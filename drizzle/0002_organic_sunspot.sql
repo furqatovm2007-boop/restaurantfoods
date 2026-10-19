@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `bookings_active_table_slot` ON `bookings` (`restaurant_id`,`date`,`slot`,`table_number`) WHERE status IN ('pending','confirmed');
