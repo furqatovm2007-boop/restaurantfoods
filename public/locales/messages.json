@@ -201,8 +201,8 @@
   },
   "Restoranlarni ko‘rish →": {
     "uz": "Restoranlarni ko‘rish →",
-    "ru": "Посмотреть рестораны →",
-    "en": "Browse restaurants →"
+    "ru": "Смотреть рестораны →",
+    "en": "Explore restaurants →"
   },
   "Til": {
     "uz": "Til",
@@ -3388,5 +3388,65 @@
     "uz": "Saqlandi",
     "ru": "Сохранено",
     "en": "Saved"
+  },
+  "Har bir uchrashuv — yangi ta’m.": {
+    "uz": "Har bir uchrashuv — yangi ta’m.",
+    "ru": "Новая встреча — новый вкус.",
+    "en": "Every gathering. A new flavour."
+  },
+  "Yaxshi taom. Yaxshi davra.": {
+    "uz": "Yaxshi taom. Yaxshi davra.",
+    "ru": "Вкусная еда. Отличная компания.",
+    "en": "Good food. Great company."
+  },
+  "Restoranni tanlang, menyuni ko‘ring va keyingi uchrashuvingiz uchun joy toping.": {
+    "uz": "Restoranni tanlang, menyuni ko‘ring va keyingi uchrashuvingiz uchun joy toping.",
+    "ru": "Выберите ресторан, изучите меню и найдите место для следующей встречи.",
+    "en": "Explore restaurants, discover menus and find a table for your next gathering."
+  },
+  "Qidiruv →": {
+    "uz": "Qidiruv →",
+    "ru": "Поиск →",
+    "en": "Search →"
+  },
+  "Tavsiya etilgan restoranlar": {
+    "uz": "Tavsiya etilgan restoranlar",
+    "ru": "Откройте для себя рестораны",
+    "en": "Restaurants to discover"
+  },
+  "Barchasi →": {
+    "uz": "Barchasi →",
+    "ru": "Все →",
+    "en": "View all →"
+  },
+  "Yuqori baholangan restoranlar": {
+    "uz": "Yuqori baholangan restoranlar",
+    "ru": "Высоко оценённые рестораны",
+    "en": "Highly rated restaurants"
+  },
+  "Uchrashuvni oldindan rejalashtiring.": {
+    "uz": "Uchrashuvni oldindan rejalashtiring.",
+    "ru": "Планируйте встречи заранее.",
+    "en": "Make room for your next gathering."
+  },
+  "Sana va vaqtni tanlab, restoranning stol xaritasini ko‘ring.": {
+    "uz": "Sana va vaqtni tanlab, restoranning stol xaritasini ko‘ring.",
+    "ru": "Выберите дату и время и посмотрите схему столов ресторана.",
+    "en": "Choose a date and time, then explore the restaurant’s table map."
+  },
+  "Stol tanlash →": {
+    "uz": "Stol tanlash →",
+    "ru": "Выбрать стол →",
+    "en": "Choose a table →"
+  },
+  "Restoranlar hali qo‘shilmagan": {
+    "uz": "Restoranlar hali qo‘shilmagan",
+    "ru": "Ресторанов пока нет",
+    "en": "No restaurants yet"
+  },
+  "Tasdiqlangan restoranlar shu yerda ko‘rinadi.": {
+    "uz": "Tasdiqlangan restoranlar shu yerda ko‘rinadi.",
+    "ru": "Здесь появятся одобренные рестораны.",
+    "en": "Approved restaurants will appear here."
   }
 }
