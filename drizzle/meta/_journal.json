@@ -1,0 +1,125 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1791932488526,
+      "tag": "0000_quick_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791933271066,
+      "tag": "0001_sleepy_sasquatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791933304916,
+      "tag": "0002_organic_sunspot",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791971308713,
+      "tag": "0003_revoked_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792057825065,
+      "tag": "0004_illegal_sharon_carter",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792078395673,
+      "tag": "0005_round_marten_broadcloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792080223355,
+      "tag": "0006_past_malice",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792094518467,
+      "tag": "0007_true_riptide",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792138633801,
+      "tag": "0008_nifty_tyger_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792336239569,
+      "tag": "0009_typical_gorgon",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1792337576483,
+      "tag": "0010_nasty_mad_thinker",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1792338214163,
+      "tag": "0011_demo_restaurants",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1792374092920,
+      "tag": "0012_seo_blog",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1792395710758,
+      "tag": "0013_demo_isolation",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1792435358846,
+      "tag": "0014_persistent_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1792435358847,
+      "tag": "0015_demo_menu_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1792436730914,
+      "tag": "0016_demo_desserts",
+      "breakpoints": true
+    }
+  ]
+}
