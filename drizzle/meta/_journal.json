@@ -113,6 +113,13 @@
       "when": 1792435358847,
       "tag": "0015_demo_menu_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1792436730914,
+      "tag": "0016_demo_desserts",
+      "breakpoints": true
     }
   ]
 }

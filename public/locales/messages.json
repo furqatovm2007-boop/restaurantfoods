@@ -3518,5 +3518,50 @@
     "uz": "Kirish xizmati vaqtincha mavjud emas. Keyinroq urinib ko‘ring.",
     "ru": "Сервис входа временно недоступен. Попробуйте позже.",
     "en": "Sign-in is temporarily unavailable. Try again later."
+  },
+  "Birinchi taomlar": {
+    "uz": "Birinchi taomlar",
+    "ru": "Первые блюда",
+    "en": "First courses"
+  },
+  "Ikkinchi taomlar": {
+    "uz": "Ikkinchi taomlar",
+    "ru": "Вторые блюда",
+    "en": "Main courses"
+  },
+  "Kamaytirish": {
+    "uz": "Kamaytirish",
+    "ru": "Уменьшить",
+    "en": "Decrease"
+  },
+  "Ko‘paytirish": {
+    "uz": "Ko‘paytirish",
+    "ru": "Увеличить",
+    "en": "Increase"
+  },
+  "Demo buyurtma": {
+    "uz": "Demo buyurtma",
+    "ru": "Демо-заказ",
+    "en": "Demo order"
+  },
+  "Demo buyurtmani sinash": {
+    "uz": "Demo buyurtmani sinash",
+    "ru": "Проверить демо-заказ",
+    "en": "Test demo order"
+  },
+  "Demo savat tekshirildi. Restoranga haqiqiy buyurtma yoki to‘lov yuborilmadi.": {
+    "uz": "Demo savat tekshirildi. Restoranga haqiqiy buyurtma yoki to‘lov yuborilmadi.",
+    "ru": "Демо-корзина проверена. Настоящий заказ или платёж не отправлен.",
+    "en": "Demo cart checked. No real order or payment was sent."
+  },
+  "Tavsiya etilgan menyu bilan savat almashtirilsinmi?": {
+    "uz": "Tavsiya etilgan menyu bilan savat almashtirilsinmi?",
+    "ru": "Заменить корзину рекомендованным меню?",
+    "en": "Replace your cart with the recommended menu?"
+  },
+  "Savatga qo‘shildi. Buyurtmani savatda tekshiring.": {
+    "uz": "Savatga qo‘shildi. Buyurtmani savatda tekshiring.",
+    "ru": "Добавлено в корзину. Проверьте заказ в корзине.",
+    "en": "Added to cart. Review your order in the cart."
   }
 }
