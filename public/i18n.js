@@ -7,4 +7,4 @@ function t(source){if(typeof source!=='string')return source;const key=source.tr
 function ht(strings,...values){let tag=false,quote='',output='';for(let n=0;n<strings.length;n++){const s=strings[n];let chunk='',textMode=!tag;const flush=()=>{output+=textMode?t(chunk):chunk.replace(/(placeholder|aria-label|title)="([^"]*)"/g,(_,a,v)=>a+'="'+t(v).replaceAll('"','&quot;')+'"');chunk=''};for(const c of s){if(!tag&&c==='<'){flush();tag=true;textMode=false;chunk=c;continue}chunk+=c;if(tag){if(quote){if(c===quote)quote=''}else if(c==='"'||c==="'")quote=c;else if(c==='>'){flush();tag=false;textMode=true}}}flush();if(n<values.length)output+=values[n]??'';}return output;}
 function lh(s){return ht([s])}
 
-const requestedLanguage=new URLSearchParams(location.search).get('lang');if(['ru','uz','en'].includes(requestedLanguage))RF_I18N.set(requestedLanguage);
+const requestedLanguage=new URLSearchParams(location.search).get('lang')||String(location.pathname||'').match(/^\/(ru|uz|en)\/?$/)?.[1];if(['ru','uz','en'].includes(requestedLanguage))RF_I18N.set(requestedLanguage);

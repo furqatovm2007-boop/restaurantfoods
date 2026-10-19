@@ -3448,5 +3448,75 @@
     "uz": "Tasdiqlangan restoranlar shu yerda ko‘rinadi.",
     "ru": "Здесь появятся одобренные рестораны.",
     "en": "Approved restaurants will appear here."
+  },
+  "Menyu kategoriyalari": {
+    "uz": "Menyu kategoriyalari",
+    "ru": "Категории меню",
+    "en": "Menu categories"
+  },
+  "Salatlar": {
+    "uz": "Salatlar",
+    "ru": "Салаты",
+    "en": "Salads"
+  },
+  "Sho‘rvalar": {
+    "uz": "Sho‘rvalar",
+    "ru": "Супы",
+    "en": "Soups"
+  },
+  "Asosiy taomlar": {
+    "uz": "Asosiy taomlar",
+    "ru": "Основные блюда",
+    "en": "Main dishes"
+  },
+  "Fastfood": {
+    "uz": "Fastfood",
+    "ru": "Фастфуд",
+    "en": "Fast food"
+  },
+  "Garnirlar": {
+    "uz": "Garnirlar",
+    "ru": "Гарниры",
+    "en": "Sides"
+  },
+  "Gazli ichimliklar": {
+    "uz": "Gazli ichimliklar",
+    "ru": "Газированные напитки",
+    "en": "Carbonated drinks"
+  },
+  "Gazsiz ichimliklar": {
+    "uz": "Gazsiz ichimliklar",
+    "ru": "Негазированные напитки",
+    "en": "Still drinks"
+  },
+  "Issiq ichimliklar": {
+    "uz": "Issiq ichimliklar",
+    "ru": "Горячие напитки",
+    "en": "Hot drinks"
+  },
+  "Desertlar": {
+    "uz": "Desertlar",
+    "ru": "Десерты",
+    "en": "Desserts"
+  },
+  "Boshqalar": {
+    "uz": "Boshqalar",
+    "ru": "Другое",
+    "en": "Other"
+  },
+  "Akkauntingizga kiring.": {
+    "uz": "Akkauntingizga kiring.",
+    "ru": "Войдите в аккаунт.",
+    "en": "Please sign in."
+  },
+  "Akkauntingizga qayta kiring.": {
+    "uz": "Akkauntingizga qayta kiring.",
+    "ru": "Войдите в аккаунт ещё раз.",
+    "en": "Please sign in again."
+  },
+  "Kirish xizmati vaqtincha mavjud emas. Keyinroq urinib ko‘ring.": {
+    "uz": "Kirish xizmati vaqtincha mavjud emas. Keyinroq urinib ko‘ring.",
+    "ru": "Сервис входа временно недоступен. Попробуйте позже.",
+    "en": "Sign-in is temporarily unavailable. Try again later."
   }
 }

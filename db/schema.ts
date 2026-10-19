@@ -24,3 +24,5 @@ export const otpChallenges=sqliteTable('otp_challenges',{id:text('id').primaryKe
 export const smsCooldowns=sqliteTable('sms_cooldowns',{phone:text('phone').primaryKey(),nextAt:integer('next_at').notNull()});
 
 export const blogPosts=sqliteTable('blog_posts',{id:text('id').primaryKey(),slug:text('slug').notNull(),lang:text('lang').notNull(),title:text('title').notNull(),description:text('description').notNull(),content:text('content').notNull(),status:text('status').notNull().default('draft'),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull()},t=>[uniqueIndex('blog_slug_language').on(t.slug,t.lang)]);
+
+export const persistentSessions=sqliteTable('persistent_sessions',{tokenHash:text('token_hash').primaryKey(),userId:text('user_id').notNull(),sessionKey:text('session_key').notNull(),startedAt:integer('started_at').notNull(),expiresAt:integer('expires_at').notNull()});

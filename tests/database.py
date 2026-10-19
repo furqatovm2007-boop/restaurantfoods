@@ -7,11 +7,11 @@ c.execute(insert,('a','pending'))
 try:c.execute(insert,('b','confirmed'));raise AssertionError('Duplicate booking accepted')
 except sqlite3.IntegrityError:pass
 c.execute("UPDATE bookings SET status='cancelled' WHERE id='a'");c.execute(insert,('b','pending'))
-c.execute("INSERT INTO reviews VALUES ('one','r','c',5,'Actual review','now','now')")
-try:c.execute("INSERT INTO reviews VALUES ('two','r','c',4,'Duplicate review','now','now')");raise AssertionError('Duplicate review accepted')
+c.execute("INSERT INTO reviews (id,restaurant_id,user_id,stars,comment,created_at,updated_at) VALUES ('one','r','c',5,'Actual review','now','now')")
+try:c.execute("INSERT INTO reviews (id,restaurant_id,user_id,stars,comment,created_at,updated_at) VALUES ('two','r','c',4,'Duplicate review','now','now')");raise AssertionError('Duplicate review accepted')
 except sqlite3.IntegrityError:pass
-c.execute("INSERT INTO reviews VALUES ('two','r','d',3,'Second customer','now','now')")
-assert c.execute('SELECT AVG(stars),COUNT(*) FROM reviews').fetchone()==(4.,2)
+c.execute("INSERT INTO reviews (id,restaurant_id,user_id,stars,comment,created_at,updated_at) VALUES ('two','r','d',3,'Second customer','now','now')")
+assert c.execute("SELECT AVG(stars),COUNT(*) FROM reviews WHERE restaurant_id='r'").fetchone()==(4.,2)
 sql='INSERT INTO rate_limits (key,window,count) VALUES (?,?,1) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN window=excluded.window THEN count+1 ELSE 1 END, window=excluded.window RETURNING count'
 assert c.execute(sql,('ip',1)).fetchone()[0]==1
 assert c.execute(sql,('ip',1)).fetchone()[0]==2
