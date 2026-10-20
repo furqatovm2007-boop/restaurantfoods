@@ -3563,5 +3563,95 @@
     "uz": "Savatga qo‘shildi. Buyurtmani savatda tekshiring.",
     "ru": "Добавлено в корзину. Проверьте заказ в корзине.",
     "en": "Added to cart. Review your order in the cart."
+  },
+  "TA’M. DAVRA. XOTIRA.": {
+    "uz": "TA’M. DAVRA. XOTIRA.",
+    "ru": "ВКУС. ВСТРЕЧИ. ВПЕЧАТЛЕНИЯ.",
+    "en": "TASTE. COMPANY. MEMORIES."
+  },
+  "Ajoyib taom.": {
+    "uz": "Ajoyib taom.",
+    "ru": "Отличная еда.",
+    "en": "Great food."
+  },
+  "Yaxshi davra.": {
+    "uz": "Yaxshi davra.",
+    "ru": "Приятная компания.",
+    "en": "Good company."
+  },
+  "Keyingi uchrashuvingiz uchun restoran, dasturxoningiz uchun yangi ta’m.": {
+    "uz": "Keyingi uchrashuvingiz uchun restoran, dasturxoningiz uchun yangi ta’m.",
+    "ru": "Ресторан для следующей встречи. Новые вкусы для вашего стола.",
+    "en": "A place for your next gathering. New flavors for your table."
+  },
+  "Restoranlarni ko‘rish": {
+    "uz": "Restoranlarni ko‘rish",
+    "ru": "Смотреть рестораны",
+    "en": "Explore restaurants"
+  },
+  "SIZNING KEYINGI MANZILINGIZ": {
+    "uz": "SIZNING KEYINGI MANZILINGIZ",
+    "ru": "ВАШ СЛЕДУЮЩИЙ АДРЕС",
+    "en": "YOUR NEXT DESTINATION"
+  },
+  "Restoranlarni kashf eting": {
+    "uz": "Restoranlarni kashf eting",
+    "ru": "Откройте новые рестораны",
+    "en": "Discover restaurants"
+  },
+  "Barchasini ko‘rish →": {
+    "uz": "Barchasini ko‘rish →",
+    "ru": "Смотреть все →",
+    "en": "View all →"
+  },
+  "YANGI TA’MLARNI KASHF ETING": {
+    "uz": "YANGI TA’MLARNI KASHF ETING",
+    "ru": "ОТКРОЙТЕ НОВЫЕ ВКУСЫ",
+    "en": "DISCOVER NEW FLAVORS"
+  },
+  "Har xil ta’b uchun tanlovlar": {
+    "uz": "Har xil ta’b uchun tanlovlar",
+    "ru": "Для разных вкусов",
+    "en": "A choice for every taste"
+  },
+  "Turli oshxonalardan tanishish uchun tavsiyalar.": {
+    "uz": "Turli oshxonalardan tanishish uchun tavsiyalar.",
+    "ru": "Познакомьтесь с ресторанами разных кухонь.",
+    "en": "Explore restaurants across different cuisines."
+  },
+  "BIRGA O‘TKAZILGAN VAQT": {
+    "uz": "BIRGA O‘TKAZILGAN VAQT",
+    "ru": "ВРЕМЯ ВМЕСТЕ",
+    "en": "TIME TOGETHER"
+  },
+  "Yaxshi kechki ovqat joy tanlashdan boshlanadi.": {
+    "uz": "Yaxshi kechki ovqat joy tanlashdan boshlanadi.",
+    "ru": "Хороший вечер начинается с выбора места.",
+    "en": "A great evening starts with the right place."
+  },
+  "Menyuni ko‘ring, zal bilan tanishing va tashrif vaqtini tanlang.": {
+    "uz": "Menyuni ko‘ring, zal bilan tanishing va tashrif vaqtini tanlang.",
+    "ru": "Изучите меню, посмотрите зал и выберите время визита.",
+    "en": "Browse the menu, explore the floor plan and choose your visit time."
+  },
+  "Restoran tanlash ↗": {
+    "uz": "Restoran tanlash ↗",
+    "ru": "Выбрать ресторан ↗",
+    "en": "Choose a restaurant ↗"
+  },
+  "Topilgan restoranlar": {
+    "uz": "Topilgan restoranlar",
+    "ru": "Найдено ресторанов",
+    "en": "Restaurants found"
+  },
+  "Ish vaqti": {
+    "uz": "Ish vaqti",
+    "ru": "Часы работы",
+    "en": "Opening hours"
+  },
+  "Menyu va bron": {
+    "uz": "Menyu va bron",
+    "ru": "Меню и бронирование",
+    "en": "Menu & reservations"
   }
 }
