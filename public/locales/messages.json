@@ -3698,5 +3698,25 @@
     "uz": "Savat ovozi o‘chirilgan",
     "ru": "Звук корзины выключен",
     "en": "Cart sound off"
+  },
+  "Sharbatlar": {
+    "uz": "Sharbatlar",
+    "ru": "Соки",
+    "en": "Juices"
+  },
+  "Varaq ovozi": {
+    "uz": "Varaq ovozi",
+    "ru": "Звук страниц",
+    "en": "Page sound"
+  },
+  "Varaq ovozi yoqilgan": {
+    "uz": "Varaq ovozi yoqilgan",
+    "ru": "Звук страниц включён",
+    "en": "Page sound on"
+  },
+  "Varaq ovozi o‘chirilgan": {
+    "uz": "Varaq ovozi o‘chirilgan",
+    "ru": "Звук страниц выключен",
+    "en": "Page sound off"
   }
 }

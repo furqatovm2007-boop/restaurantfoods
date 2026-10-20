@@ -120,6 +120,13 @@
       "when": 1792436730914,
       "tag": "0016_demo_desserts",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1792510800000,
+      "tag": "0017_demo_drinks",
+      "breakpoints": true
     }
   ]
 }
