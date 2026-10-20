@@ -3653,5 +3653,50 @@
     "uz": "Menyu va bron",
     "ru": "Меню и бронирование",
     "en": "Menu & reservations"
+  },
+  "Menyu daftari": {
+    "uz": "Menyu daftari",
+    "ru": "Книга меню",
+    "en": "Menu book"
+  },
+  "Varaqni tugmalar yoki surish orqali almashtiring.": {
+    "uz": "Varaqni tugmalar yoki surish orqali almashtiring.",
+    "ru": "Перелистывайте кнопками или свайпом.",
+    "en": "Turn the pages with the buttons or a swipe."
+  },
+  "Oldingi varaq": {
+    "uz": "Oldingi varaq",
+    "ru": "Предыдущая страница",
+    "en": "Previous page"
+  },
+  "Keyingi varaq": {
+    "uz": "Keyingi varaq",
+    "ru": "Следующая страница",
+    "en": "Next page"
+  },
+  "3D menyu": {
+    "uz": "3D menyu",
+    "ru": "3D-меню",
+    "en": "3D menu"
+  },
+  "3D menyuni ochish": {
+    "uz": "3D menyuni ochish",
+    "ru": "Открыть 3D-меню",
+    "en": "Open 3D menu"
+  },
+  "Savatga qo‘shish": {
+    "uz": "Savatga qo‘shish",
+    "ru": "Добавить в корзину",
+    "en": "Add to cart"
+  },
+  "Savat ovozi yoqilgan": {
+    "uz": "Savat ovozi yoqilgan",
+    "ru": "Звук корзины включён",
+    "en": "Cart sound on"
+  },
+  "Savat ovozi o‘chirilgan": {
+    "uz": "Savat ovozi o‘chirilgan",
+    "ru": "Звук корзины выключен",
+    "en": "Cart sound off"
   }
 }
