@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>RestaurantFoods 3D · DEMO</title>
+<link rel="stylesheet" href="/premium.css?v=57">
+<style>
+  body{margin:0;min-height:100vh;background:#081521;color:#f8fafc;font-family:Inter,system-ui,sans-serif}
+  main{max-width:1100px;margin:0 auto;padding:24px 16px 120px}
+  h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:32px 0 10px}
+  p{color:#a7c1ca;font-size:13px;margin:0 0 16px}
+  .row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  #avatar{width:220px;height:280px;border:1px solid #294654;border-radius:20px;background:radial-gradient(#153242,#081521)}
+  button.demo{padding:10px 14px;border-radius:12px;border:1px solid #294654;background:#102635;color:#f8fafc;font:inherit;cursor:pointer}
+</style>
+<script src="/rf-3d-loader.js?v=2" defer></script>
+<script src="/rf-3d-demo.js?v=2" defer></script>
+</head>
+<body>
+<main>
+  <h1>RestaurantFoods 3D</h1>
+  <p>DEMO: namunaviy ma’lumotlar. Buyurtma, bron yoki AI so‘rovi yuborilmaydi.</p>
+  <h2>To‘liq ekranli 3D menyu</h2>
+  <button type="button" class="menu-3d-launch" id="openMenu"><span class="menu-3d-launch-icon" aria-hidden="true">📖</span><span><b>3D menyuni ochish</b><small>Varaqlab ko‘ring</small></span><span aria-hidden="true">↗</span></button>
+  <h2>3D zal: stol tanlab bron</h2>
+  <p id="hallStatus">Bo‘sh (yashil) stolni bosing.</p>
+  <div id="hall"></div>
+  <h2>Ovozli 3D yordamchi (lip-sync)</h2>
+  <div class="row"><div id="avatar"></div><button type="button" class="demo" id="talk">Gapirish sinovi ▶</button></div>
+</main>
+</body>
+</html>

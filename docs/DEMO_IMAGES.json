@@ -1,0 +1,21 @@
+{
+  "notice": "Illustrative Unsplash stock photography, not photos of actual demo businesses or exact menu dishes.",
+  "sources": {
+    "room-warm": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
+    "room-modern": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0",
+    "room-green": "https://images.unsplash.com/photo-1552566626-52f8b828add9",
+    "room-bistro": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
+    "room-cafe": "https://images.unsplash.com/photo-1559339352-11d035aa65de",
+    "room-evening": "https://images.unsplash.com/photo-1514933651103-005eec06c04b",
+    "food-grill": "https://images.unsplash.com/photo-1544025162-d76694265947",
+    "food-pasta": "https://images.unsplash.com/photo-1473093295043-cdd812d0e601",
+    "food-burger": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd",
+    "food-salad": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd",
+    "food-sushi": "https://images.unsplash.com/photo-1579871494447-9811cf80d66c",
+    "food-dessert": "https://images.unsplash.com/photo-1488477181946-6428a0291777",
+    "food-pizza": "https://images.unsplash.com/photo-1513104890138-7c749659a591",
+    "food-coffee": "https://images.unsplash.com/photo-1509042239860-f550ce710b93",
+    "food-bread": "https://images.unsplash.com/photo-1509440159596-0249088772ff",
+    "food-curry": "https://images.unsplash.com/photo-1565557623262-b51c2513a641"
+  }
+}

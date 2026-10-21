@@ -1,0 +1,45 @@
+/*
+ * Tailwind for the 3D menu island only. Preflight is skipped and every utility
+ * is prefixed (`rf:`) so nothing leaks into the vanilla site styles. Utilities
+ * stay unlayered so the site's plain `button {}` rules cannot outrank them.
+ */
+@import 'tailwindcss/theme.css' layer(theme) prefix(rf);
+@import 'tailwindcss/utilities.css' prefix(rf);
+@source '../';
+
+@theme {
+  --color-night: #081521;
+  --color-panel: #102635;
+  --color-card: #153242;
+  --color-line: #294654;
+  --color-teal: #00c9a7;
+  --color-blue: #00a8ff;
+  --color-text: #f8fafc;
+  --color-gold: #e0c791;
+  --color-paper: #eae4d7;
+  --color-ink: #203735;
+  --font-book: RFBook, 'EB Garamond', Georgia, serif;
+}
+
+@font-face {
+  font-family: RFBook;
+  src: url('/fonts/ebgaramond-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: RFBook;
+  src: url('/fonts/ebgaramond-italic-latin.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+[data-menu-book].has-3d > :not([data-menu-book-3d]):not(.menu-book-heading) {
+  display: none !important;
+}
+[data-menu-book-3d] button {
+  font: inherit;
+  cursor: pointer;
+}

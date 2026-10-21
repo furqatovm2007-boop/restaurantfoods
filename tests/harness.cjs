@@ -1,0 +1,3 @@
+const fs=require('fs'),vm=require('vm'),ts=require('typescript');
+exports.load=(file,imports,extras={})=>{const exports={};const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;vm.runInNewContext(code,{exports,require:n=>{if(!(n in imports))throw Error('Missing test dependency '+n);return imports[n]},Response,Request,URL,Date,TextEncoder,TextDecoder,AbortSignal,crypto:require('crypto').webcrypto,btoa,atob,...extras});return exports;};
+exports.request=(path,data,method='POST',origin='https://test')=>new Request('https://test'+path,{method,headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
