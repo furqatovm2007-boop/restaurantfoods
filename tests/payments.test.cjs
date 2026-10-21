@@ -61,6 +61,12 @@ assert.equal(db.prepare('SELECT status FROM bookings WHERE id=?').get(created.id
 await update({callback_query:{id:'q2',data:'b:c:'+created.id,message:{chat:{id:777},message_id:5}}});
 assert.equal(db.prepare('SELECT status FROM bookings WHERE id=?').get(created.id).status,'confirmed');
 assert.ok(calls.some(c=>c.telegram==='editMessageText'&&c.body.text.includes('Tasdiqlandi')));
+// The site sees the Telegram decision through the status feed (customer and owner views).
+const statusFeed=load('app/api/bookings/status/route.ts',{...cf,'../../../access':{identity:async()=>who},'../../../http':http});let who={userId:'client',role:'customer'};
+assert.equal((await (await statusFeed.GET()).json()).mine.find(b=>b.id===created.id).status,'confirmed');
+who={userId:'owner',role:'restaurant_owner'};let feed=await (await statusFeed.GET()).json();assert.equal(feed.managed.find(b=>b.id===created.id).status,'confirmed');assert.equal(feed.mine.length,0);
+who={userId:'other-owner',role:'restaurant_owner'};assert.equal((await (await statusFeed.GET()).json()).managed.length,0,'other restaurants stay private');
+who=null;assert.equal((await statusFeed.GET()).status,401);
 // Linking: one-time code from telegram_links binds the chat.
 db.prepare('INSERT INTO telegram_links(code,restaurant_id,created_by,expires_at) VALUES (?,?,?,?)').run('abcdef123456','r','owner',Date.now()+60000);
 await update({message:{chat:{id:4242},text:'/start abcdef123456'}});

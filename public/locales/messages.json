@@ -4203,5 +4203,10 @@
     "uz": "SMS tasdiqlash:",
     "ru": "SMS-подтверждение:",
     "en": "SMS verification:"
+  },
+  "Bron holati yangilandi.": {
+    "uz": "Bron holati yangilandi.",
+    "ru": "Статус брони обновлён.",
+    "en": "Booking status updated."
   }
 }

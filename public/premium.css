@@ -125,3 +125,8 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 @property --neon-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
 @keyframes rf-neon-spin{to{--neon-angle:360deg}}
 @media (prefers-reduced-motion:reduce){.menu-3d-launch.neon,.menu-3d-launch.neon:hover{transform:none}.menu-3d-launch.neon::before{animation:none}}
+
+/* A booking row whose status changed elsewhere (e.g. confirmed in Telegram) flashes once. */
+@keyframes rf-row-updated{from{box-shadow:0 0 0 2px #00c9a7,0 0 24px #00c9a766}to{box-shadow:none}}
+.row.row-updated{animation:rf-row-updated 2.4s ease-out}
+@media (prefers-reduced-motion:reduce){.row.row-updated{animation:none;outline:2px solid #00c9a7}}
