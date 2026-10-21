@@ -134,6 +134,13 @@
       "when": 1792600000000,
       "tag": "0018_plans_trial",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1792700000000,
+      "tag": "0019_telegram_deposits_otp",
+      "breakpoints": true
     }
   ]
 }

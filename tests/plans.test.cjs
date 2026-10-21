@@ -1,10 +1,10 @@
-const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=require('node:sqlite'),{load,request}=require('./harness.cjs');
+const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=require('node:sqlite'),{load,request,integrationDeps}=require('./harness.cjs');
 // Plans, 14-day trial, feature guards, live tables, vision and AI streaming against real SQLite migrations.
 (async()=>{
  const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
  const DB={prepare(sql){let args=[];return {sql,bind(...a){args=a;return this},get args(){return args},first:async()=>db.prepare(sql).get(...args),all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...args).changes)}})}},batch:async list=>{db.exec('BEGIN');try{for(const s of list)db.prepare(s.sql).run(...s.args);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}};
  const env={DB,OPENAI_API_KEY:'sk-worker-test'},cf={'cloudflare:workers':{env}};
- const http=load('app/http.ts',cf),httpNoLimit={...http,throttle:async()=>{}};
+ const http=load('app/http.ts',cf),httpNoLimit={...http,throttle:async()=>{}},integrations=integrationDeps(env,http);
  const plans=load('app/plans.ts',{...cf,'./http':http});
  const DAY=86400000,now=Date.parse('2030-01-10T00:00:00Z'),iso=t=>new Date(t).toISOString();
 
@@ -23,7 +23,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 
  // Manage: new restaurants start a 14-day trial; owners choose, only admins record payment
  let user={userId:'owner',role:'restaurant_owner'};
- const manageDeps={...cf,'../../geo':load('app/geo.ts',{'./http':http}),'../../access':{identity:async()=>user},'../../http':http,'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../account-admin':load('app/account-admin.ts',{...cf,'./http':http}),'../../plans':plans};
+ const manageDeps={...cf,...integrations,'../../geo':load('app/geo.ts',{'./http':http}),'../../access':{identity:async()=>user},'../../http':http,'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../account-admin':load('app/account-admin.ts',{...cf,'./http':http}),'../../plans':plans};
  const manage=load('app/api/manage/route.ts',manageDeps);
  let r=await manage.POST(request('/api/manage',{action:'restaurant',name:'New place',address:'Samarqand 1',phone:'+998901234567',tables:4,floors:1}));assert.equal(r.status,200);const id=(await r.json()).id;
  let row=db.prepare('SELECT * FROM restaurants WHERE id=?').get(id);assert.ok(Math.abs(Date.parse(row.trial_ends_at)-Date.now()-14*DAY)<60000,'14-day trial');assert.equal(row.paid_until,null);
@@ -44,7 +44,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 
  // Tables: live status is a Business feature
  db.exec(`INSERT INTO restaurant_tables(id,restaurant_id,number,seats,x,y) VALUES ('t1','${id}',1,4,20,30),('t2','${id}',2,2,60,30),('t3','legacy',1,4,50,50)`);
- const tables=load('app/api/tables/route.ts',{...cf,'../../access':{identity:async()=>user},'../../http':http,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../plans':plans});
+ const tables=load('app/api/tables/route.ts',{...cf,...integrations,'../../access':{identity:async()=>user},'../../http':http,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../plans':plans});
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'occupied'}))).status,200);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'party'}))).status,400);
  let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:true,liveTables:true});assert.equal(t.live[0].status,'occupied');
