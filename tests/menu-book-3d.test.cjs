@@ -25,7 +25,7 @@ const html=fs.readFileSync('app/site-html.ts','utf8');assert.ok(!html.includes('
 const snippet=source.slice(source.indexOf('// Full-screen WebGL menu'),source.indexOf('// Subscription: 14-day'));
 let opened=null,clicked=0;const cart={items:[]};
 const input={value:'1'},add={click(){clicked++;cart.items.push({id:'a',quantity:Number(input.value)})}};
-const form={isConnected:true,elements:{namedItem:id=>id==='a'?input:null},querySelector:s=>s.includes('"a"')?add:null};
+let formClick=null;const form={isConnected:true,addEventListener:(type,fn)=>{if(type==='click')formClick=fn},elements:{namedItem:id=>id==='a'?input:null},querySelector:s=>s.includes('"a"')?add:null};
 const launcher={hidden:true,closest:()=>form,focus(){}};
 const ctx={document:{documentElement:{lang:'uz'},querySelector:s=>s==='[data-menu-3d-open]'?launcher:null,createElement:()=>({getContext:()=>({})})},
  window:{RF3DLoad:async()=>({fullscreenMenu:{open(props){opened=props;return {close(){}}}}})},CSS:{escape:s=>s},Promise,Map,Boolean,String,JSON,matchMedia:()=>({matches:false}),setTimeout,
@@ -34,10 +34,14 @@ vm.createContext(ctx);vm.runInContext(snippet,ctx);
 ctx.bindMenuBook3D({name:'Real'},[{id:'b',category:'Desertlar',price:5,available:true},{id:'a',category:'Salatlar',price:3,available:true,image_url:'/x.jpg'}]);
 assert.equal(launcher.hidden,false,'launcher shown once WebGL is available');
 (async()=>{await launcher.onclick();await new Promise(r=>setTimeout(r,0));
- assert.ok(opened,'full-screen menu opened');assert.equal(opened.lang,'uz');
+ assert.ok(opened,'full-screen menu opened');assert.equal(opened.lang,'uz');assert.equal(opened.origin,launcher,'book grows out of the launcher');
  assert.deepEqual([...opened.data.chapters.map(c=>c.title)],['T:Salatlar','T:Desertlar']);
  assert.equal(opened.data.chapters[0].dishes[0].price,'3 sum');assert.equal(opened.data.chapters[0].dishes[0].image,'/x.jpg');
  assert.equal(opened.onAddToCart({id:'a'},4),true);assert.equal(input.value,'4');assert.equal(clicked,1);
  assert.equal(opened.onAddToCart({id:'missing'},1),false);assert.equal(clicked,1);
+ // Tapping a dish photo opens the book on that dish, growing out of its card; controls do not.
+ const card={dataset:{dish:'a'}},at=hit=>({target:{closest:s=>s==='.food-card[data-dish]'?card:s.startsWith('button')?(hit==='button'?{}:null):s==='.food-image,h3'?(hit==='photo'?{}:null):null}});
+ opened=null;formClick(at('button'));await new Promise(r=>setTimeout(r,0));assert.equal(opened,null,'stepper buttons do not open the book');
+ formClick(at('photo'));await new Promise(r=>setTimeout(r,0));assert.equal(opened.revealDishId,'a');assert.equal(opened.origin,card);
  console.log('menu-book-3d ok');
 })();

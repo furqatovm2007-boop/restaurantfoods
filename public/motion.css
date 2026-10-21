@@ -1,0 +1,126 @@
+/* Motion layer (see motion.js). Spring easing, GPU-only properties (transform, opacity). */
+:root {
+  --rf-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --rf-genie: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---------------------------------------------------------- scroll reveal */
+.rf-reveal {
+  opacity: 0;
+  transform: translate3d(0, 40px, 0) scale(0.96);
+  will-change: transform, opacity;
+}
+.rf-reveal.rf-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity 0.7s var(--rf-spring) var(--rf-reveal-delay, 0ms),
+    transform 0.8s var(--rf-spring) var(--rf-reveal-delay, 0ms);
+}
+/* The old one-shot keyframe reveal would fight the transition. */
+.rf-reveal.market-reveal { animation: none; }
+
+/* ------------------------------------------------- windows and backdrops */
+dialog::backdrop {
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+.booking-meals-dialog,
+#drawer[open],
+.deposit-card {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+.deposit-dialog {
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+
+/* A copy of the tapped restaurant card that grows into the restaurant page. */
+.rf-morph-ghost {
+  position: fixed !important;
+  z-index: 2147482900;
+  margin: 0 !important;
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+/* Food cards that open the 3D book at their dish. */
+.food-card[data-dish] .food-image { cursor: zoom-in; }
+
+/* ------------------------------------------- desktop: lift, tilt, glow */
+@media (hover: hover) and (pointer: fine) {
+  .food-card,
+  .plan-card,
+  .service-tile,
+  .booking-meal-card {
+    transition:
+      transform 0.45s var(--rf-spring),
+      box-shadow 0.45s var(--rf-spring),
+      border-color 0.3s ease;
+  }
+  .food-card.cursor-lit,
+  .plan-card.cursor-lit,
+  .service-tile.cursor-lit,
+  .booking-meal-card.cursor-lit {
+    transform: perspective(900px) translate3d(0, -4px, 0) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.015);
+    border-color: #00c9a7;
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(0, 201, 167, 0.35),
+      0 0 26px rgba(0, 168, 255, 0.18);
+  }
+}
+
+/* ---------------------------------------------------- touch: iOS press */
+@media (hover: none) {
+  .restaurant-card,
+  .food-card,
+  .plan-card,
+  .service-tile,
+  .menu-3d-launch,
+  .primary,
+  .quiet,
+  .mobile-nav a {
+    transition: transform 0.35s var(--rf-spring);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .restaurant-card:active,
+  .food-card:active,
+  .plan-card:active,
+  .service-tile:active,
+  .menu-3d-launch:active,
+  .primary:active,
+  .quiet:active,
+  .mobile-nav a:active {
+    transform: scale(0.96);
+    transition-duration: 0.12s;
+  }
+  /* Steppers inside a card should not shrink the whole card. */
+  .food-card:has(button:active, input:focus) { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-reveal,
+  .rf-reveal.rf-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .food-card.cursor-lit,
+  .plan-card.cursor-lit,
+  .service-tile.cursor-lit,
+  .booking-meal-card.cursor-lit,
+  .restaurant-card:active,
+  .food-card:active,
+  .primary:active,
+  .quiet:active {
+    transform: none;
+  }
+}
+@media print {
+  .rf-reveal { opacity: 1 !important; transform: none !important; }
+}

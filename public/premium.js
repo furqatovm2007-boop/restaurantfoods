@@ -4,6 +4,8 @@
  const selector='button,a[href],[role="button"],.restaurant-card',presses=new Map(),effects=new Map(),contacts=new Set();
  let hover=null,hoverPoint=null,frame=0,lastBurst=-Infinity;
  function target(node){const el=node?.closest?.(selector);return el&&!el.matches(':disabled,[aria-disabled="true"]')?el:null}
+ // Cards that only lift and glow on hover (no click burst).
+ const hoverOnly='.food-card,.plan-card,.service-tile,.booking-meal-card';function hoverTarget(node){return target(node)||node?.closest?.(hoverOnly)||null}
  function unlight(){if(hover){hover.classList.remove('cursor-lit');hover.style.removeProperty('--tilt-x');hover.style.removeProperty('--tilt-y')}hover=null;hoverPoint=null}
  function clear(){presses.clear();contacts.clear();for(const [el,timer] of effects){clearTimeout(timer);el.remove()}effects.clear();if(frame)cancelAnimationFrame(frame);frame=0;unlight()}
  function burst(el,x,y){if(reduced.matches||performance.now()-lastBurst<80||!Element.prototype.animate)return;lastBurst=performance.now();
@@ -17,7 +19,7 @@
  }
  document.addEventListener('pointerdown',e=>{if(e.button!==0||reduced.matches)return;contacts.add(e.pointerId);if(contacts.size>1){presses.clear();return}const el=target(e.target);if(el)presses.set(e.pointerId,{el,x:e.clientX,y:e.clientY,at:performance.now(),moved:false})},{passive:true,capture:true});
  document.addEventListener('pointermove',e=>{const p=presses.get(e.pointerId);if(p&&Math.hypot(e.clientX-p.x,e.clientY-p.y)>8)p.moved=true;
-  if(!fine.matches||e.pointerType!=='mouse'||reduced.matches)return;const el=target(e.target);if(hover!==el){unlight();hover=el}if(!el)return;hoverPoint={x:e.clientX,y:e.clientY};if(frame)return;
+  if(!fine.matches||e.pointerType!=='mouse'||reduced.matches)return;const el=hoverTarget(e.target);if(hover!==el){unlight();hover=el}if(!el)return;hoverPoint={x:e.clientX,y:e.clientY};if(frame)return;
   frame=requestAnimationFrame(()=>{frame=0;if(!hover?.isConnected||!hoverPoint)return;const r=hover.getBoundingClientRect(),x=hoverPoint.x-r.left,y=hoverPoint.y-r.top;hover.style.setProperty('--pointer-x',x+'px');hover.style.setProperty('--pointer-y',y+'px');hover.style.setProperty('--tilt-x',((.5-y/Math.max(r.height,1))*4)+'deg');hover.style.setProperty('--tilt-y',((x/Math.max(r.width,1)-.5)*4)+'deg');hover.classList.add('cursor-lit')});
  },{passive:true});
  document.addEventListener('pointerup',e=>{const p=presses.get(e.pointerId);presses.delete(e.pointerId);contacts.delete(e.pointerId);if(p&&!p.moved&&performance.now()-p.at<700&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<=8&&!p.el.matches(':disabled,[aria-disabled="true"]')&&p.el.contains(document.elementFromPoint?.(e.clientX,e.clientY)||e.target))burst(p.el,e.clientX,e.clientY)},{passive:true,capture:true});
@@ -26,10 +28,7 @@
  document.addEventListener('pointerout',e=>{if(hover&&!hover.contains(e.relatedTarget))unlight()},{passive:true});
  document.addEventListener('click',e=>{const card=e.target.closest('.restaurant-card');if(card&&!e.target.closest('a,button,input,select')&&!getSelection()?.toString()){const a=card.querySelector('a.primary');if(a)location.hash=a.hash}});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)clear()});window.addEventListener('pagehide',clear);window.addEventListener('hashchange',()=>{presses.clear();contacts.clear();unlight()});reduced.addEventListener('change',clear);
- // Reveal only once, then stop observing: no continuous scroll handler or hidden content without JS.
- const content=document.getElementById('content');let revealObserver;
- function reveal(){if(!content)return;revealObserver?.disconnect();if(reduced.matches||!window.IntersectionObserver)return;revealObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('market-reveal');revealObserver.unobserve(entry.target)}},{threshold:.08});content.querySelectorAll('.restaurant-card,.market-promo,.market-hero').forEach((el,i)=>{el.style.setProperty('--reveal-delay',Math.min(i%3,2)*55+'ms');revealObserver.observe(el)})}
- if(content){new MutationObserver(reveal).observe(content,{childList:true});reveal()}
+ // Scroll reveal lives in motion.js.
  const nav=document.getElementById('nav');let sidebar;
  function syncSidebar(){const management=/^#\/(manage|admin|courier|blog-admin)(\/|$)/.test(location.hash);document.body.classList.toggle('management-view',management);if(!sidebar){sidebar=document.createElement('aside');sidebar.className='management-sidebar';document.body.append(sidebar)}sidebar.hidden=!management;if(management){const collapsed=document.body.classList.contains('sidebar-collapsed');sidebar.innerHTML='<button class="quiet sidebar-toggle" aria-expanded="'+!collapsed+'">'+(collapsed?'›':'‹')+'</button><nav>'+nav.innerHTML+'</nav>';sidebar.querySelector('button').setAttribute('aria-label',({uz:'Yon menyuni yig‘ish yoki ochish',ru:'Свернуть или развернуть меню',en:'Collapse or expand sidebar'})[window.RF_I18N?.lang||'ru']);sidebar.querySelector('button').onclick=e=>{const collapsed=document.body.classList.toggle('sidebar-collapsed');e.currentTarget.setAttribute('aria-expanded',String(!collapsed));e.currentTarget.textContent=collapsed?'›':'‹'}}}
  if(nav){new MutationObserver(syncSidebar).observe(nav,{childList:true});window.addEventListener('hashchange',syncSidebar);syncSidebar()}

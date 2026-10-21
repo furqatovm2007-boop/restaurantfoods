@@ -6,6 +6,15 @@ export interface FullscreenMenuProps extends Omit<MenuBook3DProps, 'fill' | 'ref
   onClose: () => void;
   /** Turn to this dish once the book is open. */
   revealDishId?: string;
+  /** Element the overlay grows out of and shrinks back into (window.RFMotion genie). */
+  origin?: Element | null;
+}
+
+declare global {
+  interface Window {
+    /** Motion layer from public/motion.js, when loaded. */
+    RFMotion?: { open: (el: Element, origin?: Element | null) => Promise<void>; close: (el: Element) => Promise<void> };
+  }
 }
 
 const ENTER_MS = 320;
@@ -17,21 +26,31 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: 'portrait') => Promi
  * on phones enters browser full screen and tries to lock portrait orientation (Android;
  * iOS ignores both, so a rotate hint covers landscape), and opens the cover by itself.
  */
-export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: FullscreenMenuProps) {
+export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }: FullscreenMenuProps) {
   const [shown, setShown] = useState(false);
   // Phones held sideways: the book is designed for portrait, so ask to rotate.
   const sideways = useLandscapePhone();
   const handle = useRef<MenuBook3DHandle>(null);
   const dialog = useRef<HTMLDivElement>(null);
 
+  // With an origin and the motion layer the window genies out of / back into it; otherwise it fades.
+  const genie = !!(origin && window.RFMotion);
+  const closing = useRef(false);
   const close = useCallback(() => {
-    setShown(false);
+    if (closing.current) return;
+    closing.current = true;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    if (genie && dialog.current) {
+      window.RFMotion!.close(dialog.current).then(onClose);
+      return;
+    }
+    setShown(false);
     window.setTimeout(onClose, ENTER_MS);
-  }, [onClose]);
+  }, [onClose, genie]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShown(true));
+    if (genie && dialog.current) window.RFMotion!.open(dialog.current, origin);
     const opener = window.setTimeout(() => (revealDishId ? handle.current?.reveal(revealDishId) : handle.current?.open()), ENTER_MS + 150);
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
@@ -54,7 +73,7 @@ export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: Fullscr
       window.removeEventListener('keydown', onKey);
       previousFocus?.focus?.();
     };
-  }, [close, revealDishId]);
+  }, [close, revealDishId, genie, origin]);
 
   const rotate = ROTATE_TEXT[lang === 'ru' || lang === 'en' ? lang : 'uz'];
   const closeLabel = { uz: 'Yopish', ru: 'Закрыть', en: 'Close' }[lang === 'ru' || lang === 'en' ? lang : 'uz'];
@@ -66,7 +85,7 @@ export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: Fullscr
       aria-modal="true"
       aria-label={book.data.restaurantName}
       tabIndex={-1}
-      className={`rf:fixed rf:inset-0 rf:z-[2147483000] rf:flex rf:flex-col rf:bg-night/95 rf:backdrop-blur-md rf:outline-none rf:transition-opacity rf:duration-300 rf:ease-out ${shown ? 'rf:opacity-100' : 'rf:opacity-0'}`}
+      className={`rf:fixed rf:inset-0 rf:z-[2147483000] rf:flex rf:flex-col rf:bg-night/95 rf:backdrop-blur-md rf:outline-none rf:transition-opacity rf:duration-300 rf:ease-out ${shown || genie ? 'rf:opacity-100' : 'rf:opacity-0'}`}
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <button
@@ -80,7 +99,7 @@ export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: Fullscr
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
       </button>
-      <div className={`rf:min-h-0 rf:flex-1 rf:transition rf:duration-300 rf:ease-out ${shown ? 'rf:translate-y-0 rf:scale-100' : 'rf:translate-y-6 rf:scale-[0.97]'}`}>
+      <div className={`rf:min-h-0 rf:flex-1 rf:transition rf:duration-300 rf:ease-out ${shown || genie ? 'rf:translate-y-0 rf:scale-100' : 'rf:translate-y-6 rf:scale-[0.97]'}`}>
         <MenuBook3D {...book} lang={lang} ref={handle} fill />
       </div>
       {sideways && (
