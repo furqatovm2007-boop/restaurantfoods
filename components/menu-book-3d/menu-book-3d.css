@@ -43,3 +43,11 @@
   font: inherit;
   cursor: pointer;
 }
+
+/* Admin orb toasts slide in from the right. */
+@keyframes rf-toast-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+.rf-orb-toast { animation: rf-toast-in 0.28s ease-out; }
+@media (prefers-reduced-motion: reduce) { .rf-orb-toast { animation: none; } }

@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),{load}=require('./harness.cjs');
+const {tableStatus,tashkentNow}=load('components/admin-table-map/status.ts',{});
+const live=(n,status,source)=>({table_number:n,status,source,confidence:1,updated_at:''}),booking={table_number:1,slot:'19:30',end_slot:'21:30'};
+const at=(n,l,m)=>tableStatus(n,l,[booking],m);
+assert.deepEqual({...at(1,[],19*60+45)},{status:'booked',source:'booking'},'site booking now = yellow');
+assert.deepEqual({...at(1,[],21*60+30)},{status:'free',source:null},'booking end is exclusive');
+assert.deepEqual({...at(1,[live(1,'occupied','vision')],19*60+45)},{status:'occupied',source:'camera'},'camera occupied beats booking');
+assert.deepEqual({...at(1,[live(1,'free','vision')],19*60+45)},{status:'booked',source:'booking'},'camera free does not hide a booking');
+assert.deepEqual({...at(1,[live(1,'free','manual')],19*60+45)},{status:'free',source:'manual'},'staff override wins');
+assert.deepEqual({...at(2,[live(2,'reserved','manual')],600)},{status:'booked',source:'manual'});
+assert.deepEqual({...at(2,[live(2,'unknown','vision')],600)},{status:'free',source:null});
+assert.deepEqual({...tashkentNow(Date.parse('2026-10-21T20:10:00Z'))},{date:'2026-10-22',minutes:70},'UTC+5 rolls the date');
+console.log('PASS live table map: manual override > camera occupied > site booking > camera free, exclusive end, Tashkent clock.');

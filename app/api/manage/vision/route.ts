@@ -81,11 +81,13 @@ export async function POST(request: Request) {
 
     const result = readings(parsed, tables);
     const now = new Date().toISOString();
+    // A staff override stays in force for the live-status lifetime (20 min) before the camera takes over again.
+    const manualUntil = new Date(Date.now() - 20 * 60000).toISOString();
     if (result.length)
       await env.DB!.batch(
         result.map((r) =>
-          env.DB!.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,?,?,'vision',?,?) ON CONFLICT(restaurant_id,table_number) DO UPDATE SET status=excluded.status,source=excluded.source,confidence=excluded.confidence,updated_at=excluded.updated_at")
-            .bind(restaurantId, r.number, r.status, r.confidence, now),
+          env.DB!.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,?,?,'vision',?,?) ON CONFLICT(restaurant_id,table_number) DO UPDATE SET status=excluded.status,source=excluded.source,confidence=excluded.confidence,updated_at=excluded.updated_at WHERE table_live_status.source<>'manual' OR table_live_status.updated_at<?")
+            .bind(restaurantId, r.number, r.status, r.confidence, now, manualUntil),
         ),
       );
     return json({ ok: true, source, updatedAt: now, tables: result, skipped: tables.length - result.length });

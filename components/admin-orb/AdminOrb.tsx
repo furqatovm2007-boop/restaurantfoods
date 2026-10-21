@@ -2,15 +2,15 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Color, type ShaderMaterial } from 'three';
 import { postStream } from '../shared/sse-client';
-import { record, speak as speakAloud, unlockAudio, type Playback, type Recording } from './orb-voice';
+import { chime, record, speak as speakAloud, unlockAudio, type Playback, type Recording } from './orb-voice';
 
 /* ------------------------------------------------------------------ copy */
 
 type Lang = 'uz' | 'ru' | 'en';
 const COPY = {
-  uz: { title: 'Admin AI', listen: 'Gapiring… tugatish uchun yana bosing', mic: 'Ovoz bilan so‘rash', micError: 'Mikrofon ishlamadi. Ruxsatni tekshiring.', speaking: 'Gapiryapman…', stop: 'To‘xtatish', alerts: 'Xabarlar', tables: 'Stollar', chat: 'AI so‘rov', none: 'Yangi bron yo‘q', newBooking: 'Yangi bron', guests: 'mehmon', table: 'stol', free: 'Bo‘sh', occupied: 'Band', reserved: 'Bron', unknown: 'Noma’lum', liveEmpty: 'Jonli holat hali yo‘q. Kamera yoki qo‘lda belgilash kerak.', ask: 'Masalan: bugun nechta bron bor?', send: 'Yuborish', voiceOn: 'Ovozli xabar yoqilgan', voiceOff: 'Ovozli xabar o‘chirilgan', close: 'Yopish', open: 'Admin AI yordamchini ochish', trial: 'Sinov muddati: {n} kun qoldi', active: 'Tarif faol: {n} kun', payment: 'To‘lov kerak — tarifni tanlang', error: 'AI hozir javob bera olmadi.', speakBooking: '{r}: yangi bron, {d} soat {s}, {g} kishi, {t}-stol.' },
-  ru: { title: 'Admin AI', listen: 'Говорите… нажмите ещё раз, чтобы закончить', mic: 'Спросить голосом', micError: 'Микрофон не работает. Проверьте разрешение.', speaking: 'Говорю…', stop: 'Остановить', alerts: 'Уведомления', tables: 'Столы', chat: 'Вопрос AI', none: 'Новых броней нет', newBooking: 'Новая бронь', guests: 'гостей', table: 'стол', free: 'Свободен', occupied: 'Занят', reserved: 'Бронь', unknown: 'Неизвестно', liveEmpty: 'Живого статуса пока нет. Нужна камера или ручная отметка.', ask: 'Например: сколько броней сегодня?', send: 'Отправить', voiceOn: 'Голосовые уведомления включены', voiceOff: 'Голосовые уведомления выключены', close: 'Закрыть', open: 'Открыть Admin AI', trial: 'Пробный период: осталось {n} дн.', active: 'Тариф активен: {n} дн.', payment: 'Нужна оплата — выберите тариф', error: 'AI сейчас не ответил.', speakBooking: '{r}: новая бронь, {d} в {s}, {g} гостей, стол {t}.' },
-  en: { title: 'Admin AI', listen: 'Listening… tap again to finish', mic: 'Ask by voice', micError: 'The microphone is unavailable. Check the permission.', speaking: 'Speaking…', stop: 'Stop', alerts: 'Alerts', tables: 'Tables', chat: 'Ask AI', none: 'No new bookings', newBooking: 'New booking', guests: 'guests', table: 'table', free: 'Free', occupied: 'Occupied', reserved: 'Reserved', unknown: 'Unknown', liveEmpty: 'No live status yet. Connect a camera or mark tables manually.', ask: 'E.g. how many bookings today?', send: 'Send', voiceOn: 'Voice alerts on', voiceOff: 'Voice alerts off', close: 'Close', open: 'Open Admin AI assistant', trial: 'Trial: {n} days left', active: 'Plan active: {n} days', payment: 'Payment needed — choose a plan', error: 'The AI could not answer right now.', speakBooking: '{r}: new booking, {d} at {s}, {g} guests, table {t}.' },
+  uz: { title: 'Admin AI', liveChange: '{r}: {t}-stol — {s} (AI kamera)', paid: 'depozit to‘langan', listen: 'Gapiring… tugatish uchun yana bosing', mic: 'Ovoz bilan so‘rash', micError: 'Mikrofon ishlamadi. Ruxsatni tekshiring.', speaking: 'Gapiryapman…', stop: 'To‘xtatish', alerts: 'Xabarlar', tables: 'Stollar', chat: 'AI so‘rov', none: 'Yangi bron yo‘q', newBooking: 'Yangi bron', guests: 'mehmon', table: 'stol', free: 'Bo‘sh', occupied: 'Band', reserved: 'Bron', unknown: 'Noma’lum', liveEmpty: 'Jonli holat hali yo‘q. Kamera yoki qo‘lda belgilash kerak.', ask: 'Masalan: bugun nechta bron bor?', send: 'Yuborish', voiceOn: 'Ovozli xabar yoqilgan', voiceOff: 'Ovozli xabar o‘chirilgan', close: 'Yopish', open: 'Admin AI yordamchini ochish', trial: 'Sinov muddati: {n} kun qoldi', active: 'Tarif faol: {n} kun', payment: 'To‘lov kerak — tarifni tanlang', error: 'AI hozir javob bera olmadi.', speakBooking: '{r}: yangi bron, {d} soat {s}, {g} kishi, {t}-stol.' },
+  ru: { title: 'Admin AI', liveChange: '{r}: стол {t} — {s} (AI-камера)', paid: 'депозит оплачен', listen: 'Говорите… нажмите ещё раз, чтобы закончить', mic: 'Спросить голосом', micError: 'Микрофон не работает. Проверьте разрешение.', speaking: 'Говорю…', stop: 'Остановить', alerts: 'Уведомления', tables: 'Столы', chat: 'Вопрос AI', none: 'Новых броней нет', newBooking: 'Новая бронь', guests: 'гостей', table: 'стол', free: 'Свободен', occupied: 'Занят', reserved: 'Бронь', unknown: 'Неизвестно', liveEmpty: 'Живого статуса пока нет. Нужна камера или ручная отметка.', ask: 'Например: сколько броней сегодня?', send: 'Отправить', voiceOn: 'Голосовые уведомления включены', voiceOff: 'Голосовые уведомления выключены', close: 'Закрыть', open: 'Открыть Admin AI', trial: 'Пробный период: осталось {n} дн.', active: 'Тариф активен: {n} дн.', payment: 'Нужна оплата — выберите тариф', error: 'AI сейчас не ответил.', speakBooking: '{r}: новая бронь, {d} в {s}, {g} гостей, стол {t}.' },
+  en: { title: 'Admin AI', liveChange: '{r}: table {t} — {s} (AI camera)', paid: 'deposit paid', listen: 'Listening… tap again to finish', mic: 'Ask by voice', micError: 'The microphone is unavailable. Check the permission.', speaking: 'Speaking…', stop: 'Stop', alerts: 'Alerts', tables: 'Tables', chat: 'Ask AI', none: 'No new bookings', newBooking: 'New booking', guests: 'guests', table: 'table', free: 'Free', occupied: 'Occupied', reserved: 'Reserved', unknown: 'Unknown', liveEmpty: 'No live status yet. Connect a camera or mark tables manually.', ask: 'E.g. how many bookings today?', send: 'Send', voiceOn: 'Voice alerts on', voiceOff: 'Voice alerts off', close: 'Close', open: 'Open Admin AI assistant', trial: 'Trial: {n} days left', active: 'Plan active: {n} days', payment: 'Payment needed — choose a plan', error: 'The AI could not answer right now.', speakBooking: '{r}: new booking, {d} at {s}, {g} guests, table {t}.' },
 } satisfies Record<Lang, Record<string, string>>;
 const fill = (s: string, values: Record<string, string | number>) => s.replace(/\{(\w)\}/g, (_, k) => String(values[k] ?? ''));
 
@@ -73,7 +73,9 @@ interface PlanInfo {
 }
 interface Booking {
   id: string;
+  restaurant_id: string;
   restaurant_name: string;
+  deposit_status?: string;
   date: string;
   slot: string;
   table_number: number;
@@ -86,6 +88,12 @@ interface EventsResponse {
   restaurants: { id: string; name: string; plan: PlanInfo }[];
   bookings: Booking[];
   live: { restaurant_id: string; status: string; n: number }[];
+  tables?: { restaurant_id: string; table_number: number; status: string; source: string }[];
+}
+interface Toast {
+  id: number;
+  kind: 'booking' | 'live';
+  text: string;
 }
 
 export interface AdminOrbProps {
@@ -124,6 +132,10 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
   const history = useRef<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [signal, setSignal] = useState(0);
   const since = useRef<string | null>(null);
+  // Last seen status per restaurant:table; null until the first poll seeds it.
+  const known = useRef<Map<string, string> | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastId = useRef(0);
   const abort = useRef<AbortController | null>(null);
   const [calm] = useState(() => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -174,6 +186,21 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
         const data = (await res.json()) as EventsResponse;
         since.current = data.now;
         setFeed(data);
+        const names = new Map(data.restaurants.map((r) => [r.id, r.name]));
+        const statusWord: Record<string, string> = { free: t.free, occupied: t.occupied, reserved: t.reserved };
+        const fresh: Toast[] = data.bookings.map((b) => ({ id: ++toastId.current, kind: 'booking', text: `${t.newBooking}: ${b.restaurant_name} · ${b.table_number}-${t.table} · ${b.date} ${b.slot} · ${b.guests} ${t.guests}${b.deposit_status === 'paid' ? ' · ' + t.paid : ''}` }));
+        const seen = new Map((data.tables ?? []).map((row) => [row.restaurant_id + ':' + row.table_number, row.status]));
+        const changed = (data.tables ?? []).filter((row) => row.source === 'vision' && known.current && known.current.get(row.restaurant_id + ':' + row.table_number) !== row.status && statusWord[row.status]);
+        known.current = seen;
+        for (const row of changed) fresh.push({ id: ++toastId.current, kind: 'live', text: fill(t.liveChange, { r: names.get(row.restaurant_id) ?? '', t: row.table_number, s: statusWord[row.status] }) });
+        if (fresh.length) {
+          setToasts((list) => [...list, ...fresh].slice(-4));
+          const ids = new Set(fresh.map((f) => f.id));
+          window.setTimeout(() => setToasts((list) => list.filter((x) => !ids.has(x.id))), 7000);
+          if (voice) chime(data.bookings.length ? 'booking' : 'live');
+          // Lets the live table map refresh without waiting for its own poll.
+          for (const id of new Set([...data.bookings.map((b) => b.restaurant_id), ...changed.map((c) => c.restaurant_id)])) window.dispatchEvent(new CustomEvent('rf:live-change', { detail: { restaurantId: id } }));
+        }
         if (data.bookings.length) {
           setAlerts((list) => [...data.bookings.slice().reverse(), ...list].slice(0, 30));
           setUnread((n) => n + data.bookings.length);
@@ -193,7 +220,7 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
       clearInterval(timer);
       document.removeEventListener('visibilitychange', wake);
     };
-  }, [pollSeconds, speak, t.speakBooking]);
+  }, [pollSeconds, speak, t, voice]);
 
   const enabledRestaurants = feed?.restaurants.filter((r) => r.plan.features.adminAi) ?? [];
   const current = restaurantId || enabledRestaurants[0]?.id || '';
@@ -280,6 +307,22 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
   const statusName: Record<string, string> = { free: t.free, occupied: t.occupied, reserved: t.reserved, unknown: t.unknown };
 
   return (
+    <>
+    <ol className="rf:pointer-events-none rf:fixed rf:top-[calc(12px+env(safe-area-inset-top))] rf:right-3 rf:z-[2147482500] rf:m-0 rf:grid rf:w-[min(340px,calc(100vw-24px))] rf:list-none rf:gap-2 rf:p-0" aria-live="assertive">
+      {toasts.map((toast) => (
+        <li
+          key={toast.id}
+          className="rf-orb-toast rf:pointer-events-auto rf:flex rf:items-start rf:gap-2 rf:rounded-xl rf:border rf:bg-panel/95 rf:px-3 rf:py-2.5 rf:text-sm rf:text-text rf:shadow-2xl rf:backdrop-blur"
+          style={{ borderColor: toast.kind === 'booking' ? '#facc15' : '#00c9a7', boxShadow: `0 0 18px ${toast.kind === 'booking' ? 'rgba(250,204,21,.35)' : 'rgba(0,201,167,.35)'}` }}
+        >
+          <span aria-hidden="true">{toast.kind === 'booking' ? '📌' : '📷'}</span>
+          <span className="rf:flex-1">{toast.text}</span>
+          <button type="button" aria-label={t.close} onClick={() => setToasts((list) => list.filter((x) => x.id !== toast.id))} className="rf:border-0 rf:bg-transparent rf:p-0 rf:text-text/60 rf:hover:text-text">
+            ×
+          </button>
+        </li>
+      ))}
+    </ol>
     <div className="rf:fixed rf:right-4 rf:bottom-[calc(16px+env(safe-area-inset-bottom))] rf:z-[2147482000] rf:flex rf:flex-col rf:items-end rf:gap-3 rf:max-sm:bottom-[calc(84px+env(safe-area-inset-bottom))]">
       <section
         aria-label={t.title}
@@ -418,6 +461,7 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
         )}
       </button>
     </div>
+    </>
   );
 }
 

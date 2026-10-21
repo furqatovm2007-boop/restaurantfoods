@@ -156,3 +156,28 @@ export async function record(lang: Lang): Promise<Recording> {
     },
   };
 }
+
+/**
+ * Short notification chime, synthesised so no audio file is fetched: a rising two-note
+ * bell for a new booking, a single softer note for a table status change.
+ */
+export function chime(kind: 'booking' | 'live') {
+  const ctx = audioContext();
+  if (!ctx) return;
+  ctx.resume().catch(() => {});
+  const notes = kind === 'booking' ? [880, 1320] : [660];
+  const start = ctx.currentTime + 0.02;
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const at = start + i * 0.14;
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(kind === 'booking' ? 0.22 : 0.14, at + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + 0.55);
+  });
+}

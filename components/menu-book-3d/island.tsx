@@ -7,10 +7,12 @@
  *   RF3D.hall.mount(el, props) / unmount                3D hall table picker
  *   RF3D.avatar.mount(el, props) → controller           talking assistant with lip-sync
  *   RF3D.orb.mount(props) / unmount                     admin AI orb widget
+ *   RF3D.tableMap.mount(el, props) / unmount            live table map for the dashboard
  */
 import { createRef, StrictMode, type ReactNode, type RefObject } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AdminOrb, type AdminOrbProps } from '../admin-orb/AdminOrb';
+import { AdminTableMap, type AdminTableMapProps } from '../admin-table-map/AdminTableMap';
 import { analyserLevel, AssistantAvatar, type AssistantAvatarProps, type LevelSource } from '../assistant-avatar/AssistantAvatar';
 import { Hall3D, type Hall3DProps } from '../hall-3d/Hall3D';
 import { FullscreenMenu, type FullscreenMenuProps } from './FullscreenMenu';
@@ -155,7 +157,16 @@ const orb = {
   },
 };
 
-const api = { supported: webglAvailable, menuBook, fullscreenMenu, hall, avatar, orb };
+// Plain SVG, so it works without WebGL.
+const tableMap = {
+  mount(el: Element, props: AdminTableMapProps) {
+    render(el, <AdminTableMap {...props} />);
+    return true;
+  },
+  unmount,
+};
+
+const api = { supported: webglAvailable, menuBook, fullscreenMenu, hall, avatar, orb, tableMap };
 
 declare global {
   interface Window {

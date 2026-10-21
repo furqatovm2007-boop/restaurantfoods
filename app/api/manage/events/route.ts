@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Feed for the admin AI orb: new bookings since `since` and live table counts for the
  * manager's restaurants that have the Admin AI feature. Polled every few seconds.
+ * `tables` lists each fresh per-table status so the client can chime on real changes.
  */
 export async function GET(request: Request) {
   try {
@@ -25,15 +26,18 @@ export async function GET(request: Request) {
         .all<any>()
     ).results.map((r) => ({ id: r.id as string, name: r.name as string, tables: r.tables as number, plan: planState(r) }));
     const enabled = owned.filter((r) => r.plan.features.adminAi);
-    if (!enabled.length) return json({ now: now.toISOString(), enabled: false, restaurants: owned.map(({ id, name, plan }) => ({ id, name, plan })), bookings: [], live: [] });
+    if (!enabled.length) return json({ now: now.toISOString(), enabled: false, restaurants: owned.map(({ id, name, plan }) => ({ id, name, plan })), bookings: [], live: [], tables: [] });
 
     const ids = enabled.map((r) => r.id);
     const marks = ids.map(() => '?').join(',');
-    const [bookings, live] = await Promise.all([
-      env.DB!.prepare(`SELECT b.id,b.restaurant_id,r.name AS restaurant_name,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.preorder_total,b.created_at FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE b.restaurant_id IN (${marks}) AND b.created_at>? AND b.is_demo=0 ORDER BY b.created_at LIMIT 20`)
+    const [bookings, live, tables] = await Promise.all([
+      env.DB!.prepare(`SELECT b.id,b.restaurant_id,r.name AS restaurant_name,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.deposit_status,b.preorder_total,b.created_at FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE b.restaurant_id IN (${marks}) AND b.created_at>? AND b.is_demo=0 ORDER BY b.created_at LIMIT 20`)
         .bind(...ids, since.toISOString())
         .all(),
       env.DB!.prepare(`SELECT restaurant_id,status,COUNT(*) AS n FROM table_live_status WHERE restaurant_id IN (${marks}) AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes') GROUP BY restaurant_id,status`)
+        .bind(...ids)
+        .all(),
+      env.DB!.prepare(`SELECT restaurant_id,table_number,status,source FROM table_live_status WHERE restaurant_id IN (${marks}) AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes') LIMIT 500`)
         .bind(...ids)
         .all(),
     ]);
@@ -43,6 +47,7 @@ export async function GET(request: Request) {
       restaurants: owned.map(({ id, name, plan }) => ({ id, name, plan })),
       bookings: bookings.results,
       live: live.results,
+      tables: tables.results,
     });
   } catch (e) {
     return failure(e);

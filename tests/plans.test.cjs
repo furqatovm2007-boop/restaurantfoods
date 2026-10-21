@@ -59,12 +59,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const vision=load('app/api/manage/vision/route.ts',{...cf,'../../../access':{identity:async()=>user},'../../../http':httpNoLimit,'../../../plans':plans,'../../../vision':load('app/vision.ts',{})},{fetch:async(url,options)=>{visionCalls++;assert.equal(url,'https://api.openai.com/v1/chat/completions');const payload=JSON.parse(options.body);assert.equal(payload.model,'gpt-4o-mini');assert.equal(payload.response_format.type,'json_schema');assert.match(payload.messages[1].content[1].image_url.url,/^data:image\/jpeg;base64,/);return Response.json({choices:[{message:{content:JSON.stringify(visionAnswer)}}]})}});
  const frame=(headers,payload)=>new Request('https://test/api/manage/vision',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({restaurantId:id,mimeType:'image/jpeg',image:'AAAA',...payload})});
  assert.equal((await vision.POST(frame({Authorization:'Bearer rfcam_wrong'}))).status,401);
+ // A fresh staff mark wins over the camera; once it is older than the live TTL the camera takes over.
+ assert.equal((await vision.POST(frame({Authorization:'Bearer '+key}))).status,200);assert.equal(db.prepare('SELECT source FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id).source,'manual');
+ db.prepare("UPDATE table_live_status SET updated_at=? WHERE restaurant_id=?").run(iso(Date.now()-30*60000),id);
  r=await vision.POST(frame({Authorization:'Bearer '+key}));assert.equal(r.status,200);let v=await r.json();assert.deepEqual(v.tables,[{number:1,status:'free',confidence:.9}]);assert.equal(v.skipped,1);
  assert.equal(db.prepare('SELECT status FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id).status,'free');assert.equal(db.prepare('SELECT source FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id).source,'vision');
  assert.equal((await vision.POST(frame({Authorization:'Bearer '+key},{image:'not base64!'}))).status,400);
  assert.equal((await vision.POST(frame({Authorization:'Bearer '+key},{restaurantId:'legacy'}))).status,401,'key is bound to its restaurant');
  assert.equal((await vision.POST(frame({Origin:'https://evil'}))).status,403,'session uploads need same origin');
- db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);assert.equal((await vision.POST(frame({Authorization:'Bearer '+key}))).status,402,'vision is Premium');assert.equal(visionCalls,1);
+ db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);assert.equal((await vision.POST(frame({Authorization:'Bearer '+key}))).status,402,'vision is Premium');assert.equal(visionCalls,2);
 
  // Events feed for the admin orb
  db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('b1',?, 'c','2030-01-01','18:00',1,3,'+998901234567','pending',?)").run(id,iso(Date.now()-5000));
