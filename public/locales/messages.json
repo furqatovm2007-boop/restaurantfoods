@@ -4018,5 +4018,190 @@
     "uz": "Bu imkoniyat restoran tarifiga kirmaydi.",
     "ru": "Эта возможность не входит в тариф ресторана.",
     "en": "This feature is not included in the restaurant’s plan."
+  },
+  "Interaktiv 3D menyu": {
+    "uz": "Interaktiv 3D menyu",
+    "ru": "Интерактивное 3D-меню",
+    "en": "Interactive 3D Menu"
+  },
+  "SMS KOD": {
+    "uz": "SMS KOD",
+    "ru": "SMS-КОД",
+    "en": "SMS CODE"
+  },
+  "Kod olish": {
+    "uz": "Kod olish",
+    "ru": "Получить код",
+    "en": "Get code"
+  },
+  "SMS kod yuborildi.": {
+    "uz": "SMS kod yuborildi.",
+    "ru": "SMS-код отправлен.",
+    "en": "SMS code sent."
+  },
+  "Bron uchun depozit:": {
+    "uz": "Bron uchun depozit:",
+    "ru": "Депозит за бронь:",
+    "en": "Booking deposit:"
+  },
+  "). 30 daqiqa ichida to‘lanmasa bron bekor bo‘ladi.": {
+    "uz": "). 30 daqiqa ichida to‘lanmasa bron bekor bo‘ladi.",
+    "ru": "). Если не оплатить за 30 минут, бронь отменится.",
+    "en": "). Unpaid bookings are cancelled after 30 minutes."
+  },
+  "Depozitni to‘lang": {
+    "uz": "Depozitni to‘lang",
+    "ru": "Оплатите депозит",
+    "en": "Pay the deposit"
+  },
+  "Bron saqlandi. Stol": {
+    "uz": "Bron saqlandi. Stol",
+    "ru": "Бронь сохранена. Стол закреплён за вами до",
+    "en": "Booking saved. The table is held for you until"
+  },
+  "gacha siz uchun ushlab turiladi.": {
+    "uz": "gacha siz uchun ushlab turiladi.",
+    "ru": ".",
+    "en": "."
+  },
+  "orqali to‘lash": {
+    "uz": "orqali to‘lash",
+    "ru": "— оплатить",
+    "en": "— pay"
+  },
+  "Keyinroq": {
+    "uz": "Keyinroq",
+    "ru": "Позже",
+    "en": "Later"
+  },
+  "SMS kod eskirgan. Yangi kod oling.": {
+    "uz": "SMS kod eskirgan. Yangi kod oling.",
+    "ru": "SMS-код устарел. Получите новый.",
+    "en": "The SMS code expired. Request a new one."
+  },
+  "SMS kod noto‘g‘ri.": {
+    "uz": "SMS kod noto‘g‘ri.",
+    "ru": "Неверный SMS-код.",
+    "en": "Wrong SMS code."
+  },
+  "Telefon raqamini SMS kod bilan tasdiqlang.": {
+    "uz": "Telefon raqamini SMS kod bilan tasdiqlang.",
+    "ru": "Подтвердите номер телефона SMS-кодом.",
+    "en": "Confirm the phone number with the SMS code."
+  },
+  "SMS xizmati hali ulanmagan.": {
+    "uz": "SMS xizmati hali ulanmagan.",
+    "ru": "SMS-сервис ещё не подключён.",
+    "en": "SMS service is not connected yet."
+  },
+  "SMS yuborilmadi. Birozdan keyin qayta urinib ko‘ring.": {
+    "uz": "SMS yuborilmadi. Birozdan keyin qayta urinib ko‘ring.",
+    "ru": "SMS не отправлено. Попробуйте чуть позже.",
+    "en": "SMS was not sent. Try again shortly."
+  },
+  "Jonli stol xaritasi": {
+    "uz": "Jonli stol xaritasi",
+    "ru": "Живая карта столов",
+    "en": "Live table map"
+  },
+  "Yashil — bo‘sh, qizil — band (AI kamera yoki qo‘lda), sariq — saytdan bron.": {
+    "uz": "Yashil — bo‘sh, qizil — band (AI kamera yoki qo‘lda), sariq — saytdan bron.",
+    "ru": "Зелёный — свободен, красный — занят (AI-камера или вручную), жёлтый — бронь с сайта.",
+    "en": "Green — free, red — occupied (AI camera or manual), yellow — booked on the site."
+  },
+  "Xaritani yuklab bo‘lmadi.": {
+    "uz": "Xaritani yuklab bo‘lmadi.",
+    "ru": "Не удалось загрузить карту.",
+    "en": "Could not load the map."
+  },
+  "Bildirishnomalar va depozit": {
+    "uz": "Bildirishnomalar va depozit",
+    "ru": "Уведомления и депозит",
+    "en": "Notifications and deposit"
+  },
+  "Telegram’ni ulash": {
+    "uz": "Telegram’ni ulash",
+    "ru": "Подключить Telegram",
+    "en": "Connect Telegram"
+  },
+  "Uzish": {
+    "uz": "Uzish",
+    "ru": "Отключить",
+    "en": "Disconnect"
+  },
+  "Webhookni yangilash": {
+    "uz": "Webhookni yangilash",
+    "ru": "Обновить webhook",
+    "en": "Update webhook"
+  },
+  "✅ Telegram ulangan. Yangi bronlar shu chatga keladi.": {
+    "uz": "✅ Telegram ulangan. Yangi bronlar shu chatga keladi.",
+    "ru": "✅ Telegram подключён. Новые брони приходят в этот чат.",
+    "en": "✅ Telegram connected. New bookings arrive in that chat."
+  },
+  "Yangi bronlarni Telegram’da “Tasdiqlash / Bekor qilish” tugmalari bilan oling.": {
+    "uz": "Yangi bronlarni Telegram’da “Tasdiqlash / Bekor qilish” tugmalari bilan oling.",
+    "ru": "Получайте новые брони в Telegram с кнопками «Подтвердить / Отменить».",
+    "en": "Get new bookings in Telegram with Confirm / Cancel buttons."
+  },
+  "Telegram bot hali sozlanmagan (administrator).": {
+    "uz": "Telegram bot hali sozlanmagan (administrator).",
+    "ru": "Telegram-бот ещё не настроен (администратор).",
+    "en": "The Telegram bot is not set up yet (administrator)."
+  },
+  "Telegram bot hali sozlanmagan.": {
+    "uz": "Telegram bot hali sozlanmagan.",
+    "ru": "Telegram-бот ещё не настроен.",
+    "en": "The Telegram bot is not set up yet."
+  },
+  "Telegram’da “Start” tugmasini bosing, keyin sahifani yangilang.": {
+    "uz": "Telegram’da “Start” tugmasini bosing, keyin sahifani yangilang.",
+    "ru": "Нажмите «Start» в Telegram, затем обновите страницу.",
+    "en": "Press Start in Telegram, then reload this page."
+  },
+  "Telegram webhook o‘rnatildi.": {
+    "uz": "Telegram webhook o‘rnatildi.",
+    "ru": "Telegram webhook установлен.",
+    "en": "Telegram webhook set."
+  },
+  "Bron depoziti": {
+    "uz": "Bron depoziti",
+    "ru": "Депозит за бронь",
+    "en": "Booking deposit"
+  },
+  "DEPOZIT (SO‘M)": {
+    "uz": "DEPOZIT (SO‘M)",
+    "ru": "ДЕПОЗИТ (СУМ)",
+    "en": "DEPOSIT (UZS)"
+  },
+  ". 0 — depozitsiz. To‘lanmagan depozit 30 daqiqada bekor bo‘ladi.": {
+    "uz": ". 0 — depozitsiz. To‘lanmagan depozit 30 daqiqada bekor bo‘ladi.",
+    "ru": ". 0 — без депозита. Неоплаченный депозит отменяется через 30 минут.",
+    "en": ". 0 — no deposit. Unpaid deposits are cancelled after 30 minutes."
+  },
+  "Click yoki Payme hali ulanmagan — bronlar depozitsiz qabul qilinadi.": {
+    "uz": "Click yoki Payme hali ulanmagan — bronlar depozitsiz qabul qilinadi.",
+    "ru": "Click или Payme ещё не подключены — брони принимаются без депозита.",
+    "en": "Click or Payme is not connected yet — bookings are accepted without a deposit."
+  },
+  "Click yoki Payme hali ulanmagan.": {
+    "uz": "Click yoki Payme hali ulanmagan.",
+    "ru": "Click или Payme ещё не подключены.",
+    "en": "Click or Payme is not connected yet."
+  },
+  "Depozit saqlandi.": {
+    "uz": "Depozit saqlandi.",
+    "ru": "Депозит сохранён.",
+    "en": "Deposit saved."
+  },
+  "Depozit kamida 1 000 so‘m.": {
+    "uz": "Depozit kamida 1 000 so‘m.",
+    "ru": "Депозит — не меньше 1 000 сум.",
+    "en": "The deposit must be at least 1,000 UZS."
+  },
+  "SMS tasdiqlash:": {
+    "uz": "SMS tasdiqlash:",
+    "ru": "SMS-подтверждение:",
+    "en": "SMS verification:"
   }
 }

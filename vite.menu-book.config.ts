@@ -60,9 +60,26 @@ function r3fTimerClock(): Plugin {
   };
 }
 
+/*
+ * DRACOLoader points its default decoder URLs at three/examples via import.meta.url, which a
+ * library build inlines as ~1.8 MB of base64. The avatar sets /draco/ (self-hosted copies of
+ * three/examples/jsm/libs/draco/gltf), so the defaults are replaced with that path.
+ */
+function dracoDecoderPaths(): Plugin {
+  return {
+    name: 'rf-draco-decoder-paths',
+    transform(code, id) {
+      if (!id.includes('DRACOLoader')) return null;
+      const out = code.replace(/new URL\(\s*'\.\.\/libs\/draco\/(?:gltf\/)?([\w.]+)',\s*import\.meta\.url\s*\)\.toString\(\)/g, (_, file) => JSON.stringify('/draco/' + file));
+      if (out.includes('import.meta.url')) this.error('DRACOLoader decoder URLs changed; update vite.menu-book.config.ts');
+      return out;
+    },
+  };
+}
+
 /** Standalone browser bundle for the 3D features (React + R3F island): menu book, hall, avatar, admin orb. */
 export default defineConfig({
-  plugins: [react(), r3fTimerClock()],
+  plugins: [react(), r3fTimerClock(), dracoDecoderPaths()],
   publicDir: false,
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },
   build: {

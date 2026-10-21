@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ROTATE_TEXT, useLandscapePhone } from '../shared/device';
 import { MenuBook3D, type MenuBook3DHandle, type MenuBook3DProps } from './MenuBook3D';
 
 export interface FullscreenMenuProps extends Omit<MenuBook3DProps, 'fill' | 'ref' | 'initiallyOpen'> {
@@ -9,9 +10,6 @@ export interface FullscreenMenuProps extends Omit<MenuBook3DProps, 'fill' | 'ref
 
 const ENTER_MS = 320;
 
-/** Phones held sideways: the book is designed for portrait, so ask to rotate. */
-const landscapePhone = () => typeof matchMedia === 'function' && matchMedia('(orientation: landscape) and (max-height: 520px)').matches;
-
 type LockableOrientation = ScreenOrientation & { lock?: (o: 'portrait') => Promise<void> };
 
 /**
@@ -21,7 +19,8 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: 'portrait') => Promi
  */
 export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: FullscreenMenuProps) {
   const [shown, setShown] = useState(false);
-  const [sideways, setSideways] = useState(landscapePhone);
+  // Phones held sideways: the book is designed for portrait, so ask to rotate.
+  const sideways = useLandscapePhone();
   const handle = useRef<MenuBook3DHandle>(null);
   const dialog = useRef<HTMLDivElement>(null);
 
@@ -46,21 +45,18 @@ export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: Fullscr
         .then(() => (screen.orientation as LockableOrientation | undefined)?.lock?.('portrait'))
         .catch(() => {});
 
-    const orientation = () => setSideways(landscapePhone());
-    window.addEventListener('resize', orientation);
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !e.defaultPrevented && close();
     window.addEventListener('keydown', onKey);
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(opener);
       document.documentElement.style.overflow = previousOverflow;
-      window.removeEventListener('resize', orientation);
       window.removeEventListener('keydown', onKey);
       previousFocus?.focus?.();
     };
   }, [close, revealDishId]);
 
-  const rotate = { uz: 'Telefonni vertikal holatga keltiring', ru: 'Поверните телефон вертикально', en: 'Rotate your phone to portrait' }[lang === 'ru' || lang === 'en' ? lang : 'uz'];
+  const rotate = ROTATE_TEXT[lang === 'ru' || lang === 'en' ? lang : 'uz'];
   const closeLabel = { uz: 'Yopish', ru: 'Закрыть', en: 'Close' }[lang === 'ru' || lang === 'en' ? lang : 'uz'];
 
   return (
@@ -77,10 +73,12 @@ export function FullscreenMenu({ onClose, revealDishId, lang, ...book }: Fullscr
         type="button"
         onClick={close}
         aria-label={closeLabel}
-        className="rf:absolute rf:top-3 rf:right-3 rf:z-10 rf:grid rf:size-11 rf:place-items-center rf:rounded-full rf:border rf:border-line rf:bg-panel/90 rf:text-xl rf:text-text rf:transition rf:hover:border-teal rf:hover:text-teal rf:focus-visible:outline-2 rf:focus-visible:outline-blue"
-        style={{ marginTop: 'env(safe-area-inset-top)' }}
+        className="rf:absolute rf:top-3 rf:right-3 rf:z-30 rf:grid rf:size-12 rf:cursor-pointer rf:place-items-center rf:rounded-full rf:border-2 rf:border-teal rf:bg-night/90 rf:text-text rf:shadow-[0_0_0_4px_rgba(8,21,33,0.6),0_0_18px_rgba(0,201,167,0.55)] rf:transition rf:hover:scale-105 rf:hover:bg-teal rf:hover:text-night rf:focus-visible:outline-2 rf:focus-visible:outline-offset-2 rf:focus-visible:outline-blue"
+        style={{ marginTop: 'env(safe-area-inset-top)', marginRight: 'env(safe-area-inset-right)' }}
       >
-        ×
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
       </button>
       <div className={`rf:min-h-0 rf:flex-1 rf:transition rf:duration-300 rf:ease-out ${shown ? 'rf:translate-y-0 rf:scale-100' : 'rf:translate-y-6 rf:scale-[0.97]'}`}>
         <MenuBook3D {...book} lang={lang} ref={handle} fill />

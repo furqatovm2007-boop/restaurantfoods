@@ -113,3 +113,15 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .deposit-actions a{display:block;text-align:center;text-decoration:none}
 .deposit-actions .deposit-click{background:#0073ff;color:#fff}
 .deposit-actions .deposit-payme{background:#00baba;color:#fff}
+
+/* Neon "Interactive 3D Menu" launcher: glowing animated rim, light sweep and a pointer-driven 3D tilt (--rx/--ry set by bindMenuBook3D). */
+.menu-3d-launch.neon{position:relative;isolation:isolate;overflow:visible;border:0;background:linear-gradient(120deg,#062521,#0b3a33 55%,#08202e);color:#f3fffb;transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transform-style:preserve-3d;box-shadow:0 0 0 1px #00c9a766,0 0 18px #00c9a755,0 0 42px #00a8ff33,inset 0 0 22px #00c9a722;transition:transform .18s ease-out,box-shadow .25s ease}
+.menu-3d-launch.neon::before{content:"";position:absolute;inset:-2px;z-index:-1;border-radius:20px;padding:2px;background:conic-gradient(from var(--neon-angle,0deg),#00c9a7,#00a8ff,#a78bfa,#e0c791,#00c9a7);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:rf-neon-spin 4s linear infinite;filter:drop-shadow(0 0 6px #00c9a7)}
+.menu-3d-launch.neon::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;background:radial-gradient(circle at var(--gx,30%) 0%,#ffffff2e,transparent 55%)}
+.menu-3d-launch.neon:hover{transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-2px);box-shadow:0 0 0 1px #00c9a7,0 0 26px #00c9a788,0 0 64px #00a8ff55,inset 0 0 26px #00c9a733}
+.menu-3d-launch.neon b{font-size:17px;letter-spacing:.02em;text-shadow:0 0 8px #00c9a7,0 0 18px #00c9a788}
+.menu-3d-launch.neon .menu-3d-launch-icon{background:#00c9a71f;box-shadow:inset 0 0 12px #00c9a755,0 0 12px #00c9a744;transform:translateZ(18px)}
+.menu-3d-launch.neon .menu-3d-launch-arrow{color:#00c9a7;text-shadow:0 0 10px #00c9a7;transform:translateZ(12px)}
+@property --neon-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes rf-neon-spin{to{--neon-angle:360deg}}
+@media (prefers-reduced-motion:reduce){.menu-3d-launch.neon,.menu-3d-launch.neon:hover{transform:none}.menu-3d-launch.neon::before{animation:none}}

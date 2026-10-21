@@ -1,6 +1,7 @@
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasTexture, MathUtils, SRGBColorSpace, Vector3, type Group } from 'three';
+import { lowEndDevice, ROTATE_TEXT, useLandscapePhone } from '../shared/device';
 
 export type TableState = 'free' | 'booked' | 'occupied' | 'unavailable';
 
@@ -64,7 +65,7 @@ function numberTexture(n: number) {
   return texture;
 }
 
-function TableMesh({ table, w, l, state, selected, small, onSelect }: { table: HallTable; w: number; l: number; state: TableState; selected: boolean; small: boolean; onSelect?: (n: number) => void }) {
+function TableMesh({ table, w, l, state, selected, small, lite, onSelect }: { table: HallTable; w: number; l: number; state: TableState; selected: boolean; small: boolean; lite: boolean; onSelect?: (n: number) => void }) {
   const group = useRef<Group>(null);
   const label = useMemo(() => numberTexture(table.number), [table.number]);
   useEffect(() => () => label.dispose(), [label]);
@@ -117,7 +118,7 @@ function TableMesh({ table, w, l, state, selected, small, onSelect }: { table: H
     <group ref={group} position={[x, 0, z]} onClick={click} onPointerOver={over} onPointerOut={out}>
       {round ? (
         <mesh position={[0, 0.74, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[size / 2, size / 2, 0.06, 40]} />
+          <cylinderGeometry args={[size / 2, size / 2, 0.06, lite ? 18 : 40]} />
           <meshStandardMaterial color={color} roughness={0.45} emissive={color} emissiveIntensity={selected ? 0.35 : 0.08} />
         </mesh>
       ) : (
@@ -127,19 +128,29 @@ function TableMesh({ table, w, l, state, selected, small, onSelect }: { table: H
         </mesh>
       )}
       <mesh position={[0, 0.37, 0]} castShadow>
-        <cylinderGeometry args={[0.06, 0.12, 0.72, 12]} />
+        <cylinderGeometry args={[0.06, 0.12, 0.72, lite ? 6 : 12]} />
         <meshStandardMaterial color="#1c3440" roughness={0.6} />
       </mesh>
       {chairs.map(([cx, cz, rot], i) => (
         <group key={i} position={[cx, 0, cz]} rotation={[0, rot, 0]}>
-          <mesh position={[0, 0.45, 0]} castShadow>
-            <boxGeometry args={[0.42, 0.06, 0.42]} />
-            <meshStandardMaterial color="#d8ccb4" roughness={0.8} />
-          </mesh>
-          <mesh position={[0, 0.22, 0]}>
-            <boxGeometry args={[0.05, 0.44, 0.05]} />
-            <meshStandardMaterial color="#1c3440" />
-          </mesh>
+          {lite ? (
+            // Low-detail chair: one block, no separate leg.
+            <mesh position={[0, 0.24, 0]}>
+              <boxGeometry args={[0.42, 0.48, 0.42]} />
+              <meshStandardMaterial color="#d8ccb4" roughness={0.8} />
+            </mesh>
+          ) : (
+            <>
+              <mesh position={[0, 0.45, 0]} castShadow>
+                <boxGeometry args={[0.42, 0.06, 0.42]} />
+                <meshStandardMaterial color="#d8ccb4" roughness={0.8} />
+              </mesh>
+              <mesh position={[0, 0.22, 0]}>
+                <boxGeometry args={[0.05, 0.44, 0.05]} />
+                <meshStandardMaterial color="#1c3440" />
+              </mesh>
+            </>
+          )}
         </group>
       ))}
       <sprite position={[0, 1.35, 0]} scale={[0.55, 0.55, 0.55]}>
@@ -226,10 +237,13 @@ export function Hall3D({ tables, width, length, floor = 1, states, selected, gue
   const radius = Math.max(w, l);
   const legend = LEGEND[lang] ?? LEGEND.uz;
   const [reduced] = useState(() => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // Level of detail by device: slow / low-memory phones skip shadows and use simpler meshes.
+  const [lite] = useState(lowEndDevice);
+  const sideways = useLandscapePhone();
 
   return (
     <div className={`rf:relative rf:h-[min(62vh,520px)] rf:w-full rf:touch-none rf:overflow-hidden rf:rounded-2xl rf:border rf:border-line rf:bg-night ${className}`}>
-      <Canvas shadows="percentage" dpr={[1, 2]} frameloop="demand" camera={{ fov: 42, near: 0.1, far: 200, position: [radius, radius, radius] }} gl={{ antialias: true, alpha: false }}>
+      <Canvas shadows={lite ? false : 'percentage'} dpr={lite ? [1, 1.5] : [1, 2]} frameloop="demand" camera={{ fov: 42, near: 0.1, far: 200, position: [radius, radius, radius] }} gl={{ antialias: true, alpha: false }}>
         <color attach="background" args={['#0b1c28']} />
         <fog attach="fog" args={['#0b1c28', radius * 1.8, radius * 3.5]} />
         <hemisphereLight args={['#fff4e0', '#102635', 1.1]} />
@@ -251,7 +265,7 @@ export function Hall3D({ tables, width, length, floor = 1, states, selected, gue
           </mesh>
         ))}
         {visible.map((t) => (
-          <TableMesh key={t.number} table={t} w={w} l={l} state={states[t.number] ?? 'free'} selected={selected === t.number} small={t.seats < guests} onSelect={onSelect} />
+          <TableMesh key={t.number} table={t} w={w} l={l} state={states[t.number] ?? 'free'} selected={selected === t.number} small={t.seats < guests} lite={lite} onSelect={onSelect} />
         ))}
         <OrbitRig radius={reduced ? radius * 1.1 : radius} />
       </Canvas>
@@ -263,6 +277,14 @@ export function Hall3D({ tables, width, length, floor = 1, states, selected, gue
           </li>
         ))}
       </ul>
+      {sideways && (
+        <div className="rf:absolute rf:inset-0 rf:grid rf:place-items-center rf:bg-night/95 rf:p-6 rf:text-center" role="alert">
+          <div>
+            <div className="rf:mx-auto rf:mb-3 rf:h-14 rf:w-9 rf:animate-pulse rf:rounded-lg rf:border-2 rf:border-teal" aria-hidden="true" />
+            <p className="rf:m-0 rf:text-sm rf:text-text">{ROTATE_TEXT[lang] ?? ROTATE_TEXT.uz}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

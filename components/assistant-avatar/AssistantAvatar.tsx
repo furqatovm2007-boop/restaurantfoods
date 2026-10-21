@@ -1,7 +1,9 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimationMixer, Box3, MathUtils, Vector3, type Object3D } from 'three';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { lowEndDevice } from '../shared/device';
 
 /** Returns the current mouth opening 0..1 (e.g. from an AnalyserNode). */
 export type LevelSource = () => number;
@@ -112,10 +114,18 @@ function Frame({ object }: { object: Object3D }) {
   return null;
 }
 
+/**
+ * Draco-compressed models (scripts/compress-avatar.mjs): ~2 MB full, ~0.8 MB lite instead of
+ * the 8.7 MB original, which stays for the <model-viewer> fallback. The decoder is self-hosted.
+ */
+export const avatarModelUrl = () => (lowEndDevice() ? '/models/assistant-robot.lite.glb?v=1' : '/models/assistant-robot.draco.glb?v=1');
+
+let draco: DRACOLoader | null = null;
 const cache = new Map<string, Promise<GLTF>>();
 function loadModel(src: string) {
   if (!cache.has(src)) {
-    const promise = new GLTFLoader().loadAsync(src);
+    draco ??= new DRACOLoader().setDecoderPath('/draco/');
+    const promise = new GLTFLoader().setDRACOLoader(draco).loadAsync(src);
     promise.catch(() => cache.delete(src));
     cache.set(src, promise);
   }
@@ -126,7 +136,7 @@ function loadModel(src: string) {
  * Talking 3D assistant. The GLB plays its idle clip; while TTS audio plays, `level`
  * drives the mouth joints and a slight head nod in sync with the audio amplitude.
  */
-export function AssistantAvatar({ src = '/models/assistant-robot.glb?v=52', level, gesture, paused, onReady, onError }: AssistantAvatarProps) {
+export function AssistantAvatar({ src = avatarModelUrl(), level, gesture, paused, onReady, onError }: AssistantAvatarProps) {
   const [gltf, setGltf] = useState<GLTF | null>(null);
   const callbacks = useRef({ onReady, onError });
   useEffect(() => {
