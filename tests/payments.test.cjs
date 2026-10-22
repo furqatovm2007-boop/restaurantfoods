@@ -115,6 +115,18 @@ r=await book({tableNumber:1,slot:'16:00',endSlot:'18:00'});const plain=await r.j
 assert.equal(db.prepare('SELECT deposit_status FROM bookings WHERE id=?').get(plain.id).deposit_status,'not_required');
 assert.ok(calls.find(c=>c.telegram==='sendMessage').body.text.includes('Talab qilinmaydi'));
 assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
+// Profile completion: the contact phone is confirmed with an SMS code, then an address is saved.
+const profile=load('app/api/profile/route.ts',{...cf,'../../access':{identity:async()=>user},'../../http':http,'../../account-admin':{hashInvite:async()=>'',audit:()=>null},'../../geo':load('app/geo.ts',{'./http':http}),...integrations},extras);
+db.prepare("INSERT OR IGNORE INTO accounts(id,email,name,created_at) VALUES ('client','c@x','C','now')").run();
+const prof=b=>profile.POST(request('/api/profile',b));
+r=await prof({action:'contact-otp',phone:'+998907777777'});assert.equal(r.status,200);const pOtp=await r.json();const pCode=smsCode;
+assert.equal((await prof({action:'contact-verify',phone:'+998907777777',otpId:pOtp.id,code:pCode==='000000'?'111111':'000000'})).status,400,'wrong code');
+r=await prof({action:'contact-verify',phone:'+998907777777',otpId:pOtp.id,code:pCode});assert.equal(r.status,200);assert.equal((await r.json()).verified,true);
+assert.deepEqual({...db.prepare("SELECT contact_phone,contact_phone_verified FROM accounts WHERE id='client'").get()},{contact_phone:'+998907777777',contact_phone_verified:1});
+assert.equal((await prof({action:'contact-phone',phone:'+998908888888'})).status,200);assert.equal(db.prepare("SELECT contact_phone_verified v FROM accounts WHERE id='client'").get().v,0,'changing the number drops verification');
+assert.equal((await prof({action:'address',address:'Samarqand, Registon 1',latitude:39.65,longitude:66.97})).status,200);
+assert.equal(db.prepare("SELECT address FROM accounts WHERE id='client'").get().address,'Samarqand, Registon 1');
+assert.equal((await prof({action:'address',address:'x'})).status,400);
 // SMS is only sent while booking OTP is switched on.
 env.BOOKING_PHONE_OTP='false';assert.equal((await otpRoute.POST(request('/api/bookings/phone-otp',{phone:'+998901234567'}))).status,404);
 console.log('PASS booking SMS OTP (hashed, phone-bound, single use), Click prepare/complete signatures + errors, Payme JSON-RPC lifecycle/refund/statement, Telegram card format, linked-chat callbacks, deep-link binding, deposit hold sweep, provider-less bookings.');

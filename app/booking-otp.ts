@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { ApiError } from './http';
+import { ApiError, throttle, clientIp } from './http';
 import { sendSms } from './sms';
 
 /*
@@ -10,6 +10,17 @@ const TTL_MS = 5 * 60000;
 const MAX_ATTEMPTS = 5;
 
 const digest = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), (v) => v.toString(16).padStart(2, '0')).join('');
+
+const DAY = 86400000;
+/** Sends a code with every SMS limit applied: per account, per phone, per network address and per day overall. */
+export async function sendGuardedOtp(request: Request, userId: string, phone: string) {
+  await throttle('booking-otp:' + userId, 5);
+  await throttle('booking-otp-day:' + userId, 10, DAY);
+  await throttle('booking-otp-phone:' + phone, 3);
+  await throttle('booking-otp-ip:' + clientIp(request), 8);
+  await throttle('sms:global', 1000, DAY);
+  return sendBookingOtp(userId, phone);
+}
 
 export async function sendBookingOtp(userId: string, phone: string) {
   const id = crypto.randomUUID();

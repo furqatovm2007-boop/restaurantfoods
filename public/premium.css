@@ -182,3 +182,9 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .rf-app-sheet-body ol{padding-left:20px;display:grid;gap:8px}
 .rf-app-sheet-actions{display:grid;gap:8px;margin-top:16px}
 @media(max-width:700px){.rf-app-sheet[open]{margin:auto auto 0;width:100%;max-width:100%;border-radius:24px 24px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom))}}
+
+/* Map card actions: open the pinned location first, other map apps and directions next to it. */
+.map-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.map-actions .primary{flex:1 1 180px;text-align:center}
+.map-actions .quiet{flex:0 1 auto}
+.profile-setup{max-width:560px}

@@ -4218,5 +4218,65 @@
     "uz": "Ko‘proq",
     "ru": "Ещё",
     "en": "More"
+  },
+  "Profilni yakunlang": {
+    "uz": "Profilni yakunlang",
+    "ru": "Завершите профиль",
+    "en": "Complete your profile"
+  },
+  "Buyurtma va bronlar uchun telefon raqamingiz va manzilingiz kerak. Bu bir martalik.": {
+    "uz": "Buyurtma va bronlar uchun telefon raqamingiz va manzilingiz kerak. Bu bir martalik.",
+    "ru": "Для заказов и броней нужны ваш телефон и адрес. Это нужно один раз.",
+    "en": "We need your phone number and address for orders and bookings. This is a one-time step."
+  },
+  "Shahar, ko‘cha, uy, xonadon": {
+    "uz": "Shahar, ko‘cha, uy, xonadon",
+    "ru": "Город, улица, дом, квартира",
+    "en": "City, street, building, apartment"
+  },
+  "Joylashuvimni aniqlash": {
+    "uz": "Joylashuvimni aniqlash",
+    "ru": "Определить моё местоположение",
+    "en": "Use my location"
+  },
+  "Joylashuv saqlangan.": {
+    "uz": "Joylashuv saqlangan.",
+    "ru": "Местоположение сохранено.",
+    "en": "Location saved."
+  },
+  "Joylashuv aniqlandi.": {
+    "uz": "Joylashuv aniqlandi.",
+    "ru": "Местоположение определено.",
+    "en": "Location found."
+  },
+  "Joylashuvni aniqlab bo‘lmadi.": {
+    "uz": "Joylashuvni aniqlab bo‘lmadi.",
+    "ru": "Не удалось определить местоположение.",
+    "en": "Could not get your location."
+  },
+  "Davom etish": {
+    "uz": "Davom etish",
+    "ru": "Продолжить",
+    "en": "Continue"
+  },
+  "Avval SMS kodni oling va kiriting.": {
+    "uz": "Avval SMS kodni oling va kiriting.",
+    "ru": "Сначала получите и введите SMS-код.",
+    "en": "Get and enter the SMS code first."
+  },
+  "Profil saqlandi.": {
+    "uz": "Profil saqlandi.",
+    "ru": "Профиль сохранён.",
+    "en": "Profile saved."
+  },
+  "Xaritada ko‘rish": {
+    "uz": "Xaritada ko‘rish",
+    "ru": "Показать на карте",
+    "en": "Show on map"
+  },
+  "Yo‘nalish": {
+    "uz": "Yo‘nalish",
+    "ru": "Маршрут",
+    "en": "Directions"
   }
 }
