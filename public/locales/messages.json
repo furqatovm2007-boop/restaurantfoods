@@ -4298,5 +4298,60 @@
     "uz": "Xaritada belgilangan joy",
     "ru": "Место, отмеченное на карте",
     "en": "Place marked on the map"
+  },
+  "Yetkazildi. Yoqimli ishtaha!": {
+    "uz": "Yetkazildi. Yoqimli ishtaha!",
+    "ru": "Доставлено. Приятного аппетита!",
+    "en": "Delivered. Enjoy your meal!"
+  },
+  "Restoran buyurtmani tasdiqlashi kutilmoqda": {
+    "uz": "Restoran buyurtmani tasdiqlashi kutilmoqda",
+    "ru": "Ждём подтверждения ресторана",
+    "en": "Waiting for the restaurant to confirm"
+  },
+  "yo‘lda": {
+    "uz": "yo‘lda",
+    "ru": "в пути",
+    "en": "is on the way"
+  },
+  "taomni oladi": {
+    "uz": "taomni oladi",
+    "ru": "заберёт заказ",
+    "en": "will pick up the order"
+  },
+  "daqiqa": {
+    "uz": "daqiqa",
+    "ru": "мин",
+    "en": "min"
+  },
+  "taxminan": {
+    "uz": "taxminan",
+    "ru": "примерно в",
+    "en": "around"
+  },
+  "Kuryerga qo‘ng‘iroq": {
+    "uz": "Kuryerga qo‘ng‘iroq",
+    "ru": "Позвонить курьеру",
+    "en": "Call the courier"
+  },
+  "Yangilandi": {
+    "uz": "Yangilandi",
+    "ru": "Обновлено",
+    "en": "Updated"
+  },
+  "Aniqlik": {
+    "uz": "Aniqlik",
+    "ru": "Точность",
+    "en": "Accuracy"
+  },
+  "Kuryer GPS ulashmagan — joyi biroz keyin chiqadi.": {
+    "uz": "Kuryer GPS ulashmagan — joyi biroz keyin chiqadi.",
+    "ru": "Курьер ещё не передал GPS — место появится чуть позже.",
+    "en": "The courier hasn’t shared GPS yet — the location will appear shortly."
+  },
+  "Kuryer taomni olgach, joylashuvi shu yerda ko‘rinadi.": {
+    "uz": "Kuryer taomni olgach, joylashuvi shu yerda ko‘rinadi.",
+    "ru": "Когда курьер заберёт заказ, его место появится здесь.",
+    "en": "Once the courier picks up the order, their location shows here."
   }
 }

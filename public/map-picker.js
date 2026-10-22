@@ -4,6 +4,8 @@
  * "My location" to jump to the GPS fix. Whatever sits under the pin is the chosen point.
  *   RFMapPicker.mount(host, { lat, lng, onChange(lat, lng) }) → { set(lat, lng), destroy() }
  * Without a starting point the map opens on Samarkand and reports nothing until the user moves it.
+ *   RFMapPicker.track(host) → { update([{ kind: 'courier'|'home'|'restaurant', lat, lng, label }]) }
+ * A read-only live map for order tracking: fits every marker, the courier glides between GPS fixes.
  */
 (() => {
   'use strict';
@@ -26,24 +28,11 @@
     return [clampLat((180 / Math.PI) * Math.atan(Math.sinh(n))), wrapLng((x / s) * 360 - 180)];
   };
 
-  function mount(host, opts = {}) {
-    const w = words();
-    const given = Number.isFinite(opts.lat) && Number.isFinite(opts.lng);
-    let lat = given ? opts.lat : HOME[0], lng = given ? opts.lng : HOME[1], z = given ? 17 : 13, frame = 0;
-    host.classList.add('rf-map-picker');
-    host.innerHTML = '<div class="rf-map-tiles"></div><div class="rf-map-pin" aria-hidden="true"></div>' +
-      '<div class="rf-map-zoom"><button type="button" data-z="1">+</button><button type="button" data-z="-1">−</button></div>' +
-      '<button type="button" class="rf-map-me"></button><p class="rf-map-hint"></p>' +
-      '<a class="rf-map-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>';
-    const layer = host.querySelector('.rf-map-tiles'), tiles = new Map();
-    host.querySelector('[data-z="1"]').setAttribute('aria-label', w.zin);
-    host.querySelector('[data-z="-1"]').setAttribute('aria-label', w.zout);
-    host.querySelector('.rf-map-me').textContent = '📍 ' + w.me;
-    host.querySelector('.rf-map-hint').textContent = w.hint;
-
-    function draw() {
-      frame = 0;
-      const W = host.clientWidth, H = host.clientHeight, [cx, cy] = project(lat, lng, z), n = 2 ** z;
+  /** Keeps the OpenStreetMap tiles under (lat, lng) at zoom z in a W×H box; returns the painter. */
+  function tileLayer(layer) {
+    const tiles = new Map();
+    return (lat, lng, z, W, H) => {
+      const [cx, cy] = project(lat, lng, z), n = 2 ** z;
       const x0 = Math.floor((cx - W / 2) / TILE), x1 = Math.floor((cx + W / 2) / TILE), y0 = Math.max(0, Math.floor((cy - H / 2) / TILE)), y1 = Math.min(n - 1, Math.floor((cy + H / 2) / TILE));
       const keep = new Set();
       for (let x = x0; x <= x1; x++)
@@ -56,6 +45,7 @@
             img.alt = '';
             img.draggable = false;
             img.decoding = 'async';
+            img.onerror = () => (img.style.visibility = 'hidden');
             // OpenStreetMap asks for a Referer; the site's own policy sends none cross-origin.
             img.referrerPolicy = 'strict-origin-when-cross-origin';
             img.src = 'https://tile.openstreetmap.org/' + z + '/' + (((x % n) + n) % n) + '/' + y + '.png';
@@ -65,6 +55,74 @@
           img.style.transform = 'translate3d(' + Math.round(x * TILE - cx + W / 2) + 'px,' + Math.round(y * TILE - cy + H / 2) + 'px,0)';
         }
       for (const [key, img] of tiles) if (!keep.has(key)) (img.remove(), tiles.delete(key));
+    };
+  }
+
+  function track(host) {
+    const ICON = { courier: '🛵', home: '🏠', restaurant: '🍽️' };
+    host.classList.add('rf-map-picker', 'rf-map-track');
+    host.innerHTML = '<div class="rf-map-tiles"></div><div class="rf-map-marks"></div><a class="rf-map-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>';
+    const paint = tileLayer(host.querySelector('.rf-map-tiles')), layer = host.querySelector('.rf-map-marks'), marks = new Map();
+    let list = [], frame = 0, lastZ = 0;
+    function draw() {
+      frame = 0;
+      const W = host.clientWidth, H = host.clientHeight, pts = list.filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lng));
+      if (!W || !H || !pts.length) return;
+      // Largest zoom (max 17) that keeps every marker 40px inside the edges.
+      let z = 17, xs, ys;
+      for (; z > MIN_Z; z--) {
+        const p = pts.map((m) => project(m.lat, m.lng, z));
+        xs = p.map((v) => v[0]);
+        ys = p.map((v) => v[1]);
+        if (Math.max(...xs) - Math.min(...xs) <= W - 80 && Math.max(...ys) - Math.min(...ys) <= H - 80) break;
+      }
+      const p = pts.map((m) => project(m.lat, m.lng, z));
+      xs = p.map((v) => v[0]);
+      ys = p.map((v) => v[1]);
+      const cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2, [lat, lng] = unproject(cx, cy, z);
+      paint(lat, lng, z, W, H);
+      // Same zoom: markers glide to their new place; a zoom change jumps.
+      layer.classList.toggle('rf-map-jump', z !== lastZ);
+      lastZ = z;
+      const keep = new Set();
+      pts.forEach((m, i) => {
+        keep.add(m.kind);
+        let el = marks.get(m.kind);
+        if (!el) {
+          el = document.createElement('div');
+          el.className = 'rf-map-mark rf-map-' + m.kind;
+          el.textContent = ICON[m.kind] || '📍';
+          marks.set(m.kind, el);
+          layer.append(el);
+        }
+        el.title = m.label || '';
+        el.style.transform = 'translate3d(' + Math.round(p[i][0] - cx + W / 2) + 'px,' + Math.round(p[i][1] - cy + H / 2) + 'px,0)';
+      });
+      for (const [k, el] of marks) if (!keep.has(k)) (el.remove(), marks.delete(k));
+    }
+    const redraw = () => frame || (frame = requestAnimationFrame(draw));
+    new ResizeObserver(redraw).observe(host);
+    return { update: (next) => ((list = next || []), redraw()) };
+  }
+
+  function mount(host, opts = {}) {
+    const w = words();
+    const given = Number.isFinite(opts.lat) && Number.isFinite(opts.lng);
+    let lat = given ? opts.lat : HOME[0], lng = given ? opts.lng : HOME[1], z = given ? 17 : 13, frame = 0;
+    host.classList.add('rf-map-picker');
+    host.innerHTML = '<div class="rf-map-tiles"></div><div class="rf-map-pin" aria-hidden="true"></div>' +
+      '<div class="rf-map-zoom"><button type="button" data-z="1">+</button><button type="button" data-z="-1">−</button></div>' +
+      '<button type="button" class="rf-map-me"></button><p class="rf-map-hint"></p>' +
+      '<a class="rf-map-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap</a>';
+    host.querySelector('[data-z="1"]').setAttribute('aria-label', w.zin);
+    host.querySelector('[data-z="-1"]').setAttribute('aria-label', w.zout);
+    host.querySelector('.rf-map-me').textContent = '📍 ' + w.me;
+    host.querySelector('.rf-map-hint').textContent = w.hint;
+
+    const paint = tileLayer(host.querySelector('.rf-map-tiles'));
+    function draw() {
+      frame = 0;
+      paint(lat, lng, z, host.clientWidth, host.clientHeight);
     }
     const redraw = () => frame || (frame = requestAnimationFrame(draw));
     const report = () => opts.onChange?.(Number(lat.toFixed(6)), Number(lng.toFixed(6)));
@@ -128,5 +186,5 @@
     return { set, destroy: () => resize.disconnect() };
   }
 
-  window.RFMapPicker = { mount };
+  window.RFMapPicker = { mount, track };
 })();

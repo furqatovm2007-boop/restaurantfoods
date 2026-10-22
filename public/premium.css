@@ -208,3 +208,13 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .rf-map-me:disabled{opacity:.6}
 .rf-map-hint{position:absolute;left:10px;right:58px;top:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(8,21,33,.75);color:#fff;font-size:12px;pointer-events:none}
 .rf-map-credit{position:absolute;right:6px;bottom:4px;font-size:10px;color:#333;background:rgba(255,255,255,.75);padding:1px 4px;border-radius:4px}
+/* Order tracking: live map markers and the status headline. */
+.rf-map-track{height:300px;cursor:default;touch-action:auto}
+.rf-map-marks{position:absolute;inset:0;pointer-events:none}
+.rf-map-mark{position:absolute;left:0;top:0;width:40px;height:40px;margin:-20px 0 0 -20px;display:grid;place-items:center;font-size:22px;border-radius:50%;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.35);transition:transform 9s linear}
+.rf-map-jump .rf-map-mark{transition:none}
+.rf-map-courier{background:#ffd23f;z-index:2}
+.delivery-headline{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:6px 0 14px;padding:14px 16px;border-radius:16px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.35)}
+.delivery-headline strong{font-size:1.1rem;flex:1 1 100%}
+.delivery-eta{font-weight:800}
+@media (prefers-reduced-motion:reduce){.rf-map-mark{transition:none}}
