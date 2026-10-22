@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { md5 } from '../../../md5';
+import { sameSecret } from '../../../http';
 import { active,payable,depositById,markPaid,cancelDeposit } from '../../../deposits';
 export const dynamic='force-dynamic';
 
@@ -19,7 +20,7 @@ export async function POST(request:Request){
   if(!secret||!clickTransId||!depositId||!amount||!get('sign_time')||!get('sign_string'))return reply(base,-8,'Error in request from click');
   if(get('service_id')!==env.CLICK_SERVICE_ID?.trim())return reply(base,-1,'SIGN CHECK FAILED!');
   const sign=md5(clickTransId+get('service_id')+secret+depositId+(action==='1'?prepareId:'')+amount+action+get('sign_time'));
-  if(sign!==get('sign_string').toLowerCase())return reply(base,-1,'SIGN CHECK FAILED!');
+  if(!(await sameSecret(sign,get('sign_string').toLowerCase())))return reply(base,-1,'SIGN CHECK FAILED!');
   if(action!=='0'&&action!=='1')return reply(base,-3,'Action not found');
   const d=await depositById(depositId);
   if(!d)return reply(base,-5,'User does not exist');

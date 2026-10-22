@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { sameSecret } from '../../../http';
 import { active,payable,depositById,depositByPayme,markPaid,cancelDeposit,type DepositRow } from '../../../deposits';
 export const dynamic='force-dynamic';
 
@@ -11,7 +12,7 @@ const MESSAGES:Record<number,string>={[-32504]:'Ruxsat yo‘q',[-32600]:'Noto‘
 class RpcError extends Error{constructor(public code:number,public data?:string){super(String(code))}}
 const fail=(code:number,data?:string):never=>{throw new RpcError(code,data)};
 
-function authorized(request:Request){const key=env.PAYME_KEY?.trim();if(!key)return false;const header=request.headers.get('authorization')||'';const m=/^Basic\s+(.+)$/i.exec(header);if(!m)return false;try{return atob(m[1])==='Paycom:'+key}catch{return false}}
+async function authorized(request:Request){const key=env.PAYME_KEY?.trim();if(!key)return false;const header=request.headers.get('authorization')||'';const m=/^Basic\s+(.+)$/i.exec(header);if(!m)return false;let given='';try{given=atob(m[1])}catch{return false}return sameSecret(given,'Paycom:'+key)}
 
 const state=(d:DepositRow)=>({create_time:d.payme_create_time??0,perform_time:d.payme_perform_time??0,cancel_time:d.payme_cancel_time??0,transaction:d.id,state:d.payme_state,reason:d.payme_reason??null});
 
@@ -42,9 +43,10 @@ const methods:Record<string,(p:any)=>Promise<unknown>>={
     if(d!.payme_state===2)return {transaction:d!.id,perform_time:d!.payme_perform_time,state:2};
     if(d!.payme_state!==1)fail(-31008);
     if(Date.now()-d!.payme_create_time!>TIMEOUT||!active(d)){await cancel(d!,4);fail(-31008)}
+    // Mark the deposit paid first: if Click already paid it, Payme must not take the money too.
+    if(!(await markPaid(d!.id,'payme'))){await cancel(d!,4);fail(-31008)}
     const now=Date.now();
     await env.DB!.prepare('UPDATE deposits SET payme_state=2,payme_perform_time=? WHERE id=? AND payme_state=1').bind(now,d!.id).run();
-    await markPaid(d!.id,'payme');
     return {transaction:d!.id,perform_time:now,state:2};
   },
   async CancelTransaction(p){const d=typeof p?.id==='string'?await depositByPayme(p.id):null;if(!d)fail(-31003);const c=await cancel(d!,p.reason);return {transaction:c.id,cancel_time:c.payme_cancel_time,state:c.payme_state}},
@@ -62,7 +64,7 @@ export async function POST(request:Request){
   let rpc:any;
   try{rpc=await request.json()}catch{return error(-32700)}
   id=rpc?.id??null;
-  if(!authorized(request))return error(-32504);
+  if(!(await authorized(request)))return error(-32504);
   const method=typeof rpc?.method==='string'&&Object.hasOwn(methods,rpc.method)?methods[rpc.method]:null;
   if(!method)return error(-32601);
   try{return Response.json({jsonrpc:'2.0',id,result:await method(rpc.params)})}

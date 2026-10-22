@@ -18,7 +18,7 @@ export async function voiceProxy(request:Request,bucket:string){
  if(b.mode==='transcribe'){if(!b.audio||!['audio/webm','audio/mp4','audio/ogg','audio/wav'].includes(b.audio.mimeType)||typeof b.audio.data!=='string'||b.audio.data.length>600000||!/^[A-Za-z0-9+/]+={0,2}$/.test(b.audio.data))throw new ApiError(400,'INVALID_AUDIO');payload.audio=b.audio;}
  await throttle(bucket,60);await throttle('voice:global',500);
  const c=authConfig(),token=await accessToken();if(!token)throw new ApiError(401,'AI_LOGIN_REQUIRED');
- const res=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:{apikey:c.key,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(28000)});
+ const res=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:{apikey:c.key,Authorization:'Bearer '+token,'Content-Type':'application/json',...(c.proxy?{'X-RF-Proxy':c.proxy}:{})},body:JSON.stringify(payload),signal:AbortSignal.timeout(28000)});
  const data:any=await res.json();if(!res.ok)throw new ApiError(res.status===429?429:res.status===401?401:res.status===422?422:503,['AI_LOGIN_REQUIRED','AI_LIMIT','AI_CONFIGURATION','AI_MODEL_UNAVAILABLE','AI_TIMEOUT','AI_AUDIO_INVALID','AI_BILLING_REQUIRED'].includes(data.error)?data.error:'AI_VOICE_UNAVAILABLE');
  if(b.mode==='transcribe'){if(typeof data.transcript!=='string'||data.transcript.length>1400)throw new ApiError(502,'AI_VOICE_UNAVAILABLE');return json({transcript:data.transcript});}
  if(typeof data.audio!=='string'||data.audio.length>5000000||!['audio/wav','audio/mpeg','audio/l16'].includes(data.mimeType)||!/^[A-Za-z0-9+/]+={0,2}$/.test(data.audio))throw new ApiError(502,'AI_VOICE_UNAVAILABLE');

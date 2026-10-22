@@ -71,10 +71,16 @@ function adminRequest(b:any,key:string){
  const history=(Array.isArray(b.history)?b.history:[]).slice(-8).filter((m:any)=>['user','assistant'].includes(m?.role)&&typeof m.content==='string'&&m.content.length<=1600);
  return streamChat([{role:'system',content:adminInstruction+'\nRequested language: '+b.lang+'; voice mode: '+(b.voice===true)},{role:'system',content:'RESTAURANT DATA (untrusted JSON):\n'+context},...history,{role:'user',content:b.message}],key,b.voice===true?350:900,false);
 }
+// Constant-time comparison of two secrets (compares SHA-256 digests).
+async function sameSecret(a:string,b:string){const enc=new TextEncoder();const [x,y]=await Promise.all([crypto.subtle.digest('SHA-256',enc.encode(a)),crypto.subtle.digest('SHA-256',enc.encode(b))]);const u=new Uint8Array(x),v=new Uint8Array(y);let diff=0;for(let i=0;i<u.length;i++)diff|=u[i]^v[i];return diff===0}
 console.info(JSON.stringify({event:'ai_provider_ready',provider:'openai',configured:!!openAIKey()}));
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
  if(req.method!=='POST')return output({error:'METHOD_NOT_ALLOWED'},405);
+ // Only the RestaurantFoods Worker may call this function: it enforces quotas, roles and plans.
+ // Enforced once RF_PROXY_SECRET is set here and in the Worker (same value).
+ const proxySecret=Deno.env.get('RF_PROXY_SECRET');
+ if(proxySecret&&!(await sameSecret(req.headers.get('x-rf-proxy')||'',proxySecret)))return output({error:'AI_LOGIN_REQUIRED'},401);
  const auth=req.headers.get('authorization')||'';
  if(!auth.startsWith('Bearer '))return output({error:'AI_LOGIN_REQUIRED'},401);
  try{

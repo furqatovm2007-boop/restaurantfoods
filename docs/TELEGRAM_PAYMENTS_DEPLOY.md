@@ -65,3 +65,12 @@ Admin Orb yangi bron yoki kamera o‘zgarishida ovozli signal beradi va yuqori o
 ## Avatar modeli
 
 `public/models/assistant-robot.draco.glb` (2.1 MB) va `assistant-robot.lite.glb` (0.8 MB, sekin internet / Save-Data) asl 8.7 MB modeldan `scripts/compress-avatar.mjs` bilan olingan. Draco decoder `public/draco/` da o‘zimizda turadi.
+
+## Xavfsizlik: AI funksiyasini faqat sayt chaqira olsin (`RF_PROXY_SECRET`)
+
+Supabase Edge Function (`restaurantfoods-ai`) kunlik limit, rol va tarifni bilmaydi — buni Worker tekshiradi. Funksiyaga to‘g‘ridan-to‘g‘ri murojaatni yopish uchun ikkala joyga **bir xil** uzun tasodifiy qiymat qo‘ying:
+
+1. Cloudflare → Workers & Pages → restaurantfoods → Settings → Variables and Secrets → **Secret** `RF_PROXY_SECRET`.
+2. Deploy tugagach: Supabase → Edge Functions → Secrets → `RF_PROXY_SECRET` (aynan o‘sha qiymat).
+
+Tartib muhim: avval Cloudflare, keyin Supabase. Supabase'da qiymat yo‘q ekan, tekshiruv o‘chiq turadi va AI odatdagidek ishlaydi.

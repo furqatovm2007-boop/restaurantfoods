@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     try {
       upstream = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token },
+        headers: { 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) },
         body: JSON.stringify({ mode: 'admin_chat', message, lang, history, context, voice: b.voice === true }),
         signal: AbortSignal.timeout(35000),
       });

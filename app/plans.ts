@@ -78,9 +78,13 @@ export async function restaurantPlan(restaurantId: string) {
   return { row, state: planState(row) };
 }
 
+const PAID_CALLS: Feature[] = ['adminAi', 'clientAi', 'visionTables'];
+
 /** Route guard: throws 402 when the restaurant's current plan does not include `feature`. */
 export async function requireFeature(restaurantId: string, feature: Feature) {
   const result = await restaurantPlan(restaurantId);
   if (!result.state.features[feature]) throw new ApiError(402, 'PLAN_UPGRADE_REQUIRED');
+  // Features that spend money on AI calls start once an administrator has approved the restaurant.
+  if (PAID_CALLS.includes(feature) && result.row.status !== 'active') throw new ApiError(403, 'RESTAURANT_NOT_APPROVED');
   return result;
 }

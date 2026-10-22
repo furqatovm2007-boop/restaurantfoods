@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
 // Booking SMS OTP, Click / Payme deposits and Telegram notifications on real SQLite with mocked providers.
 (async()=>{
 const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
-db.exec("INSERT INTO restaurants(id,name,status,owner_id,deposit_amount,telegram_chat_id) VALUES ('r','Real <Osh>','active','owner',50000,'777');INSERT INTO restaurant_tables(id,restaurant_id,number,seats) VALUES ('t1','r',1,4),('t2','r',2,4),('t3','r',3,4)");
+db.exec("INSERT INTO restaurants(id,name,status,owner_id,deposit_amount,telegram_chat_id) VALUES ('r','Real <Osh>','active','owner',50000,'777');INSERT INTO restaurant_tables(id,restaurant_id,number,seats) VALUES ('t1','r',1,4),('t2','r',2,4),('t3','r',3,4),('t4','r',4,4)");
 const DB={prepare(sql){let args=[];return{bind(...a){args=a;return this},first:async()=>db.prepare(sql).get(...args)||null,all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...args).changes)}})}}};
 DB.batch=async ops=>{db.exec('BEGIN');try{const r=[];for(const op of ops)r.push(await op.run());db.exec('COMMIT');return r}catch(e){db.exec('ROLLBACK');throw e}};
 const env={DB,TELEGRAM_BOT_TOKEN:'bot:secret',TELEGRAM_WEBHOOK_SECRET:'hook-secret',TELEGRAM_BOT_USERNAME:'rf_bot',CLICK_SERVICE_ID:'11',CLICK_MERCHANT_ID:'22',CLICK_SECRET_KEY:'click-key',PAYME_MERCHANT_ID:'pm',PAYME_KEY:'payme-key',ESKIZ_EMAIL:'e@x',ESKIZ_PASSWORD:'p',BOOKING_PHONE_OTP:'true'};
@@ -13,7 +13,7 @@ let user={userId:'client',role:'customer',phoneVerified:false,phone:''};
 const http=load('app/http.ts',{'cloudflare:workers':{env}}),cf={'cloudflare:workers':{env}},integrations=integrationDeps(env,http,'../../',extras),deep=integrationDeps(env,http,'../../../',extras);
 const deps={...cf,...integrations,'../../access':{identity:async()=>user},'../../http':http,'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':load('app/booking-rules.ts',{'./http':http}),'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http})};
 const bookings=load('app/api/bookings/route.ts',deps,extras),otpRoute=load('app/api/bookings/phone-otp/route.ts',{...deep,'../../../access':{identity:async()=>user},'../../../http':http},extras);
-const click=load('app/api/payments/click/route.ts',{...cf,...deep},extras),payme=load('app/api/payments/payme/route.ts',{...cf,...deep},extras),hook=load('app/api/telegram/webhook/route.ts',{...cf,...deep},extras);
+const withHttp={...cf,...deep,'../../../http':http},click=load('app/api/payments/click/route.ts',withHttp,extras),payme=load('app/api/payments/payme/route.ts',withHttp,extras),hook=load('app/api/telegram/webhook/route.ts',withHttp,extras);
 const {md5}=deep['../../../md5'],{bookingText,prettyPhone}=deep['../../../telegram'];
 
 // md5 matches Node for ASCII and UTF-8 of all lengths around block boundaries.
@@ -94,6 +94,13 @@ const statement=(await rpc('GetStatement',{from:t-1000,to:Date.now()+1000})).res
 const refund=(await rpc('CancelTransaction',{id:'pm-1',reason:5})).result;assert.equal(refund.state,-2);
 assert.deepEqual({...db.prepare('SELECT status,deposit_status FROM bookings WHERE id=?').get(second.id)},{status:'cancelled',deposit_status:'refunded'});
 
+// Paid by Click while a Payme transaction was open: Payme must be refused, not charged twice.
+r=await book({tableNumber:4,slot:'18:00',endSlot:'20:00'});const both=(await r.json()).deposit.id;
+assert.equal((await rpc('CreateTransaction',{id:'pm-race',time:Date.now(),amount:5000000,account:{deposit_id:both}})).result.state,1);
+assert.equal(await deep['../../../deposits'].markPaid(both,'click'),true);
+assert.equal((await rpc('PerformTransaction',{id:'pm-race'})).error.code,-31008,'second provider refused');
+assert.equal((await rpc('CheckTransaction',{id:'pm-race'})).result.state,-1);
+assert.equal(db.prepare('SELECT provider FROM deposits WHERE id=?').get(both).provider,'click');
 // Unpaid deposits release the table after the hold; a Payme create on an expired deposit is refused.
 r=await book({tableNumber:3});const third=await r.json();
 db.prepare("UPDATE deposits SET created_at=? WHERE id=?").run(new Date(Date.now()-31*60000).toISOString(),third.deposit.id);
@@ -108,5 +115,7 @@ r=await book({tableNumber:1,slot:'16:00',endSlot:'18:00'});const plain=await r.j
 assert.equal(db.prepare('SELECT deposit_status FROM bookings WHERE id=?').get(plain.id).deposit_status,'not_required');
 assert.ok(calls.find(c=>c.telegram==='sendMessage').body.text.includes('Talab qilinmaydi'));
 assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
+// SMS is only sent while booking OTP is switched on.
+env.BOOKING_PHONE_OTP='false';assert.equal((await otpRoute.POST(request('/api/bookings/phone-otp',{phone:'+998901234567'}))).status,404);
 console.log('PASS booking SMS OTP (hashed, phone-bound, single use), Click prepare/complete signatures + errors, Payme JSON-RPC lifecycle/refund/statement, Telegram card format, linked-chat callbacks, deep-link binding, deposit hold sweep, provider-less bookings.');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -21,5 +21,7 @@ declare namespace Cloudflare {
     ESKIZ_PASSWORD?: string;
     ESKIZ_FROM?: string;
     BOOKING_PHONE_OTP?: string;
+    /** Shared with the Supabase Edge Function so only this Worker may call it. */
+    RF_PROXY_SECRET?: string;
   }
 }
