@@ -7,10 +7,11 @@
 /* ---------------------------------------------------------- scroll reveal */
 .rf-reveal {
   opacity: 0;
-  transform: translate3d(0, 35px, 0) scale(0.97);
-  will-change: transform, opacity;
+  transform: translate3d(0, 40px, 0) scale(0.96);
 }
+/* GPU layers only while an element is animating, not for every card waiting below the fold. */
 .rf-reveal.rf-in {
+  will-change: transform, opacity;
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
   transition:
@@ -24,6 +25,14 @@
 dialog::backdrop {
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
   backdrop-filter: blur(16px) saturate(1.2);
+}
+/* Phones: a lighter blur keeps opening and closing smooth on mid-range GPUs. */
+@media (hover: none) {
+  dialog::backdrop,
+  .deposit-dialog {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
 }
 .booking-meals-dialog,
 #drawer[open],
@@ -75,27 +84,33 @@ dialog::backdrop {
   }
 }
 
-/* --------------------------------------- press: every button and card */
-/* `scale` composes with any transform (tilt, hover lift); motion.js springs it back on release. */
-:where(button, a[href], [role="button"], summary, .restaurant-card, .food-card, .plan-card, .service-tile):active:not(:disabled, [aria-disabled="true"]) {
-  scale: 0.95;
+/* ---------------------------------------------------- touch: iOS press */
+@media (hover: none) {
+  .restaurant-card,
+  .food-card,
+  .plan-card,
+  .service-tile,
+  .menu-3d-launch,
+  .primary,
+  .quiet,
+  .mobile-nav a {
+    transition: transform 0.35s var(--rf-spring);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .restaurant-card:active,
+  .food-card:active,
+  .plan-card:active,
+  .service-tile:active,
+  .menu-3d-launch:active,
+  .primary:active,
+  .quiet:active,
+  .mobile-nav a:active {
+    transform: scale(0.96);
+    transition-duration: 0.12s;
+  }
+  /* Steppers inside a card should not shrink the whole card. */
+  .food-card:has(button:active, input:focus) { transform: none; }
 }
-:where(button, a[href], [role="button"], .restaurant-card, .food-card) {
-  -webkit-tap-highlight-color: transparent;
-}
-/* Steppers inside a card should not shrink the whole card. */
-.food-card:has(button:active, input:focus) { scale: 1; }
-
-/* ------------------------------------------------- page transitions */
-/* motion.js drives both snapshots with clip-path / transform; turn off the default cross-fade. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-/* Going back, the page being left shrinks on top of the one returning. */
-html.rf-vt-back::view-transition-old(root) { z-index: 2; }
-html.rf-vt-back::view-transition-new(root) { z-index: 1; }
 
 @media (prefers-reduced-motion: reduce) {
   .rf-reveal,
@@ -107,11 +122,12 @@ html.rf-vt-back::view-transition-new(root) { z-index: 1; }
   .food-card.cursor-lit,
   .plan-card.cursor-lit,
   .service-tile.cursor-lit,
-  .booking-meal-card.cursor-lit {
+  .booking-meal-card.cursor-lit,
+  .restaurant-card:active,
+  .food-card:active,
+  .primary:active,
+  .quiet:active {
     transform: none;
-  }
-  :where(button, a[href], [role="button"], summary, .restaurant-card, .food-card, .plan-card, .service-tile):active {
-    scale: 1;
   }
 }
 @media print {
