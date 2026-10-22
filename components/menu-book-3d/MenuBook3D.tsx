@@ -71,7 +71,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
   const [container, width] = useElementWidth<HTMLDivElement>();
   const narrow = width > 0 && width < NARROW_BREAKPOINT;
   const reducedMotion = useReducedMotion();
-  // Phones: lower pixel ratio, and no soft shadows on slow devices, so page turns stay smooth.
+  // Phones: lower pixel ratio and no real-time shadows, so page turns stay at 60 fps.
   const [lite] = useState(lowEndDevice);
   const [touch] = useState(() => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   const sound = usePageSound(soundSrc);
@@ -89,11 +89,17 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
   // Repaint once the book font and dish photos are ready.
   useEffect(() => {
     let alive = true;
-    const bump = () => alive && setAssetsVersion((v) => v + 1);
+    // Photos arrive in a burst: repaint once for the whole burst, not once per photo.
+    let timer = 0;
+    const bump = () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => alive && setAssetsVersion((v) => v + 1), 250);
+    };
     const unsubscribe = images.subscribe(bump);
     document.fonts?.load("400 32px RFBook").then(() => document.fonts.load("italic 32px RFBook")).then(bump, () => {});
     return () => {
       alive = false;
+      clearTimeout(timer);
       unsubscribe();
     };
   }, [images]);
@@ -271,7 +277,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
             // (transformed) size would leave the canvas smaller than its box for good.
             resize={{ offsetSize: true }}
             flat
-            shadows={lite ? false : 'percentage'}
+            shadows={lite || touch ? false : 'percentage'}
             dpr={touch ? [1, 1.5] : [1, 2]}
             frameloop="demand"
             camera={{ fov: 32, position: [0, 0, 4], near: 0.1, far: 20 }}

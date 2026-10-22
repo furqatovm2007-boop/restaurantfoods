@@ -54,6 +54,8 @@ export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }:
     const opener = window.setTimeout(() => (revealDishId ? handle.current?.reveal(revealDishId) : handle.current?.open()), ENTER_MS + 150);
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
+    // The page underneath is covered: pause its CSS animations so phones spend every frame on the book.
+    document.documentElement.classList.add('rf-3d-open');
     const previousFocus = document.activeElement as HTMLElement | null;
     dialog.current?.focus();
 
@@ -70,6 +72,7 @@ export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }:
       cancelAnimationFrame(frame);
       clearTimeout(opener);
       document.documentElement.style.overflow = previousOverflow;
+      document.documentElement.classList.remove('rf-3d-open');
       window.removeEventListener('keydown', onKey);
       previousFocus?.focus?.();
     };

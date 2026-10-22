@@ -188,3 +188,9 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .map-actions .primary{flex:1 1 180px;text-align:center}
 .map-actions .quiet{flex:0 1 auto}
 .profile-setup{max-width:560px}
+/* 3D menu button while the 3D bundle downloads on first tap. */
+[data-menu-3d-open][aria-busy="true"]{opacity:.7;cursor:progress;pointer-events:none}
+[data-menu-3d-open][aria-busy="true"]::after{content:"";display:inline-block;width:.9em;height:.9em;margin-inline-start:.5em;vertical-align:-.1em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:rf-spin .7s linear infinite}
+@keyframes rf-spin{to{transform:rotate(360deg)}}
+/* Full-screen 3D book open: the covered page stops animating. */
+.rf-3d-open body>:not([data-rf-3d-overlay]),.rf-3d-open body>:not([data-rf-3d-overlay]) *{animation-play-state:paused!important}

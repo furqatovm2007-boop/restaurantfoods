@@ -158,7 +158,7 @@ export function BookScene(props: BookSceneProps) {
 
   const slots = useRef(new Map<number, PageSlot>());
   const texWidth = narrow ? 720 : 1024;
-  const anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
+  const anisotropy = Math.min(narrow ? 4 : 8, gl.capabilities.getMaxAnisotropy());
 
   useEffect(
     () => () => {
@@ -221,10 +221,32 @@ export function BookScene(props: BookSceneProps) {
       return slot;
     };
 
+    // Pages in view (and sheets in motion) are painted now; the rest of the window is painted
+    // one face per idle moment, so a page turn never waits for canvases it does not show yet.
+    const now = new Set<number>([spread - 1, spread]);
+    motionOf().list.forEach((m, i) => m.t !== m.to && now.add(i));
+    const later: (() => void)[] = [];
     meshes.forEach((m, i) => {
       if (wanted.has(i)) {
-        m.front.map = paint(m.sheet.front, 'right').texture;
-        m.back.map = paint(m.sheet.back, 'left').texture;
+        const faces: [BookPage, 'left' | 'right', 'front' | 'back'][] = [
+          [m.sheet.front, 'right', 'front'],
+          [m.sheet.back, 'left', 'back'],
+        ];
+        for (const [page, side, face] of faces) {
+          const current = slots.current.get(page.index);
+          const fresh = current?.key === pageKey(page, quantities, flashed, assetsVersion) + texWidth;
+          if (fresh || now.has(i) || !current) {
+            if (fresh || now.has(i)) m[face].map = paint(page, side).texture;
+            else {
+              // Not painted yet and not visible: keep the blank page until its turn comes.
+              m[face].map = blank;
+              later.push(() => {
+                m[face].map = paint(page, side).texture;
+                m[face].needsUpdate = true;
+              });
+            }
+          } else later.push(() => (m[face].map = paint(page, side).texture));
+        }
       } else {
         for (const page of [m.sheet.front, m.sheet.back]) {
           slots.current.get(page.index)?.texture.dispose();
@@ -235,6 +257,22 @@ export function BookScene(props: BookSceneProps) {
       }
     });
     invalidate();
+    let idle = 0;
+    const idleCall: (cb: () => void) => number = (window as Window & { requestIdleCallback?: (cb: () => void, o?: object) => number }).requestIdleCallback
+      ? (cb) => (window as unknown as { requestIdleCallback: (cb: () => void, o?: object) => number }).requestIdleCallback(cb, { timeout: 600 })
+      : (cb) => window.setTimeout(cb, 60);
+    const next = () => {
+      const job = later.shift();
+      if (!job) return;
+      job();
+      invalidate();
+      idle = idleCall(next);
+    };
+    if (later.length) idle = idleCall(next);
+    return () => {
+      (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idle);
+      clearTimeout(idle);
+    };
   }, [props.quantities, props.flashed, props.assetsVersion, props.restaurantName, props.labels, spread, meshes, count, texWidth, motionOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ------------------------------------------------------- turn motion */
