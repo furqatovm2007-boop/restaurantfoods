@@ -4278,5 +4278,25 @@
     "uz": "Yo‘nalish",
     "ru": "Маршрут",
     "en": "Directions"
+  },
+  "UY, PODYEZD, MO‘LJAL (IXTIYORIY)": {
+    "uz": "UY, PODYEZD, MO‘LJAL (IXTIYORIY)",
+    "ru": "ДОМ, ПОДЪЕЗД, ОРИЕНТИР (НЕОБЯЗАТЕЛЬНО)",
+    "en": "HOUSE, ENTRANCE, LANDMARK (OPTIONAL)"
+  },
+  "Masalan: 12-uy, 3-podyezd, 45-xonadon": {
+    "uz": "Masalan: 12-uy, 3-podyezd, 45-xonadon",
+    "ru": "Например: дом 12, подъезд 3, кв. 45",
+    "en": "E.g. house 12, entrance 3, flat 45"
+  },
+  "Xaritada joyni belgilang.": {
+    "uz": "Xaritada joyni belgilang.",
+    "ru": "Отметьте место на карте.",
+    "en": "Mark the place on the map."
+  },
+  "Xaritada belgilangan joy": {
+    "uz": "Xaritada belgilangan joy",
+    "ru": "Место, отмеченное на карте",
+    "en": "Place marked on the map"
   }
 }

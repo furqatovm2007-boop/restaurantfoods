@@ -194,3 +194,17 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 @keyframes rf-spin{to{transform:rotate(360deg)}}
 /* Full-screen 3D book open: the covered page stops animating. */
 .rf-3d-open body>:not([data-rf-3d-overlay]),.rf-3d-open body>:not([data-rf-3d-overlay]) *{animation-play-state:paused!important}
+/* Map picker: drag the map, the pin in the middle is the chosen place. */
+.rf-map-picker{position:relative;height:260px;border-radius:16px;overflow:hidden;background:#dfe6e9;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;margin:4px 0 12px;border:1px solid var(--line,rgba(255,255,255,.12))}
+.rf-map-picker:active{cursor:grabbing}
+.rf-map-tiles,.rf-map-tiles img{position:absolute;inset:0 auto auto 0;pointer-events:none}
+.rf-map-tiles img{width:256px;height:256px;max-width:none;will-change:transform}
+.rf-map-pin{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-30px 0 0 -15px;border-radius:50% 50% 50% 0;background:#e5484d;transform:rotate(-45deg);box-shadow:0 4px 10px rgba(0,0,0,.35);pointer-events:none}
+.rf-map-pin::after{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
+.rf-map-zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.rf-map-zoom button,.rf-map-me{min-height:0;border:0;border-radius:10px;background:rgba(8,21,33,.85);color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.rf-map-zoom button{width:38px;height:38px;padding:0;font-size:20px}
+.rf-map-me{position:absolute;left:10px;bottom:30px;padding:9px 12px;font-size:14px}
+.rf-map-me:disabled{opacity:.6}
+.rf-map-hint{position:absolute;left:10px;right:58px;top:10px;margin:0;padding:6px 10px;border-radius:10px;background:rgba(8,21,33,.75);color:#fff;font-size:12px;pointer-events:none}
+.rf-map-credit{position:absolute;right:6px;bottom:4px;font-size:10px;color:#333;background:rgba(255,255,255,.75);padding:1px 4px;border-radius:4px}

@@ -1,5 +1,5 @@
 import { ApiError } from './http';
 export function coordinate(value:unknown,latitude:boolean){if(value===null||value===undefined||value==='')return null;if(typeof value!=='number'||!Number.isFinite(value)||Math.abs(value)>(latitude?90:180))throw new ApiError(400,'Xarita koordinatasi noto‘g‘ri.');return value;}
-export function point(lat:unknown,lng:unknown,required=false){const a=coordinate(lat,true),b=coordinate(lng,false);if((a===null)!==(b===null)||(required&&a===null))throw new ApiError(400,'Xaritadagi ikkala koordinatani kiriting.');return [a,b];}
+export function point(lat:unknown,lng:unknown,required=false){const a=coordinate(lat,true),b=coordinate(lng,false);if((a===null)!==(b===null)||(required&&a===null))throw new ApiError(400,'Xaritada joyni belgilang.');return [a,b];}
 export function imageUrl(value:unknown){if(!value)return '';if(typeof value!=='string'||value.length>1500)throw new ApiError(400,'Rasm havolasi noto‘g‘ri.');if(/^\/demo-assets\/[a-z-]+\.jpg$/.test(value))return value;if(/^\/api\/media\?key=photos%2F[a-f0-9-]{36}\.(jpg|png|webp)$/.test(value))return value;// Only our own uploads and demo assets: an outside URL would let anyone track every visitor or swap the picture unmoderated.
 throw new ApiError(400,'Rasmni fayl sifatida yuklang.');}
