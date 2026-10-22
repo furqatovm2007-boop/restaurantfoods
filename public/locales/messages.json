@@ -4208,5 +4208,10 @@
     "uz": "Bron holati yangilandi.",
     "ru": "Статус брони обновлён.",
     "en": "Booking status updated."
+  },
+  "Tarif faol (muddatsiz)": {
+    "uz": "Tarif faol (muddatsiz)",
+    "ru": "Тариф активен (бессрочно)",
+    "en": "Plan active (no end date)"
   }
 }
