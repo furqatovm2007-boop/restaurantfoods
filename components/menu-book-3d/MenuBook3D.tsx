@@ -119,6 +119,30 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
     turnTo(spread - 1, 'right');
   }, [narrow, open, focus, left, spread, turnTo]);
 
+  // Tap zones: a short tap on the right half turns forward, on the left half back, at any
+  // height. Drags (page curl), long presses and taps on menu buttons are left alone.
+  const zoneTap = useRef<{ x: number; y: number; t: number; id: number } | null>(null);
+  const hotspotAt = useRef(0);
+  const markHotspot = useCallback(() => {
+    hotspotAt.current = performance.now();
+  }, []);
+  const onZoneDown = (e: React.PointerEvent) => {
+    zoneTap.current = e.isPrimary ? { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId } : null;
+  };
+  const onZoneUp = (e: React.PointerEvent) => {
+    const tap = zoneTap.current;
+    zoneTap.current = null;
+    if (!tap || tap.id !== e.pointerId || Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10 || performance.now() - tap.t > 450) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const forward = e.clientX > rect.left + rect.width / 2;
+    // The scene's own pointerup (hotspots) runs after this one; decide once it has.
+    window.setTimeout(() => {
+      if (performance.now() - hotspotAt.current < 300) return;
+      if (forward) next();
+      else prev();
+    }, 0);
+  };
+
   const close = useCallback(() => {
     sound.stop();
     if (spread !== 0) {
@@ -232,7 +256,10 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
         ref={container}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className={`rf:relative rf:w-full rf:touch-pan-y ${fill ? 'rf:min-h-0 rf:flex-1' : 'rf:h-[min(78vh,calc(100vw*1.45))] rf:sm:h-[min(78vh,620px)] rf:lg:h-[min(76vh,680px)]'} rf:outline-none rf:focus-visible:ring-2 rf:focus-visible:ring-inset rf:focus-visible:ring-blue/40`}
+        onPointerDown={onZoneDown}
+        onPointerUp={onZoneUp}
+        onContextMenu={(e) => e.preventDefault()}
+        className={`rf-book-surface rf:relative rf:w-full ${fill ? 'rf:touch-none rf:min-h-0 rf:flex-1' : 'rf:touch-pan-y rf:h-[min(78vh,calc(100vw*1.45))] rf:sm:h-[min(78vh,620px)] rf:lg:h-[min(76vh,680px)]'} rf:outline-none rf:focus-visible:ring-2 rf:focus-visible:ring-inset rf:focus-visible:ring-blue/40`}
       >
         {width > 0 && (
           <Canvas
@@ -259,6 +286,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
               folioOf={folioOf}
               onSpreadChange={(s) => turnTo(s, s < spread ? 'right' : undefined)}
               onAction={onAction}
+              onHotspot={markHotspot}
             />
           </Canvas>
         )}

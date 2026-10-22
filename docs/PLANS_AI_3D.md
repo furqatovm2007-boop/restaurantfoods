@@ -6,7 +6,7 @@
 |---|---|---|---|
 | 2D menyu, ro‘yxatli bron | ✓ | ✓ | ✓ |
 | To‘liq ekranli 3D menyu (`menu3d`) | — | ✓ | ✓ |
-| 3D zalda stol tanlab bron (`room3d`) | — | ✓ | ✓ |
+| 3D zalda stol tanlab bron (`room3d`) | — | — | ✓ |
 | Admin AI Orb (`adminAi`) | — | ✓ | ✓ |
 | Stollar holati real vaqtda (`liveTables`) | — | ✓ | ✓ |
 | Mijozlar uchun ovozli 3D AI (`clientAi`) | — | — | ✓ |

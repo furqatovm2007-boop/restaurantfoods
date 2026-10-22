@@ -16,7 +16,8 @@ const DAY = 86400000;
 
 export const PLANS: Record<PlanId, { price: number; features: Feature[] }> = {
   start: { price: 199000, features: [] },
-  business: { price: 399000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables'] },
+  // The 3D hall is Premium only, together with the customer AI.
+  business: { price: 399000, features: ['menu3d', 'adminAi', 'liveTables'] },
   premium: { price: 699000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables', 'clientAi', 'visionTables', 'analytics'] },
 };
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[];

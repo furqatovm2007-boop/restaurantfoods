@@ -10,7 +10,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 
  // Pure plan logic
  let s=plans.planState({plan:'business',trial_ends_at:iso(now+3*DAY)},now);assert.equal(s.status,'trial');assert.equal(s.effective,'premium');assert.equal(s.daysLeft,3);assert.ok(s.features.clientAi&&s.features.visionTables);
- s=plans.planState({plan:'business',trial_ends_at:iso(now-DAY),paid_until:iso(now+10*DAY)},now);assert.equal(s.status,'active');assert.equal(s.effective,'business');assert.ok(s.features.menu3d&&s.features.room3d&&s.features.adminAi&&s.features.liveTables);assert.ok(!s.features.clientAi&&!s.features.visionTables);
+ s=plans.planState({plan:'business',trial_ends_at:iso(now-DAY),paid_until:iso(now+10*DAY)},now);assert.equal(s.status,'active');assert.equal(s.effective,'business');assert.ok(s.features.menu3d&&s.features.adminAi&&s.features.liveTables);assert.ok(!s.features.room3d&&!s.features.clientAi&&!s.features.visionTables,'3D hall and customer AI are Premium only');
  s=plans.planState({plan:'premium',trial_ends_at:iso(now-DAY)},now);assert.equal(s.status,'payment_required');assert.equal(s.effective,'start');assert.ok(Object.values(s.features).every(v=>!v));
  s=plans.planState({plan:'start',paid_until:iso(now+DAY)},now);assert.equal(s.effective,'start');assert.ok(!s.features.menu3d);
  assert.equal(plans.planState({plan:'bogus'},now).plan,'premium');
@@ -47,7 +47,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const tables=load('app/api/tables/route.ts',{...cf,...integrations,'../../access':{identity:async()=>user},'../../http':http,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../plans':plans});
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'occupied'}))).status,200);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'party'}))).status,400);
- let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:true,liveTables:true});assert.equal(t.live[0].status,'occupied');
+ let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:false,liveTables:true},'Business: live tables, no 3D hall');assert.equal(t.live[0].status,'occupied');
  db.prepare("UPDATE restaurants SET paid_until=NULL,trial_ends_at=? WHERE id=?").run(iso(Date.now()-DAY),id);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:2,status:'free'}))).status,402,'expired trial loses live tables');
  t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.equal(t.features.room3d,false);assert.deepEqual(t.live,[]);

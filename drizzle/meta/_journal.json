@@ -148,6 +148,13 @@
       "when": 1792659969739,
       "tag": "0020_ai_daily_quota",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1792665125828,
+      "tag": "0021_demo_plan_tiers",
+      "breakpoints": true
     }
   ]
 }

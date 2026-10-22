@@ -133,3 +133,33 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 
 /* The page title takes focus after navigation for screen readers; it should not show a box. */
 #content h1[tabindex="-1"]:focus{outline:none}
+
+/* Paid plan badges on restaurant cards and pages. */
+.plan-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.03em;line-height:1.2;white-space:nowrap}
+.restaurant-cover .plan-badge{position:absolute;top:12px;right:12px;z-index:2}
+.link.back+.plan-badge{margin:0 0 0 10px;vertical-align:middle}
+.plan-business{background:#0b2f4dcc;color:#7cc8ff;border:1px solid #00a8ff88;backdrop-filter:blur(4px)}
+.plan-premium{background:linear-gradient(135deg,#3a2a08,#6b4d12);color:#ffe08a;border:1px solid #e0c791;box-shadow:0 0 14px #e0c79155;text-shadow:0 0 6px #ffcf4d88}
+
+/* ---- Phones: the menu lives in the bottom bar ("Menyu") and opens as a bottom sheet of tiles. */
+.nav-ico{display:none}
+.mobile-more{all:unset;box-sizing:border-box;min-width:0;min-height:52px;display:grid;justify-items:center;align-content:center;gap:4px;padding:3px;font-size:10px;color:var(--muted);border-radius:12px;text-align:center;cursor:pointer}
+.mobile-more[aria-expanded=true]{color:var(--text);background:#00c9a71a}
+.mobile-more:focus-visible{outline:2px solid #00a8ff;outline-offset:-3px}
+@media(max-width:700px){
+ .mobile-nav:not([hidden]){grid-template-columns:repeat(5,minmax(0,1fr))}
+ #menuButton{display:none!important}
+ #drawer[open]{inset:auto 0 0 0;margin:0;width:100%;max-width:100%;height:auto;max-height:min(88dvh,720px);border:0;border-top:1px solid var(--line);border-radius:26px 26px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;box-shadow:0 -20px 60px #0008}
+ #drawer[open]::before{content:"";align-self:center;width:44px;height:5px;border-radius:5px;background:var(--line);margin:4px 0 10px;flex:none}
+ #drawer .drawer-top{min-height:40px}
+ #drawer .drawer-top .logo{width:140px}
+ #drawer #nav{margin:10px 0 6px}
+ #drawer #nav .drawer-profile{margin-bottom:12px}
+ #drawer .drawer-links{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+ #drawer .drawer-links a{display:grid;justify-items:center;align-content:center;gap:8px;min-height:92px;padding:12px 6px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(160deg,#ffffff0a,transparent);text-align:center;font-size:12px;line-height:1.25;color:var(--text)}
+ #drawer .drawer-links a>span:last-child{display:none}
+ #drawer .drawer-links a>span:nth-child(2){width:100%;text-align:center}
+ #drawer .drawer-links a.active{border-color:#00c9a7;background:linear-gradient(160deg,#00c9a722,transparent);box-shadow:0 0 0 1px #00c9a744,0 0 18px #00c9a722}
+ #drawer .nav-ico{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#00c9a71a;color:#00c9a7}
+ #drawer .drawer-footer{flex-direction:row;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--line)}
+}

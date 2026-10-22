@@ -4213,5 +4213,10 @@
     "uz": "Tarif faol (muddatsiz)",
     "ru": "Тариф активен (бессрочно)",
     "en": "Plan active (no end date)"
+  },
+  "Ko‘proq": {
+    "uz": "Ko‘proq",
+    "ru": "Ещё",
+    "en": "More"
   }
 }

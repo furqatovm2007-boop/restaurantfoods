@@ -36,6 +36,9 @@ const STAGGER_SECONDS = 0.07;
 /** Sheets kept textured around the open spread; the rest show blank paper. */
 const TEXTURE_WINDOW = { before: 2, after: 1 };
 
+/** Holding a page longer than this without moving is not a tap. */
+const LONG_PRESS_MS = 450;
+
 export interface BookSceneProps {
   sheets: BookSheet[];
   spread: number;
@@ -52,6 +55,8 @@ export interface BookSceneProps {
   folioOf: (page: number) => number | null;
   onSpreadChange: (spread: number) => void;
   onAction: (action: HotspotAction) => void;
+  /** Called when a tap ran a hotspot, so the container does not also turn the page. */
+  onHotspot?: () => void;
 }
 
 interface SheetMotion {
@@ -391,16 +396,23 @@ export function BookScene(props: BookSceneProps) {
       if (!d || e.pointerId !== d.pointerId) return;
       drag.current = null;
       const m = motionOf().list[d.sheet];
-      const { spread: current, onSpreadChange, onAction } = latest.current;
+      const { spread: current, onSpreadChange, onAction, onHotspot } = latest.current;
+      // The browser took the gesture over (scroll, system gesture): never turn or act on it.
+      const cancelled = e.type === 'pointercancel';
       if (!d.moved) {
         m.dragging = false;
+        // A long press is just holding the page; only a short tap presses a button.
+        if (cancelled || performance.now() - d.startTime > LONG_PRESS_MS) return;
         const hit = hotspotAt(d.page, d.uv, d.sheet < current ? 'left' : 'right');
-        if (hit) onAction(hit.action);
+        if (hit) {
+          onHotspot?.();
+          onAction(hit.action);
+        }
         return;
       }
       const forwardDrag = d.sheet === current;
       const fling = Math.abs(d.velocity) > 1.2;
-      const commit = forwardDrag ? m.t > 0.5 || (fling && d.velocity < 0 && m.t > 0.08) : m.t < 0.5 || (fling && d.velocity > 0 && m.t < 0.92);
+      const commit = !cancelled && (forwardDrag ? m.t > 0.5 || (fling && d.velocity < 0 && m.t > 0.08) : m.t < 0.5 || (fling && d.velocity > 0 && m.t < 0.92));
       m.dragging = false;
       if (commit) {
         onSpreadChange(forwardDrag ? current + 1 : current - 1);
@@ -427,7 +439,7 @@ export function BookScene(props: BookSceneProps) {
 
   const onDown = (sheetIndex: number, side: 'left' | 'right') => (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
-    if (e.button !== 0 || drag.current) return;
+    if (e.button !== 0 || drag.current || !e.isPrimary) return;
     const sheet = sheets[sheetIndex];
     // Only the top sheet of each stack can be picked up, and not while it is still moving.
     const top = side === 'right' ? sheetIndex === spread : sheetIndex === spread - 1;
