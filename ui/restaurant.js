@@ -21,7 +21,7 @@ let orbMounted=false;
 // The Admin AI orb lives only inside the restaurant dashboard; couriers get no assistant at all.
 function adminOrb(){const role=state.user?.role,manager=['restaurant_owner','admin'].includes(role),show=manager&&routeName()==='manage';document.body.classList.toggle('rf-manager',manager);document.body.classList.toggle('rf-courier',role==='courier');if(show===orbMounted||!window.RF3DLoad)return;orbMounted=show;window.RF3DLoad().then(api=>show?api.orb.mount({lang:document.documentElement.lang}):api.orb.unmount()).catch(()=>{orbMounted=false})}
 function navigation(){
- syncDrawerTheme();adminOrb();const route=routeName(),keys=['discover','search','cart','bookings','orders'];
+ syncDrawerTheme();adminOrb();window.RFApp?.signedIn(state.user);const route=routeName(),keys=['discover','search','cart','bookings','orders'];
  if(state.user?.role==='admin')keys.push('admin');if(['restaurant_owner','admin'].includes(state.user?.role))keys.push('manage');if(state.user?.role==='courier')keys.push('courier');keys.push('billing','settings','help');
  const helpRoutes=['help','support','faq','blog'];
  $('#nav').innerHTML=`<a href="${state.user?'#/account':'#/login'}" class="drawer-profile ${route==='account'?'active':''}" ${route==='account'?'aria-current="page"':''}>${profileAvatar()}<span class="profile-copy"><strong>${esc(state.user?.name||t('Kirish'))}</strong><small>${t('Profil')}</small></span><span aria-hidden="true">›</span></a><div class="drawer-links">`+keys.map(id=>{const active=route===id||(id==='help'&&helpRoutes.includes(route));return `<a href="#/${id}" ${['discover','search','cart'].includes(id)?'data-bottom-nav':''} class="${active?'active':''}" ${active?'aria-current="page"':''}><span class="nav-ico" aria-hidden="true">${drawerIcon(id)}</span><span>${id==='help'?t('Yordam markazi'):labels[id]}</span><span aria-hidden="true">›</span></a>`}).join('')+'</div>';
@@ -116,6 +116,9 @@ function bindMenuBook3D(r,menu){const button=document.querySelector('[data-menu-
  // origin: the element the full-screen book grows out of and shrinks back into.
  const open=(revealDishId,origin=button)=>window.RF3DLoad?.().then(api=>{if(form.isConnected)api.fullscreenMenu.open({data:menuBookData(r,menu),lang:document.documentElement.lang,onAddToCart,revealDishId,origin,onClose:()=>button.focus()})}).catch(()=>notify('3D menyuni ochib bo‘lmadi.'));
  button.hidden=false;button.onclick=()=>open();
+ // Business/Premium: the 3D book is the menu. The plain list stays in the page (hidden) so cart
+ // validation and the add buttons keep working; it shows again only if WebGL is missing.
+ form.classList.add('menu-3d-only');
  // Tapping a dish photo or name opens the 3D book on that dish, growing out of its card.
  form.addEventListener('click',e=>{const card=e.target.closest('.food-card[data-dish]');if(!card||e.target.closest('button,input,select,a,label,textarea')||!e.target.closest('.food-image,h3'))return;open(card.dataset.dish,card)});// Warm the 3D bundle only when the phone is idle and the connection is not slow or metered.
  const net=globalThis.navigator?.connection;if(!net?.saveData&&!/(^|-)(2g|3g)$/.test(net?.effectiveType||''))(window.requestIdleCallback||(f=>setTimeout(f,1500)))(()=>window.RF3DLoad?.().catch(()=>{}),{timeout:5000});

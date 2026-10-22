@@ -25,14 +25,14 @@ const html=fs.readFileSync('app/site-html.ts','utf8');assert.ok(!html.includes('
 const snippet=source.slice(source.indexOf('// Full-screen WebGL menu'),source.indexOf('// Subscription: 14-day'));
 let opened=null,clicked=0;const cart={items:[]};
 const input={value:'1'},add={click(){clicked++;cart.items.push({id:'a',quantity:Number(input.value)})}};
-let formClick=null;const form={isConnected:true,addEventListener:(type,fn)=>{if(type==='click')formClick=fn},elements:{namedItem:id=>id==='a'?input:null},querySelector:s=>s.includes('"a"')?add:null};
+let formClick=null;const form={isConnected:true,classList:{add(c){form.added=c}},addEventListener:(type,fn)=>{if(type==='click')formClick=fn},elements:{namedItem:id=>id==='a'?input:null},querySelector:s=>s.includes('"a"')?add:null};
 const launcher={hidden:true,closest:()=>form,focus(){}};
 const ctx={document:{documentElement:{lang:'uz'},querySelector:s=>s==='[data-menu-3d-open]'?launcher:null,createElement:()=>({getContext:()=>({})})},
  window:{RF3DLoad:async()=>({fullscreenMenu:{open(props){opened=props;return {close(){}}}}})},CSS:{escape:s=>s},Promise,Map,Boolean,String,JSON,matchMedia:()=>({matches:false}),setTimeout,
  t:s=>'T:'+s,money:n=>n+' sum',notify:()=>{},menuCategory:m=>m.category,menuCategories:['Salatlar','Desertlar'],readCart:()=>cart};
 vm.createContext(ctx);vm.runInContext(snippet,ctx);
 ctx.bindMenuBook3D({name:'Real'},[{id:'b',category:'Desertlar',price:5,available:true},{id:'a',category:'Salatlar',price:3,available:true,image_url:'/x.jpg'}]);
-assert.equal(launcher.hidden,false,'launcher shown once WebGL is available');
+assert.equal(launcher.hidden,false,'launcher shown once WebGL is available');assert.equal(form.added,'menu-3d-only','Business/Premium show only the 3D book');
 (async()=>{await launcher.onclick();await new Promise(r=>setTimeout(r,0));
  assert.ok(opened,'full-screen menu opened');assert.equal(opened.lang,'uz');assert.equal(opened.origin,launcher,'book grows out of the launcher');
  assert.deepEqual([...opened.data.chapters.map(c=>c.title)],['T:Salatlar','T:Desertlar']);

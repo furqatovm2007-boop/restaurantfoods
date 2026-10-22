@@ -454,7 +454,7 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
         aria-expanded={open}
         className="rf:relative rf:size-[72px] rf:cursor-pointer rf:rounded-full rf:border-0 rf:bg-transparent rf:p-0 rf:shadow-[0_10px_40px_rgba(0,201,167,0.35)] rf:transition rf:hover:scale-105 rf:focus-visible:outline-2 rf:focus-visible:outline-offset-4 rf:focus-visible:outline-blue"
       >
-        <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 3.1], fov: 45 }} gl={{ alpha: true, antialias: true }} frameloop={calm ? 'demand' : 'always'} style={{ pointerEvents: 'none' }}>
+        <Canvas resize={{ offsetSize: true }} dpr={[1, 2]} camera={{ position: [0, 0, 3.1], fov: 45 }} gl={{ alpha: true, antialias: true }} frameloop={calm ? 'demand' : 'always'} style={{ pointerEvents: 'none' }}>
           <OrbMesh signal={signal} calm={calm} level={level} />
         </Canvas>
         {unread > 0 && (

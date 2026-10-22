@@ -163,3 +163,22 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
  #drawer .nav-ico{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#00c9a71a;color:#00c9a7}
  #drawer .drawer-footer{flex-direction:row;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--line)}
 }
+
+/* Business/Premium restaurants: only the 3D book, no duplicate plain list under it. */
+#orderForm.menu-3d-only .menu-categories,#orderForm.menu-3d-only .menu-category{display:none}
+#orderForm.menu-3d-only .menu-3d-launch{min-height:96px;margin-bottom:22px}
+#orderForm.menu-3d-only .menu-3d-launch b{font-size:19px}
+
+/* Install-the-app bar at the very top of the site, and the install sheet. */
+.rf-app-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(90deg,#062b26,#0b2a3d);border-bottom:1px solid #00c9a755;color:#f3fffb;font-size:13px;line-height:1.3}
+.rf-app-bar img{border-radius:9px;flex:none}
+.rf-app-bar span{flex:1;min-width:0}
+.rf-app-bar .primary{flex:none;min-height:34px;padding:6px 14px;font-size:13px;border-radius:10px}
+.rf-app-bar .icon{flex:none;width:32px;height:32px;min-width:32px;border:0;background:transparent;color:#a7c1ca;font-size:20px}
+.rf-app-sheet{width:min(400px,calc(100vw - 32px));border:1px solid var(--line,#294654);border-radius:22px;background:var(--panel,#102635);color:var(--text,#f8fafc);padding:22px;text-align:center}
+.rf-app-sheet img{border-radius:16px;margin:0 auto 10px;display:block}
+.rf-app-sheet h2{margin:0 0 8px;font-size:20px}
+.rf-app-sheet-body{color:#c9dde3;font-size:14px;text-align:left}
+.rf-app-sheet-body ol{padding-left:20px;display:grid;gap:8px}
+.rf-app-sheet-actions{display:grid;gap:8px;margin-top:16px}
+@media(max-width:700px){.rf-app-sheet[open]{margin:auto auto 0;width:100%;max-width:100%;border-radius:24px 24px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom))}}

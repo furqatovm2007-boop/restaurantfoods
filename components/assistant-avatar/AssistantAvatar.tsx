@@ -158,7 +158,7 @@ export function AssistantAvatar({ src = avatarModelUrl(), level, gesture, paused
   }, [src]);
 
   return (
-    <Canvas flat dpr={[1, 2]} frameloop="demand" camera={{ fov: 30, near: 0.01, far: 100 }} gl={{ alpha: true, antialias: true }} style={{ background: 'transparent' }}>
+    <Canvas resize={{ offsetSize: true }} flat dpr={[1, 2]} frameloop="demand" camera={{ fov: 30, near: 0.01, far: 100 }} gl={{ alpha: true, antialias: true }} style={{ background: 'transparent' }}>
       <ambientLight intensity={1.6} />
       <directionalLight position={[1.5, 2.5, 3]} intensity={2.4} />
       <directionalLight position={[-2, 1, -1]} intensity={0.8} color="#00c9a7" />

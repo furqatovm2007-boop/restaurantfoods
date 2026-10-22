@@ -1,4 +1,5 @@
 import { Canvas } from '@react-three/fiber';
+import { lowEndDevice } from '../shared/device';
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react';
 import { BookScene } from './BookScene';
 import { resolveLabels } from './labels';
@@ -70,6 +71,9 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
   const [container, width] = useElementWidth<HTMLDivElement>();
   const narrow = width > 0 && width < NARROW_BREAKPOINT;
   const reducedMotion = useReducedMotion();
+  // Phones: lower pixel ratio, and no soft shadows on slow devices, so page turns stay smooth.
+  const [lite] = useState(lowEndDevice);
+  const [touch] = useState(() => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   const sound = usePageSound(soundSrc);
 
   const [spread, setSpread] = useState(initiallyOpen ? 1 : 0);
@@ -263,9 +267,12 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
       >
         {width > 0 && (
           <Canvas
+            // Measure the layout size: the overlay opens with a scale animation, and a measured
+            // (transformed) size would leave the canvas smaller than its box for good.
+            resize={{ offsetSize: true }}
             flat
-            shadows="percentage"
-            dpr={[1, 2]}
+            shadows={lite ? false : 'percentage'}
+            dpr={touch ? [1, 1.5] : [1, 2]}
             frameloop="demand"
             camera={{ fov: 32, position: [0, 0, 4], near: 0.1, far: 20 }}
             gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}

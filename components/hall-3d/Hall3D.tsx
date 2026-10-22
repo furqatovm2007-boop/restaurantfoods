@@ -243,7 +243,7 @@ export function Hall3D({ tables, width, length, floor = 1, states, selected, gue
 
   return (
     <div className={`rf:relative rf:h-[min(62vh,520px)] rf:w-full rf:touch-none rf:overflow-hidden rf:rounded-2xl rf:border rf:border-line rf:bg-night ${className}`}>
-      <Canvas shadows={lite ? false : 'percentage'} dpr={lite ? [1, 1.5] : [1, 2]} frameloop="demand" camera={{ fov: 42, near: 0.1, far: 200, position: [radius, radius, radius] }} gl={{ antialias: true, alpha: false }}>
+      <Canvas resize={{ offsetSize: true }} shadows={lite ? false : 'percentage'} dpr={lite ? [1, 1.5] : [1, 2]} frameloop="demand" camera={{ fov: 42, near: 0.1, far: 200, position: [radius, radius, radius] }} gl={{ antialias: true, alpha: false }}>
         <color attach="background" args={['#0b1c28']} />
         <fog attach="fog" args={['#0b1c28', radius * 1.8, radius * 3.5]} />
         <hemisphereLight args={['#fff4e0', '#102635', 1.1]} />

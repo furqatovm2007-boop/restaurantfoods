@@ -482,7 +482,7 @@ export function BookScene(props: BookSceneProps) {
 
   useEffect(() => {
     if (light.current) {
-      light.current.shadow.mapSize.set(2048, 2048);
+      light.current.shadow.mapSize.set(narrow ? 1024 : 2048, narrow ? 1024 : 2048);
       light.current.shadow.bias = -0.0004;
       light.current.shadow.normalBias = 0.02;
       const cam = light.current.shadow.camera;
@@ -495,7 +495,7 @@ export function BookScene(props: BookSceneProps) {
       cam.updateProjectionMatrix();
     }
     invalidate();
-  }, [invalidate, size.width, size.height]);
+  }, [invalidate, size.width, size.height, narrow]);
 
   return (
     <>
