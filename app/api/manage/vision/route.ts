@@ -47,7 +47,8 @@ export async function POST(request: Request) {
     const source = await authorize(request, restaurantId);
     await requireFeature(restaurantId, 'visionTables');
     // ~1 frame every 15 s per restaurant is plenty for occupancy and bounds API cost.
-    await throttle('vision:' + restaurantId, 40);
+    // Cameras send a frame every 5 minutes; 6 per 10 minutes leaves room for up to three cameras.
+    await throttle('vision:' + restaurantId, 6);
 
     const mimeType = typeof b.mimeType === 'string' && IMAGE_TYPES.includes(b.mimeType) ? b.mimeType : null;
     if (!mimeType || typeof b.image !== 'string' || !b.image.length || b.image.length > MAX_IMAGE_BASE64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b.image)) throw new ApiError(400, 'Kadr JPEG, PNG yoki WebP base64 bo‘lsin.');

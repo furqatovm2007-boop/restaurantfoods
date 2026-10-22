@@ -4,6 +4,7 @@ import {ApiError,body,text,throttle,failure} from '../../../http';
 import {aiCatalog,validRecommendations} from '../../../ai-catalog';
 import {guideActions,checkGuideAvailability,availabilitySpeech} from '../../../ai-guide';
 import {requireFeature} from '../../../plans';
+import {assertClientAiUser,takeClientAiQuestion,refundClientAiQuestion} from '../../../client-ai';
 import {readSse,sseFrame,sseHeaders} from '../../../sse';
 export const dynamic='force-dynamic';
 
@@ -14,7 +15,7 @@ export const dynamic='force-dynamic';
  * rewrites the answer, `done.replaced` tells the client to show `done.reply` instead.
  */
 export async function POST(request:Request){try{
- const b=await body(request),u=await identity();if(!u)throw new ApiError(401,'AI_LOGIN_REQUIRED');
+ const b=await body(request),u=await identity();if(!u)throw new ApiError(401,'AI_LOGIN_REQUIRED');assertClientAiUser(u);
  const message=text(b.message,1,1400),lang=text(b.lang);if(!['uz','ru','en'].includes(lang))throw new ApiError(400,'AI_INVALID_LANGUAGE');
  const restaurantId=typeof b.restaurantId==='string'&&b.restaurantId?b.restaurantId:undefined;
  // The customer assistant on a restaurant page is a Premium feature of that restaurant.
@@ -23,14 +24,16 @@ export async function POST(request:Request){try{
  const token=await accessToken(),c=authConfig();if(!token)throw new ApiError(401,'AI_LOGIN_REQUIRED');if(!c.url||!c.key)throw new ApiError(503,'AI_UNAVAILABLE');
  const history=Array.isArray(b.history)?b.history.slice(-10).map((m:any)=>{if(!m||!['user','assistant'].includes(m.role)||typeof m.content!=='string'||m.content.length>1600)throw new ApiError(400,'AI_INVALID_HISTORY');return {role:m.role,content:m.content}}):[];
  const catalog=await aiCatalog(restaurantId,message);
- let upstream:Response;try{upstream=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:{'Content-Type':'application/json',apikey:c.key,Authorization:'Bearer '+token},body:JSON.stringify({message,lang,history,catalog,stream:true,voice:b.voice===true,currentRestaurantId:catalog.some(r=>r.id===restaurantId)?restaurantId:null,serverDate:new Date(Date.now()+5*3600000).toISOString().slice(0,10)}),signal:AbortSignal.timeout(35000)})}catch{throw new ApiError(504,'AI_TIMEOUT')}
- if(!upstream.ok){let error='';try{error=(await upstream.json() as any).error}catch{}throw new ApiError(upstream.status===429?429:upstream.status===401?401:503,error==='AI_BILLING_REQUIRED'?'AI_BILLING_REQUIRED':upstream.status===429?'AI_LIMIT':upstream.status===401?'AI_LOGIN_REQUIRED':'AI_UNAVAILABLE')}
+ // One free question a day (+1 per booking/order today); refunded if the model call fails.
+ const quota=await takeClientAiQuestion(u);const refund=()=>quota?refundClientAiQuestion(u.userId,quota.day):Promise.resolve();
+ let upstream:Response;try{upstream=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:{'Content-Type':'application/json',apikey:c.key,Authorization:'Bearer '+token},body:JSON.stringify({message,lang,history,catalog,stream:true,voice:b.voice===true,currentRestaurantId:catalog.some(r=>r.id===restaurantId)?restaurantId:null,serverDate:new Date(Date.now()+5*3600000).toISOString().slice(0,10)}),signal:AbortSignal.timeout(35000)})}catch{await refund();throw new ApiError(504,'AI_TIMEOUT')}
+ if(!upstream.ok){await refund();let error='';try{error=(await upstream.json() as any).error}catch{}throw new ApiError(upstream.status===429?429:upstream.status===401?401:503,error==='AI_BILLING_REQUIRED'?'AI_BILLING_REQUIRED':upstream.status===429?'AI_LIMIT':upstream.status===401?'AI_LOGIN_REQUIRED':'AI_UNAVAILABLE')}
 
  const finish=async(data:any)=>{if(typeof data?.reply!=='string'||!data.reply.trim())return sseFrame('error',{error:'AI_UNAVAILABLE'});
   const actions=guideActions(data.actions,catalog);let reply=data.reply.trim(),replaced=false;const availabilityAction=actions.find(a=>a.type==='check_availability');
   if(availabilityAction){const result=await checkGuideAvailability(availabilityAction,token);availabilityAction.availability=result;reply=availabilitySpeech(availabilityAction,result,lang);replaced=true}
   else if(Array.isArray(data.actions)&&data.actions.some((a:any)=>a?.type==='check_availability')){reply=availabilitySpeech({},{checked:false},lang);replaced=true}
-  return sseFrame('done',{reply,replaced,recommendations:validRecommendations(data.recommendations,catalog),actions})};
+  return sseFrame('done',{reply,replaced,recommendations:validRecommendations(data.recommendations,catalog),actions,quota:quota&&{remaining:quota.remaining,limit:quota.limit}})};
 
  const stream=new ReadableStream<Uint8Array>({async start(controller){
   try{

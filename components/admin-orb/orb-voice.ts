@@ -1,6 +1,6 @@
 /*
- * Voice for the admin orb, using the same authenticated /api/ai-voice endpoint as the
- * customer robot: OpenAI TTS for replies (with browser speech as a fallback) and
+ * Voice for the admin orb through its own endpoint, /api/manage/voice (the customer robot
+ * uses /api/ai-voice): OpenAI TTS for replies (with browser speech as a fallback) and
  * push-to-talk recording sent for transcription. The audio level drives the orb.
  */
 type Lang = 'uz' | 'ru' | 'en';
@@ -19,7 +19,7 @@ export function unlockAudio() {
 }
 
 async function voiceRequest<T>(payload: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
-  const response = await fetch('/api/ai-voice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal });
+  const response = await fetch('/api/manage/voice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal });
   const data = (await response.json().catch(() => ({}))) as T & { error?: string };
   if (!response.ok) throw new Error(data.error || 'AI_VOICE_UNAVAILABLE');
   return data;

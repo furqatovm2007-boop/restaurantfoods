@@ -4,7 +4,7 @@
  * occupancy analysis. Run it on a computer in the restaurant network (Node 22+, ffmpeg).
  *
  *   RF_CAMERA_KEY=rfcam_… RF_RESTAURANT_ID=… RF_CAMERA_URL=rtsp://user:pass@192.168.1.20/stream \
- *   RF_TABLES=1,2,3,4 RF_INTERVAL=30 node scripts/camera-agent.mjs
+ *   RF_TABLES=1,2,3,4 RF_INTERVAL=300 node scripts/camera-agent.mjs
  *
  * RF_CAMERA_URL may also be an HTTP snapshot URL (http://camera/snapshot.jpg).
  * Frames are scaled to 1280px and never written to disk.
@@ -15,7 +15,8 @@ const site = process.env.RF_SITE || 'https://restaurantfoods.online';
 const key = process.env.RF_CAMERA_KEY;
 const restaurantId = process.env.RF_RESTAURANT_ID;
 const camera = process.env.RF_CAMERA_URL;
-const interval = Math.max(15, Number(process.env.RF_INTERVAL) || 30) * 1000;
+// One frame every 5 minutes by default (minimum 1 minute): enough for occupancy, cheap on Vision calls.
+const interval = Math.max(60, Number(process.env.RF_INTERVAL) || 300) * 1000;
 const tables = process.env.RF_TABLES ? process.env.RF_TABLES.split(',').map(Number).filter(Number.isInteger) : undefined;
 const floor = process.env.RF_FLOOR ? Number(process.env.RF_FLOOR) : undefined;
 if (!key || !restaurantId || !camera) {

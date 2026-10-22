@@ -57,3 +57,19 @@
 - 37 ta `tests/*.test.cjs` (yangi `plans.test.cjs`: real SQLite bilan trial, to‘lov, 402 gate, live stollar, kamera kaliti, vision yozuvi, bron lentasi, SSE oqimi), `tests/database.py`, TypeScript, yangi kod lint’i va `pnpm build` o‘tdi.
 - Headless Chromium’da: to‘liq ekranli menyu (desktop/mobil, Esc), landscape ogohlantirishi, 3D zalda tanlash (band stol tanlanmaydi), lip-sync og‘iz almashishi, Orb paneli tekshirildi.
 - Haqiqiy OpenAI (streaming, vision aniqligi, TTS), real IP kamera, telefon GPU tezligi, Android orientation lock va to‘lov tizimi bu muhitda tekshirilmagan.
+
+## Ikki alohida AI yordamchi
+
+Kuryerlar uchun AI yo‘q: mijoz AI'si kuryer va restoran egalariga ko‘rinmaydi, API ham ularni rad etadi (`AI_NOT_FOR_COURIERS`, `AI_USE_ADMIN_ASSISTANT`).
+
+| | Mijoz AI (3D avatar) | Restoran Admin AI (Orb) |
+|---|---|---|
+| Kimga | mijozlar | restoran egasi va administrator |
+| Tarif | Premium yoki 14 kunlik trial (`clientAi`) | Business, Premium yoki trial (`adminAi`) |
+| Qayerda | sayt bo‘ylab, Premium/trial restoranlar haqida | faqat `#/manage` kabinetida, o‘ng pastki burchak |
+| Matn | `POST /api/ai/stream` (`/api/ai` — JSON) | `POST /api/manage/assistant` |
+| Ovoz | `POST /api/ai-voice` | `POST /api/manage/voice` |
+| Limit | kuniga 1 bepul savol (Toshkent vaqti) + shu kuni qilingan har bir haqiqiy bron/buyurtma uchun +1 (ko‘pi bilan +5); xato bo‘lsa savol qaytariladi | rate-limit |
+| Qo‘shimcha | — | yangi bron va kamera o‘zgarishida ovozli signal + xabar; kamera har 5 daqiqada kadr yuboradi (`RF_INTERVAL=300`) |
+
+Limit jadvali: `ai_quota (user_id, day, used)` — migratsiya `0020_ai_daily_quota.sql`.

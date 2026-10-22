@@ -1,4 +1,6 @@
 import {env} from 'cloudflare:workers';
+import {planState} from './plans';
+import {ApiError} from './http';
 
 /*
  * Dynamic AI context. Every request reads the live D1 catalog (a newly approved restaurant
@@ -13,9 +15,13 @@ function score(haystack:string,words:string[]){if(!words.length)return 0;const v
 
 export async function aiCatalog(currentRestaurantId?:string,query?:string){
  const [restaurants,menu]=await Promise.all([
-  env.DB!.prepare("SELECT id,name,cuisine,address,description,hours,is_demo,delivery_enabled,booking_open,booking_close,tables FROM restaurants WHERE status='active' ORDER BY name LIMIT 1000").all<any>(),
+  env.DB!.prepare("SELECT id,name,cuisine,address,description,hours,is_demo,delivery_enabled,booking_open,booking_close,tables,plan,trial_ends_at,paid_until FROM restaurants WHERE status='active' ORDER BY name LIMIT 1000").all<any>(),
   env.DB!.prepare("SELECT m.id,m.restaurant_id,m.name,m.price,m.category,m.ingredients,m.allergens,m.is_demo FROM menu m JOIN restaurants r ON r.id=m.restaurant_id WHERE r.status='active' AND m.available=1 ORDER BY m.restaurant_id,m.name LIMIT 8000").all<any>(),
  ]).then(r=>r.map(x=>x.results));
+ // The customer assistant only knows restaurants whose plan includes it (Premium or trial).
+ const allowed=new Set(restaurants.filter(r=>planState(r).features.clientAi).map(r=>r.id));
+ if(!allowed.size)throw new ApiError(403,'AI_NOT_AVAILABLE');
+ restaurants.splice(0,restaurants.length,...restaurants.filter(r=>allowed.has(r.id)));
  const words=terms(query),byRestaurant=new Map<string,any[]>();
  for(const m of menu){const list=byRestaurant.get(m.restaurant_id)||[];list.push({...m,score:score(m.name+' '+m.category+' '+m.ingredients,words)});byRestaurant.set(m.restaurant_id,list)}
  const ranked=restaurants.map(r=>{const dishes=byRestaurant.get(r.id)||[];return {r,dishes,score:(r.id===currentRestaurantId?1000:0)+score(r.name+' '+r.cuisine+' '+r.address+' '+r.description,words)*3+dishes.reduce((s,d)=>s+d.score,0)}})
