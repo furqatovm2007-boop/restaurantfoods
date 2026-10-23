@@ -4853,5 +4853,100 @@
     "uz": "Call AI: bronga 2 soat qolganda mijozga ovozli tasdiqlash qo‘ng‘irog‘i (Telegram)",
     "ru": "Call AI: голосовой звонок-подтверждение клиенту за 2 часа до брони (Telegram)",
     "en": "Call AI: voice confirmation call to the customer 2 hours before the booking (Telegram)"
+  },
+  "Dosye": {
+    "uz": "Dosye",
+    "ru": "Досье",
+    "en": "Dossier"
+  },
+  "Tariflarni solishtirish": {
+    "uz": "Tariflarni solishtirish",
+    "ru": "Сравнить тарифы",
+    "en": "Compare plans"
+  },
+  "TUG‘ILGAN SANA": {
+    "uz": "TUG‘ILGAN SANA",
+    "ru": "ДАТА РОЖДЕНИЯ",
+    "en": "DATE OF BIRTH"
+  },
+  "Tug‘ilgan kuningizdan oldin siz borgan restoranlar Telegram orqali maxsus chegirma promokodini yuborishi mumkin.": {
+    "uz": "Tug‘ilgan kuningizdan oldin siz borgan restoranlar Telegram orqali maxsus chegirma promokodini yuborishi mumkin.",
+    "ru": "Перед днём рождения рестораны, где вы бывали, могут прислать в Telegram промокод со скидкой.",
+    "en": "Before your birthday, restaurants you have visited may send you a discount promo code in Telegram."
+  },
+  "Tariflar": {
+    "uz": "Tariflar",
+    "ru": "Тарифы",
+    "en": "Pricing"
+  },
+  "Xodim paneli": {
+    "uz": "Xodim paneli",
+    "ru": "Панель сотрудника",
+    "en": "Staff panel"
+  },
+  "Tig‘iz vaqt depoziti": {
+    "uz": "Tig‘iz vaqt depoziti",
+    "ru": "Депозит в часы пик",
+    "en": "Peak-hour deposit"
+  },
+  "Stollarni birlashtirish": {
+    "uz": "Stollarni birlashtirish",
+    "ru": "Объединение столов",
+    "en": "Table merging"
+  },
+  "Tug‘ilgan kun CRM va promokod": {
+    "uz": "Tug‘ilgan kun CRM va promokod",
+    "ru": "CRM дней рождения и промокод",
+    "en": "Birthday CRM and promo code"
+  },
+  "Xodimlar: Hostess, Ofitsiant, Menejer": {
+    "uz": "Xodimlar: Hostess, Ofitsiant, Menejer",
+    "ru": "Сотрудники: хостес, официант, менеджер",
+    "en": "Staff: hostess, waiter, manager"
+  },
+  "AI haftalik analitika (Business: kuniga 1, Premium: cheksiz)": {
+    "uz": "AI haftalik analitika (Business: kuniga 1, Premium: cheksiz)",
+    "ru": "AI-аналитика за неделю (Business: 1 в день, Premium: без ограничений)",
+    "en": "AI weekly analytics (Business: 1 a day, Premium: unlimited)"
+  },
+  "AI ofitsiant tezligi nazorati": {
+    "uz": "AI ofitsiant tezligi nazorati",
+    "ru": "AI-контроль скорости обслуживания",
+    "en": "AI service speed control"
+  },
+  "VIP mijoz dosyesi": {
+    "uz": "VIP mijoz dosyesi",
+    "ru": "Досье VIP-гостя",
+    "en": "VIP guest dossier"
+  },
+  "Bo‘sh soatlarni to‘ldirish (avto chegirma)": {
+    "uz": "Bo‘sh soatlarni to‘ldirish (avto chegirma)",
+    "ru": "Заполнение пустых часов (автоскидка)",
+    "en": "Fill empty hours (auto discount)"
+  },
+  "3D zalda stoldan ko‘rinish (panorama)": {
+    "uz": "3D zalda stoldan ko‘rinish (panorama)",
+    "ru": "Вид со стола в 3D-зале (панорама)",
+    "en": "View from the table in the 3D hall (panorama)"
+  },
+  "PROMOKOD (IXTIYORIY)": {
+    "uz": "PROMOKOD (IXTIYORIY)",
+    "ru": "ПРОМОКОД (НЕОБЯЗАТЕЛЬНО)",
+    "en": "PROMO CODE (OPTIONAL)"
+  },
+  "Joy topish": {
+    "uz": "Joy topish",
+    "ru": "Найти места",
+    "en": "Find seats"
+  },
+  "👥 KATTA KOMPANIYA UCHUN JOY (KISHI)": {
+    "uz": "👥 KATTA KOMPANIYA UCHUN JOY (KISHI)",
+    "ru": "👥 МЕСТО ДЛЯ БОЛЬШОЙ КОМПАНИИ (ЧЕЛОВЕК)",
+    "en": "👥 SEATS FOR A LARGE GROUP (PEOPLE)"
+  },
+  "👁 Stoldan ko‘rinish": {
+    "uz": "👁 Stoldan ko‘rinish",
+    "ru": "👁 Вид со стола",
+    "en": "👁 View from the table"
   }
 }

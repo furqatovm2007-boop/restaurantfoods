@@ -58,8 +58,10 @@
         const { booking } = await post({ code });
         stop();
         result.innerHTML =
-          '<div class="rf-scan-card"><b>' + esc(booking.restaurant) + '</b><p>' + esc(booking.date) + ' · ' + esc(String(booking.slot).slice(0, 5)) + '–' + esc(String(booking.endSlot || '').slice(0, 5)) + ' · ' + esc(w.table) + ' ' + esc(booking.table) + ' · ' + esc(booking.guests) + ' ' + esc(w.guests) + '</p><p>' + esc(booking.customer || '') + ' · ' + esc(booking.receiptNo) + (booking.noShowCount ? ' · ⚠️ ' + esc(w.noShows) + ': ' + booking.noShowCount : '') + '</p>' +
+          '<div class="rf-scan-card"><b>' + esc(booking.restaurant) + '</b><p>' + esc(booking.date) + ' · ' + esc(String(booking.slot).slice(0, 5)) + '–' + esc(String(booking.endSlot || '').slice(0, 5)) + ' · ' + esc(w.table) + ' ' + esc(booking.table) + (booking.mergedTable ? '+' + esc(booking.mergedTable) : '') + ' · ' + esc(booking.guests) + ' ' + esc(w.guests) + '</p><p>' + esc(booking.customer || '') + ' · ' + esc(booking.receiptNo) + (booking.noShowCount ? ' · ⚠️ ' + esc(w.noShows) + ': ' + booking.noShowCount : '') + '</p>' +
           booking.warnings.map((m) => '<p class="notice">' + esc(m) + '</p>').join('') +
+          // Premium: VIP guest dossier (visits, favourite dishes and table).
+          (booking.guest && window.RFGrowth ? window.RFGrowth.dossierHtml(booking.guest) : '') +
           '<div class="row-actions"><button type="button" class="primary" data-arrived>✓ ' + esc(w.arrived) + '</button><button type="button" class="quiet" data-again>' + esc(w.again) + '</button></div></div>';
         result.querySelector('[data-arrived]').onclick = async (e) => {
           e.currentTarget.disabled = true;
