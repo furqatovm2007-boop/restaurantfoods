@@ -23,7 +23,7 @@ export async function POST(request:Request){try{
  await throttle('ai:user:'+u.userId,15);await throttle('ai:global',200);
  const token=await accessToken(),c=authConfig();if(!token)throw new ApiError(401,'AI_LOGIN_REQUIRED');if(!c.url||!c.key)throw new ApiError(503,'AI_UNAVAILABLE');
  const history=Array.isArray(b.history)?b.history.slice(-10).map((m:any)=>{if(!m||!['user','assistant'].includes(m.role)||typeof m.content!=='string'||m.content.length>1600)throw new ApiError(400,'AI_INVALID_HISTORY');return {role:m.role,content:m.content}}):[];
- const catalog=await aiCatalog(restaurantId,message);
+ const catalog=await aiCatalog(restaurantId,message,b.voice===true);
  // One free question a day (+1 per booking/order today); refunded if the model call fails.
  const quota=await takeClientAiQuestion(u);const refund=()=>quota?refundClientAiQuestion(u.userId,quota.day):Promise.resolve();
  let upstream:Response;try{upstream=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:{'Content-Type':'application/json',apikey:c.key,Authorization:'Bearer '+token,...(c.proxy?{'X-RF-Proxy':c.proxy}:{})},body:JSON.stringify({message,lang,history,catalog,stream:true,voice:b.voice===true,currentRestaurantId:catalog.some(r=>r.id===restaurantId)?restaurantId:null,serverDate:new Date(Date.now()+5*3600000).toISOString().slice(0,10)}),signal:AbortSignal.timeout(35000)})}catch{await refund();throw new ApiError(504,'AI_TIMEOUT')}

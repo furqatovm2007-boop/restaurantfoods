@@ -32,3 +32,45 @@ export function useLandscapePhone() {
 }
 
 export const ROTATE_TEXT: Record<string, string> = { uz: 'Telefonni vertikal holatga keltiring', ru: 'Поверните телефон вертикально', en: 'Rotate your phone to portrait' };
+
+const touchScreen = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+
+/**
+ * Canvas pixel ratio: phones render at most 1.5x (a 3x screen at full density costs 4x the
+ * fill rate for detail nobody sees on a 6" display); desktops up to 2x.
+ */
+export const canvasDpr = (): [number, number] => (touchScreen() || lowEndDevice() ? [1, 1.5] : [1, 2]);
+export const shadowsAllowed = () => !touchScreen() && !lowEndDevice();
+
+/**
+ * True while the element is on screen and the tab is visible. Canvases switch their frame
+ * loop off when it is false, so a 3D scene scrolled out of view or in a background tab
+ * costs nothing.
+ */
+export function useOnScreen(ref: React.RefObject<Element | null>) {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const el = ref.current;
+    let inView = true;
+    const update = () => setVisible(inView && document.visibilityState !== 'hidden');
+    const io = typeof IntersectionObserver === 'function' && el ? new IntersectionObserver(([entry]) => ((inView = entry.isIntersecting), update())) : null;
+    if (io && el) io.observe(el);
+    document.addEventListener('visibilitychange', update);
+    return () => {
+      io?.disconnect();
+      document.removeEventListener('visibilitychange', update);
+    };
+  }, [ref]);
+  return visible;
+}
+
+/** False while the tab is in the background. */
+export function usePageVisible() {
+  const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  useEffect(() => {
+    const update = () => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+  return visible;
+}

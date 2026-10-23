@@ -30,6 +30,6 @@
   const useFallback=()=>{if(closed||fallback)return;impl?.destroy();impl=null;host.remove();model.hidden=false;fallback=legacy(model,callbacks)};
   window.RF3DLoad().then(api=>{if(closed)return;impl=api.avatar.mount(host,{onReady:()=>!closed&&callbacks.ready?.(),onError:useFallback});if(!impl)useFallback()}).catch(useFallback);
   const target=()=>impl||fallback;
-  return {gesture(){target()?.gesture()},idle(){target()?.idle()},pause(){target()?.pause()},speak(analyser){impl?.speak(analyser)},destroy(){closed=true;target()?.destroy();host.remove();model.hidden=false}}
+  return {gesture(){target()?.gesture()},idle(){target()?.idle()},pause(){target()?.pause()},speak(analyser){impl?.speak(analyser)},mode(name){impl?.mode?.(name)},destroy(){closed=true;target()?.destroy();host.remove();model.hidden=false}}
  }};
 })();

@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasTexture, MathUtils, SRGBColorSpace, Vector3, type Group } from 'three';
-import { lowEndDevice, ROTATE_TEXT, useLandscapePhone } from '../shared/device';
+import { lowEndDevice, ROTATE_TEXT, useLandscapePhone, canvasDpr, shadowsAllowed, useOnScreen } from '../shared/device';
 
 export type TableState = 'free' | 'booked' | 'occupied' | 'cleaning' | 'unavailable';
 
@@ -241,10 +241,12 @@ export function Hall3D({ tables, width, length, floor = 1, states, selected, gue
   // Level of detail by device: slow / low-memory phones skip shadows and use simpler meshes.
   const [lite] = useState(lowEndDevice);
   const sideways = useLandscapePhone();
+  const box = useRef<HTMLDivElement>(null);
+  const onScreen = useOnScreen(box);
 
   return (
-    <div className={`rf:relative rf:h-[min(62vh,520px)] rf:w-full rf:touch-none rf:overflow-hidden rf:rounded-2xl rf:border rf:border-line rf:bg-night ${className}`}>
-      <Canvas resize={{ offsetSize: true }} shadows={lite ? false : 'percentage'} dpr={lite ? [1, 1.5] : [1, 2]} frameloop="demand" camera={{ fov: 42, near: 0.1, far: 200, position: [radius, radius, radius] }} gl={{ antialias: true, alpha: false }}>
+    <div ref={box} className={`rf:relative rf:h-[min(62vh,520px)] rf:w-full rf:touch-none rf:overflow-hidden rf:rounded-2xl rf:border rf:border-line rf:bg-night ${className}`}>
+      <Canvas resize={{ offsetSize: true }} shadows={lite || !shadowsAllowed() ? false : 'percentage'} dpr={canvasDpr()} frameloop={onScreen ? 'demand' : 'never'} camera={{ fov: 42, near: 0.1, far: 200, position: [radius, radius, radius] }} gl={{ antialias: true, alpha: false }}>
         <color attach="background" args={['#0b1c28']} />
         <fog attach="fog" args={['#0b1c28', radius * 1.8, radius * 3.5]} />
         <hemisphereLight args={['#fff4e0', '#102635', 1.1]} />

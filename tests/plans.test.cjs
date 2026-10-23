@@ -112,7 +112,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  db.prepare("UPDATE restaurants SET plan='premium' WHERE id=?").run(id);
  let evs=await read(await streamRoute.POST(request('/api/ai/stream',{message:'Osh bormi?',lang:'uz',restaurantId:id})));
  assert.deepEqual(evs.filter(e=>e[0]==='delta').map(e=>e[1].text).join(''),'Ha, osh bor.');const done=evs.find(e=>e[0]==='done')[1];assert.equal(done.replaced,false);assert.equal(done.recommendations.length,1,'unknown restaurants dropped');
- // One free customer question a day: the second one is refused until tomorrow (or a booking/order).
+ // Once today's customer questions are used up, the next one is refused until tomorrow (or a booking/order).
+ db.prepare('UPDATE ai_quota SET used=1000').run();
  r=await streamRoute.POST(request('/api/ai/stream',{message:'Osh bormi?',lang:'uz',restaurantId:id}));assert.equal(r.status,429);assert.equal((await r.json()).error,'AI_DAILY_LIMIT');db.prepare('DELETE FROM ai_quota').run();
  edge='json';evs=await read(await streamRoute.POST(request('/api/ai/stream',{message:'Osh bormi?',lang:'uz'})));assert.deepEqual(evs.map(e=>e[0]),['delta','done'],'legacy JSON edge replayed');
  db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);assert.equal((await streamRoute.POST(request('/api/ai/stream',{message:'Osh bormi?',lang:'uz',restaurantId:id}))).status,402,'client AI is Premium');

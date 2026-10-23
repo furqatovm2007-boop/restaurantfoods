@@ -12,12 +12,14 @@ const status=async(p)=>{try{await p;return 200}catch(e){return e.status}};
 assert.throws(()=>ai.assertClientAiUser({userId:'k',role:'courier'}),e=>e.status===403&&e.message==='AI_NOT_FOR_COURIERS');
 assert.throws(()=>ai.assertClientAiUser({userId:'o',role:'restaurant_owner'}),e=>e.message==='AI_USE_ADMIN_ASSISTANT');
 ai.assertClientAiUser(customer);
-// One free question per Tashkent day.
+// FREE_QUESTIONS_PER_DAY questions per Tashkent day (a whole voice conversation fits).
+const F=ai.FREE_QUESTIONS_PER_DAY;assert.ok(F>=20,'customers get a real conversation, not one question');
 assert.equal(ai.tashkentDay(Date.parse('2026-10-22T20:30:00Z')),'2026-10-23','UTC+5 day boundary');
-let q=await ai.takeClientAiQuestion(customer,now);assert.deepEqual({...q},{day:'2026-10-22',limit:1,used:1,remaining:0});
+let q=await ai.takeClientAiQuestion(customer,now);assert.deepEqual({...q},{day:'2026-10-22',limit:F,used:1,remaining:F-1});
+for(let i=1;i<F;i++)q=await ai.takeClientAiQuestion(customer,now);assert.equal(q.remaining,0);
 assert.equal(await status(ai.takeClientAiQuestion(customer,now)),429);
 // Refund after a failed model call gives the question back.
-await ai.refundClientAiQuestion('c1','2026-10-22');assert.equal((await ai.takeClientAiQuestion(customer,now)).used,1);
+await ai.refundClientAiQuestion('c1','2026-10-22');assert.equal((await ai.takeClientAiQuestion(customer,now)).used,F);
 // A real booking or order today adds one; cancelled and demo ones do not; yesterday's do not.
 db.exec("INSERT INTO restaurants(id,name,status,owner_id) VALUES ('r','Real','active','o')");
 let table=0;const book=(id,created,st='pending')=>db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)").run(id,'r','c1','2026-10-25','12:00',++table,2,'+998901234567',st,created);
@@ -26,8 +28,8 @@ assert.equal(await status(ai.takeClientAiQuestion(customer,now)),429,'old/cancel
 book('b-today',iso(now-3600000));
 assert.equal((await ai.takeClientAiQuestion(customer,now)).remaining,0,'booking today = +1 question');
 db.prepare("INSERT INTO orders(id,restaurant_id,user_id,items,total,status,created_at,phone) VALUES (?,?,?,?,?,?,?,?)").run('o1','r','c1','[]',1000,'pending',iso(now-60000),'+998901234567');
-assert.equal((await ai.clientAiQuota('c1',now)).limit,3,'order today = +1 more');
-for(let i=0;i<8;i++)book('b'+i,iso(now-1000*i));assert.equal((await ai.clientAiQuota('c1',now)).limit,1+ai.MAX_BONUS,'bonus is capped');
+assert.equal((await ai.clientAiQuota('c1',now)).limit,F+2,'order today = +1 more');
+for(let i=0;i<8;i++)book('b'+i,iso(now-1000*i));assert.equal((await ai.clientAiQuota('c1',now)).limit,F+ai.MAX_BONUS,'bonus is capped');
 // Next day starts fresh; administrators are unlimited.
 assert.equal((await ai.takeClientAiQuestion(customer,now+DAY)).used,1);
 assert.equal(await ai.takeClientAiQuestion({userId:'a',role:'admin'},now),null);
@@ -39,5 +41,5 @@ assert.equal(await status(catalog.aiCatalog(undefined,'osh')),403,'no Premium/tr
 add('premium-paid','premium',null,iso(Date.now()+30*DAY));add('in-trial','start',iso(Date.now()+5*DAY),null);add('trial-over','premium',iso(Date.now()-DAY),null);
 const ids=(await catalog.aiCatalog(undefined,'osh')).map(r=>r.id).sort();
 assert.deepEqual(ids,['in-trial','premium-paid']);
-console.log('PASS client AI: couriers/owners refused, 1 free question per Tashkent day, +1 per real booking/order today (capped), refund, admin unlimited, Premium/trial-only catalog.');
+console.log('PASS client AI: couriers/owners refused, FREE_QUESTIONS_PER_DAY per Tashkent day, +1 per real booking/order today (capped), refund, admin unlimited, Premium/trial-only catalog.');
 })().catch(e=>{console.error(e);process.exitCode=1});

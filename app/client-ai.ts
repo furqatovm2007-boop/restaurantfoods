@@ -4,13 +4,14 @@ import { ApiError } from './http';
 /*
  * Rules of the customer AI assistant (separate from the restaurant Admin AI):
  *  - customers only: couriers and restaurant staff do not get it;
- *  - one free question per Tashkent day, plus one for every real booking or order the
- *    customer placed that day (at most MAX_BONUS); site administrators are not limited;
+ *  - FREE_QUESTIONS_PER_DAY questions per Tashkent day (enough for a whole voice conversation),
+ *    plus one for every real booking or order the customer placed that day (at most MAX_BONUS);
+ *    site administrators are not limited;
  *  - it only talks about restaurants whose plan includes `clientAi` (Premium or trial).
  * A question is counted before the model is called and refunded if the call fails.
  */
-export const FREE_QUESTIONS_PER_DAY = 1;
-export const MAX_BONUS = 5;
+export const FREE_QUESTIONS_PER_DAY = 25;
+export const MAX_BONUS = 10;
 
 export interface AiUser {
   userId: string;

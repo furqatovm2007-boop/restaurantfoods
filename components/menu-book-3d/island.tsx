@@ -13,7 +13,7 @@ import { createRef, StrictMode, type ReactNode, type RefObject } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AdminOrb, type AdminOrbProps } from '../admin-orb/AdminOrb';
 import { AdminTableMap, type AdminTableMapProps } from '../admin-table-map/AdminTableMap';
-import { analyserLevel, AssistantAvatar, type AssistantAvatarProps, type LevelSource } from '../assistant-avatar/AssistantAvatar';
+import { analyserLevel, AssistantAvatar, type AssistantAvatarProps, type AvatarMode, type LevelSource } from '../assistant-avatar/AssistantAvatar';
 import { Hall3D, type Hall3DProps } from '../hall-3d/Hall3D';
 import { FullscreenMenu, type FullscreenMenuProps } from './FullscreenMenu';
 import { MenuBook3D, type MenuBook3DHandle, type MenuBook3DProps } from './MenuBook3D';
@@ -104,12 +104,13 @@ const hall = {
 
 const avatar = {
   /** Returns a controller; `speak(analyser)` starts lip-sync, `speak(null)` stops it. */
-  mount(el: Element, props: Omit<AssistantAvatarProps, 'level' | 'gesture' | 'paused'> = {}) {
+  mount(el: Element, props: Omit<AssistantAvatarProps, 'level' | 'gesture' | 'paused' | 'mode'> = {}) {
     if (!webglAvailable()) return null;
     const level = createRef<LevelSource | null>() as { current: LevelSource | null };
     let gesture = 0;
     let paused = false;
-    const draw = () => render(el, <AssistantAvatar {...props} level={level} gesture={gesture} paused={paused} />);
+    let mode: AvatarMode = 'idle';
+    const draw = () => render(el, <AssistantAvatar {...props} level={level} gesture={gesture} paused={paused} mode={mode} />);
     draw();
     return {
       speak(analyser: AnalyserNode | null) {
@@ -124,6 +125,12 @@ const avatar = {
       },
       idle() {
         paused = false;
+        draw();
+      },
+      /** Body language for what the assistant is doing: idle, listening, thinking or speaking. */
+      mode(next: AvatarMode) {
+        if (next === mode) return;
+        mode = next;
         draw();
       },
       pause() {

@@ -287,3 +287,11 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .cancel-rule b{color:#f59e0b}
 .cancel-blocked{display:block;margin-top:6px;font-size:.85rem;color:#f59e0b}
 .seated-notice{border-color:#ef4444!important}
+/* Touch screens: backdrop blur re-samples everything behind an element on every scroll frame —
+   the single most expensive effect on mid-range phones. Solid, slightly more opaque surfaces
+   look the same and keep scrolling at 60 fps. */
+@media (pointer:coarse){
+*,*::before,*::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+dialog::backdrop{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(2,13,22,.82)}
+#topbar,.mobile-nav,.rf-app-bar{background-color:rgba(8,21,33,.97)!important}
+}
