@@ -4983,5 +4983,15 @@
     "uz": "ta javobsiz",
     "ru": "без ответа",
     "en": "unanswered"
+  },
+  "Gul": {
+    "uz": "Gul",
+    "ru": "Цветы",
+    "en": "Flowers"
+  },
+  "Summa": {
+    "uz": "Summa",
+    "ru": "Сумма",
+    "en": "Amount"
   }
 }

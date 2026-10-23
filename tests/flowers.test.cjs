@@ -33,7 +33,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // 3. Posts: validation, create, catalog.
  assert.equal((await save({title:'A',kind:'Atirgul',size:'Katta',price:150000})).status,400);
  let r=await save({title:'25 ta qizil atirgul',kind:'Atirgul',size:'Katta',price:150000,description:'Lenta bilan'});assert.equal(r.status,201);const fid=(await r.json()).id;
- r=await save({title:'Lola',kind:'Lola',size:'Kichik',price:40000,active:false});const hidden=(await r.json()).id;
+ r=await save({title:'Lola',kind:'Lola',size:'Kichik',price:40000});const hidden=(await r.json()).id;await save({id:hidden,title:'Lola',kind:'Lola',size:'Kichik',price:40000,active:false});
  let cat=await (await flowers.GET(new Request('https://test/api/flowers'))).json();assert.deepEqual(cat.flowers.map(f=>f.id),[fid],'inactive hidden');assert.equal(cat.flowers[0].florist_name,'Gulchi');
  // 4. Orders: card needed; table delivery only to own booking; 3% commission; charged from the card.
  as('c1','c1@x');const order=p=>flowers.POST(request('/api/flowers',{action:'order',flowerId:fid,quantity:2,phone:'+998901234567',...p}));

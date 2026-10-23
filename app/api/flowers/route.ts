@@ -9,7 +9,11 @@ export const dynamic = 'force-dynamic';
  * Flowers. Florists (role 'florist', granted by the admin) post bouquets; customers order them
  * delivered to a table they booked or to their home, paid from their bound card (Payme). From
  * every paid order the platform keeps COMMISSION_RATE; the rest is the florist's.
+ * One table (flowers) feeds both the florist cabinet and the public showcase: a post is public while
+ * it is on sale (active=1), status 'active', approved and its seller's account is not suspended —
+ * whoever added it (florist or admin; a seller who lost the florist role is hidden). Approved couriers see paid orders that need delivering.
  */
+const PUBLIC = "f.active=1 AND f.status='active' AND f.is_approved=1 AND COALESCE(a.status,'active')<>'suspended' AND COALESCE(a.role,'admin') IN ('florist','admin')";
 export const COMMISSION_RATE = 0.03;
 export const commissionOf = (total: number) => Math.round(total * COMMISSION_RATE);
 const PAID = "('paid','accepted','delivering','delivered')";
@@ -20,7 +24,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url),
       view = url.searchParams.get('view') || 'catalog';
     if (view === 'catalog') {
-      const rows = await env.DB!.prepare("SELECT f.id,f.title,f.kind,f.size,f.price,f.image_url,f.description,f.florist_id,a.name AS florist_name FROM flowers f JOIN accounts a ON a.id=f.florist_id WHERE f.active=1 AND a.role='florist' AND a.status='active' ORDER BY f.created_at DESC LIMIT 200").all();
+      const rows = await env.DB!.prepare("SELECT f.id,f.title,f.kind,f.size,f.price,f.image_url,f.description,f.florist_id,COALESCE(a.name,'RestaurantFoods') AS florist_name FROM flowers f LEFT JOIN accounts a ON a.id=f.florist_id WHERE " + PUBLIC + ' ORDER BY f.created_at DESC LIMIT 200').all();
       return json({ flowers: rows.results, commissionRate: COMMISSION_RATE, card: cardBindingEnabled() });
     }
     const u = await identity();
@@ -37,15 +41,24 @@ export async function GET(request: Request) {
       if (!['florist', 'admin'].includes(u.role)) throw new ApiError(403, 'Gulchi kabineti faqat admin tasdiqlagan gulchilar uchun.');
       const [flowers, orders, sums] = await Promise.all([
         env.DB!.prepare('SELECT * FROM flowers WHERE florist_id=? ORDER BY created_at DESC').bind(u.userId).all(),
-        env.DB!.prepare('SELECT id,title,quantity,total,commission,florist_amount,delivery_type,address,lat,lng,phone,note,deliver_at,status,created_at FROM flower_orders WHERE florist_id=? AND status NOT IN (?,?) ORDER BY created_at DESC LIMIT 200').bind(u.userId, 'pending_payment', 'payment_failed').all(),
+        env.DB!.prepare('SELECT id,title,quantity,total,commission,florist_amount,delivery_type,address,lat,lng,phone,note,deliver_at,status,created_at,(SELECT name FROM accounts WHERE id=courier_id) AS courier_name FROM flower_orders WHERE florist_id=? AND status NOT IN (?,?) ORDER BY created_at DESC LIMIT 200').bind(u.userId, 'pending_payment', 'payment_failed').all(),
         env.DB!.prepare(`SELECT COALESCE(SUM(florist_amount),0) AS earned,COALESCE(SUM(commission),0) AS commission,COUNT(*) AS count FROM flower_orders WHERE florist_id=? AND status IN ${PAID}`).bind(u.userId).first(),
       ]);
       return json({ flowers: flowers.results, orders: orders.results, totals: sums, commissionRate: COMMISSION_RATE });
     }
     if (view === 'admin') {
       if (u.role !== 'admin') throw new ApiError(403, 'Ruxsat yo‘q.');
-      const totals = await env.DB!.prepare(`SELECT COALESCE(SUM(total),0) AS sales,COALESCE(SUM(commission),0) AS commission,COUNT(*) AS count FROM flower_orders WHERE status IN ${PAID}`).first();
-      return json({ totals, commissionRate: COMMISSION_RATE });
+      const [totals, orders] = await Promise.all([
+        env.DB!.prepare(`SELECT COALESCE(SUM(total),0) AS sales,COALESCE(SUM(commission),0) AS commission,COUNT(*) AS count FROM flower_orders WHERE status IN ${PAID}`).first(),
+        env.DB!.prepare("SELECT o.id,o.title,o.quantity,o.total,o.commission,o.florist_amount,o.delivery_type,o.address,o.status,o.created_at,COALESCE(f.name,'—') AS florist_name,COALESCE(c.name,'') AS courier_name FROM flower_orders o LEFT JOIN accounts f ON f.id=o.florist_id LEFT JOIN accounts c ON c.id=o.courier_id WHERE o.status<>'pending_payment' ORDER BY o.created_at DESC LIMIT 50").all(),
+      ]);
+      return json({ totals, orders: orders.results, commissionRate: COMMISSION_RATE });
+    }
+    if (view === 'courier') {
+      // Approved couriers: paid orders the florist accepted, not yet taken by someone else.
+      if (u.role !== 'courier' || !u.courierApproved) throw new ApiError(403, 'Kuryer akkaunti tasdiqlanmagan.');
+      const rows = await env.DB!.prepare("SELECT o.id,o.title,o.quantity,o.delivery_type,o.address,o.lat,o.lng,o.phone,o.note,o.deliver_at,o.status,o.courier_id,COALESCE(f.name,'') AS florist_name FROM flower_orders o LEFT JOIN accounts f ON f.id=o.florist_id WHERE (o.status='accepted' AND o.courier_id IS NULL) OR (o.courier_id=? AND o.status IN ('accepted','delivering')) ORDER BY o.created_at LIMIT 50").bind(u.userId).all();
+      return json({ orders: rows.results });
     }
     throw new ApiError(400, 'Noma’lum bo‘lim.');
   } catch (e) {
@@ -64,12 +77,13 @@ export async function POST(request: Request) {
       await throttle('flower-save:' + u.userId, 60);
       const row = { title: text(b.title, 2, 120), kind: text(b.kind, 2, 60), size: text(b.size, 1, 60), price: integer(b.price, 1000, 50000000), image: imageUrl(b.imageUrl) || '', description: text(b.description || '', 0, 1000), active: b.active === false ? 0 : 1 };
       if (b.id) {
-        const res = await env.DB!.prepare('UPDATE flowers SET title=?,kind=?,size=?,price=?,image_url=?,description=?,active=? WHERE id=? AND florist_id=?').bind(row.title, row.kind, row.size, row.price, row.image, row.description, row.active, text(b.id), u.userId).run();
+        const res = await env.DB!.prepare("UPDATE flowers SET title=?,kind=?,size=?,price=?,image_url=?,description=?,active=?,status='active',is_approved=1 WHERE id=? AND florist_id=?").bind(row.title, row.kind, row.size, row.price, row.image, row.description, row.active, text(b.id), u.userId).run();
         if (!res.meta.changes) throw new ApiError(404, 'Post topilmadi.');
         return json({ ok: true, id: b.id });
       }
       const id = crypto.randomUUID();
-      await env.DB!.prepare('INSERT INTO flowers (id,florist_id,title,kind,size,price,image_url,description,active,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id, u.userId, row.title, row.kind, row.size, row.price, row.image, row.description, row.active, new Date().toISOString()).run();
+      // A new post is on the public showcase at once: on sale, active and approved.
+      await env.DB!.prepare("INSERT INTO flowers (id,florist_id,title,kind,size,price,image_url,description,active,status,is_approved,created_at) VALUES (?,?,?,?,?,?,?,?,1,'active',1,?)").bind(id, u.userId, row.title, row.kind, row.size, row.price, row.image, row.description, new Date().toISOString()).run();
       return json({ ok: true, id }, 201);
     }
     if (b.action === 'remove') {
@@ -82,7 +96,7 @@ export async function POST(request: Request) {
       if (!cardBindingEnabled()) throw new ApiError(503, 'Karta orqali to‘lov hali ulanmagan.');
       const card = await env.DB!.prepare('SELECT token FROM payment_cards WHERE user_id=?').bind(u.userId).first<{ token: string }>();
       if (!card) throw new ApiError(402, 'To‘lov uchun avval bank kartangizni ulang (Profil → Karta).');
-      const f = await env.DB!.prepare("SELECT f.* FROM flowers f JOIN accounts a ON a.id=f.florist_id WHERE f.id=? AND f.active=1 AND a.role='florist' AND a.status='active'").bind(text(b.flowerId)).first<any>();
+      const f = await env.DB!.prepare('SELECT f.* FROM flowers f LEFT JOIN accounts a ON a.id=f.florist_id WHERE f.id=? AND ' + PUBLIC).bind(text(b.flowerId)).first<any>();
       if (!f) throw new ApiError(404, 'Gul topilmadi yoki sotuvda emas.');
       if (f.florist_id === u.userId) throw new ApiError(400, 'O‘z gulingizni buyurtma qilib bo‘lmaydi.');
       const quantity = integer(b.quantity, 1, 20),
@@ -120,6 +134,15 @@ export async function POST(request: Request) {
         throw new ApiError(402, 'Kartadan to‘lov o‘tmadi: ' + String((e as Error).message || '').slice(0, 120));
       }
       return json({ ok: true, id, total, commission, status: 'paid' }, 201);
+    }
+    if (b.action === 'courier_take' || b.action === 'courier_done') {
+      if (u.role !== 'courier' || !u.courierApproved) throw new ApiError(403, 'Kuryer akkaunti tasdiqlanmagan.');
+      const res =
+        b.action === 'courier_take'
+          ? await env.DB!.prepare("UPDATE flower_orders SET courier_id=?,status='delivering' WHERE id=? AND status='accepted' AND courier_id IS NULL").bind(u.userId, text(b.id)).run()
+          : await env.DB!.prepare("UPDATE flower_orders SET status='delivered' WHERE id=? AND courier_id=? AND status='delivering'").bind(text(b.id), u.userId).run();
+      if (!res.meta.changes) throw new ApiError(409, 'Buyurtmani boshqa kuryer olgan yoki holati o‘zgargan.');
+      return json({ ok: true });
     }
     if (b.action === 'status') {
       if (!florist) throw new ApiError(403, 'Ruxsat yo‘q.');

@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 export class ApiError extends Error { constructor(public status:number,message:string){super(message)} }
-export const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'private, no-store','Vary':'Cookie'}});
+// API data is always live: no browser, proxy or edge copy may be reused.
+export const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'private, no-store, no-cache, must-revalidate, max-age=0','Pragma':'no-cache','Vary':'Cookie'}});
 export function failure(e:unknown){return json({error:e instanceof ApiError?e.message:'So‘rov bajarilmadi. Keyinroq qayta urinib ko‘ring.'},e instanceof ApiError?e.status:503)}
 export function sameOrigin(request:Request){if(request.headers.get('origin')!==new URL(request.url).origin)throw new ApiError(403,'So‘rov manbasi tasdiqlanmadi.')}
 export async function body(request:Request){
