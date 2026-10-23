@@ -56,7 +56,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // Camera keys + vision
  r=await manage.POST(request('/api/manage',{action:'camera_key',restaurantId:id,label:'Zal'}));assert.equal(r.status,200);const {key}=await r.json();assert.match(key,/^rfcam_[a-f0-9]{48}$/);assert.ok(!JSON.stringify(db.prepare('SELECT * FROM camera_keys').all()).includes(key),'only the hash is stored');
  let visionCalls=0,visionAnswer={tables:[{number:1,status:'free',confidence:.9},{number:2,status:'occupied',confidence:.4},{number:9,status:'occupied',confidence:.99}]};
- const vision=load('app/api/manage/vision/route.ts',{...cf,'../../../access':{identity:async()=>user},'../../../http':httpNoLimit,'../../../plans':plans,'../../../vision':load('app/vision.ts',{})},{fetch:async(url,options)=>{visionCalls++;assert.equal(url,'https://api.openai.com/v1/chat/completions');const payload=JSON.parse(options.body);assert.equal(payload.model,'gpt-4o-mini');assert.equal(payload.response_format.type,'json_schema');assert.match(payload.messages[1].content[1].image_url.url,/^data:image\/jpeg;base64,/);return Response.json({choices:[{message:{content:JSON.stringify(visionAnswer)}}]})}});
+ const camAuth=load('app/camera-auth.ts',{...cf,'./access':{identity:async()=>user},'./http':httpNoLimit});
+ const vision=load('app/api/manage/vision/route.ts',{...cf,'../../../camera-auth':camAuth,'../../../http':httpNoLimit,'../../../plans':plans,'../../../vision':load('app/vision.ts',{})},{fetch:async(url,options)=>{visionCalls++;assert.equal(url,'https://api.openai.com/v1/chat/completions');const payload=JSON.parse(options.body);assert.equal(payload.model,'gpt-4o-mini');assert.equal(payload.response_format.type,'json_schema');assert.match(payload.messages[1].content[1].image_url.url,/^data:image\/jpeg;base64,/);return Response.json({choices:[{message:{content:JSON.stringify(visionAnswer)}}]})}});
  const frame=(headers,payload)=>new Request('https://test/api/manage/vision',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({restaurantId:id,mimeType:'image/jpeg',image:'AAAA',...payload})});
  assert.equal((await vision.POST(frame({Authorization:'Bearer rfcam_wrong'}))).status,401);
  // A fresh staff mark wins over the camera; once it is older than the live TTL the camera takes over.
@@ -68,6 +69,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal((await vision.POST(frame({Authorization:'Bearer '+key},{restaurantId:'legacy'}))).status,401,'key is bound to its restaurant');
  assert.equal((await vision.POST(frame({Origin:'https://evil'}))).status,403,'session uploads need same origin');
  db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);assert.equal((await vision.POST(frame({Authorization:'Bearer '+key}))).status,402,'vision is Premium');assert.equal(visionCalls,2);
+ // Smart Vision (on-device detection): statuses only, Business+ (liveTables), staff mark still wins.
+ const occupancy=load('app/api/manage/occupancy/route.ts',{...cf,'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans});
+ const occ=(headers,tables)=>occupancy.POST(new Request('https://test/api/manage/occupancy',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({restaurantId:id,tables})}));
+ const savedLive=db.prepare('SELECT * FROM table_live_status WHERE restaurant_id=?').all(id);db.prepare('DELETE FROM table_live_status WHERE restaurant_id=?').run(id);
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,200,'Business plan may use the camera page');
+ assert.deepEqual({...db.prepare('SELECT status,source FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id)},{status:'occupied',source:'camera'});
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:9,status:'free'}])).status,400,'unknown table');
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'reserved'}])).status,400,'only free/occupied');
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'free'},{number:1,status:'free'}])).status,400,'no duplicates');
+ assert.equal((await occ({Origin:'https://evil'},[{number:1,status:'free'}])).status,403,'browser posts need same origin');
+ db.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,2,'occupied','manual',1,?)").run(id,new Date().toISOString());
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:2,status:'free'}])).status,200);assert.equal(db.prepare('SELECT source FROM table_live_status WHERE restaurant_id=? AND table_number=2').get(id).source,'manual','fresh staff mark wins');
+ db.prepare("UPDATE restaurants SET plan='start' WHERE id=?").run(id);assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'free'}])).status,402,'Start plan has no live tables');db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);
+ db.prepare('DELETE FROM table_live_status WHERE restaurant_id=?').run(id);for(const l of savedLive)db.prepare('INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,?,?,?,?,?)').run(l.restaurant_id,l.table_number,l.status,l.source,l.confidence,l.updated_at);
 
  // Events feed for the admin orb
  db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('b1',?, 'c','2030-01-01','18:00',1,3,'+998901234567','pending',?)").run(id,iso(Date.now()-5000));

@@ -1,11 +1,9 @@
 import { env } from 'cloudflare:workers';
-import { identity } from '../../../access';
-import { ApiError, json, failure, sameOrigin, text, integer, throttle } from '../../../http';
+import { ApiError, json, failure, text, integer, throttle } from '../../../http';
+import { authorizeCamera as authorize } from '../../../camera-auth';
 import { requireFeature } from '../../../plans';
 import { IMAGE_TYPES, MAX_IMAGE_BASE64, readings, visionRequest, type VisionTable } from '../../../vision';
 export const dynamic = 'force-dynamic';
-
-const hex = (bytes: ArrayBuffer) => Array.from(new Uint8Array(bytes), (v) => v.toString(16).padStart(2, '0')).join('');
 
 async function readJson(request: Request) {
   if (request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json') throw new ApiError(415, 'JSON talab etiladi.');
@@ -20,24 +18,6 @@ async function readJson(request: Request) {
   } catch {
     throw new ApiError(400, 'Noto‘g‘ri ma’lumot.');
   }
-}
-
-/** Camera agents send `Authorization: Bearer rfcam_…`; managers use their normal session. */
-async function authorize(request: Request, restaurantId: string) {
-  const header = request.headers.get('authorization') || '';
-  if (header.startsWith('Bearer rfcam_')) {
-    const hash = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(header.slice(7).trim())));
-    const key = await env.DB!.prepare('SELECT id FROM camera_keys WHERE key_hash=? AND restaurant_id=? AND revoked=0').bind(hash, restaurantId).first<{ id: string }>();
-    if (!key) throw new ApiError(401, 'Kamera kaliti yaroqsiz.');
-    await env.DB!.prepare('UPDATE camera_keys SET last_used_at=? WHERE id=?').bind(new Date().toISOString(), key.id).run();
-    return 'camera';
-  }
-  sameOrigin(request);
-  const u = await identity();
-  if (!u || !['admin', 'restaurant_owner'].includes(u.role)) throw new ApiError(403, 'Ruxsat yo‘q.');
-  const owner = await env.DB!.prepare('SELECT owner_id FROM restaurants WHERE id=?').bind(restaurantId).first<{ owner_id: string | null }>();
-  if (!owner || (u.role !== 'admin' && owner.owner_id !== u.userId)) throw new ApiError(403, 'Restoranga ruxsat yo‘q.');
-  return 'manager';
 }
 
 export async function POST(request: Request) {

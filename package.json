@@ -16,7 +16,8 @@
     "build:3d": "vite build --config vite.menu-book.config.ts",
     "test": "node scripts/run-tests.mjs",
     "typecheck": "tsc --noEmit -p .",
-    "lint:ui": "eslint components vite.menu-book.config.ts"
+    "lint:ui": "eslint components vite.menu-book.config.ts",
+    "build:vision": "vite build --config vite.vision.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -51,6 +52,11 @@
     "@cloudflare/vite-plugin": "1.37.1",
     "@cloudflare/workers-types": "4.20260515.1",
     "@tailwindcss/postcss": "4.2.1",
+    "@tensorflow-models/coco-ssd": "2.2.3",
+    "@tensorflow/tfjs-backend-cpu": "4.22.0",
+    "@tensorflow/tfjs-backend-webgl": "4.22.0",
+    "@tensorflow/tfjs-converter": "4.22.0",
+    "@tensorflow/tfjs-core": "4.22.0",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",

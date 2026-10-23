@@ -73,3 +73,12 @@ Kuryerlar uchun AI yo‘q: mijoz AI'si kuryer va restoran egalariga ko‘rinmayd
 | Qo‘shimcha | — | yangi bron va kamera o‘zgarishida ovozli signal + xabar; kamera har 5 daqiqada kadr yuboradi (`RF_INTERVAL=300`) |
 
 Limit jadvali: `ai_quota (user_id, day, used)` — migratsiya `0020_ai_daily_quota.sql`.
+
+## Smart Vision — kamera orqali stol bandligi (brauzerda)
+
+- Sahifa: **Menyu → AI kamera** (`#/camera`), faqat restoran egasi va administrator uchun. Business va Premium tariflarida (`liveTables`) bazaga yozadi; restoran tanlanmasa sinov rejimi.
+- **Kamerani ulash** → brauzer ruxsat so‘raydi (`getUserMedia`). TensorFlow.js + coco-ssd (`public/rf-vision.js`, model `public/models/coco-ssd/`, ~20 MB, faqat shu sahifada yuklanadi) odamlarni **qurilmaning o‘zida** topadi. Video serverga yuborilmaydi.
+- Ekrandagi zonalar (stollar) sichqoncha/barmoq bilan suriladi, o‘ng pastki burchakdan kattalashtiriladi; zona qaysi stolga tegishli ekani pastdagi ro‘yxatdan tanlanadi. Zonalar shu brauzerda saqlanadi.
+- Odam zonada 3 soniya tursa — **Band**, chiqib ketgach 3 soniyadan so‘ng — **Bo‘sh**. Holat `POST /api/manage/occupancy` orqali `table_live_status` ga (`source='camera'`) yoziladi: o‘zgarganda va har daqiqada. Xodim qo‘lda qo‘ygan belgi 20 daqiqa ustun turadi.
+- Mijoz bron sahifasida bugungi va 2 soat ichidagi vaqt uchun kamera band deb belgilagan stollar «hozir band (AI kamera)» bo‘lib ko‘rinadi (15 soniyada yangilanadi).
+- Bundle: `pnpm build:vision`.

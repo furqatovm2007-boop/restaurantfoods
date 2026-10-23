@@ -13,6 +13,8 @@ let token: string | null = null;
 const eskizKey = () => (env.ESKIZ_SECRET_KEY?.trim() || env.ESKIZ_PASSWORD?.trim() || '');
 export const smsConfigured = () => !!(env.ESKIZ_EMAIL?.trim() && eskizKey());
 export const bookingOtpRequired = () => env.BOOKING_PHONE_OTP === 'true';
+/** One switch for every phone code (booking and profile): BOOKING_PHONE_OTP on and Eskiz keys present. */
+export const phoneOtpEnabled = () => bookingOtpRequired() && smsConfigured();
 
 async function login() {
   const form = new FormData();

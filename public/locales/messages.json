@@ -4378,5 +4378,35 @@
     "uz": "Raqam tasdiqlandi.",
     "ru": "Номер подтверждён.",
     "en": "Number verified."
+  },
+  "AI kamera": {
+    "uz": "AI kamera",
+    "ru": "AI-камера",
+    "en": "AI camera"
+  },
+  "Kamera tasviri faqat shu qurilmada tahlil qilinadi va hech qayerga yuborilmaydi. Bazaga faqat stollarning Bo‘sh / Band holati yoziladi.": {
+    "uz": "Kamera tasviri faqat shu qurilmada tahlil qilinadi va hech qayerga yuborilmaydi. Bazaga faqat stollarning Bo‘sh / Band holati yoziladi.",
+    "ru": "Видео анализируется только на этом устройстве и никуда не отправляется. В базу записывается лишь статус столов: свободен / занят.",
+    "en": "Video is analysed only on this device and never uploaded. Only each table’s free / occupied status is saved."
+  },
+  "Sinov rejimi (bazaga yozilmaydi)": {
+    "uz": "Sinov rejimi (bazaga yozilmaydi)",
+    "ru": "Тестовый режим (без записи в базу)",
+    "en": "Test mode (not saved)"
+  },
+  "AI modulini yuklab bo‘lmadi.": {
+    "uz": "AI modulini yuklab bo‘lmadi.",
+    "ru": "Не удалось загрузить AI-модуль.",
+    "en": "Could not load the AI module."
+  },
+  "Bu restoranda stollar yo‘q. Avval kabinetda stollarni qo‘shing.": {
+    "uz": "Bu restoranda stollar yo‘q. Avval kabinetda stollarni qo‘shing.",
+    "ru": "В этом ресторане нет столов. Сначала добавьте их в кабинете.",
+    "en": "This restaurant has no tables yet. Add them in the dashboard first."
+  },
+  "RESTORAN": {
+    "uz": "RESTORAN",
+    "ru": "РЕСТОРАН",
+    "en": "RESTAURANT"
   }
 }
