@@ -67,8 +67,8 @@ export async function POST(request: Request) {
     if (result.length)
       await env.DB!.batch(
         result.map((r) =>
-          env.DB!.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,?,?,'vision',?,?) ON CONFLICT(restaurant_id,table_number) DO UPDATE SET status=excluded.status,source=excluded.source,confidence=excluded.confidence,updated_at=excluded.updated_at WHERE table_live_status.source<>'manual' OR table_live_status.updated_at<?")
-            .bind(restaurantId, r.number, r.status, r.confidence, now, manualUntil),
+          env.DB!.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at,since) VALUES (?,?,?,'vision',?,?,?) ON CONFLICT(restaurant_id,table_number) DO UPDATE SET since=CASE WHEN table_live_status.status=excluded.status THEN COALESCE(table_live_status.since,excluded.since) ELSE excluded.since END,status=excluded.status,source=excluded.source,confidence=excluded.confidence,updated_at=excluded.updated_at WHERE table_live_status.source<>'manual' OR table_live_status.updated_at<?")
+            .bind(restaurantId, r.number, r.status, r.confidence, now, now, manualUntil),
         ),
       );
     return json({ ok: true, source, updatedAt: now, tables: result, skipped: tables.length - result.length });

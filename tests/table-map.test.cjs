@@ -10,4 +10,5 @@ assert.deepEqual({...at(1,[live(1,'free','manual')],19*60+45)},{status:'free',so
 assert.deepEqual({...at(2,[live(2,'reserved','manual')],600)},{status:'booked',source:'manual'});
 assert.deepEqual({...at(2,[live(2,'unknown','vision')],600)},{status:'free',source:null});
 assert.deepEqual({...tashkentNow(Date.parse('2026-10-21T20:10:00Z'))},{date:'2026-10-22',minutes:70},'UTC+5 rolls the date');
+assert.deepEqual({...at(1,[live(1,'cleaning','camera')],20*60)},{status:'cleaning',source:'camera'},'staff at the table (yellow) shows over a booking');assert.deepEqual({...at(2,[live(2,'cleaning','manual')],0)},{status:'cleaning',source:'manual'});
 console.log('PASS live table map: manual override > camera occupied > site booking > camera free, exclusive end, Tashkent clock.');

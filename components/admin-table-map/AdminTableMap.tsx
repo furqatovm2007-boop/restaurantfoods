@@ -4,7 +4,8 @@ import { STATUS_COLOR, tableStatus, tashkentNow, toMinutes, type MapBooking, typ
 /*
  * Live floor map for the restaurant dashboard. Each table is coloured by what is true now:
  *   red    occupied (AI camera or staff)
- *   yellow booked through the site for this moment, or marked reserved
+ *   blue   booked through the site for this moment, or marked reserved
+ *   yellow staff at the table (camera: someone standing / moving there — cleaning, serving)
  *   green  free
  * Staff can override a table by hand; "Auto" removes the override so camera and
  * bookings decide again. Data comes from /api/tables, refreshed every few seconds and
@@ -12,9 +13,9 @@ import { STATUS_COLOR, tableStatus, tashkentNow, toMinutes, type MapBooking, typ
  */
 type Lang = 'uz' | 'ru' | 'en';
 const COPY = {
-  uz: { title: 'Jonli stol xaritasi', free: 'Bo‘sh', occupied: 'Band', booked: 'Bron', auto: 'Avtomatik', floor: 'Qavat', seats: 'kishi', camera: 'AI kamera', manual: 'Qo‘lda', booking: 'Saytdan bron', next: 'Keyingi bron', none: 'Stollar hali joylashtirilmagan.', upgrade: 'Jonli holat Business va Premium tariflarida ishlaydi.', error: 'Holat saqlanmadi.', updated: 'Yangilandi', choose: 'Stolni tanlang va holatini belgilang.' },
-  ru: { title: 'Живая карта столов', free: 'Свободен', occupied: 'Занят', booked: 'Бронь', auto: 'Авто', floor: 'Этаж', seats: 'мест', camera: 'AI-камера', manual: 'Вручную', booking: 'Бронь с сайта', next: 'Следующая бронь', none: 'Столы ещё не расставлены.', upgrade: 'Живой статус доступен на тарифах Business и Premium.', error: 'Статус не сохранён.', updated: 'Обновлено', choose: 'Выберите стол и задайте статус.' },
-  en: { title: 'Live table map', free: 'Free', occupied: 'Occupied', booked: 'Booked', auto: 'Auto', floor: 'Floor', seats: 'seats', camera: 'AI camera', manual: 'Manual', booking: 'Site booking', next: 'Next booking', none: 'No tables placed yet.', upgrade: 'Live status is part of the Business and Premium plans.', error: 'Status was not saved.', updated: 'Updated', choose: 'Pick a table and set its status.' },
+  uz: { title: 'Jonli stol xaritasi', free: 'Bo‘sh', occupied: 'Band', booked: 'Bron', cleaning: 'Tozalanmoqda', auto: 'Avtomatik', floor: 'Qavat', seats: 'kishi', camera: 'AI kamera', manual: 'Qo‘lda', booking: 'Saytdan bron', next: 'Keyingi bron', none: 'Stollar hali joylashtirilmagan.', upgrade: 'Jonli holat Business va Premium tariflarida ishlaydi.', error: 'Holat saqlanmadi.', updated: 'Yangilandi', choose: 'Stolni tanlang va holatini belgilang.' },
+  ru: { title: 'Живая карта столов', free: 'Свободен', occupied: 'Занят', booked: 'Бронь', cleaning: 'Уборка', auto: 'Авто', floor: 'Этаж', seats: 'мест', camera: 'AI-камера', manual: 'Вручную', booking: 'Бронь с сайта', next: 'Следующая бронь', none: 'Столы ещё не расставлены.', upgrade: 'Живой статус доступен на тарифах Business и Premium.', error: 'Статус не сохранён.', updated: 'Обновлено', choose: 'Выберите стол и задайте статус.' },
+  en: { title: 'Live table map', free: 'Free', occupied: 'Occupied', booked: 'Booked', cleaning: 'Cleaning', auto: 'Auto', floor: 'Floor', seats: 'seats', camera: 'AI camera', manual: 'Manual', booking: 'Site booking', next: 'Next booking', none: 'No tables placed yet.', upgrade: 'Live status is part of the Business and Premium plans.', error: 'Status was not saved.', updated: 'Updated', choose: 'Pick a table and set its status.' },
 };
 
 interface TablesResponse {
@@ -95,7 +96,7 @@ export function AdminTableMap({ restaurantId, lang: rawLang = 'uz', pollSeconds 
   const ratio = data.width && data.length ? Math.min(1.6, Math.max(0.45, data.length / data.width)) : 0.62;
   const H = Math.round(100 * ratio);
   const statusOf = (n: number) => tableStatus(n, data.live, data.bookings, clock.minutes);
-  const counts = tables.reduce<Record<MapStatus, number>>((c, x) => (c[statusOf(x.number).status]++, c), { free: 0, occupied: 0, booked: 0 });
+  const counts = tables.reduce<Record<MapStatus, number>>((c, x) => (c[statusOf(x.number).status]++, c), { free: 0, occupied: 0, booked: 0, cleaning: 0 });
   const chosen = selected !== null ? tables.find((x) => x.number === selected) : undefined;
   const chosenState = chosen ? statusOf(chosen.number) : null;
   const nextBooking = chosen ? data.bookings.filter((b) => b.table_number === chosen.number && toMinutes(b.slot) > clock.minutes).sort((a, b) => toMinutes(a.slot) - toMinutes(b.slot))[0] : undefined;
@@ -105,7 +106,7 @@ export function AdminTableMap({ restaurantId, lang: rawLang = 'uz', pollSeconds 
   return (
     <div className="rf:grid rf:gap-3">
       <div className="rf:flex rf:flex-wrap rf:items-center rf:gap-3 rf:text-xs">
-        {(['free', 'booked', 'occupied'] as MapStatus[]).map((s) => (
+        {(['free', 'booked', 'cleaning', 'occupied'] as MapStatus[]).map((s) => (
           <span key={s} className="rf:inline-flex rf:items-center rf:gap-1.5">
             <i className="rf:inline-block rf:size-3 rf:rounded-full" style={{ background: STATUS_COLOR[s], boxShadow: `0 0 8px ${STATUS_COLOR[s]}` }} />
             {t[s]}: <b>{counts[s]}</b>

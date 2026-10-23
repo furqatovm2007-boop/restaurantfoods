@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /*
  * Smart Vision: the camera page detects people on the device (TensorFlow.js) and posts only
- * per-table "free" / "occupied" here; no frames reach the server. Statuses land in
+ * per-table "free" / "occupied" / "cleaning" (staff standing at the table) here; no frames reach the server. Statuses land in
  * table_live_status as source 'camera', so the live map and the customer booking plan show them.
  * A staff override ('manual') keeps priority for 20 minutes, as with the cloud vision agent.
  */
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const seen = new Set<number>();
     const rows = b.tables.map((t: any) => {
       if (!t || typeof t !== 'object' || !Number.isInteger(t.number) || !known.has(t.number) || seen.has(t.number)) throw new ApiError(400, 'Stol raqami noto‘g‘ri yoki restoranda yo‘q.');
-      if (!['free', 'occupied'].includes(t.status)) throw new ApiError(400, 'Holat noto‘g‘ri.');
+      if (!['free', 'occupied', 'cleaning'].includes(t.status)) throw new ApiError(400, 'Holat noto‘g‘ri.');
       seen.add(t.number);
       const confidence = typeof t.confidence === 'number' && Number.isFinite(t.confidence) ? Math.max(0, Math.min(1, t.confidence)) : null;
       return { number: t.number as number, status: t.status as string, confidence };
@@ -43,8 +43,8 @@ export async function POST(request: Request) {
     const manualUntil = new Date(Date.now() - 20 * 60000).toISOString();
     await env.DB!.batch(
       rows.map((r: { number: number; status: string; confidence: number | null }) =>
-        env.DB!.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,?,?,'camera',?,?) ON CONFLICT(restaurant_id,table_number) DO UPDATE SET status=excluded.status,source=excluded.source,confidence=excluded.confidence,updated_at=excluded.updated_at WHERE table_live_status.source<>'manual' OR table_live_status.updated_at<?")
-          .bind(restaurantId, r.number, r.status, r.confidence, now, manualUntil),
+        env.DB!.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at,since) VALUES (?,?,?,'camera',?,?,?) ON CONFLICT(restaurant_id,table_number) DO UPDATE SET since=CASE WHEN table_live_status.status=excluded.status THEN COALESCE(table_live_status.since,excluded.since) ELSE excluded.since END,status=excluded.status,source=excluded.source,confidence=excluded.confidence,updated_at=excluded.updated_at WHERE table_live_status.source<>'manual' OR table_live_status.updated_at<?")
+          .bind(restaurantId, r.number, r.status, r.confidence, now, now, manualUntil),
       ),
     );
     return json({ ok: true, source, updatedAt: now, count: rows.length });

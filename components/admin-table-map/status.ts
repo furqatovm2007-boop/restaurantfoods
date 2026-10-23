@@ -1,5 +1,5 @@
 /* Status rules for the live table map, kept free of React so they are unit-tested. */
-export type MapStatus = 'free' | 'occupied' | 'booked';
+export type MapStatus = 'free' | 'occupied' | 'booked' | 'cleaning';
 
 export interface MapTable {
   number: number;
@@ -16,6 +16,7 @@ export interface MapLive {
   source: string;
   confidence: number | null;
   updated_at: string;
+  since?: string | null;
 }
 export interface MapBooking {
   table_number: number;
@@ -23,7 +24,8 @@ export interface MapBooking {
   end_slot: string;
 }
 
-export const STATUS_COLOR: Record<MapStatus, string> = { free: '#22c55e', occupied: '#ef4444', booked: '#facc15' };
+// Yellow is staff at the table (cleaning / serving); site bookings are blue.
+export const STATUS_COLOR: Record<MapStatus, string> = { free: '#22c55e', occupied: '#ef4444', booked: '#3b82f6', cleaning: '#facc15' };
 
 export const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
@@ -42,9 +44,9 @@ export function tashkentNow(now = Date.now()) {
  */
 export function tableStatus(number: number, live: MapLive[], bookings: MapBooking[], minutes: number): { status: MapStatus; source: 'manual' | 'camera' | 'booking' | null } {
   const mark = live.find((l) => l.table_number === number && l.status !== 'unknown');
-  const named = (s: string): MapStatus => (s === 'occupied' ? 'occupied' : s === 'reserved' ? 'booked' : 'free');
+  const named = (s: string): MapStatus => (s === 'occupied' ? 'occupied' : s === 'reserved' ? 'booked' : s === 'cleaning' ? 'cleaning' : 'free');
   if (mark?.source === 'manual') return { status: named(mark.status), source: 'manual' };
-  if (mark?.status === 'occupied') return { status: 'occupied', source: 'camera' };
+  if (mark?.status === 'occupied' || mark?.status === 'cleaning') return { status: named(mark.status), source: 'camera' };
   if (bookings.some((b) => b.table_number === number && toMinutes(b.slot) <= minutes && minutes < toMinutes(b.end_slot))) return { status: 'booked', source: 'booking' };
   if (mark) return { status: named(mark.status), source: 'camera' };
   return { status: 'free', source: null };

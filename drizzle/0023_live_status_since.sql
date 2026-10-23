@@ -1,0 +1,1 @@
+ALTER TABLE `table_live_status` ADD `since` text;

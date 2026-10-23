@@ -27,7 +27,7 @@ export const blogPosts=sqliteTable('blog_posts',{id:text('id').primaryKey(),slug
 
 export const persistentSessions=sqliteTable('persistent_sessions',{tokenHash:text('token_hash').primaryKey(),userId:text('user_id').notNull(),sessionKey:text('session_key').notNull(),startedAt:integer('started_at').notNull(),expiresAt:integer('expires_at').notNull()});
 
-export const tableLiveStatus=sqliteTable('table_live_status',{restaurantId:text('restaurant_id').notNull().references(()=>restaurants.id),tableNumber:integer('table_number').notNull(),status:text('status').notNull(),source:text('source').notNull(),confidence:real('confidence'),updatedAt:text('updated_at').notNull()},t=>[primaryKey({columns:[t.restaurantId,t.tableNumber]})])
+export const tableLiveStatus=sqliteTable('table_live_status',{restaurantId:text('restaurant_id').notNull().references(()=>restaurants.id),tableNumber:integer('table_number').notNull(),status:text('status').notNull(),source:text('source').notNull(),confidence:real('confidence'),updatedAt:text('updated_at').notNull(),since:text('since')},t=>[primaryKey({columns:[t.restaurantId,t.tableNumber]})])
 
 export const cameraKeys=sqliteTable('camera_keys',{id:text('id').primaryKey(),restaurantId:text('restaurant_id').notNull().references(()=>restaurants.id),keyHash:text('key_hash').notNull().unique(),label:text('label').notNull().default(''),createdAt:text('created_at').notNull(),lastUsedAt:text('last_used_at'),revoked:integer('revoked').notNull().default(0)})
 

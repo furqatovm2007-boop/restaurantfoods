@@ -76,7 +76,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,200,'Business plan may use the camera page');
  assert.deepEqual({...db.prepare('SELECT status,source FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id)},{status:'occupied',source:'camera'});
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:9,status:'free'}])).status,400,'unknown table');
- assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'reserved'}])).status,400,'only free/occupied');
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'reserved'}])).status,400,'only free/occupied/cleaning');
+ const sinceA=db.prepare('SELECT since FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id).since;assert.ok(sinceA);
+ db.prepare("UPDATE table_live_status SET since='2026-01-01T00:00:00.000Z' WHERE restaurant_id=? AND table_number=1").run(id);
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied'}])).status,200);assert.equal(db.prepare('SELECT since FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id).since,'2026-01-01T00:00:00.000Z','heartbeat keeps since');
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'cleaning'}])).status,200);{const row=db.prepare('SELECT status,since FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id);assert.equal(row.status,'cleaning');assert.notEqual(row.since,'2026-01-01T00:00:00.000Z','a new status restarts since')}
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'free'},{number:1,status:'free'}])).status,400,'no duplicates');
  assert.equal((await occ({Origin:'https://evil'},[{number:1,status:'free'}])).status,403,'browser posts need same origin');
  db.prepare("INSERT INTO table_live_status (restaurant_id,table_number,status,source,confidence,updated_at) VALUES (?,2,'occupied','manual',1,?)").run(id,new Date().toISOString());

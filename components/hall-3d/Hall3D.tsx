@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasTexture, MathUtils, SRGBColorSpace, Vector3, type Group } from 'three';
 import { lowEndDevice, ROTATE_TEXT, useLandscapePhone } from '../shared/device';
 
-export type TableState = 'free' | 'booked' | 'occupied' | 'unavailable';
+export type TableState = 'free' | 'booked' | 'occupied' | 'cleaning' | 'unavailable';
 
 export interface HallTable {
   number: number;
@@ -34,14 +34,15 @@ const COLORS: Record<TableState | 'selected', string> = {
   free: '#00c9a7',
   booked: '#e0697a',
   occupied: '#f0a35e',
+  cleaning: '#facc15',
   unavailable: '#4b6470',
   selected: '#e0c791',
 };
 
 const LEGEND: Record<string, Record<TableState | 'selected', string>> = {
-  uz: { free: 'Bo‘sh', booked: 'Band (bron)', occupied: 'Hozir band', unavailable: 'Mos emas', selected: 'Tanlangan' },
-  ru: { free: 'Свободен', booked: 'Забронирован', occupied: 'Сейчас занят', unavailable: 'Не подходит', selected: 'Выбран' },
-  en: { free: 'Free', booked: 'Booked', occupied: 'In use now', unavailable: 'Not suitable', selected: 'Selected' },
+  uz: { free: 'Bo‘sh', booked: 'Band (bron)', occupied: 'Hozir band', cleaning: 'Tozalanmoqda', unavailable: 'Mos emas', selected: 'Tanlangan' },
+  ru: { free: 'Свободен', booked: 'Забронирован', occupied: 'Сейчас занят', cleaning: 'Уборка', unavailable: 'Не подходит', selected: 'Выбран' },
+  en: { free: 'Free', booked: 'Booked', occupied: 'In use now', cleaning: 'Being cleaned', unavailable: 'Not suitable', selected: 'Selected' },
 };
 
 function numberTexture(n: number) {
@@ -270,7 +271,7 @@ export function Hall3D({ tables, width, length, floor = 1, states, selected, gue
         <OrbitRig radius={reduced ? radius * 1.1 : radius} />
       </Canvas>
       <ul className="rf:pointer-events-none rf:absolute rf:bottom-2 rf:left-2 rf:m-0 rf:flex rf:list-none rf:flex-wrap rf:gap-1.5 rf:p-0 rf:text-[11px] rf:text-text">
-        {(['free', 'booked', 'occupied', 'selected'] as const).map((k) => (
+        {(['free', 'booked', 'occupied', 'cleaning', 'selected'] as const).map((k) => (
           <li key={k} className="rf:flex rf:items-center rf:gap-1.5 rf:rounded-full rf:bg-night/80 rf:px-2 rf:py-1">
             <span className="rf:inline-block rf:size-2.5 rf:rounded-full" style={{ background: COLORS[k] }} />
             {legend[k]}
