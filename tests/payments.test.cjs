@@ -31,12 +31,15 @@ let r=await otpRoute.POST(request('/api/bookings/phone-otp',{phone:'+99890123456
 assert.ok(!JSON.stringify(db.prepare('SELECT * FROM booking_phone_otps').all()).includes(smsCode),'code stored hashed');
 assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode==='000000'?'111111':'000000'})).status,400,'wrong code');
 assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode,phone:'+998901111111'})).status,400,'code bound to phone');
+db.prepare("INSERT OR IGNORE INTO accounts(id,email,name,created_at) VALUES ('client','c@x','C','now')").run();
 r=await book({phoneOtpId:otp.id,phoneCode:smsCode});assert.equal(r.status,201);const created=await r.json();
+assert.deepEqual({...db.prepare("SELECT contact_phone,contact_phone_verified FROM accounts WHERE id='client'").get()},{contact_phone:'+998901234567',contact_phone_verified:1},'a booking code also verifies the account phone');db.prepare("UPDATE accounts SET contact_phone_verified=0 WHERE id='client'").run();
 assert.equal(created.deposit.amount,50000);assert.ok(created.deposit.links.click.includes('transaction_param='+created.deposit.id));
 assert.ok(atob(created.deposit.links.payme.split('/').pop()).includes('ac.deposit_id='+created.deposit.id+';a=5000000;'));
 assert.equal(calls.length,0,'restaurant is not notified before the deposit is paid');
 assert.equal(db.prepare('SELECT phone_verified,deposit_status FROM bookings WHERE id=?').get(created.id).deposit_status,'pending');
 assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode,tableNumber:2})).status,400,'code is single use');
+db.prepare("UPDATE accounts SET contact_phone_verified=1 WHERE id='client'").run();r=await book({tableNumber:4,slot:'14:00',endSlot:'16:00'});assert.equal(r.status,201,'an SMS-verified account number needs no new code');db.prepare("UPDATE bookings SET status='cancelled' WHERE id=?").run((await r.json()).id);db.prepare('UPDATE rate_limits SET count=count-1').run();db.prepare("UPDATE accounts SET contact_phone='',contact_phone_verified=0 WHERE id='client'").run();
 // A phone-verified account booking with its own number skips SMS.
 user={...user,phoneVerified:true,phone:'998901234567'};
 
@@ -123,7 +126,8 @@ r=await prof({action:'contact-otp',phone:'+998907777777'});assert.equal(r.status
 assert.equal((await prof({action:'contact-verify',phone:'+998907777777',otpId:pOtp.id,code:pCode==='000000'?'111111':'000000'})).status,400,'wrong code');
 r=await prof({action:'contact-verify',phone:'+998907777777',otpId:pOtp.id,code:pCode});assert.equal(r.status,200);assert.equal((await r.json()).verified,true);
 assert.deepEqual({...db.prepare("SELECT contact_phone,contact_phone_verified FROM accounts WHERE id='client'").get()},{contact_phone:'+998907777777',contact_phone_verified:1});
-assert.equal((await prof({action:'contact-phone',phone:'+998908888888'})).status,200);assert.equal(db.prepare("SELECT contact_phone_verified v FROM accounts WHERE id='client'").get().v,0,'changing the number drops verification');
+assert.equal((await prof({action:'contact-phone',phone:'+998908888888'})).status,400,'with SMS on, a new number needs its code');assert.equal(db.prepare("SELECT contact_phone_verified v FROM accounts WHERE id='client'").get().v,1,'verified number untouched');
+assert.equal((await prof({action:'contact-phone',phone:''})).status,400,'customers keep a phone');
 assert.equal((await prof({action:'address',address:'Samarqand, Registon 1',latitude:39.65,longitude:66.97})).status,200);
 assert.equal(db.prepare("SELECT address FROM accounts WHERE id='client'").get().address,'Samarqand, Registon 1');
 assert.equal((await prof({action:'address',address:'x'})).status,400);

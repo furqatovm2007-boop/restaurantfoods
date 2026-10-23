@@ -218,3 +218,36 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .delivery-headline strong{font-size:1.1rem;flex:1 1 100%}
 .delivery-eta{font-weight:800}
 @media (prefers-reduced-motion:reduce){.rf-map-mark{transition:none}}
+/* Phones: the booking "Your selection" dialog and menu never get wider than the screen.
+   `1fr` columns cannot shrink below their widest child (the category tabs), so use minmax(0,1fr),
+   let the tabs scroll sideways and wrap long names and prices. */
+@media (max-width:700px){
+.booking-meals-dialog,.booking-meals-dialog *{box-sizing:border-box}
+.booking-meals-dialog{width:100vw;max-width:100vw;overflow-x:hidden;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
+.booking-meals-head{flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.booking-meals-head>div{min-width:0;flex:1 1 220px}
+.booking-meals-head h2{font-size:22px;overflow-wrap:anywhere}
+.booking-meals-grid{grid-template-columns:minmax(0,1fr);gap:16px}
+.booking-meals-grid>*{min-width:0;max-width:100%}
+.meal-category-tabs{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;max-width:100%;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.meal-category-tabs::-webkit-scrollbar{display:none}
+.meal-category-tabs button{flex:0 0 auto;white-space:nowrap}
+.booking-meal-card{grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px;max-width:100%}
+.booking-meal-card img,.booking-meal-placeholder{width:64px;height:64px}
+.booking-meal-card>div{min-width:0}
+.booking-meal-card h3,.booking-meal-card p,.booking-meal-card small{overflow-wrap:anywhere}
+.booking-meal-stepper{justify-self:stretch;justify-content:flex-end}
+.booking-meal-stepper button{min-width:44px;min-height:44px}
+.booking-meal-stepper input{width:52px;min-height:44px}
+.booking-meals-summary{padding:16px;max-width:100%}
+.booking-meals-summary [data-meals-summary] p{gap:10px;overflow-wrap:anywhere}
+.booking-meals-summary [data-meals-summary] p>*:last-child,.booking-meals-total>*:last-child{white-space:nowrap;flex:0 0 auto}
+.booking-meals-review{padding:28px 14px}
+.booking-meals-summary>.badge{display:inline-block;margin-bottom:10px}
+/* Restaurant page, menu cards, booking form and cart. */
+#content,.panel,.food-card,.menu-category,.cart-row,form.form{max-width:100%;box-sizing:border-box;min-width:0}
+.panel .two{grid-template-columns:minmax(0,1fr)}
+.food-card h3,.food-card p,.panel h2,.panel h3{overflow-wrap:anywhere}
+.row-actions,.contact-phone-actions{flex-wrap:wrap}
+.row-actions>*,.contact-phone-actions>*{min-height:44px}
+}

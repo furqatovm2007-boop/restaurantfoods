@@ -4353,5 +4353,30 @@
     "uz": "Kuryer taomni olgach, joylashuvi shu yerda ko‘rinadi.",
     "ru": "Когда курьер заберёт заказ, его место появится здесь.",
     "en": "Once the courier picks up the order, their location shows here."
+  },
+  "Raqam SMS orqali tasdiqlangan.": {
+    "uz": "Raqam SMS orqali tasdiqlangan.",
+    "ru": "Номер подтверждён по SMS.",
+    "en": "Number verified by SMS."
+  },
+  "Raqam hali tasdiqlanmagan.": {
+    "uz": "Raqam hali tasdiqlanmagan.",
+    "ru": "Номер ещё не подтверждён.",
+    "en": "Number not verified yet."
+  },
+  "Saqlash": {
+    "uz": "Saqlash",
+    "ru": "Сохранить",
+    "en": "Save"
+  },
+  "SMS kodni kiriting.": {
+    "uz": "SMS kodni kiriting.",
+    "ru": "Введите код из SMS.",
+    "en": "Enter the SMS code."
+  },
+  "Raqam tasdiqlandi.": {
+    "uz": "Raqam tasdiqlandi.",
+    "ru": "Номер подтверждён.",
+    "en": "Number verified."
   }
 }
