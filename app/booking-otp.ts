@@ -27,7 +27,8 @@ export async function sendBookingOtp(userId: string, phone: string) {
   const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
   const now = Date.now();
   await env.DB!.prepare('INSERT INTO booking_phone_otps (id,user_id,phone,code_hash,expires_at,created_at) VALUES (?,?,?,?,?,?)').bind(id, userId, phone, await digest(id + code), now + TTL_MS, now).run();
-  await sendSms(phone, `RestaurantFoods: bron tasdiqlash kodi ${code}. Kodni hech kimga bermang.`);
+  // Must match the text approved in the Eskiz cabinet word for word (Eskiz wants the site name and purpose).
+  await sendSms(phone, `restaurantfoods.online saytida telefon raqamingizni tasdiqlash uchun kod: ${code}. Kodni hech kimga bermang.`);
   return { id, expiresIn: TTL_MS / 1000 };
 }
 

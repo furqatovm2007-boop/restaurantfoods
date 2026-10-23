@@ -46,7 +46,7 @@ To‘lov holati faqat Click/Payme serverlaridan keladigan so‘rovlar orqali o�
 
 - `ESKIZ_EMAIL` (Secret), `ESKIZ_SECRET_KEY` (Secret — Eskiz kabinetidagi maxfiy kalit, oddiy parol emas; eski `ESKIZ_PASSWORD` ham ishlaydi), ixtiyoriy `ESKIZ_FROM` (standart `4546`)
 - `BOOKING_PHONE_OTP` = `true` — bronda SMS kodni majburiy qiladi
-- Eskiz kabinetida shu shablonni tasdiqlating: `RestaurantFoods: bron tasdiqlash kodi %d. Kodni hech kimga bermang.`
+- Eskiz kabinetida (Mening matnlarim) shu matnni misol kod bilan moderatsiyaga yuboring: `restaurantfoods.online saytida telefon raqamingizni tasdiqlash uchun kod: 123456. Kodni hech kimga bermang.` Test rejimida bu ishlamaydi — avval shartnoma (@eskizhelpbot).
 - Akkaunti aynan shu telefon raqami bilan tasdiqlangan mijozdan qayta kod so‘ralmaydi.
 
 ## 4. Admin jonli stol xaritasi
