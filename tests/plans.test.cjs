@@ -10,7 +10,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 
  // Pure plan logic
  let s=plans.planState({plan:'business',trial_ends_at:iso(now+3*DAY)},now);assert.equal(s.status,'trial');assert.equal(s.effective,'premium');assert.equal(s.daysLeft,3);assert.ok(s.features.clientAi&&s.features.visionTables);
- s=plans.planState({plan:'business',trial_ends_at:iso(now-DAY),paid_until:iso(now+10*DAY)},now);assert.equal(s.status,'active');assert.equal(s.effective,'business');assert.ok(s.features.menu3d&&s.features.adminAi&&s.features.liveTables);assert.ok(!s.features.room3d&&!s.features.clientAi&&!s.features.visionTables,'3D hall and customer AI are Premium only');
+ s=plans.planState({plan:'business',trial_ends_at:iso(now-DAY),paid_until:iso(now+10*DAY)},now);assert.equal(s.status,'active');assert.equal(s.effective,'business');assert.ok(s.features.menu3d&&s.features.adminAi&&!s.features.liveTables&&!s.features.visionTables,'Business: 3D menu + limited admin AI, no camera/live map');assert.ok(!s.features.room3d&&!s.features.clientAi&&!s.features.visionTables,'3D hall and customer AI are Premium only');
  s=plans.planState({plan:'premium',trial_ends_at:iso(now-DAY)},now);assert.equal(s.status,'payment_required');assert.equal(s.effective,'start');assert.ok(Object.values(s.features).every(v=>!v));
  s=plans.planState({plan:'start',paid_until:iso(now+DAY)},now);assert.equal(s.effective,'start');assert.ok(!s.features.menu3d);
  assert.equal(plans.planState({plan:'bogus'},now).plan,'premium');
@@ -42,12 +42,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const catalog=load('app/api/catalog/route.ts',{...cf,'../../auth-service':{authConfig:()=>({url:'',key:''})},'../../demo-drinks':{withDemoDrinks:(_r,m)=>m},'../../http':http,'../../plans':plans},{fetch:async()=>{throw Error('offline')}});
  const cat=await (await catalog.GET()).json(),entry=cat.restaurants.find(x=>x.id===id);assert.equal(entry.features.menu3d,true);assert.equal(entry.features.clientAi,false);assert.ok(!('paid_until' in entry)&&!('trial_ends_at' in entry)&&!('plan' in entry));
 
- // Tables: live status is a Business feature
+ // Tables: live status (camera / live map) is Premium only
  db.exec(`INSERT INTO restaurant_tables(id,restaurant_id,number,seats,x,y) VALUES ('t1','${id}',1,4,20,30),('t2','${id}',2,2,60,30),('t3','legacy',1,4,50,50)`);
  const tables=load('app/api/tables/route.ts',{...cf,...integrations,'../../access':{identity:async()=>user},'../../http':http,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../plans':plans});
+ assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'occupied'}))).status,402,'Business has no live table map');
+ db.prepare("UPDATE restaurants SET plan='premium' WHERE id=?").run(id);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'occupied'}))).status,200);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'party'}))).status,400);
- let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:false,liveTables:true},'Business: live tables, no 3D hall');assert.equal(t.live[0].status,'occupied');
+ let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:true,liveTables:true},'Premium: live tables and the 3D hall');assert.equal(t.live[0].status,'occupied');
  db.prepare("UPDATE restaurants SET paid_until=NULL,trial_ends_at=? WHERE id=?").run(iso(Date.now()-DAY),id);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:2,status:'free'}))).status,402,'expired trial loses live tables');
  t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.equal(t.features.room3d,false);assert.deepEqual(t.live,[]);
@@ -73,7 +75,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const occupancy=load('app/api/manage/occupancy/route.ts',{...cf,'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans});
  const occ=(headers,tables)=>occupancy.POST(new Request('https://test/api/manage/occupancy',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({restaurantId:id,tables})}));
  const savedLive=db.prepare('SELECT * FROM table_live_status WHERE restaurant_id=?').all(id);db.prepare('DELETE FROM table_live_status WHERE restaurant_id=?').run(id);
- assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,200,'Business plan may use the camera page');
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,402,'Business: no AI camera');db.prepare("UPDATE restaurants SET plan='premium' WHERE id=?").run(id);
+ assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,200,'Premium uses the camera page');
  assert.deepEqual({...db.prepare('SELECT status,source FROM table_live_status WHERE restaurant_id=? AND table_number=1').get(id)},{status:'occupied',source:'camera'});
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:9,status:'free'}])).status,400,'unknown table');
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'reserved'}])).status,400,'only free/occupied/cleaning');

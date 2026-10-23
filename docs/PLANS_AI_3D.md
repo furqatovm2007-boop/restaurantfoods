@@ -7,8 +7,8 @@
 | 2D menyu, ro‘yxatli bron | ✓ | ✓ | ✓ |
 | To‘liq ekranli 3D menyu (`menu3d`) | — | ✓ | ✓ |
 | 3D zalda stol tanlab bron (`room3d`) | — | — | ✓ |
-| Admin AI Orb (`adminAi`) | — | ✓ | ✓ |
-| Stollar holati real vaqtda (`liveTables`) | — | ✓ | ✓ |
+| Admin AI Orb (`adminAi`) | — | ✓ kuniga 30 savol, faqat bronlar va kelgan so‘rovlar | ✓ cheklovsiz, barcha ma’lumot |
+| AI kamera + jonli stol xaritasi (`liveTables`) | — | — | ✓ |
 | Mijozlar uchun ovozli 3D AI (`clientAi`) | — | — | ✓ |
 | Kamera → Vision → stollar bandligi (`visionTables`) | — | — | ✓ |
 | Analitika (`analytics`) | — | — | ✓ |
@@ -65,7 +65,7 @@ Kuryerlar uchun AI yo‘q: mijoz AI'si kuryer va restoran egalariga ko‘rinmayd
 | | Mijoz AI (3D avatar) | Restoran Admin AI (Orb) |
 |---|---|---|
 | Kimga | mijozlar | restoran egasi va administrator |
-| Tarif | Premium yoki 14 kunlik trial (`clientAi`) | Business, Premium yoki trial (`adminAi`) |
+| Tarif | Premium yoki 14 kunlik trial (`clientAi`) | Business (kuniga 30 savol, faqat bronlar/so‘rovlar), Premium yoki trial — cheklovsiz (`adminAi`) |
 | Qayerda | sayt bo‘ylab, Premium/trial restoranlar haqida | faqat `#/manage` kabinetida, o‘ng pastki burchak |
 | Matn | `POST /api/ai/stream` (`/api/ai` — JSON) | `POST /api/manage/assistant` |
 | Ovoz | `POST /api/ai-voice` | `POST /api/manage/voice` |
@@ -76,9 +76,15 @@ Limit jadvali: `ai_quota (user_id, day, used)` — migratsiya `0020_ai_daily_quo
 
 ## Smart Vision — kamera orqali stol bandligi (brauzerda)
 
-- Sahifa: **Menyu → AI kamera** (`#/camera`), faqat restoran egasi va administrator uchun. Business va Premium tariflarida (`liveTables`) bazaga yozadi; restoran tanlanmasa sinov rejimi.
+- Sahifa: **Menyu → AI kamera** (`#/camera`), faqat restoran egasi va administrator uchun. faqat Premium (va 14 kunlik trial) tarifida ishlaydi (`liveTables`); Business/Start’da «Faqat Premium tarifda mavjud» chiqadi. Restoran tanlanmasa sinov rejimi.
 - **Kamerani ulash** → brauzer ruxsat so‘raydi (`getUserMedia`). TensorFlow.js + coco-ssd (`public/rf-vision.js`, model `public/models/coco-ssd/`, ~20 MB, faqat shu sahifada yuklanadi) odamlarni **qurilmaning o‘zida** topadi. Video serverga yuborilmaydi.
 - Ekrandagi zonalar (stollar) sichqoncha/barmoq bilan suriladi, o‘ng pastki burchakdan kattalashtiriladi; zona qaysi stolga tegishli ekani pastdagi ro‘yxatdan tanlanadi. Zonalar shu brauzerda saqlanadi.
 - Har bir odam faqat bitta stolga — beli/oyog‘i turgan zonaga — tegishli bo‘ladi. Qimirlamay o‘tirgan odam (o‘tirgan shakli) 3 soniya tursa — **Band** (qizil); faqat turgan/yurgan odam bo‘lsa (ofitsiant, tozalash) 1,5 soniyadan so‘ng — **Tozalanmoqda** (sariq); hech kim bo‘lmasa 3 soniyadan so‘ng — **Bo‘sh**. Holat qachondan beri ekani (`since`) saqlanadi va mijozga «🔴 hozir band · 14:05 dan beri» bo‘lib ko‘rinadi. Holat `POST /api/manage/occupancy` orqali `table_live_status` ga (`source='camera'`) yoziladi: o‘zgarganda va har daqiqada. Xodim qo‘lda qo‘ygan belgi 20 daqiqa ustun turadi.
 - Mijoz bron sahifasida bugungi va 2 soat ichidagi vaqt uchun kamera band deb belgilagan stollar «hozir band (AI kamera)» bo‘lib ko‘rinadi (15 soniyada yangilanadi).
 - Bundle: `pnpm build:vision`.
+
+## Bron qoidalari (kamera va bekor qilish)
+
+- **Walk-in:** kamera (yoki xodim) stolni `occupied` deb belgilagan bo‘lsa (oxirgi 20 daqiqa ichida), boshlanishi hozirdan 2 soatgacha bo‘lgan bron `POST /api/bookings` da 409 bilan rad etiladi: «Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki vaqt tanlang». Sariq (`cleaning`) bloklamaydi. Saytda shu stol uchun bron formasi o‘rniga ogohlantirish chiqadi.
+- **Bekor qilish:** mijoz bronni boshlanishidan kamida 2 soat oldin bekor qila oladi (`PATCH /api/bookings`); kamroq qolsa 400. «Bronlarim»da tugma nofaol va sababi yoziladi. Bron formasida va tasdiqlash oynasida bu qoida ogohlantirish sifatida turadi.
+- Qoidalar `app/booking-rules.ts` da; testlar: `tests/walk-in-booking.test.cjs`, `tests/admin-ai-plan.test.cjs`.

@@ -4408,5 +4408,85 @@
     "uz": "RESTORAN",
     "ru": "РЕСТОРАН",
     "en": "RESTAURANT"
+  },
+  "⚠️ Muhim qoida:": {
+    "uz": "⚠️ Muhim qoida:",
+    "ru": "⚠️ Важное правило:",
+    "en": "⚠️ Important rule:"
+  },
+  "Bron qilingan joyni belgilangan vaqtdan kamida 2 soat oldin bekor qilish mumkin. Belgilangan vaqtga 2 soatdan kam vaqt qolganda bronni bekor qilib bo‘lmaydi.": {
+    "uz": "Bron qilingan joyni belgilangan vaqtdan kamida 2 soat oldin bekor qilish mumkin. Belgilangan vaqtga 2 soatdan kam vaqt qolganda bronni bekor qilib bo‘lmaydi.",
+    "ru": "Бронь можно отменить не позднее чем за 2 часа до назначенного времени. Если до брони осталось меньше 2 часов, отменить её нельзя.",
+    "en": "A booking can be cancelled up to 2 hours before its time. With less than 2 hours left it can no longer be cancelled."
+  },
+  "Bron vaqtiga 2 soatdan kam qoldi — bekor qilib bo‘lmaydi.": {
+    "uz": "Bron vaqtiga 2 soatdan kam qoldi — bekor qilib bo‘lmaydi.",
+    "ru": "До брони меньше 2 часов — отменить нельзя.",
+    "en": "Less than 2 hours left — it can no longer be cancelled."
+  },
+  "🔴 Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki vaqt tanlang. Keyingi 2 soatga bron qilib bo‘lmaydi.": {
+    "uz": "🔴 Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki vaqt tanlang. Keyingi 2 soatga bron qilib bo‘lmaydi.",
+    "ru": "🔴 За этим столом сейчас сидят гости — выберите другой стол или время. На ближайшие 2 часа забронировать нельзя.",
+    "en": "🔴 Guests are sitting at this table now — choose another table or time. It can’t be booked for the next 2 hours."
+  },
+  "Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki vaqt tanlang.": {
+    "uz": "Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki vaqt tanlang.",
+    "ru": "За этим столом сейчас сидят гости, выберите другой стол или время.",
+    "en": "Guests are sitting at this table now, choose another table or time."
+  },
+  "Bron vaqtiga 2 soatdan kam qoldi — endi bekor qilib bo‘lmaydi. Zarur bo‘lsa restoranga qo‘ng‘iroq qiling.": {
+    "uz": "Bron vaqtiga 2 soatdan kam qoldi — endi bekor qilib bo‘lmaydi. Zarur bo‘lsa restoranga qo‘ng‘iroq qiling.",
+    "ru": "До брони меньше 2 часов — отменить уже нельзя. При необходимости позвоните в ресторан.",
+    "en": "Less than 2 hours to the booking — it can no longer be cancelled. Call the restaurant if needed."
+  },
+  "Faqat Premium tarifda mavjud": {
+    "uz": "Faqat Premium tarifda mavjud",
+    "ru": "Доступно только на тарифе Premium",
+    "en": "Available on the Premium plan only"
+  },
+  "AI kamera stollardagi mijozlarni jonli kuzatadi va bandlikni bron sahifasiga o‘zi chiqaradi. Bu imkoniyat Premium tarifida ishlaydi.": {
+    "uz": "AI kamera stollardagi mijozlarni jonli kuzatadi va bandlikni bron sahifasiga o‘zi chiqaradi. Bu imkoniyat Premium tarifida ishlaydi.",
+    "ru": "AI-камера следит за гостями за столами и сама показывает занятость на странице бронирования. Функция доступна на тарифе Premium.",
+    "en": "The AI camera watches guests at tables live and shows occupancy on the booking page. It is part of the Premium plan."
+  },
+  "Tarifni ko‘rish": {
+    "uz": "Tarifni ko‘rish",
+    "ru": "Посмотреть тарифы",
+    "en": "See plans"
+  },
+  "Admin AI yordamchi (Business: kuniga 30 savol, bronlar va so‘rovlar; Premium: cheklovsiz)": {
+    "uz": "Admin AI yordamchi (Business: kuniga 30 savol, bronlar va so‘rovlar; Premium: cheklovsiz)",
+    "ru": "Admin AI (Business: 30 вопросов в день, брони и заявки; Premium: без ограничений)",
+    "en": "Admin AI (Business: 30 questions a day, bookings and requests; Premium: unlimited)"
+  },
+  "AI kamera va jonli stol xaritasi": {
+    "uz": "AI kamera va jonli stol xaritasi",
+    "ru": "AI-камера и живая карта столов",
+    "en": "AI camera and live table map"
+  },
+  "O‘tirgan va turgan odamni farqlash, bandlik bron sahifasida": {
+    "uz": "O‘tirgan va turgan odamni farqlash, bandlik bron sahifasida",
+    "ru": "Различает сидящих и стоящих, занятость видна при бронировании",
+    "en": "Tells seated from standing people, occupancy shown when booking"
+  },
+  "hozir band": {
+    "uz": "hozir band",
+    "ru": "сейчас занят",
+    "en": "in use now"
+  },
+  "dan beri": {
+    "uz": "dan beri",
+    "ru": "с этого времени",
+    "en": "since then"
+  },
+  "tozalanmoqda, tez orada bo‘shaydi": {
+    "uz": "tozalanmoqda, tez orada bo‘shaydi",
+    "ru": "идёт уборка, скоро освободится",
+    "en": "being cleaned, free soon"
+  },
+  "hozir bo‘sh": {
+    "uz": "hozir bo‘sh",
+    "ru": "сейчас свободен",
+    "en": "free now"
   }
 }

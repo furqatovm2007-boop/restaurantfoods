@@ -16,8 +16,9 @@ const DAY = 86400000;
 
 export const PLANS: Record<PlanId, { price: number; features: Feature[] }> = {
   start: { price: 199000, features: [] },
-  // The 3D hall is Premium only, together with the customer AI.
-  business: { price: 399000, features: ['menu3d', 'adminAi', 'liveTables'] },
+  // Business: 3D menu and a limited admin AI (bookings and incoming requests only, daily quota).
+  // The camera, the live table map and the 3D hall are Premium only, together with the customer AI.
+  business: { price: 399000, features: ['menu3d', 'adminAi'] },
   premium: { price: 699000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables', 'clientAi', 'visionTables', 'analytics'] },
 };
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[];
@@ -63,6 +64,9 @@ export function planState(row: PlanRow, now = Date.now()): PlanState {
     features: Object.fromEntries(ALL_FEATURES.map((f) => [f, enabled.has(f)])) as Record<Feature, boolean>,
   };
 }
+
+/** Admin AI questions per restaurant per day on Business; Premium (and the trial) is unlimited. */
+export const BUSINESS_ADMIN_AI_DAILY = 30;
 
 export const trialEnd = (now = Date.now()) => new Date(now + TRIAL_DAYS * DAY).toISOString();
 

@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
 import { accessToken, authConfig } from '../../../auth-service';
 import { ApiError, body, text, throttle, failure } from '../../../http';
-import { requireFeature } from '../../../plans';
+import { requireFeature, BUSINESS_ADMIN_AI_DAILY } from '../../../plans';
 import { readSse, sseFrame, sseHeaders } from '../../../sse';
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 const today = () => new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
 
 /** Compact, owner-only snapshot the admin assistant may answer from. */
-async function restaurantContext(restaurantId: string, plan: unknown) {
+async function restaurantContext(restaurantId: string, plan: unknown, full: boolean) {
   const date = today();
   const [restaurant, bookings, week, orders, live, unavailable] = await Promise.all([
     env.DB!.prepare('SELECT name,address,hours,tables,floors,booking_open,booking_close FROM restaurants WHERE id=?').bind(restaurantId).first(),
@@ -20,7 +20,11 @@ async function restaurantContext(restaurantId: string, plan: unknown) {
     env.DB!.prepare("SELECT table_number,status,source,updated_at FROM table_live_status WHERE restaurant_id=? AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes') ORDER BY table_number").bind(restaurantId).all(),
     env.DB!.prepare('SELECT name FROM menu WHERE restaurant_id=? AND available=0 ORDER BY name LIMIT 40').bind(restaurantId).all(),
   ]);
-  return { today: date, restaurant, plan, bookingsToday: bookings.results, last7Days: week.results, ordersSinceYesterday: orders.results, liveTables: live.results, unavailableDishes: unavailable.results.map((r: any) => r.name) };
+  const requests = (await env.DB!.prepare("SELECT date,slot,end_slot,table_number,guests,status,created_at FROM bookings WHERE restaurant_id=? AND date BETWEEN ? AND date(?,'+7 days') AND status='pending' ORDER BY date,slot LIMIT 60").bind(restaurantId, date, date).all()).results;
+  // Business: only bookings and incoming booking requests reach the model, so the assistant can
+  // check and sort them but has nothing else to answer from.
+  if (!full) return { today: date, restaurant, plan, scope: 'Business plan: the assistant only reviews bookings and incoming booking requests. For anything else, say it is available on Premium.', bookingsToday: bookings.results, pendingRequestsNext7Days: requests, last7Days: week.results };
+  return { today: date, restaurant, plan, bookingsToday: bookings.results, pendingRequestsNext7Days: requests, last7Days: week.results, ordersSinceYesterday: orders.results, liveTables: live.results, unavailableDishes: unavailable.results.map((r: any) => r.name) };
 }
 
 export async function POST(request: Request) {
@@ -36,12 +40,18 @@ export async function POST(request: Request) {
     const { row, state } = await requireFeature(restaurantId, 'adminAi');
     if (u.role !== 'admin' && row.owner_id !== u.userId) throw new ApiError(403, 'Restoranga ruxsat yo‘q.');
     await throttle('admin-ai:' + u.userId, 40);
+    // Business plan: a daily question quota per restaurant; Premium and the trial are unlimited.
+    const full = state.effective === 'premium';
+    if (!full)
+      await throttle('admin-ai-day:' + restaurantId, BUSINESS_ADMIN_AI_DAILY, 86400000).catch((e) => {
+        throw e instanceof ApiError && e.status === 429 ? new ApiError(429, 'AI_DAILY_LIMIT') : e;
+      });
     const token = await accessToken();
     const c = authConfig();
     if (!token) throw new ApiError(401, 'AI_LOGIN_REQUIRED');
     if (!c.url || !c.key) throw new ApiError(503, 'AI_UNAVAILABLE');
     const history = Array.isArray(b.history) ? b.history.slice(-8).filter((m: any) => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.length <= 1600) : [];
-    const context = await restaurantContext(restaurantId, { status: state.status, plan: state.plan, daysLeft: state.daysLeft });
+    const context = await restaurantContext(restaurantId, { status: state.status, plan: state.plan, effective: state.effective, daysLeft: state.daysLeft }, full);
 
     let upstream: Response;
     try {

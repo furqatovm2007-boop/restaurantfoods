@@ -51,7 +51,7 @@ To‘lov holati faqat Click/Payme serverlaridan keladigan so‘rovlar orqali o�
 
 ## 4. Admin jonli stol xaritasi
 
-Business/Premium tarifda kabinetda **Jonli stol xaritasi** chiqadi: yashil — bo‘sh, qizil — band (AI kamera yoki qo‘lda), sariq — ofitsiant/tozalash (kamera stol yonida turgan odamni ko‘rsa), ko‘k — saytdan bron.
+Premium tarifda kabinetda **Jonli stol xaritasi** chiqadi: yashil — bo‘sh, qizil — band (AI kamera yoki qo‘lda), sariq — ofitsiant/tozalash (kamera stol yonida turgan odamni ko‘rsa), ko‘k — saytdan bron.
 Stolni bosib **Bo‘sh / Band / Bron / Avtomatik** tanlanadi. Qo‘lda qo‘yilgan belgi 20 daqiqa amal qiladi, shu vaqtda kamera uni o‘zgartirmaydi.
 Admin Orb yangi bron yoki kamera o‘zgarishida ovozli signal beradi va yuqori o‘ng burchakda xabar ko‘rsatadi.
 

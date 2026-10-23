@@ -282,3 +282,8 @@ body.rf-manager .rf-ai-launch,body.rf-manager .rf-robot,body.rf-manager .rf-robo
 .sv-card-state small{margin-left:auto;opacity:.7;white-space:nowrap}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:700px){.sv-status{margin-left:0;width:100%}.sv-bar button{flex:1 1 auto;justify-content:center}}
+/* Booking: the 2-hour cancellation rule shown right above the confirm button. */
+.cancel-rule{margin:12px 0;padding:12px 14px;border-radius:14px;border:1px solid #f59e0b;background:rgba(245,158,11,.12);color:inherit;font-size:.92rem;line-height:1.5;text-align:left}
+.cancel-rule b{color:#f59e0b}
+.cancel-blocked{display:block;margin-top:6px;font-size:.85rem;color:#f59e0b}
+.seated-notice{border-color:#ef4444!important}
