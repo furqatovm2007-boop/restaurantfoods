@@ -35,6 +35,8 @@ const localBindingConfig = {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkZnB5dHNyaWJrcXh0ZGZpbXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODM3OTAsImV4cCI6MjEwNzU1OTc5MH0.6FBK9aGsEXA_-Pb99jmfiS-dx7SwuXa13Er4DLefpU0",
     AUTH_SETUP_COMPLETE: "true",
     AUTH_GOOGLE_ENABLED: "true",
+    // Bookings need an SMS code (Eskiz) unless the account number is already SMS-verified.
+    BOOKING_PHONE_OTP: "true",
   },
   d1_databases: d1
     ? [
