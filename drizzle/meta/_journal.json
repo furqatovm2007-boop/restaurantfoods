@@ -176,6 +176,13 @@
       "when": 1792770108292,
       "tag": "0024_camera_feeds",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1792772028080,
+      "tag": "0025_receipts_passes_waitlist",
+      "breakpoints": true
     }
   ]
 }

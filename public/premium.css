@@ -312,3 +312,8 @@ dialog::backdrop{-webkit-backdrop-filter:none!important;backdrop-filter:none!imp
 .sv-chip button:hover{color:#ef4444}
 .sv-add{margin:6px 0 14px;padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.12)}
 .sv-tables-title{margin:4px 0 8px;font-size:1rem}
+/* Sign in with Apple: Apple's button style (black, white logo, same height as the Google button). */
+.social-button.apple-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#000;color:#fff;border-color:#000;font-weight:600}
+.social-button.apple-button:hover{background:#1c1c1e}
+.social-button.apple-button[disabled]{opacity:.55}
+.apple-logo{flex:0 0 auto;margin-top:-2px}

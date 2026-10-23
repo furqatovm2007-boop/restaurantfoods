@@ -4488,5 +4488,10 @@
     "uz": "hozir bo‘sh",
     "ru": "сейчас свободен",
     "en": "free now"
+  },
+  "Apple (iCloud) orqali kirish": {
+    "uz": "Apple (iCloud) orqali kirish",
+    "ru": "Войти через Apple (iCloud)",
+    "en": "Sign in with Apple"
   }
 }
