@@ -27,12 +27,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  let r=await call.runCallAi();assert.equal(r.called,2,'b1 + b2 only (Premium, active, within 2 h)');
  // b1: voice note via the Edge Function service mode, then the question with Yes/No buttons.
  assert.equal(edge[0].b.mode,'call_speech');assert.equal(edge[0].headers['X-RF-Proxy'],'proxy-secret');assert.equal(edge[0].headers['X-RF-Service'],'call');
- assert.ok(edge[0].b.text.startsWith('Salom Aziz, RestaurantFoods orqali qilgan broningizga 2 soat qoldi. Kelishingizni tasdiqlaysizmi?'));
+ assert.equal(edge[0].b.text,'Assalomu alaykum Aziz! Real <Osh>dagi 1-stol broningizga 2 soat qoldi. Kelishingizni tasdiqlaysizmi?');
  const voice=tg.find(x=>x.method==='sendVoice');assert.equal(voice.chat,'500');assert.equal(voice.voice.type,'audio/ogg');
- const ask=tg.find(x=>x.method==='sendMessage'&&x.body.chat_id==='500');assert.ok(ask.body.text.includes('Real &lt;Osh&gt;'));assert.deepEqual(ask.body.reply_markup.inline_keyboard[0].map(b=>b.callback_data),['cc:y:b1','cc:n:b1']);
+ const ask=tg.find(x=>x.method==='sendMessage'&&x.body.chat_id==='500');assert.ok(ask.body.text.includes('Real &lt;Osh&gt;'));const kb=ask.body.reply_markup.inline_keyboard;assert.equal(kb.length,3,'three buttons');assert.ok(kb[0][0].text.includes('AI Operatorga javob berish'));const token=db.prepare("SELECT call_token FROM bookings WHERE id='b1'").get().call_token;assert.equal(kb[0][0].url,'https://restaurantfoods.online/call-ai/b1?k='+token);assert.equal(token.length,24);assert.equal(kb[1][0].callback_data,'cc:y:b1');assert.ok(kb[1][0].text.includes('Ha, albatta boraman'));assert.equal(kb[2][0].callback_data,'cc:n:b1');assert.ok(kb[2][0].text.includes('Restoran bilan bog‘lanish'));
  assert.equal(status('b1').call_status,'calling');
  // b2: no Telegram -> restaurant told at once.
- assert.equal(status('b2').call_status,'unreachable');assert.ok(tg.some(x=>x.body?.chat_id==='777'&&x.body.text.includes('ulanmagan')));
+ assert.equal(status('b2').call_status,'calling','web call still open');assert.equal(db.prepare("SELECT call_channel FROM bookings WHERE id='b2'").get().call_channel,'web');assert.ok(tg.some(x=>x.body?.chat_id==='777'&&x.body.text.includes('ulanmagan')));
  assert.equal(status('b3').call_status,'','Business plan: no Call AI');assert.equal(status('b4').call_status,'','more than 2 h left');assert.equal(status('b5').call_status,'','cancelled');
  assert.equal((await call.runCallAi()).called,0,'never twice');
  // Answers: a foreign chat cannot answer; the customer's "Yes" button confirms and tells the restaurant.

@@ -8,7 +8,7 @@ import { PLANS,isPlan,planState,trialEnd,extendPaid,requireFeature } from '../..
 import { telegram,telegramConfigured,notifyCustomer } from '../../telegram';
 import { chargePenalty,cancellationPenalty,NO_SHOW_PENALTY } from '../../penalties';
 import { cardBindingEnabled } from '../../payme-cards';
-import { callNow } from '../../call-ai';
+import { callNow,runCallAi,phoneProvider } from '../../call-ai';
 import { restaurantAccess,type Level } from '../../staff';
 import { vipUsers } from '../../growth';
 import { depositProviders } from '../../deposits';
@@ -41,6 +41,8 @@ if(b.action==='menu'){const restaurantId=text(b.restaurantId);await allowed(rest
 // The customer phoned to cancel less than 2 hours before the start: staff cancel the booking and the
 // agreed penalty for the time left is charged to the customer's card for the restaurant.
 // Call AI (Premium): place the confirmation call now (normally the cron calls 2 hours before).
+// Admin: run the Call AI check now (the cron does the same every 5 minutes).
+if(b.action==='call_ai_run'){if(u.role!=='admin')throw new ApiError(403,'Ruxsat yo‘q.');return json({ok:true,...await runCallAi(),phone:phoneProvider()})}
 if(b.action==='call_now'){const old=await env.DB!.prepare('SELECT restaurant_id FROM bookings WHERE id=?').bind(text(b.id)).first<any>();if(!old)throw new ApiError(404,'Bron topilmadi.');await allowed(old.restaurant_id,u,'manager');const r=await callNow(text(b.id));if(r==='plan')throw new ApiError(402,'Call AI faqat Premium tarifida ishlaydi.');if(!r)throw new ApiError(409,'Bron faol emas.');return json({ok:true,callStatus:r})}
 if(b.action==='late_cancel'){const old=await env.DB!.prepare("SELECT * FROM bookings WHERE id=? AND status IN ('pending','confirmed')").bind(text(b.id)).first<any>();if(!old)throw new ApiError(404,'Faol bron topilmadi.');await allowed(old.restaurant_id,u,'manager');const left=Date.parse(old.date+'T'+String(old.slot).slice(0,5)+':00+05:00')-Date.now();if(left>=2*3600000)throw new ApiError(409,'Bron vaqtiga 2 soatdan ko‘p qoldi — mijoz o‘zi bepul bekor qila oladi.');if(left<=0)throw new ApiError(409,'Bron vaqti boshlangan — “Kelmadi” deb belgilang.');const amount=cancellationPenalty(old.date,old.slot);const result=await env.DB!.prepare("UPDATE bookings SET status='cancelled',deposit_status=CASE WHEN deposit_status='pending' THEN 'cancelled' ELSE deposit_status END WHERE id=? AND status=?").bind(old.id,old.status).run();if(!result.meta.changes)throw new ApiError(409,'Holat allaqachon o‘zgargan.');await env.DB!.prepare("UPDATE deposits SET state='cancelled' WHERE booking_id=? AND state='pending'").bind(old.id).run();const penalty=await chargePenalty(old.id,'late_cancel',amount);await notifyCustomer(old.id,'cancelled');return json({ok:true,amount,penalty,charged:penalty?.status==='paid',reason:penalty?null:old.penalty_accepted?'card_missing':'no_card_guarantee'})}
 if(b.action==='status'){const table=b.kind==='booking'?'bookings':b.kind==='order'?'orders':null;if(!table)throw new ApiError(400,'Noto‘g‘ri tur.');const old=await env.DB!.prepare('SELECT * FROM '+table+' WHERE id=?').bind(text(b.id)).first<any>();if(!old)throw new ApiError(404,'Topilmadi.');const next=text(b.status);// Waiters confirm/complete; cancelling and no-show (money) need a manager.

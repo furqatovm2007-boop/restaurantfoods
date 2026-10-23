@@ -4948,5 +4948,40 @@
     "uz": "👁 Stoldan ko‘rinish",
     "ru": "👁 Вид со стола",
     "en": "👁 View from the table"
+  },
+  "Call AI holati": {
+    "uz": "Call AI holati",
+    "ru": "Статус Call AI",
+    "en": "Call AI status"
+  },
+  "2 soat qolganda qo‘ng‘iroq qilinadi": {
+    "uz": "2 soat qolganda qo‘ng‘iroq qilinadi",
+    "ru": "позвоним за 2 часа",
+    "en": "will call 2 hours before"
+  },
+  "Hozir AI qo‘ng‘iroq qilish (Test)": {
+    "uz": "Hozir AI qo‘ng‘iroq qilish (Test)",
+    "ru": "Позвонить AI сейчас (тест)",
+    "en": "Call with AI now (test)"
+  },
+  "Avtomatik tekshiruv har 5 daqiqada ishlaydi: Premium restoranlarda bron vaqtiga 2 soat qolganda mijozga qo‘ng‘iroq qilinadi.": {
+    "uz": "Avtomatik tekshiruv har 5 daqiqada ishlaydi: Premium restoranlarda bron vaqtiga 2 soat qolganda mijozga qo‘ng‘iroq qilinadi.",
+    "ru": "Автопроверка каждые 5 минут: в Premium-ресторанах клиенту звонят за 2 часа до брони.",
+    "en": "The automatic check runs every 5 minutes: in Premium restaurants the customer is called 2 hours before the booking."
+  },
+  "Call AI ni hozir sinab ko‘rish": {
+    "uz": "Call AI ni hozir sinab ko‘rish",
+    "ru": "Проверить Call AI сейчас",
+    "en": "Test Call AI now"
+  },
+  "ta qo‘ng‘iroq": {
+    "uz": "ta qo‘ng‘iroq",
+    "ru": "звонков",
+    "en": "calls"
+  },
+  "ta javobsiz": {
+    "uz": "ta javobsiz",
+    "ru": "без ответа",
+    "en": "unanswered"
   }
 }

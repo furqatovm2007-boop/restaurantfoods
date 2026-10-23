@@ -10,6 +10,12 @@ declare namespace Cloudflare {
     TELEGRAM_WEBHOOK_SECRET?: string;
     TELEGRAM_BOT_USERNAME?: string;
     SITE_URL?: string;
+    VAPI_API_KEY?: string;
+    VAPI_ASSISTANT_ID?: string;
+    VAPI_PHONE_NUMBER_ID?: string;
+    VAPI_WEBHOOK_SECRET?: string;
+    CALL_AI_WEBHOOK_URL?: string;
+    CALL_AI_WEBHOOK_SECRET?: string;
     /** Click SHOP-API deposits. */
     CLICK_SERVICE_ID?: string;
     CLICK_MERCHANT_ID?: string;

@@ -1,0 +1,30 @@
+/* Call AI live web call: incoming-call screen (standalone page and the site overlay). */
+:root{--call-bg:#06141a;--call-card:#0d222b;--call-text:#e8f4f6;--call-muted:#8fb1ba;--call-ok:#22c55e;--call-no:#ef4444;--call-accent:#2dd4bf}
+.rf-call-page{margin:0;min-height:100dvh;background:radial-gradient(circle at 50% 0%,#12424d 0%,var(--call-bg) 60%);color:var(--call-text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.rf-call{min-height:100dvh;display:grid;place-items:center;padding:24px 16px;box-sizing:border-box}
+.rf-call-overlay{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:16px;background:rgba(3,10,14,.82);backdrop-filter:blur(6px);color:var(--call-text);font-family:inherit}
+.rf-call-card{width:min(400px,100%);box-sizing:border-box;text-align:center;padding:28px 20px 24px;border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)),var(--call-card);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.5);display:grid;gap:12px;justify-items:center}
+.rf-call-card h1{margin:0;font-size:1.5rem}
+.rf-call-card p{margin:0;line-height:1.45;overflow-wrap:anywhere}
+.rf-call-muted{color:var(--call-muted);font-size:.92rem}
+.rf-call-avatar{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:2rem;color:#04211d;background:linear-gradient(135deg,var(--call-accent),#38bdf8);margin:6px 0}
+.rf-call-avatar.small{width:72px;height:72px;font-size:1.6rem}
+.rf-call-avatar.pulse{animation:rf-call-pulse 1.4s ease-out infinite}
+@keyframes rf-call-pulse{0%{box-shadow:0 0 0 0 rgba(45,212,191,.55)}100%{box-shadow:0 0 0 34px rgba(45,212,191,0)}}
+.rf-call-actions{display:flex;justify-content:space-around;width:100%;margin-top:18px}
+.rf-call-actions button{display:grid;justify-items:center;gap:8px;background:none;border:0;color:var(--call-text);font:inherit;cursor:pointer}
+.rf-call-actions span{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;font-size:1.8rem;color:#fff}
+.rf-call-accept span{background:var(--call-ok);animation:rf-call-shake 1.2s ease-in-out infinite}
+.rf-call-decline span{background:var(--call-no);transform:rotate(135deg)}
+@keyframes rf-call-shake{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-14deg)}20%,40%{transform:rotate(14deg)}50%{transform:rotate(0)}}
+.rf-call-state{color:var(--call-accent);font-weight:600}
+.rf-call-line{font-size:1.05rem}
+.rf-call-heard{min-height:1.2em;color:var(--call-muted);font-style:italic}
+.rf-call-answers{display:grid;gap:10px;width:100%;margin-top:6px}
+.rf-call-answers button,.rf-call-link{display:block;width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;color:var(--call-text);background:rgba(255,255,255,.06)}
+.rf-call-yes{background:rgba(34,197,94,.18)!important;border-color:rgba(34,197,94,.6)!important}
+.rf-call-no{background:rgba(239,68,68,.14)!important;border-color:rgba(239,68,68,.5)!important}
+.rf-call-hang{width:60px;height:60px;border-radius:50%;border:0;background:var(--call-no);color:#fff;font-size:1.6rem;transform:rotate(135deg);cursor:pointer;margin-top:6px}
+.rf-call-card.ok .rf-call-avatar{background:var(--call-ok);color:#fff}
+.rf-call-card.warn .rf-call-avatar{background:#f59e0b;color:#fff}
+@media (prefers-reduced-motion:reduce){.rf-call-avatar.pulse,.rf-call-accept span{animation:none}}
