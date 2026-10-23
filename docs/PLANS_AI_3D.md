@@ -95,3 +95,12 @@ Limit jadvali: `ai_quota (user_id, day, used)` — migratsiya `0020_ai_daily_quo
 - Kameralar, nomlari va stol zonalari D1 `camera_feeds` jadvalida (`/api/manage/cameras`) va brauzerda saqlanadi; ko‘pi bilan 8 ta. Zonani surganingizda o‘zi saqlanadi.
 - Brauzer kameraga bir marta ruxsat bergandan keyin sahifa ochilishi bilan saqlangan kameralarga o‘zi ulanadi (qayta so‘ramaydi). Ruxsatni brauzer saqlaydi — Safari ba’zan qayta so‘rashi mumkin.
 - Bitta AI model barcha kameralarni navbat bilan tekshiradi; bitta stol bir nechta kamerada bo‘lsa, eng kuchli holat olinadi (Band > Tozalanmoqda > Bo‘sh).
+
+## Chek, QR chipta, kelish (check-in), no-show va navbat
+
+- **Chek:** bron tasdiqlangach va «Bronlarim» → «🧾 Chek»: restoran, sana/vaqt/stol, taomlar (soni × narxi), xizmat haqi (restoran sozlamasida «Xizmat haqi, %», 0–30) va jami summa, chek raqami, QR. «Chop etish» faqat chekni chiqaradi; «PDF» brauzerning o‘zida yasaladi (`public/receipt.js`). API: `GET /api/bookings/receipt?id=`.
+- **QR chipta:** har faol bronga taxmin qilib bo‘lmaydigan kod (`bookings.pass_code`), QR ichida `RFB1:<kod>`. «Bronlarim» → «🎟 Chipta».
+- **Kelish:** restoran kabineti → «📷 QR-kodni tekshirish» (kamera: BarcodeDetector yoki jsQR; yoki kodni qo‘lda kiritish). «Mijoz keldi» → `checked_in_at`, stol jonli xaritada «band» (xodim belgisi). API: `POST /api/manage/checkin`.
+- **No-show:** bron boshlanganidan 15 daqiqa o‘tgach, kelmagan (QR bilan kirmagan) mijozni «Kelmay qoldi» deb belgilash; `accounts.no_show_count` oshadi va keyingi bronlarida xodimga «⚠️ Avval kelmagan: N» ko‘rinadi.
+- **Navbat:** stol band (kamera/xodim) bo‘lsa mijoz «🔔 Bo‘shashi bilan xabar berish» bosadi. Stol bo‘shaganda navbatdagi birinchi mijozga 10 daqiqa ajratiladi (boshqalar o‘sha stolni 2 soat ichiga bron qila olmaydi), saytda sanab turuvchi banner va (ruxsat bo‘lsa) bildirishnoma chiqadi; vaqt o‘tsa keyingi mijozga o‘tadi. API: `/api/waitlist`.
+- **Apple (iCloud):** `/api/auth/apple` (Supabase Apple provayderi). Yoqish uchun Apple Developer akkaunti, Supabase → Authentication → Providers → Apple sozlamasi va Cloudflare’da `AUTH_APPLE_ENABLED=true`.

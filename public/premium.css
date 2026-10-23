@@ -323,7 +323,7 @@ dialog::backdrop{-webkit-backdrop-filter:none!important;backdrop-filter:none!imp
 .rf-receipt-body{padding:14px}
 .rf-receipt-paper{background:#fff;color:#111;border-radius:14px;padding:20px 18px;font-size:14px;line-height:1.45}
 .rf-receipt-paper h2{margin:6px 0 2px;font-size:20px;color:#111}
-.rf-rc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px dashed #bbb;padding-bottom:10px}
+.rf-rc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px dashed #bbb;padding:0 0 10px;position:static;inset:auto;height:auto;margin:0;background:none;box-shadow:none;backdrop-filter:none}
 .rf-rc-head img{height:34px;width:auto;filter:invert(1) hue-rotate(180deg)}
 .rf-rc-head b{font-size:12px;color:#00866f}
 .rf-rc-muted{color:#555;font-size:13px;margin:4px 0}
