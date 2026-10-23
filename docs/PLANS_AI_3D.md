@@ -88,3 +88,10 @@ Limit jadvali: `ai_quota (user_id, day, used)` — migratsiya `0020_ai_daily_quo
 - **Walk-in:** kamera (yoki xodim) stolni `occupied` deb belgilagan bo‘lsa (oxirgi 20 daqiqa ichida), boshlanishi hozirdan 2 soatgacha bo‘lgan bron `POST /api/bookings` da 409 bilan rad etiladi: «Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki vaqt tanlang». Sariq (`cleaning`) bloklamaydi. Saytda shu stol uchun bron formasi o‘rniga ogohlantirish chiqadi.
 - **Bekor qilish:** mijoz bronni boshlanishidan kamida 2 soat oldin bekor qila oladi (`PATCH /api/bookings`); kamroq qolsa 400. «Bronlarim»da tugma nofaol va sababi yoziladi. Bron formasida va tasdiqlash oynasida bu qoida ogohlantirish sifatida turadi.
 - Qoidalar `app/booking-rules.ts` da; testlar: `tests/walk-in-booking.test.cjs`, `tests/admin-ai-plan.test.cjs`.
+
+## Bir nechta kamera (Smart Vision)
+
+- **AI kamera** sahifasida «Kamera qo‘shish»: shu kompyuter/telefondagi istalgan kamera (`enumerateDevices`) yoki IP-kamera oqimi (https: MJPEG, MP4/WebM, HLS — Safari’da tabiiy). RTSP brauzerda ochilmaydi: uni MJPEG/HLS ga aylantiruvchi shlyuz (masalan go2rtc) orqali https manzil bering; AI tasvirni o‘qishi uchun oqim CORS ruxsatini berishi kerak.
+- Kameralar, nomlari va stol zonalari D1 `camera_feeds` jadvalida (`/api/manage/cameras`) va brauzerda saqlanadi; ko‘pi bilan 8 ta. Zonani surganingizda o‘zi saqlanadi.
+- Brauzer kameraga bir marta ruxsat bergandan keyin sahifa ochilishi bilan saqlangan kameralarga o‘zi ulanadi (qayta so‘ramaydi). Ruxsatni brauzer saqlaydi — Safari ba’zan qayta so‘rashi mumkin.
+- Bitta AI model barcha kameralarni navbat bilan tekshiradi; bitta stol bir nechta kamerada bo‘lsa, eng kuchli holat olinadi (Band > Tozalanmoqda > Bo‘sh).
