@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 // Smart Vision rules: one table per person (zone under the lower body), seated = still and not
 // tall-and-narrow, standing/moving people at a table mean staff (yellow "cleaning").
 const window={};vm.runInNewContext(fs.readFileSync('public/smart-vision.js','utf8'),{window,localStorage:undefined,performance:{now:()=>0},requestAnimationFrame:()=>0,cancelAnimationFrame:()=>{}});
-const {zoneOf,seated,rawStatus}=window.RFSmartVision,aspect=720/1280;
+const {zoneOf,seated,rawStatus,strongest}=window.RFSmartVision,aspect=720/1280;
 const zones=[{table:1,x:.05,y:.4,w:.27,h:.45},{table:2,x:.37,y:.4,w:.27,h:.45},{table:3,x:.69,y:.4,w:.27,h:.45}];
 // A webcam close-up spanning all three zones belongs to one table only: the one under the hips.
 const closeUp={x:.15,y:0,w:.6,h:1,score:.9,moving:false};assert.equal(zoneOf(zones,closeUp),1,'one person, one table');
@@ -15,5 +15,6 @@ assert.equal(rawStatus([guest],zones,[0],aspect),'occupied');
 assert.equal(rawStatus([waiter],zones,[0],aspect),'cleaning','waiter alone at the table: yellow');
 assert.equal(rawStatus([guest,waiter],zones,[0],aspect),'occupied','guests stay red while served');
 assert.equal(rawStatus([],zones,[0],aspect),'free');
+assert.equal(strongest(['free','cleaning']),'cleaning');assert.equal(strongest(['cleaning','occupied','free']),'occupied','two cameras on one table: the strongest reading wins');assert.equal(strongest([]),'free');
 assert.ok(!fs.readFileSync('public/smart-vision.js','utf8').includes('toDataURL'),'no frames are captured or sent');
 console.log('PASS smart vision: one table per person, seated vs standing, cleaning state, no frame upload');

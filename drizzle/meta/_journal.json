@@ -169,6 +169,13 @@
       "when": 1792761343604,
       "tag": "0023_live_status_since",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1792770108292,
+      "tag": "0024_camera_feeds",
+      "breakpoints": true
     }
   ]
 }

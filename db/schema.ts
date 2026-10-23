@@ -39,3 +39,6 @@ export const bookingPhoneOtps=sqliteTable('booking_phone_otps',{id:text('id').pr
 
 // Client AI questions used per account and Tashkent day (1 free + 1 per booking/order that day).
 export const aiQuota=sqliteTable('ai_quota',{userId:text('user_id').notNull(),day:text('day').notNull(),used:integer('used').notNull().default(0)},t=>[primaryKey({columns:[t.userId,t.day]})])
+// Smart Vision cameras of a restaurant: a device camera (deviceId + label to find it again) or an
+// HTTPS stream URL (MJPEG / MP4 / HLS), with the table zones drawn on its picture (JSON).
+export const cameraFeeds=sqliteTable('camera_feeds',{id:text('id').primaryKey(),restaurantId:text('restaurant_id').notNull().references(()=>restaurants.id),name:text('name').notNull(),kind:text('kind').notNull(),deviceId:text('device_id').notNull().default(''),deviceLabel:text('device_label').notNull().default(''),streamUrl:text('stream_url').notNull().default(''),zones:text('zones').notNull().default('[]'),sort:integer('sort').notNull().default(0),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull()});
