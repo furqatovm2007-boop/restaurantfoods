@@ -71,3 +71,16 @@ body[data-theme=light] .theme-symbol{color:#946600}
 .rf-card-dialog::backdrop{background:rgba(0,0,0,.6)}
 .rf-card-dialog .danger{background:#dc2626;border-color:#dc2626;color:#fff}
 .card-section{margin:18px 0;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:14px}
+
+/* Flowers catalog and florist cabinet */
+.flower-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:14px}
+.flower-card{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.flower-card img,.flower-card .flower-placeholder{width:100%;aspect-ratio:4/3;object-fit:cover;display:grid;place-items:center;font-size:56px;background:rgba(236,72,153,.08)}
+.flower-card.inactive{opacity:.55}
+.flower-body{padding:12px 14px 14px;display:grid;gap:6px}
+.flower-body h3{margin:0}
+.flower-body p{margin:0}
+.flower-buy{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.flower-delivery{border:0;padding:0;margin:0;display:grid;gap:6px}
+.flower-total{font-size:1.05em}
+.flower-dialog .map-picker-host{min-height:220px}

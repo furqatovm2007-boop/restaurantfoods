@@ -4713,5 +4713,65 @@
     "uz": "Kech bekor qilish va kelmaslik jarimalari mijoz kartasidan yechilib, restoran balansiga yoziladi. Pul platforma hisobidan restoranga o‘tkaziladi.",
     "ru": "Штрафы за позднюю отмену и неявку списываются с карты клиента и записываются на баланс ресторана. Деньги переводятся ресторану со счёта платформы.",
     "en": "Late-cancellation and no-show penalties are charged to the customer’s card and credited to the restaurant balance. The money is paid out to the restaurant from the platform account."
+  },
+  "Gullar": {
+    "uz": "Gullar",
+    "ru": "Цветы",
+    "en": "Flowers"
+  },
+  "Gulchi kabineti": {
+    "uz": "Gulchi kabineti",
+    "ru": "Кабинет флориста",
+    "en": "Florist cabinet"
+  },
+  "Gulchi": {
+    "uz": "Gulchi",
+    "ru": "Флорист",
+    "en": "Florist"
+  },
+  "Gullar savdosi": {
+    "uz": "Gullar savdosi",
+    "ru": "Продажи цветов",
+    "en": "Flower sales"
+  },
+  "Sotuvlar": {
+    "uz": "Sotuvlar",
+    "ru": "Продажи",
+    "en": "Sales"
+  },
+  "Gulchi (gullar)": {
+    "uz": "Gulchi (gullar)",
+    "ru": "Флорист (цветы)",
+    "en": "Florist (flowers)"
+  },
+  "Restoran egasi, kuryer va gulchi huquqlarini faqat administrator beradi.": {
+    "uz": "Restoran egasi, kuryer va gulchi huquqlarini faqat administrator beradi.",
+    "ru": "Права владельца ресторана, курьера и флориста выдаёт только администратор.",
+    "en": "Only the administrator grants restaurant owner, courier and florist rights."
+  },
+  "Restoran egasi, kuryer yoki gulchi sifatida ishlash uchun administrator tasdig‘i kerak. Tasdiqlanmaguncha akkaunt mijoz bo‘lib qoladi.": {
+    "uz": "Restoran egasi, kuryer yoki gulchi sifatida ishlash uchun administrator tasdig‘i kerak. Tasdiqlanmaguncha akkaunt mijoz bo‘lib qoladi.",
+    "ru": "Чтобы работать владельцем ресторана, курьером или флористом, нужно одобрение администратора. До одобрения аккаунт остаётся клиентским.",
+    "en": "Working as a restaurant owner, courier or florist needs administrator approval. Until then the account stays a customer account."
+  },
+  "Gulchi kabineti admin tasdiqlagandan keyin ochiladi. Profil → Hamkorlik uchun ariza → Gulchi.": {
+    "uz": "Gulchi kabineti admin tasdiqlagandan keyin ochiladi. Profil → Hamkorlik uchun ariza → Gulchi.",
+    "ru": "Кабинет флориста откроется после одобрения администратором. Профиль → Заявка на партнёрство → Флорист.",
+    "en": "The florist cabinet opens after admin approval. Profile → Partnership request → Florist."
+  },
+  "Bron uchun bank kartasi ulanishi shart.": {
+    "uz": "Bron uchun bank kartasi ulanishi shart.",
+    "ru": "Для брони нужно привязать банковскую карту.",
+    "en": "A bank card must be linked to book."
+  },
+  "Jarima qoidalari bilan tanishdim: kech bekor qilsam yoki kelmasam, jarima bog‘langan kartamdan avtomatik yechiladi.": {
+    "uz": "Jarima qoidalari bilan tanishdim: kech bekor qilsam yoki kelmasam, jarima bog‘langan kartamdan avtomatik yechiladi.",
+    "ru": "Я ознакомлен с правилами: при поздней отмене или неявке штраф автоматически спишется с привязанной карты.",
+    "en": "I have read the rules: if I cancel late or do not come, the penalty is charged automatically to my linked card."
+  },
+  "💳 Kartani ulash": {
+    "uz": "💳 Kartani ulash",
+    "ru": "💳 Привязать карту",
+    "en": "💳 Link card"
   }
 }

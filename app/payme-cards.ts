@@ -54,4 +54,7 @@ export async function chargeCard(token: string, amount: number, account: Record<
   return String(id);
 }
 
+/** Refunds a paid receipt (florist cancelled an order). */
+export const refundReceipt = (id: string) => rpc('receipts.cancel', { id });
+
 export const removeCard = (token: string) => rpc('cards.remove', { token }).catch(() => null);
