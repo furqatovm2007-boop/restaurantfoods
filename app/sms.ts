@@ -13,8 +13,10 @@ let token: string | null = null;
 const eskizKey = () => (env.ESKIZ_SECRET_KEY?.trim() || env.ESKIZ_PASSWORD?.trim() || '');
 export const smsConfigured = () => !!(env.ESKIZ_EMAIL?.trim() && eskizKey());
 export const bookingOtpRequired = () => env.BOOKING_PHONE_OTP === 'true';
-/** One switch for every phone code (booking and profile): BOOKING_PHONE_OTP on and Eskiz keys present. */
-export const phoneOtpEnabled = () => bookingOtpRequired() && smsConfigured();
+/** Codes can also go to the customer's linked Telegram chat (free), see booking-otp.ts. */
+export const telegramOtpConfigured = () => !!(env.TELEGRAM_BOT_TOKEN?.trim() && env.TELEGRAM_BOT_USERNAME?.trim());
+/** One switch for every phone code (booking and profile): BOOKING_PHONE_OTP on and a channel (Eskiz SMS or the Telegram bot) present. */
+export const phoneOtpEnabled = () => bookingOtpRequired() && (smsConfigured() || telegramOtpConfigured());
 
 async function login() {
   const form = new FormData();

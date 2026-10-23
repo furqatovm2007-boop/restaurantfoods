@@ -1,9 +1,14 @@
 import { env } from 'cloudflare:workers';
 
 /*
- * Telegram booking notifications. A restaurant links its chat once (/start CODE from the
- * dashboard deep link); new bookings are sent there with Confirm / Cancel buttons that act
- * on the booking after checking the chat still belongs to that restaurant.
+ * Telegram bot.
+ *  Restaurants: a restaurant links its chat once (/start CODE from the dashboard deep link); new
+ *  bookings are sent there with Confirm / Cancel buttons that act on the booking after checking
+ *  the chat still belongs to that restaurant.
+ *  Customers: /start c_CODE (from the profile) links the customer's chat; the bot then asks for
+ *  the phone via Telegram's own "share contact" button — Telegram vouches the number belongs to
+ *  that account, so the profile phone becomes verified without an SMS. Linked customers get their
+ *  one-time codes (OTP) and booking updates here. /stop unlinks.
  */
 const API = 'https://api.telegram.org/bot';
 
@@ -23,7 +28,7 @@ export async function telegram(method: string, payload: unknown) {
   }
 }
 
-const html = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const html = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** +998901234567 → +998 90 123 45 67 */
 export function prettyPhone(phone: string) {
@@ -96,13 +101,107 @@ export async function notifyBooking(id: string) {
 const TRANSITIONS: Record<string, Record<string, string>> = { c: { pending: 'confirmed' }, x: { pending: 'cancelled', confirmed: 'cancelled' } };
 
 interface Update {
-  message?: { chat: { id: number }; text?: string };
+  message?: { chat: { id: number }; from?: { id: number }; text?: string; contact?: { phone_number: string; user_id?: number } };
   callback_query?: { id: string; data?: string; message?: { chat: { id: number }; message_id: number } };
+}
+
+/** Telegram phone ("998901234567" or "+998901234567") → "+998901234567"; null when not Uzbek. */
+export function telegramPhone(raw: string) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  return /^998\d{9}$/.test(digits) ? '+' + digits : null;
+}
+
+const CONTACT_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true };
+const REMOVE_KEYBOARD = { remove_keyboard: true };
+const site = () => (env.SITE_URL?.trim() || 'https://restaurantfoods.online').replace(/\/$/, '');
+
+/** Sends a one-time code to a customer's linked chat. */
+export async function sendTelegramCode(chatId: string, code: string) {
+  return !!(await telegram('sendMessage', { chat_id: chatId, text: `🔐 RestaurantFoods tasdiqlash kodi: <b>${code}</b>\nKod 5 daqiqa amal qiladi. Uni hech kimga bermang.`, parse_mode: 'HTML' }));
+}
+
+const CUSTOMER_TEXT: Record<string, string> = {
+  created: '📌 Broningiz qabul qilindi — restoran tasdiqlashini kuting.',
+  confirmed: '✅ Broningiz tasdiqlandi.',
+  cancelled: '❌ Broningiz bekor qilindi.',
+  no_show: '⚠️ Bron vaqtida kelmaganingiz qayd etildi.',
+};
+
+/** Booking update to the customer who made it, when their Telegram is linked. Never throws. */
+export async function notifyCustomer(bookingId: string, kind: keyof typeof CUSTOMER_TEXT) {
+  if (!telegramConfigured()) return false;
+  try {
+    const b = await env.DB!.prepare('SELECT b.date,b.slot,b.end_slot,b.table_number,b.guests,r.name AS restaurant_name,r.address,a.telegram_chat_id FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id JOIN accounts a ON a.id=b.user_id WHERE b.id=?').bind(bookingId).first<any>();
+    if (!b?.telegram_chat_id) return false;
+    const text = [`<b>${CUSTOMER_TEXT[kind]}</b>`, `🏠 ${html(b.restaurant_name)}${b.address ? ' · ' + html(b.address) : ''}`, `📅 ${html(b.date)} · 🕒 ${html(String(b.slot).slice(0, 5))}${b.end_slot ? '–' + html(String(b.end_slot).slice(0, 5)) : ''}`, `🍽 ${b.table_number}-stol · ${b.guests} kishi`].join('\n');
+    return !!(await telegram('sendMessage', { chat_id: b.telegram_chat_id, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🧾 Chek va QR chipta', url: site() + '/#/bookings' }]] } }));
+  } catch {
+    return false;
+  }
+}
+
+/** "Your table is free" for a customer on the waitlist (10-minute hold). Never throws. */
+export async function notifyWaitlist(entryId: string) {
+  if (!telegramConfigured()) return false;
+  try {
+    const w = await env.DB!.prepare('SELECT w.table_number,w.restaurant_id,w.hold_until,r.name AS restaurant_name,a.telegram_chat_id FROM waitlist w JOIN restaurants r ON r.id=w.restaurant_id JOIN accounts a ON a.id=w.user_id WHERE w.id=?').bind(entryId).first<any>();
+    if (!w?.telegram_chat_id) return false;
+    return !!(await telegram('sendMessage', { chat_id: w.telegram_chat_id, text: `🔔 <b>${html(w.restaurant_name)}: ${w.table_number}-stol bo‘shadi!</b>\nStol 10 daqiqa siz uchun ushlab turiladi — hozir bron qiling.`, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '📅 Bron qilish', url: site() + '/#/restaurant/' + encodeURIComponent(w.restaurant_id) }]] } }));
+  } catch {
+    return false;
+  }
+}
+
+/** Customer side of the webhook: /start c_CODE, the shared contact, /stop. Null when not a customer message. */
+async function customerUpdate(msg: NonNullable<Update['message']>) {
+  const chatId = String(msg.chat.id);
+  if (msg.contact) {
+    // Telegram sets contact.user_id to the sender only for their own number (the share-contact button).
+    if (!msg.from || msg.contact.user_id !== msg.from.id) {
+      await telegram('sendMessage', { chat_id: chatId, text: 'Faqat o‘zingizning raqamingizni “📱 Raqamni yuborish” tugmasi bilan yuboring.', reply_markup: CONTACT_KEYBOARD });
+      return 'contact_not_own';
+    }
+    const phone = telegramPhone(msg.contact.phone_number);
+    const account = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
+    if (!account) {
+      await telegram('sendMessage', { chat_id: chatId, text: 'Avval saytdagi profilingizdan “Telegram orqali tasdiqlash” tugmasini bosing.', reply_markup: REMOVE_KEYBOARD });
+      return 'contact_unlinked';
+    }
+    if (!phone) {
+      await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: REMOVE_KEYBOARD });
+      return 'contact_not_uz';
+    }
+    await env.DB!.prepare('UPDATE accounts SET telegram_phone=?,contact_phone=?,contact_phone_verified=1 WHERE id=?').bind(phone, phone, account.id).run();
+    await telegram('sendMessage', { chat_id: chatId, text: `✅ Raqamingiz tasdiqlandi: ${prettyPhone(phone)}\nSaytga qayting — tasdiqlash kodlari va bron xabarlari shu yerga keladi.`, reply_markup: REMOVE_KEYBOARD });
+    return 'phone_verified';
+  }
+  const text = msg.text?.trim() || '';
+  if (text === '/stop') {
+    const res = await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=?').bind(chatId).run();
+    await telegram('sendMessage', { chat_id: chatId, text: res.meta.changes ? 'Telegram akkauntingizdan uzildi. Qayta ulash uchun saytdagi profilingizga kiring.' : 'Bu chat hech qaysi akkauntga ulanmagan.', reply_markup: REMOVE_KEYBOARD });
+    return 'unlinked';
+  }
+  const code = text.startsWith('/start') ? text.split(/\s+/)[1]?.trim() : '';
+  if (!code?.startsWith('c_')) return null;
+  const link = /^c_[A-Za-z0-9]{24}$/.test(code) ? await env.DB!.prepare('DELETE FROM telegram_user_links WHERE code=? AND expires_at>? RETURNING user_id').bind(code, Date.now()).first<{ user_id: string }>() : null;
+  if (!link) {
+    await telegram('sendMessage', { chat_id: chatId, text: 'Havola eskirgan. Saytdagi profilingizdan yangisini oling.' });
+    return 'link_expired';
+  }
+  // One chat per account and one account per chat.
+  await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=? AND id<>?').bind(chatId, link.user_id).run();
+  await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=? WHERE id=?').bind(chatId, link.user_id).run();
+  await telegram('sendMessage', { chat_id: chatId, text: '👋 RestaurantFoods akkauntingiz ulandi.\nTelefon raqamingizni tasdiqlash uchun pastdagi “📱 Raqamni yuborish” tugmasini bosing.', reply_markup: CONTACT_KEYBOARD });
+  return 'customer_linked';
 }
 
 /** Handles one webhook update. Returns what was done, for logs and tests. */
 export async function handleUpdate(update: Update) {
   const msg = update.message;
+  if (msg) {
+    const customer = await customerUpdate(msg);
+    if (customer) return customer;
+  }
   if (msg?.text?.startsWith('/start')) {
     const code = msg.text.split(/\s+/)[1]?.trim();
     const chatId = String(msg.chat.id);
@@ -144,6 +243,7 @@ export async function handleUpdate(update: Update) {
     if (next === 'cancelled' && b.deposit_status === 'pending') await env.DB!.prepare("UPDATE bookings SET deposit_status='cancelled' WHERE id=?").bind(b.id).run();
     await telegram('editMessageText', { chat_id: cb.message.chat.id, message_id: cb.message.message_id, text: bookingText({ ...b, status: next, deposit_status: next === 'cancelled' && b.deposit_status === 'pending' ? 'cancelled' : b.deposit_status }), parse_mode: 'HTML' });
     await answer(next === 'confirmed' ? 'Tasdiqlandi' : 'Bekor qilindi');
+    await notifyCustomer(b.id, next as 'confirmed' | 'cancelled');
     return next;
   }
   return 'ignored';

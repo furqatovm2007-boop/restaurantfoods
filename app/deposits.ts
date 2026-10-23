@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { notifyBooking } from './telegram';
+import { notifyBooking, notifyCustomer } from './telegram';
 
 /*
  * Booking deposits paid through Click or Payme. A deposit holds the table for HOLD_MS;
@@ -69,6 +69,7 @@ export async function markPaid(id: string, provider: Provider) {
   if (d) {
     await env.DB!.prepare("UPDATE bookings SET deposit_status='paid' WHERE id=?").bind(d.booking_id).run();
     await notifyBooking(d.booking_id);
+    await notifyCustomer(d.booking_id, 'created');
   }
   return true;
 }

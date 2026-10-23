@@ -4,7 +4,8 @@ import { ApiError,json,failure,body,text,throttle } from '../../http';
 import { hashInvite,audit } from '../../account-admin';
 import { phone as validPhone } from '../../http';
 import { point } from '../../geo';
-import { phoneOtpEnabled } from '../../sms';
+import { phoneOtpEnabled,telegramOtpConfigured } from '../../sms';
+import { telegram } from '../../telegram';
 import { sendGuardedOtp,verifyBookingOtp,consumeBookingOtp } from '../../booking-otp';
 export const dynamic='force-dynamic';
 export async function POST(request:Request){try{const b=await body(request),u=await identity();if(!u)throw new ApiError(401,'Avval kiring.');
@@ -15,6 +16,10 @@ await env.DB!.prepare('UPDATE accounts SET contact_phone_verified=CASE WHEN cont
 // connected) and a delivery address is saved.
 if(b.action==='contact-otp'){const contact=validPhone(b.phone);if(!phoneOtpEnabled())throw new ApiError(503,'SMS xizmati hali ulanmagan.');return json(await sendGuardedOtp(request,u.userId,contact));}
 if(b.action==='contact-verify'){const contact=validPhone(b.phone);await throttle('contact-verify:'+u.userId,10);const ownAuthPhone=u.phoneVerified&&'+'+String(u.phone).replace(/^\+/,'')===contact;let verified=ownAuthPhone;if(!ownAuthPhone&&phoneOtpEnabled()){await verifyBookingOtp(u.userId,contact,b.otpId,b.code);await consumeBookingOtp(b.otpId);verified=true}await env.DB!.prepare('UPDATE accounts SET contact_phone=?,contact_phone_verified=? WHERE id=?').bind(contact,verified?1:0,u.userId).run();return json({ok:true,contactPhone:contact,verified});}
+// Telegram: a one-time deep link (15 minutes) ties the customer's chat to this account; the bot then
+// asks for the number with Telegram's share-contact button, which verifies it for free.
+if(b.action==='telegram-link'){if(!telegramOtpConfigured())throw new ApiError(503,'Telegram bot hali sozlanmagan.');await throttle('telegram-link:'+u.userId,10);const abc='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',code='c_'+Array.from(crypto.getRandomValues(new Uint8Array(24)),v=>abc[v%62]).join('');await env.DB!.batch([env.DB!.prepare('DELETE FROM telegram_user_links WHERE user_id=? OR expires_at<?').bind(u.userId,Date.now()),env.DB!.prepare('INSERT INTO telegram_user_links (code,user_id,expires_at) VALUES (?,?,?)').bind(code,u.userId,Date.now()+15*60000)]);return json({ok:true,url:'https://t.me/'+env.TELEGRAM_BOT_USERNAME!.trim().replace(/^@/,'')+'?start='+code,expiresIn:900});}
+if(b.action==='telegram-unlink'){const a=await env.DB!.prepare('SELECT telegram_chat_id FROM accounts WHERE id=?').bind(u.userId).first<{telegram_chat_id:string|null}>();await env.DB!.batch([env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL,telegram_phone=NULL WHERE id=?').bind(u.userId),env.DB!.prepare('DELETE FROM telegram_user_links WHERE user_id=?').bind(u.userId)]);if(a?.telegram_chat_id)await telegram('sendMessage',{chat_id:a.telegram_chat_id,text:'RestaurantFoods akkauntingiz bu chatdan uzildi.'});return json({ok:true});}
 if(b.action==='address'){const [lat,lng]=point(b.latitude,b.longitude,true);const address=typeof b.address==='string'&&b.address.trim()?text(b.address,1,300):'Xaritada belgilangan joy';await env.DB!.prepare('UPDATE accounts SET address=?,address_lat=?,address_lng=? WHERE id=?').bind(address,lat,lng,u.userId).run();return json({ok:true});}
 if(b.action==='language'){if(!['ru','uz','en'].includes(b.language))throw new ApiError(400,'Til noto‘g‘ri.');await env.DB!.prepare('UPDATE accounts SET preferred_language=? WHERE id=?').bind(b.language,u.userId).run();return json({ok:true});}
 if(b.action==='request-access'){if(u.role!=='customer'||!['restaurant_owner','courier'].includes(b.role))throw new ApiError(403,'Ruxsat yo‘q.');await throttle('access-request:'+u.userId,3);await env.DB!.prepare("INSERT INTO access_requests (user_id,role,note,status,created_at) VALUES (?,?,?,'pending',?) ON CONFLICT(user_id) DO UPDATE SET role=excluded.role,note=excluded.note,status='pending',created_at=excluded.created_at").bind(u.userId,b.role,text(b.note,5,1000),new Date().toISOString()).run();return json({ok:true});}

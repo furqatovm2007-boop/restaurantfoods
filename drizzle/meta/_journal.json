@@ -183,6 +183,13 @@
       "when": 1792772028080,
       "tag": "0025_receipts_passes_waitlist",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1792775694979,
+      "tag": "0026_telegram_customers",
+      "breakpoints": true
     }
   ]
 }

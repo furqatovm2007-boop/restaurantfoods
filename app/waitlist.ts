@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { notifyWaitlist } from './telegram';
 
 /*
  * Smart waitlist. A customer waits for a table the camera (or staff) shows as occupied. When the
@@ -32,5 +33,6 @@ export async function notifyNext(restaurantId: string, tableNumber: number) {
   if (!next) return null;
   const until = new Date(now.getTime() + HOLD_MINUTES * 60000).toISOString();
   await env.DB!.prepare("UPDATE waitlist SET status='notified',notified_at=?,hold_until=? WHERE id=? AND status='waiting'").bind(now.toISOString(), until, next.id).run();
+  await notifyWaitlist(next.id);
   return next.id;
 }

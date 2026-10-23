@@ -9,6 +9,7 @@ declare namespace Cloudflare {
     TELEGRAM_BOT_TOKEN?: string;
     TELEGRAM_WEBHOOK_SECRET?: string;
     TELEGRAM_BOT_USERNAME?: string;
+    SITE_URL?: string;
     /** Click SHOP-API deposits. */
     CLICK_SERVICE_ID?: string;
     CLICK_MERCHANT_ID?: string;

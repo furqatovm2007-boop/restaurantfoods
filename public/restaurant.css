@@ -52,3 +52,9 @@ body[data-theme=light] .theme-symbol{color:#946600}
 @media(max-width:650px){.catalog-filters{grid-template-columns:1fr 1fr;padding:20px}.catalog-filters>label:first-child{grid-column:1/-1}.service-choices{gap:8px}.service-choices button{flex:1;padding:10px;font-size:12px}.mobile-nav:not([hidden]){display:grid;grid-template-columns:repeat(4,1fr);position:fixed;bottom:0;left:0;right:0;z-index:6;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}.mobile-nav a{position:relative;min-height:48px;display:grid;justify-items:center;align-content:center;gap:3px;font-size:11px;color:var(--muted);border-radius:10px}.mobile-nav a>span{font-size:24px;line-height:1}.mobile-nav a[aria-current]{background:#00b99a18;color:var(--text)}.mobile-nav b{position:absolute;right:15%;top:0;background:var(--teal);color:#07332b;border-radius:12px;padding:2px 5px;font-size:10px}main{padding-bottom:110px}#toast{bottom:95px}.order-progress{gap:6px}.order-progress li{font-size:11px}.booking-panel{scroll-margin-top:90px}}
 
 .demo-notice{font-size:12px;border:1px dashed var(--gold);border-radius:8px;padding:10px;color:var(--gold)}
+
+/* Telegram verification card on the profile and profile-setup pages */
+.telegram-connect{margin:18px 0;padding:16px;border:1px solid rgba(42,171,238,.35);border-radius:14px;background:rgba(42,171,238,.07)}
+.telegram-connect h3{margin:0 0 6px}
+.telegram-connect p{margin:6px 0}
+.telegram-connect .telegram-button{background:#229ed9;border-color:#229ed9;color:#fff;max-width:100%;white-space:normal}

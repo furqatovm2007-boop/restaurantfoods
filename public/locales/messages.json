@@ -4533,5 +4533,80 @@
     "uz": "🔔 Bo‘shashi bilan xabar berish (navbatga yozilish)",
     "ru": "🔔 Сообщить, когда освободится (встать в очередь)",
     "en": "🔔 Notify me when it’s free (join the queue)"
+  },
+  "Telegram ulangan.": {
+    "uz": "Telegram ulangan.",
+    "ru": "Telegram подключён.",
+    "en": "Telegram connected."
+  },
+  "Tasdiqlash kodlari va bron xabarlari Telegram’ga keladi.": {
+    "uz": "Tasdiqlash kodlari va bron xabarlari Telegram’ga keladi.",
+    "ru": "Коды подтверждения и уведомления о бронях приходят в Telegram.",
+    "en": "Verification codes and booking updates arrive in Telegram."
+  },
+  "Botda “📱 Raqamni yuborish” tugmasini bosing.": {
+    "uz": "Botda “📱 Raqamni yuborish” tugmasini bosing.",
+    "ru": "Нажмите в боте кнопку «📱 Raqamni yuborish».",
+    "en": "Tap “📱 Raqamni yuborish” in the bot."
+  },
+  "Telegram’ni uzish": {
+    "uz": "Telegram’ni uzish",
+    "ru": "Отключить Telegram",
+    "en": "Disconnect Telegram"
+  },
+  "Raqamingizni bepul tasdiqlang: bot “📱 Raqamni yuborish” tugmasini so‘raydi. Keyin kodlar va bron xabarlari shu yerga keladi.": {
+    "uz": "Raqamingizni bepul tasdiqlang: bot “📱 Raqamni yuborish” tugmasini so‘raydi. Keyin kodlar va bron xabarlari shu yerga keladi.",
+    "ru": "Подтвердите номер бесплатно: бот попросит нажать «📱 Raqamni yuborish». Затем коды и уведомления о бронях будут приходить туда.",
+    "en": "Verify your number for free: the bot asks you to tap “📱 Raqamni yuborish”. Codes and booking updates then arrive there."
+  },
+  "Telegram orqali tasdiqlash": {
+    "uz": "Telegram orqali tasdiqlash",
+    "ru": "Подтвердить через Telegram",
+    "en": "Verify via Telegram"
+  },
+  "Raqam Telegram orqali tasdiqlandi.": {
+    "uz": "Raqam Telegram orqali tasdiqlandi.",
+    "ru": "Номер подтверждён через Telegram.",
+    "en": "Number verified via Telegram."
+  },
+  "Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing. Bu sahifa o‘zi yangilanadi.": {
+    "uz": "Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing. Bu sahifa o‘zi yangilanadi.",
+    "ru": "В Telegram нажмите «Start», затем «📱 Raqamni yuborish». Страница обновится сама.",
+    "en": "In Telegram tap “Start”, then “📱 Raqamni yuborish”. This page updates by itself."
+  },
+  "Kod Telegram’ga yuborildi.": {
+    "uz": "Kod Telegram’ga yuborildi.",
+    "ru": "Код отправлен в Telegram.",
+    "en": "Code sent to Telegram."
+  },
+  "Raqam tasdiqlangan.": {
+    "uz": "Raqam tasdiqlangan.",
+    "ru": "Номер подтверждён.",
+    "en": "Number verified."
+  },
+  "Endi manzilni belgilang.": {
+    "uz": "Endi manzilni belgilang.",
+    "ru": "Теперь отметьте адрес.",
+    "en": "Now mark your address."
+  },
+  "Kod yuborish uchun profilingizda Telegram botni ulang va raqamingizni ulashing.": {
+    "uz": "Kod yuborish uchun profilingizda Telegram botni ulang va raqamingizni ulashing.",
+    "ru": "Чтобы получить код, подключите Telegram-бота в профиле и поделитесь номером.",
+    "en": "To get a code, connect the Telegram bot in your profile and share your number."
+  },
+  "Telefon raqamini tasdiqlash kodi bilan tasdiqlang.": {
+    "uz": "Telefon raqamini tasdiqlash kodi bilan tasdiqlang.",
+    "ru": "Подтвердите номер телефона кодом.",
+    "en": "Confirm the phone number with a code."
+  },
+  "Kod eskirgan. Yangi kod oling.": {
+    "uz": "Kod eskirgan. Yangi kod oling.",
+    "ru": "Код устарел. Получите новый.",
+    "en": "The code has expired. Get a new one."
+  },
+  "Kod noto‘g‘ri.": {
+    "uz": "Kod noto‘g‘ri.",
+    "ru": "Неверный код.",
+    "en": "Wrong code."
   }
 }
