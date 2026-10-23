@@ -204,6 +204,13 @@
       "when": 1792786636479,
       "tag": "0028_call_ai",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1792787878431,
+      "tag": "0029_growth_features",
+      "breakpoints": true
     }
   ]
 }

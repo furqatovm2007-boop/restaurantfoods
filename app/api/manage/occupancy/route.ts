@@ -3,6 +3,7 @@ import { ApiError, json, failure, text, throttle } from '../../../http';
 import { authorizeCamera } from '../../../camera-auth';
 import { requireFeature } from '../../../plans';
 import { expireHolds, notifyNext } from '../../../waitlist';
+import { trackSeats, checkServiceTimer } from '../../../growth';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
           .bind(restaurantId, r.number, r.status, r.confidence, now, now, manualUntil),
       ),
     );
+    // Service timer (Premium): seated/served times follow the camera; late tables raise an alert.
+    await trackSeats(restaurantId, rows.map((r: { number: number }) => r.number));
+    await checkServiceTimer(restaurantId);
     // Waitlist: a table reported free goes to the first customer waiting for it (10-minute hold).
     await expireHolds(restaurantId);
     for (const r of rows) if (r.status === 'free') await notifyNext(restaurantId, r.number);

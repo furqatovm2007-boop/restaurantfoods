@@ -30,12 +30,18 @@ export interface ReceiptItem {
 }
 
 /** Line items, subtotal, the restaurant's service fee (percent, rounded to whole sum) and the total. */
-export function receiptTotals(items: { name: string; price: number; quantity: number }[], serviceFeePercent: number) {
+export function receiptTotals(items: { name: string; price: number; quantity: number }[], serviceFeePercent: number, discountPercent = 0, depositPaid = 0) {
   const lines: ReceiptItem[] = items.map((i) => ({ name: String(i.name), price: Number(i.price) || 0, quantity: Number(i.quantity) || 0, total: (Number(i.price) || 0) * (Number(i.quantity) || 0) }));
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
+  // Discount (birthday promo / happy hours) applies to the dishes; the service fee is counted after it.
+  const discountRate = Math.max(0, Math.min(90, Math.round(discountPercent || 0)));
+  const discount = Math.round((subtotal * discountRate) / 100);
   const percent = Math.max(0, Math.min(30, Math.round(serviceFeePercent || 0)));
-  const serviceFee = Math.round((subtotal * percent) / 100);
-  return { lines, subtotal, serviceFeePercent: percent, serviceFee, total: subtotal + serviceFee };
+  const serviceFee = Math.round(((subtotal - discount) * percent) / 100);
+  const total = subtotal - discount + serviceFee;
+  // A paid deposit is counted towards the bill.
+  const deposit = Math.max(0, Math.round(depositPaid || 0));
+  return { lines, subtotal, discountPercent: discountRate, discount, serviceFeePercent: percent, serviceFee, total, depositPaid: deposit, due: Math.max(0, total - deposit) };
 }
 
 /** Gives the booking a pass code if it has none yet and returns it. */

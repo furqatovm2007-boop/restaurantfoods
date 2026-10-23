@@ -8,7 +8,12 @@ import { ApiError } from './http';
  * Payments are not processed online yet: an administrator records the paid period.
  */
 export type PlanId = 'start' | 'business' | 'premium';
-export type Feature = 'menu3d' | 'room3d' | 'adminAi' | 'liveTables' | 'clientAi' | 'visionTables' | 'analytics' | 'callAi';
+export type Feature =
+  | 'menu3d' | 'room3d' | 'adminAi' | 'liveTables' | 'clientAi' | 'visionTables' | 'analytics' | 'callAi'
+  // Business + Premium
+  | 'peakDeposit' | 'tableMerge' | 'birthdayCrm' | 'staffAccounts' | 'aiReports'
+  // Premium only
+  | 'serviceTimer' | 'vipGuests' | 'happyHours' | 'tableView';
 export type PlanStatus = 'trial' | 'active' | 'payment_required';
 
 export const TRIAL_DAYS = 14;
@@ -18,8 +23,9 @@ export const PLANS: Record<PlanId, { price: number; features: Feature[] }> = {
   start: { price: 199000, features: [] },
   // Business: 3D menu and a limited admin AI (bookings and incoming requests only, daily quota).
   // The camera, the live table map and the 3D hall are Premium only, together with the customer AI.
-  business: { price: 399000, features: ['menu3d', 'adminAi'] },
-  premium: { price: 699000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables', 'clientAi', 'visionTables', 'analytics', 'callAi'] },
+  // Both paid tiers: peak-hour deposits, table merging, birthday CRM, staff accounts, AI weekly report (Business: limited).
+  business: { price: 399000, features: ['menu3d', 'adminAi', 'peakDeposit', 'tableMerge', 'birthdayCrm', 'staffAccounts', 'aiReports'] },
+  premium: { price: 699000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables', 'clientAi', 'visionTables', 'analytics', 'callAi', 'peakDeposit', 'tableMerge', 'birthdayCrm', 'staffAccounts', 'aiReports', 'serviceTimer', 'vipGuests', 'happyHours', 'tableView'] },
 };
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[];
 const ALL_FEATURES = PLANS.premium.features;
@@ -67,6 +73,8 @@ export function planState(row: PlanRow, now = Date.now()): PlanState {
 
 /** Admin AI questions per restaurant per day on Business; Premium (and the trial) is unlimited. */
 export const BUSINESS_ADMIN_AI_DAILY = 30;
+/** AI weekly report generations per restaurant per day on Business; Premium is unlimited. */
+export const BUSINESS_AI_REPORTS_DAILY = 1;
 
 export const trialEnd = (now = Date.now()) => new Date(now + TRIAL_DAYS * DAY).toISOString();
 

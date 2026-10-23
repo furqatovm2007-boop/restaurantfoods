@@ -49,7 +49,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  db.prepare("UPDATE restaurants SET plan='premium' WHERE id=?").run(id);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'occupied'}))).status,200);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:1,status:'party'}))).status,400);
- let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:true,liveTables:true},'Premium: live tables and the 3D hall');assert.equal(t.live[0].status,'occupied');
+ let t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.deepEqual(t.features,{room3d:true,liveTables:true,tableMerge:true,tableView:true},'Premium: live tables and the 3D hall');assert.equal(t.live[0].status,'occupied');
  db.prepare("UPDATE restaurants SET paid_until=NULL,trial_ends_at=? WHERE id=?").run(iso(Date.now()-DAY),id);
  assert.equal((await tables.POST(request('/api/tables',{action:'live',restaurantId:id,tableNumber:2,status:'free'}))).status,402,'expired trial loses live tables');
  t=await (await tables.GET(new Request('https://test/api/tables?restaurantId='+id))).json();assert.equal(t.features.room3d,false);assert.deepEqual(t.live,[]);
@@ -72,7 +72,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal((await vision.POST(frame({Origin:'https://evil'}))).status,403,'session uploads need same origin');
  db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);assert.equal((await vision.POST(frame({Authorization:'Bearer '+key}))).status,402,'vision is Premium');assert.equal(visionCalls,2);
  // Smart Vision (on-device detection): statuses only, Business+ (liveTables), staff mark still wins.
- const occupancy=load('app/api/manage/occupancy/route.ts',{...cf,'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans,'../../../waitlist':load('app/waitlist.ts',{...cf,'./telegram':load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf)})})});
+ const occupancy=load('app/api/manage/occupancy/route.ts',{...cf,...integrationDeps(env,http,'../../../'),'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans,'../../../waitlist':load('app/waitlist.ts',{...cf,'./telegram':load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf)})})});
  const occ=(headers,tables)=>occupancy.POST(new Request('https://test/api/manage/occupancy',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({restaurantId:id,tables})}));
  const savedLive=db.prepare('SELECT * FROM table_live_status WHERE restaurant_id=?').all(id);db.prepare('DELETE FROM table_live_status WHERE restaurant_id=?').run(id);
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,402,'Business: no AI camera');db.prepare("UPDATE restaurants SET plan='premium' WHERE id=?").run(id);
