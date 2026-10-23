@@ -10,7 +10,7 @@ import { sendGuardedOtp,verifyBookingOtp,consumeBookingOtp } from '../../booking
 export const dynamic='force-dynamic';
 export async function POST(request:Request){try{const b=await body(request),u=await identity();if(!u)throw new ApiError(401,'Avval kiring.');
 if(b.action==='contact-phone'){await throttle('contact-phone:'+u.userId,10);if(typeof b.phone!=='string'||b.phone.length>30)throw new ApiError(400,'Telefon raqami noto‘g‘ri.');const phone=b.phone.replace(/[ ()-]/g,'');if(phone&&!/^\+998\d{9}$/.test(phone))throw new ApiError(400,'Telefon raqami noto‘g‘ri.');// With SMS connected a number is added or changed only through contact-otp + contact-verify.
-if(phone&&phoneOtpEnabled())throw new ApiError(400,'Raqamni SMS kod bilan tasdiqlang.');if(!phone&&['customer','courier'].includes(u.role))throw new ApiError(400,'Mijoz va kuryer uchun telefon raqami majburiy.');// A changed number is no longer verified.
+if(phone&&phoneOtpEnabled())throw new ApiError(400,'Raqamni tasdiqlash kodi yoki Telegram orqali tasdiqlang.');if(!phone&&['customer','courier'].includes(u.role))throw new ApiError(400,'Mijoz va kuryer uchun telefon raqami majburiy.');// A changed number is no longer verified.
 await env.DB!.prepare('UPDATE accounts SET contact_phone_verified=CASE WHEN contact_phone=? THEN contact_phone_verified ELSE 0 END,contact_phone=? WHERE id=?').bind(phone,phone,u.userId).run();return json({ok:true,contactPhone:phone});}
 // Profile completion after sign-up: the contact phone is confirmed by SMS code (when SMS is
 // connected) and a delivery address is saved.

@@ -7,7 +7,7 @@ import { audit } from '../../account-admin';
 import { PLANS,isPlan,planState,trialEnd,extendPaid,requireFeature } from '../../plans';
 import { telegram,telegramConfigured,notifyCustomer } from '../../telegram';
 import { depositProviders } from '../../deposits';
-import { smsConfigured,bookingOtpRequired } from '../../sms';
+import { smsConfigured,phoneOtpEnabled as bookingOtpRequired } from '../../sms';
 export const dynamic='force-dynamic';
 const NO_SHOW_GRACE_MIN=15;
 async function manager(){const u=await identity();if(!u)throw new ApiError(401,'Avval kiring.');if(!['admin','restaurant_owner'].includes(u.role))throw new ApiError(403,'Ruxsat yo‘q.');return u}

@@ -4608,5 +4608,20 @@
     "uz": "Kod noto‘g‘ri.",
     "ru": "Неверный код.",
     "en": "Wrong code."
+  },
+  "Raqamni pastdagi Telegram tugmasi orqali bepul tasdiqlang.": {
+    "uz": "Raqamni pastdagi Telegram tugmasi orqali bepul tasdiqlang.",
+    "ru": "Подтвердите номер бесплатно кнопкой Telegram ниже.",
+    "en": "Verify your number for free with the Telegram button below."
+  },
+  "Raqamni Telegram orqali tasdiqlang.": {
+    "uz": "Raqamni Telegram orqali tasdiqlang.",
+    "ru": "Подтвердите номер через Telegram.",
+    "en": "Verify your number via Telegram."
+  },
+  "Raqamni tasdiqlash kodi yoki Telegram orqali tasdiqlang.": {
+    "uz": "Raqamni tasdiqlash kodi yoki Telegram orqali tasdiqlang.",
+    "ru": "Подтвердите номер кодом или через Telegram.",
+    "en": "Verify the number with a code or via Telegram."
   }
 }

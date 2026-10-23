@@ -37,9 +37,9 @@ const localBindingConfig = {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkZnB5dHNyaWJrcXh0ZGZpbXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODM3OTAsImV4cCI6MjEwNzU1OTc5MH0.6FBK9aGsEXA_-Pb99jmfiS-dx7SwuXa13Er4DLefpU0",
     AUTH_SETUP_COMPLETE: "true",
     AUTH_GOOGLE_ENABLED: "true",
-    // SMS codes (booking + profile phone) stay off until the Eskiz contract and text are approved.
-    // Set to "true" then; it overrides the dashboard value on every deploy.
-    BOOKING_PHONE_OTP: "false",
+    // Phone verification codes (booking + profile). Codes go to the customer's Telegram chat; SMS
+    // joins in automatically once the Eskiz keys are set. This overrides the dashboard on every deploy.
+    BOOKING_PHONE_OTP: "true",
   },
   d1_databases: d1
     ? [

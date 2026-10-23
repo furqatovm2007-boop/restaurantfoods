@@ -4,7 +4,7 @@ import { ApiError,json,failure,body,text,integer,phone,throttle } from '../../ht
 import { interval,minutes,endMinuteSQL } from '../../table-rules';
 import {quoteBookingMeals} from '../../booking-preorder';
 import { bookingSlot,seatedWindow,SEATED_MESSAGE,cancellable,CANCEL_TOO_LATE } from '../../booking-rules';
-import { bookingOtpRequired } from '../../sms';
+import { phoneOtpEnabled as bookingOtpRequired } from '../../sms';
 import { verifyBookingOtp,consumeBookingOtp } from '../../booking-otp';
 import { depositProviders,createDeposit,paymentLinks,sweepDeposits,HOLD_MS } from '../../deposits';
 import { notifyBooking,notifyCustomer } from '../../telegram';
