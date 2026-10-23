@@ -7,7 +7,7 @@ const DB={prepare(sql){let args=[];return{bind(...a){args=a;return this},first:a
 DB.batch=async ops=>{db.exec('BEGIN');try{const r=[];for(const op of ops)r.push(await op.run());db.exec('COMMIT');return r}catch(e){db.exec('ROLLBACK');throw e}};
 const env={DB,TELEGRAM_BOT_TOKEN:'bot:secret',TELEGRAM_WEBHOOK_SECRET:'hook-secret',TELEGRAM_BOT_USERNAME:'rf_bot',CLICK_SERVICE_ID:'11',CLICK_MERCHANT_ID:'22',CLICK_SECRET_KEY:'click-key',PAYME_MERCHANT_ID:'pm',PAYME_KEY:'payme-key',ESKIZ_EMAIL:'e@x',ESKIZ_PASSWORD:'p',BOOKING_PHONE_OTP:'true'};
 const calls=[];let smsCode='';
-const fetch=async(url,init)=>{url=String(url);if(url.includes('eskiz')){if(url.endsWith('/auth/login'))return Response.json({data:{token:'tok'}});smsCode=/kodi (\d{6})/.exec(init.body.get('message'))[1];calls.push({sms:init.body.get('mobile_phone')});return Response.json({status:'waiting'})}const method=url.split('/').pop();calls.push({telegram:method,body:JSON.parse(init.body)});return Response.json({ok:true,result:{}})};
+let eskizFail=null;const fetch=async(url,init)=>{url=String(url);if(url.includes('eskiz')){if(url.endsWith('/auth/login'))return Response.json({data:{token:'tok'}});if(eskizFail)return new Response(eskizFail,{status:400});smsCode=/kodi (\d{6})/.exec(init.body.get('message'))[1];calls.push({sms:init.body.get('mobile_phone')});return Response.json({status:'waiting'})}const method=url.split('/').pop();calls.push({telegram:method,body:JSON.parse(init.body)});return Response.json({ok:true,result:{}})};
 const extras={fetch,FormData,URLSearchParams};
 let user={userId:'client',role:'customer',phoneVerified:false,phone:''};
 const http=load('app/http.ts',{'cloudflare:workers':{env}}),cf={'cloudflare:workers':{env}},integrations=integrationDeps(env,http,'../../',extras),deep=integrationDeps(env,http,'../../../',extras);
@@ -131,6 +131,9 @@ assert.equal((await prof({action:'contact-phone',phone:''})).status,400,'custome
 assert.equal((await prof({action:'address',address:'Samarqand, Registon 1',latitude:39.65,longitude:66.97})).status,200);
 assert.equal(db.prepare("SELECT address FROM accounts WHERE id='client'").get().address,'Samarqand, Registon 1');
 assert.equal((await prof({action:'address',address:'x'})).status,400);
+// Eskiz refusals come back as an actionable reason, with digits masked in the log.
+eskizFail=JSON.stringify({message:'Этот смс текст еще не прошел модерацию'});r=await prof({action:'contact-otp',phone:'+998907777777'});assert.equal(r.status,503);assert.match((await r.json()).error,/tasdiqlanmagan/);
+eskizFail=JSON.stringify({message:'Недостаточно средств на балансе'});r=await prof({action:'contact-otp',phone:'+998907777777'});assert.match((await r.json()).error,/balans/);eskizFail=null;
 // SMS is only sent while booking OTP is switched on.
 env.BOOKING_PHONE_OTP='false';assert.equal((await otpRoute.POST(request('/api/bookings/phone-otp',{phone:'+998901234567'}))).status,404);
 console.log('PASS booking SMS OTP (hashed, phone-bound, single use), Click prepare/complete signatures + errors, Payme JSON-RPC lifecycle/refund/statement, Telegram card format, linked-chat callbacks, deep-link binding, deposit hold sweep, provider-less bookings.');

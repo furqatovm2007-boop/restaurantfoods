@@ -29,6 +29,8 @@ const localBindingConfig = {
   // Public Supabase settings. TURNSTILE_SITE_KEY and optional AUTH_*_ENABLED flags are set
   // in the dashboard (Settings → Variables); keep_vars stops deploys from erasing them.
   keep_vars: true,
+  // Workers Logs: SMS/payment failures (no codes or phone numbers) are readable in the dashboard.
+  observability: { enabled: true },
   vars: {
     SUPABASE_URL: "https://edfpytsribkqxtdfimww.supabase.co",
     SUPABASE_ANON_KEY:

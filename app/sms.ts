@@ -32,12 +32,27 @@ export async function sendSms(phone: string, message: string) {
     form.set('from', env.ESKIZ_FROM?.trim() || '4546');
     return fetch(BASE + '/message/sms/send', { method: 'POST', headers: { Authorization: 'Bearer ' + bearer }, body: form, signal: AbortSignal.timeout(8000) });
   };
+  let res: Response;
   try {
-    let res = await send(token ?? (await login()));
+    res = await send(token ?? (await login()));
     if (res.status === 401) res = await send(await login());
-    if (!res.ok) throw new Error('ESKIZ_' + res.status);
   } catch (e) {
-    console.error(JSON.stringify({ event: 'sms_failed', reason: String((e as Error).message || e).slice(0, 60) }));
-    throw new ApiError(503, 'SMS yuborilmadi. Birozdan keyin qayta urinib ko‘ring.');
+    const badLogin = String((e as Error).message || e) === 'ESKIZ_LOGIN_FAILED';
+    console.error(JSON.stringify({ event: 'sms_failed', reason: badLogin ? 'login' : 'network' }));
+    throw new ApiError(503, badLogin ? 'SMS xizmatiga ulanib bo‘lmadi: Eskiz email yoki paroli noto‘g‘ri.' : 'SMS yuborilmadi. Birozdan keyin qayta urinib ko‘ring.');
   }
+  if (res.ok) return;
+  // Eskiz explains refusals in `message`; digits are masked so no phone number or code reaches the logs.
+  const detail = (await res.text().catch(() => '')).replace(/\d/g, '#').slice(0, 300);
+  console.error(JSON.stringify({ event: 'sms_failed', status: res.status, detail }));
+  throw new ApiError(503, smsFailure(detail));
+}
+
+/** Turns Eskiz's refusal into a message the restaurant owner can act on. */
+export function smsFailure(detail: string) {
+  const d = detail.toLowerCase();
+  if (/модерац|moderat|шаблон|template|не прош|not approved|тест|test/.test(d)) return 'SMS yuborilmadi: SMS matni Eskiz kabinetida hali tasdiqlanmagan.';
+  if (/баланс|balance|недостаточно|insufficient|not enough/.test(d)) return 'SMS yuborilmadi: Eskiz balansida mablag‘ yetarli emas.';
+  if (/from|nick|отправител|sender/.test(d)) return 'SMS yuborilmadi: Eskiz yuboruvchi nomi (ESKIZ_FROM) noto‘g‘ri.';
+  return 'SMS yuborilmadi. Birozdan keyin qayta urinib ko‘ring.';
 }
