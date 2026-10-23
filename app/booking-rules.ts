@@ -10,4 +10,5 @@ export const SEATED_MESSAGE='Bu stolga hozir mijoz o‘tirgan, boshqa stol yoki 
 /** Customers may cancel until 2 hours before the start; later only the restaurant can. */
 export const CANCEL_NOTICE_MS=2*3600000;
 export const cancellable=(date:string,slot:string,now=Date.now())=>bookingStartMs(date,slot)-now>=CANCEL_NOTICE_MS;
-export const CANCEL_TOO_LATE='Bron vaqtiga 2 soatdan kam qoldi — endi bekor qilib bo‘lmaydi. Zarur bo‘lsa restoranga qo‘ng‘iroq qiling.';
+export const LATE_CANCEL_WARNING='Bron vaqtiga 2 soatdan kam vaqt qolganda uni ilova orqali o‘zingiz bekor qila olmaysiz. Agar bekor qilmoqchi bo‘lsangiz, bevosita restoranga telefon qilishingiz kerak bo‘ladi, lekin bunda oldindan kelishilgan jarima (charge) kartangizdan baribir yechiladi.';
+export const CANCEL_TOO_LATE='Bron vaqtiga 2 soatdan kam qoldi — ilova orqali bekor qilib bo‘lmaydi. Bekor qilish uchun restoranga qo‘ng‘iroq qiling; kelishilgan jarima kartangizdan yechiladi.';

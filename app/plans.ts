@@ -8,7 +8,7 @@ import { ApiError } from './http';
  * Payments are not processed online yet: an administrator records the paid period.
  */
 export type PlanId = 'start' | 'business' | 'premium';
-export type Feature = 'menu3d' | 'room3d' | 'adminAi' | 'liveTables' | 'clientAi' | 'visionTables' | 'analytics';
+export type Feature = 'menu3d' | 'room3d' | 'adminAi' | 'liveTables' | 'clientAi' | 'visionTables' | 'analytics' | 'callAi';
 export type PlanStatus = 'trial' | 'active' | 'payment_required';
 
 export const TRIAL_DAYS = 14;
@@ -19,7 +19,7 @@ export const PLANS: Record<PlanId, { price: number; features: Feature[] }> = {
   // Business: 3D menu and a limited admin AI (bookings and incoming requests only, daily quota).
   // The camera, the live table map and the 3D hall are Premium only, together with the customer AI.
   business: { price: 399000, features: ['menu3d', 'adminAi'] },
-  premium: { price: 699000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables', 'clientAi', 'visionTables', 'analytics'] },
+  premium: { price: 699000, features: ['menu3d', 'room3d', 'adminAi', 'liveTables', 'clientAi', 'visionTables', 'analytics', 'callAi'] },
 };
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[];
 const ALL_FEATURES = PLANS.premium.features;

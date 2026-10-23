@@ -1,6 +1,7 @@
 import handler from "vinext/server/fetch-handler";
 import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
+import { runCallAi } from "../app/call-ai";
 
 export default {
   fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
@@ -24,5 +25,9 @@ export default {
       };
     }
     return runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+  },
+  // Cron trigger (vite.config.ts): Call AI confirmation calls 2 hours before bookings.
+  scheduled(_controller: ScheduledController, _env: Cloudflare.Env, ctx: ExecutionContext) {
+    ctx.waitUntil(runCallAi().catch(() => console.error(JSON.stringify({ event: "call_ai_failed" }))));
   },
 };

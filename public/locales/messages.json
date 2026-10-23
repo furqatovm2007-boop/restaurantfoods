@@ -4773,5 +4773,85 @@
     "uz": "💳 Kartani ulash",
     "ru": "💳 Привязать карту",
     "en": "💳 Link card"
+  },
+  "Bron vaqtiga 2 soatdan kam qoldi — ilova orqali bekor qilib bo‘lmaydi. Bekor qilish uchun restoranga qo‘ng‘iroq qiling; kelishilgan jarima kartangizdan yechiladi.": {
+    "uz": "Bron vaqtiga 2 soatdan kam qoldi — ilova orqali bekor qilib bo‘lmaydi. Bekor qilish uchun restoranga qo‘ng‘iroq qiling; kelishilgan jarima kartangizdan yechiladi.",
+    "ru": "До брони меньше 2 часов — отменить в приложении нельзя. Позвоните в ресторан; согласованный штраф спишется с вашей карты.",
+    "en": "Less than 2 hours left — the app cannot cancel it. Phone the restaurant; the agreed penalty is charged to your card."
+  },
+  "Bekor qilish va jarimani yechish": {
+    "uz": "Bekor qilish va jarimani yechish",
+    "ru": "Отменить и списать штраф",
+    "en": "Cancel and charge the penalty"
+  },
+  "Mijoz qo‘ng‘iroq qilib bekor qildimi? Bron yopiladi va vaqtga qarab belgilangan jarima mijoz kartasidan yechiladi.": {
+    "uz": "Mijoz qo‘ng‘iroq qilib bekor qildimi? Bron yopiladi va vaqtga qarab belgilangan jarima mijoz kartasidan yechiladi.",
+    "ru": "Клиент позвонил и отменил? Бронь будет закрыта, а штраф по оставшемуся времени спишется с карты клиента.",
+    "en": "Did the customer phone to cancel? The booking is closed and the penalty for the time left is charged to the customer’s card."
+  },
+  "Bron bekor qilindi, jarima yechildi": {
+    "uz": "Bron bekor qilindi, jarima yechildi",
+    "ru": "Бронь отменена, штраф списан",
+    "en": "Booking cancelled, penalty charged"
+  },
+  "Bron bekor qilindi, lekin kartadan yechib bo‘lmadi": {
+    "uz": "Bron bekor qilindi, lekin kartadan yechib bo‘lmadi",
+    "ru": "Бронь отменена, но списать с карты не удалось",
+    "en": "Booking cancelled, but the card charge failed"
+  },
+  "Bron bekor qilindi. Mijozning kartasi ulanmagan — jarima yechilmadi.": {
+    "uz": "Bron bekor qilindi. Mijozning kartasi ulanmagan — jarima yechilmadi.",
+    "ru": "Бронь отменена. Карта клиента не привязана — штраф не списан.",
+    "en": "Booking cancelled. The customer has no linked card — no penalty charged."
+  },
+  "javob kutilmoqda": {
+    "uz": "javob kutilmoqda",
+    "ru": "ждём ответа",
+    "en": "awaiting answer"
+  },
+  "mijoz tasdiqladi": {
+    "uz": "mijoz tasdiqladi",
+    "ru": "клиент подтвердил",
+    "en": "customer confirmed"
+  },
+  "mijoz kelmaydi": {
+    "uz": "mijoz kelmaydi",
+    "ru": "клиент не придёт",
+    "en": "customer not coming"
+  },
+  "javob bermadi": {
+    "uz": "javob bermadi",
+    "ru": "не ответил",
+    "en": "no answer"
+  },
+  "Telegram ulanmagan": {
+    "uz": "Telegram ulanmagan",
+    "ru": "Telegram не подключён",
+    "en": "Telegram not linked"
+  },
+  "Call AI: hozir qo‘ng‘iroq": {
+    "uz": "Call AI: hozir qo‘ng‘iroq",
+    "ru": "Call AI: позвонить сейчас",
+    "en": "Call AI: call now"
+  },
+  "Yoqilgan. Bron vaqtiga 2 soat qolganda AI mijozga Telegram orqali ovozli qo‘ng‘iroq-xabar yuboradi va kelishini so‘raydi. “Ha” — bron tasdiqlanadi; “Yo‘q” yoki javob bo‘lmasa — sizga darhol xabar keladi.": {
+    "uz": "Yoqilgan. Bron vaqtiga 2 soat qolganda AI mijozga Telegram orqali ovozli qo‘ng‘iroq-xabar yuboradi va kelishini so‘raydi. “Ha” — bron tasdiqlanadi; “Yo‘q” yoki javob bo‘lmasa — sizga darhol xabar keladi.",
+    "ru": "Включено. За 2 часа до брони AI отправляет клиенту голосовой звонок-сообщение в Telegram и спрашивает, придёт ли он. «Да» — бронь подтверждается; «Нет» или нет ответа — вам сразу приходит уведомление.",
+    "en": "On. 2 hours before a booking the AI sends the customer a voice call message in Telegram and asks whether they are coming. “Yes” confirms the booking; “No” or no answer notifies you at once."
+  },
+  "Telegram bot sozlanmagan — Call AI ishlashi uchun kerak.": {
+    "uz": "Telegram bot sozlanmagan — Call AI ishlashi uchun kerak.",
+    "ru": "Telegram-бот не настроен — он нужен для Call AI.",
+    "en": "The Telegram bot is not set up — Call AI needs it."
+  },
+  "Call AI faqat Premium tarifida ishlaydi.": {
+    "uz": "Call AI faqat Premium tarifida ishlaydi.",
+    "ru": "Call AI работает только на тарифе Premium.",
+    "en": "Call AI is available on the Premium plan only."
+  },
+  "Call AI: bronga 2 soat qolganda mijozga ovozli tasdiqlash qo‘ng‘irog‘i (Telegram)": {
+    "uz": "Call AI: bronga 2 soat qolganda mijozga ovozli tasdiqlash qo‘ng‘irog‘i (Telegram)",
+    "ru": "Call AI: голосовой звонок-подтверждение клиенту за 2 часа до брони (Telegram)",
+    "en": "Call AI: voice confirmation call to the customer 2 hours before the booking (Telegram)"
   }
 }

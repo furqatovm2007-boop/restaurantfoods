@@ -23,7 +23,7 @@ export function cancellationPenalty(date: string, slot: string, now = Date.now()
   return PENALTY_TIERS.find((t) => left > t.above)!.amount;
 }
 
-export const PENALTY_RULES_TEXT = 'Bronni boshlanishidan 2 soat oldin bepul bekor qilish mumkin. Kechroq bekor qilinsa: 2 soatdan kam (≈1,5 soat) qolganda — 50 000 so‘m, 1 soat qolganda — 100 000 so‘m, 30 daqiqa va kam qolganda yoki kelmasangiz — 150 000 so‘m bog‘langan kartangizdan avtomatik yechiladi va restoranga o‘tkaziladi.';
+export const PENALTY_RULES_TEXT = 'Bronni boshlanishidan 2 soat oldin ilova orqali bepul bekor qilish mumkin. Bron vaqtiga 2 soatdan kam vaqt qolganda uni ilova orqali o‘zingiz bekor qila olmaysiz: restoranga telefon qilasiz va kelishilgan jarima kartangizdan baribir yechiladi — 2 soatdan kam (≈1,5 soat) qolganda 50 000 so‘m, 1 soat qolganda 100 000 so‘m, 30 daqiqa va kam qolganda yoki kelmasangiz 150 000 so‘m. Jarima restoranga o‘tkaziladi.';
 
 /**
  * Records and charges a penalty once per booking. Never throws: a failed charge stays 'failed'

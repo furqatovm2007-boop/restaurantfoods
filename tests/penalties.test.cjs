@@ -21,7 +21,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const rules=load('app/booking-rules.ts',{'./http':http},{Date:FixedDate}),cards=load('app/payme-cards.ts',{...cf,'./http':http},extras),penalties=load('app/penalties.ts',{...cf,'./booking-rules':rules,'./payme-cards':cards},extras);
  let user={userId:'c1',role:'customer'};
  const deps={...cf,...integrationDeps(env,http,'../../',extras),'../../access':{identity:async()=>user},'../../http':noLimit,'../../plans':load('app/plans.ts',{...cf,'./http':http}),'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':rules,'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../payme-cards':cards,'../../penalties':penalties};
- const bookings=load('app/api/bookings/route.ts',deps,extras),cardRoute=load('app/api/cards/route.ts',deps,extras);
+ Object.assign(deps,{'../../account-admin':{audit:()=>{}},'../../demo-drinks':load('app/demo-drinks.ts',{}),'../../auth-service':{authConfig:()=>({url:'',key:''})}});
+ const bookings=load('app/api/bookings/route.ts',deps,extras),cardRoute=load('app/api/cards/route.ts',deps,extras),manage=load('app/api/manage/route.ts',deps,extras);
  db.exec("INSERT INTO accounts(id,email,name,created_at,role) VALUES ('owner','o@x','O','now','restaurant_owner'),('c1','c1@x','C1','now','customer'),('c2','c2@x','C2','now','customer')");
  db.exec("INSERT INTO restaurants(id,name,owner_id,status,tables,floors,booking_open,booking_close) VALUES ('r','Real','owner','active',3,1,'08:00','23:00')");
  db.exec("INSERT INTO restaurant_tables(id,restaurant_id,number,seats,x,y) VALUES ('t1','r',1,4,20,30),('t2','r',2,4,50,30),('t3','r',3,4,80,30)");
@@ -50,31 +51,35 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  user={userId:'c1',role:'customer'};const patch=p=>bookings.PATCH(request('/api/bookings',p,'PATCH'));
  assert.equal((await (await patch({id:b2,preview:true})).json()).penalty,0);
  calls.length=0;assert.equal((await patch({id:b2})).status,200);assert.ok(!calls.some(c=>c.method.startsWith('receipts')),'free: no charge');
- // 1.5 h before 15:00 (13:30): preview 50 000, needs explicit acceptance, charged once to the restaurant.
+ // 1.5 h before 15:00 (13:30): the customer can no longer cancel in the app — phone the restaurant.
  NOW=Date.parse(today+'T13:30:00+05:00');
- assert.equal((await (await patch({id:b1,preview:true})).json()).penalty,50000);
- r=await patch({id:b1});assert.equal(r.status,409,'must accept');assert.equal(db.prepare('SELECT status FROM bookings WHERE id=?').get(b1).status,'pending');
- calls.length=0;r=await patch({id:b1,acceptPenalty:true});assert.equal(r.status,200);assert.deepEqual((await r.json()).penalty.status,'paid');
+ r=await patch({id:b1});assert.equal(r.status,400);assert.ok((await r.json()).error.includes('restoranga qo‘ng‘iroq'));assert.equal(db.prepare('SELECT status FROM bookings WHERE id=?').get(b1).status,'pending');
+ // Staff press "Cancel and charge the penalty": 50 000 for 1.5 h left, charged once, to the restaurant.
+ user={userId:'owner',role:'restaurant_owner'};const late=id=>manage.POST(request('/api/manage',{action:'late_cancel',id}));
+ calls.length=0;r=await late(b1);assert.equal(r.status,200);let lr=await r.json();assert.equal(lr.amount,50000);assert.equal(lr.charged,true);
+ assert.equal(db.prepare('SELECT status FROM bookings WHERE id=?').get(b1).status,'cancelled');
  const create=calls.find(c=>c.method==='receipts.create'),pay=calls.find(c=>c.method==='receipts.pay');assert.equal(create.params.amount,5000000,'tiyin');assert.equal(pay.params.token,'tok-c1-xxxxxxxx');
  let p=db.prepare('SELECT * FROM penalties WHERE booking_id=?').get(b1);assert.equal(p.amount,50000);assert.equal(p.status,'paid');assert.equal(p.restaurant_id,'r');assert.equal(p.reason,'late_cancel');
- assert.equal(await penalties.chargePenalty(b1,'late_cancel',50000),null,'charged once per booking');
+ assert.equal((await late(b1)).status,404,'already closed');assert.equal(await penalties.chargePenalty(b1,'late_cancel',50000),null,'charged once per booking');
  assert.deepEqual({...await penalties.restaurantBalance('r')},{paid:50000,unpaid:0});
- // Started bookings cannot be cancelled any more (that is a no-show).
+ // More than 2 h left: the staff button is refused (the customer cancels free); another restaurant's owner is refused.
+ r=await book('c1',2,'18:00','19:00',{acceptPenalty:true});const far=(await r.json()).id;user={userId:'owner',role:'restaurant_owner'};assert.equal((await late(far)).status,409);
+ user={userId:'stranger',role:'restaurant_owner'};assert.equal((await late(far)).status,403);user={userId:'owner',role:'restaurant_owner'};
+ // Started bookings: late cancel refused (that is a no-show).
  NOW=Date.parse(today+'T13:25:00+05:00');
- // 13:20 booking already started at 13:25.
- assert.equal((await patch({id:b3,acceptPenalty:true})).status,400);
+ assert.equal((await late(b3)).status,409);
  // No-show: 150 000; a failed bank charge is recorded as unpaid.
  payFails=true;const ns=await penalties.chargePenalty(b3,'no_show',penalties.NO_SHOW_PENALTY);assert.equal(ns.status,'failed');
  p=db.prepare('SELECT * FROM penalties WHERE booking_id=?').get(b3);assert.equal(p.amount,150000);assert.ok(p.error.includes('yetarli'));
  assert.deepEqual({...await penalties.restaurantBalance('r')},{paid:50000,unpaid:150000});
  // Card removal is blocked while a guaranteed booking is active, then allowed.
  payFails=false;NOW=Date.parse(today+'T12:00:00+05:00');
- r=await book('c1',2,'20:00','21:00',{acceptPenalty:true});const b4=(await r.json()).id;
+ const b4=far;user={userId:'c1',role:'customer'};
  assert.equal((await cardRoute.POST(request('/api/cards',{action:'remove'}))).status,409);
- await patch({id:b4});db.exec("UPDATE bookings SET status='completed' WHERE id='"+b3+"'");
+ user={userId:'c1',role:'customer'};assert.equal((await patch({id:b4})).status,200,'free cancel 6 h before');db.exec("UPDATE bookings SET status='completed' WHERE id='"+b3+"'");
  assert.equal((await cardRoute.POST(request('/api/cards',{action:'remove'}))).status,200);assert.equal(db.prepare("SELECT COUNT(*) n FROM payment_cards").get().n,0);
  // Without a bound card, an old booking keeps the strict 2-hour rule.
  env.PAYME_SUBSCRIBE='false';r=await book('c2',1,'13:30','14:30');assert.equal(r.status,201,'binding off: booking as before');const b5=(await r.json()).id;
  user={userId:'c2',role:'customer'};assert.equal((await patch({id:b5})).status,400);
- console.log('PASS penalties: tiers, card binding (token only), card+consent required, preview/accept late cancel charge once, started booking locked, no-show/failed charge, card removal guard');
+ console.log('PASS penalties: tiers, card binding (token only), card+consent required, <2 h only via restaurant (staff cancel & charge once), started booking locked, no-show/failed charge, card removal guard');
 })().catch(e=>{console.error(e);process.exitCode=1});

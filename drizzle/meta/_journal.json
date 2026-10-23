@@ -197,6 +197,13 @@
       "when": 1792785468194,
       "tag": "0027_cards_penalties_flowers",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1792786636479,
+      "tag": "0028_call_ai",
+      "breakpoints": true
     }
   ]
 }

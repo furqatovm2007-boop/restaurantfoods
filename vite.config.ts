@@ -31,6 +31,8 @@ const localBindingConfig = {
   keep_vars: true,
   // Workers Logs: SMS/payment failures (no codes or phone numbers) are readable in the dashboard.
   observability: { enabled: true },
+  // Call AI: every 5 minutes, confirmation calls for bookings starting within 2 hours.
+  triggers: { crons: ["*/5 * * * *"] },
   vars: {
     SUPABASE_URL: "https://edfpytsribkqxtdfimww.supabase.co",
     SUPABASE_ANON_KEY:

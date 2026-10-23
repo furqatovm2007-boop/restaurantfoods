@@ -19,6 +19,15 @@ async function providerError(response:Response,event:string){
  const error=billing?'AI_BILLING_REQUIRED':status===429?'AI_LIMIT':status===400&&event==='transcription_failed'?'AI_AUDIO_INVALID':[400,401,403].includes(status)?'AI_CONFIGURATION':status===404?'AI_MODEL_UNAVAILABLE':'AI_UNAVAILABLE';
  return output({error},status===429?429:status===400&&event==='transcription_failed'?422:503)
 }
+async function callVoice(b:any,key:string){
+ if(!b||!['uz','ru','en'].includes(b.lang))return output({error:'INVALID_REQUEST'},400);
+ if(b.mode==='call_transcribe')return voiceRequest({...b,mode:'transcribe'},key);
+ if(b.mode!=='call_speech'||typeof b.text!=='string'||!b.text.trim()||b.text.length>600)return output({error:'INVALID_REQUEST'},400);
+ const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:Deno.env.get('OPENAI_TTS_MODEL')||'gpt-4o-mini-tts',input:b.text,voice:'coral',instructions:'Friendly restaurant booking assistant making a short confirmation call. Speak clearly in '+({uz:'Uzbek',ru:'Russian',en:'English'} as any)[b.lang]+'.',response_format:'opus'}),signal:AbortSignal.timeout(24000)});
+ if(!response.ok)return providerError(response,'tts_failed');
+ const audio=new Uint8Array(await response.arrayBuffer());if(!audio.length||audio.length>1500000)return output({error:'AI_VOICE_UNAVAILABLE'},502);
+ return output({audio:toBase64(audio),mimeType:'audio/ogg'});
+}
 function toBase64(bytes:Uint8Array){let raw='';for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw)}
 async function voiceRequest(b:any,key:string){
  if(!['uz','ru','en'].includes(b.lang))return output({error:'INVALID_REQUEST'},400);
@@ -81,6 +90,9 @@ Deno.serve(async req=>{
  // Enforced once RF_PROXY_SECRET is set here and in the Worker (same value).
  const proxySecret=Deno.env.get('RF_PROXY_SECRET');
  if(proxySecret&&!(await sameSecret(req.headers.get('x-rf-proxy')||'',proxySecret)))return output({error:'AI_LOGIN_REQUIRED'},401);
+ // Call AI (booking confirmation, no end user in the loop): only the Worker, proven by the proxy secret
+ // checked above, may ask for a Telegram voice note (OGG/Opus) or a transcript of the customer's reply.
+ if(proxySecret&&req.headers.get('x-rf-service')==='call'){const key=openAIKey();if(!key)return output({error:'AI_CONFIGURATION'},503);const raw=await req.text();if(raw.length>650000)return output({error:'INVALID_REQUEST'},413);let b:any;try{b=JSON.parse(raw)}catch{return output({error:'INVALID_REQUEST'},400)}return await callVoice(b,key)}
  const auth=req.headers.get('authorization')||'';
  if(!auth.startsWith('Bearer '))return output({error:'AI_LOGIN_REQUIRED'},401);
  try{
