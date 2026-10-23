@@ -17,6 +17,8 @@ declare namespace Cloudflare {
     /** Payme Merchant API deposits. */
     PAYME_MERCHANT_ID?: string;
     PAYME_KEY?: string;
+    PAYME_SUBSCRIBE?: string;
+    PAYME_TEST?: string;
     /** Eskiz.uz SMS for booking phone OTP; BOOKING_PHONE_OTP='true' makes it mandatory. */
     ESKIZ_EMAIL?: string;
     ESKIZ_PASSWORD?: string;

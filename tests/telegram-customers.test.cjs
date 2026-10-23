@@ -36,13 +36,21 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(db.prepare("SELECT contact_phone_verified v FROM accounts WHERE id='c1'").get().v,0);
  await update({message:{chat:{id:500},from:{id:500},contact:{phone_number:'+79001234567',user_id:500}}});
  assert.equal(db.prepare("SELECT telegram_phone FROM accounts WHERE id='c1'").get().telegram_phone,null);
- await update({message:{chat:{id:500},from:{id:500},contact:{phone_number:'998901112233',user_id:500}}});
+ calls.length=0;await update({message:{chat:{id:500},from:{id:500},contact:{phone_number:'998901112233',user_id:500}}});
+ // The code is generated on the server and sent at once; the number is NOT verified yet.
+ assert.equal(calls.length,1,'one message: the code, sent right away');const first=/<b>(\d{6})<\/b>/.exec(last().body.text)[1];
  let a=db.prepare("SELECT telegram_phone,contact_phone,contact_phone_verified FROM accounts WHERE id='c1'").get();
- assert.deepEqual({...a},{telegram_phone:'+998901112233',contact_phone:'+998901112233',contact_phone_verified:1});
+ assert.deepEqual({...a},{telegram_phone:'+998901112233',contact_phone:'',contact_phone_verified:0},'not verified before the code');
  // A contact from a chat that is not linked does nothing.
  await update({message:{chat:{id:900},from:{id:900},contact:{phone_number:'998905556677',user_id:900}}});assert.equal(db.prepare("SELECT COUNT(*) n FROM accounts WHERE telegram_phone='+998905556677'").get().n,0);
- // /api/me reports the state to the page that polls it.
- let u=(await (await me.GET()).json()).user;assert.deepEqual(u.telegram,{available:true,linked:true,phone:'+998901112233'});assert.equal(u.contactPhoneVerified,true);assert.equal(u.smsVerification,true,'Telegram alone enables codes');
+ // /api/me hands the page the pending code id so it can show the code input.
+ let u=(await (await me.GET()).json()).user;assert.equal(u.telegram.linked,true);assert.equal(u.telegram.phone,'+998901112233');assert.equal(u.telegram.verified,false);assert.ok(u.telegram.otpId);assert.equal(u.contactPhoneVerified,false);assert.equal(u.smsVerification,true,'Telegram alone enables codes');
+ // A wrong code fails; the right one verifies; the code is single use.
+ r=await profile.POST(request('/api/profile',{action:'contact-verify',phone:'+998901112233',otpId:u.telegram.otpId,code:first==='000000'?'111111':'000000'}));assert.equal(r.status,400);
+ r=await profile.POST(request('/api/profile',{action:'contact-verify',phone:'+998901112233',otpId:u.telegram.otpId,code:first}));assert.equal((await r.json()).verified,true);
+ r=await profile.POST(request('/api/profile',{action:'contact-verify',phone:'+998901112233',otpId:u.telegram.otpId,code:first}));assert.equal(r.status,400,'used once');
+ a=db.prepare("SELECT contact_phone,contact_phone_verified FROM accounts WHERE id='c1'").get();assert.deepEqual({...a},{contact_phone:'+998901112233',contact_phone_verified:1});
+ user={...user,contactPhone:'+998901112233'};u=(await (await me.GET()).json()).user;assert.equal(u.telegram.verified,true);assert.equal(u.telegram.otpId,null);
 
  // 4. One-time code goes to Telegram (no SMS configured) and verifies.
  calls.length=0;r=await profile.POST(request('/api/profile',{action:'contact-otp',phone:'+998901112233'}));assert.equal(r.status,200);const otp=await r.json();

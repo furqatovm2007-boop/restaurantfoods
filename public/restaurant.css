@@ -59,3 +59,15 @@ body[data-theme=light] .theme-symbol{color:#946600}
 .telegram-connect p{margin:6px 0}
 .telegram-connect .telegram-button{background:#229ed9;border-color:#229ed9;color:#fff;max-width:100%;white-space:normal}
 .telegram-checks{list-style:none;padding:0;margin:8px 0 12px;display:grid;gap:6px;overflow-wrap:anywhere}
+
+/* Penalty rules (red) and the card / cancel dialogs */
+.penalty-rules{margin:12px 0;padding:12px 14px;border:1px solid rgba(239,68,68,.55);border-left:4px solid #ef4444;border-radius:12px;background:rgba(239,68,68,.09);color:#fecaca}
+.penalty-rules b{color:#fca5a5}
+.penalty-rules ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.penalty-now{color:#fca5a5;font-size:1.05em}
+.penalty-agree{display:flex;gap:10px;align-items:flex-start;color:#fecaca;font-weight:600}
+.penalty-agree input{margin-top:3px;flex:none;width:18px;height:18px}
+.rf-card-dialog{width:min(440px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:18px;background:#0f1d24;color:inherit}
+.rf-card-dialog::backdrop{background:rgba(0,0,0,.6)}
+.rf-card-dialog .danger{background:#dc2626;border-color:#dc2626;color:#fff}
+.card-section{margin:18px 0;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:14px}

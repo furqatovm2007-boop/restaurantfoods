@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { ApiError, throttle, clientIp } from './http';
 import { sendSms, smsConfigured } from './sms';
 import { sendTelegramCode } from './telegram';
+import { issueOtp, otpDigest as digest, OTP_TTL_MS as TTL_MS } from './otp-store';
 
 /*
  * One-time codes proving the booking phone belongs to the customer. Only a SHA-256
@@ -10,10 +11,8 @@ import { sendTelegramCode } from './telegram';
  * (shared contact), otherwise SMS. Telegram is free, so it is tried first.
  */
 export const TELEGRAM_REQUIRED = 'Kod yuborish uchun profilingizda Telegram botni ulang va raqamingizni ulashing.';
-const TTL_MS = 5 * 60000;
 const MAX_ATTEMPTS = 5;
 
-const digest = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), (v) => v.toString(16).padStart(2, '0')).join('');
 
 const DAY = 86400000;
 /** Sends a code with every SMS limit applied: per account, per phone, per network address and per day overall. */
@@ -27,10 +26,7 @@ export async function sendGuardedOtp(request: Request, userId: string, phone: st
 }
 
 export async function sendBookingOtp(userId: string, phone: string) {
-  const id = crypto.randomUUID();
-  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
-  const now = Date.now();
-  await env.DB!.prepare('INSERT INTO booking_phone_otps (id,user_id,phone,code_hash,expires_at,created_at) VALUES (?,?,?,?,?,?)').bind(id, userId, phone, await digest(id + code), now + TTL_MS, now).run();
+  const { id, code } = await issueOtp(userId, phone);
   const tg = await env.DB!.prepare('SELECT telegram_chat_id,telegram_phone FROM accounts WHERE id=?').bind(userId).first<{ telegram_chat_id: string | null; telegram_phone: string | null }>();
   if (tg?.telegram_chat_id && tg.telegram_phone === phone && (await sendTelegramCode(tg.telegram_chat_id, code))) return { id, expiresIn: TTL_MS / 1000, channel: 'telegram' as const };
   if (!smsConfigured()) throw new ApiError(503, TELEGRAM_REQUIRED);

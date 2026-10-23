@@ -7,7 +7,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const today=new Date(Date.now()+5*3600000).toISOString().slice(0,10),NOW=Date.parse(today+'T12:00:00+05:00');
  class FixedDate extends Date{constructor(...a){super(...(a.length?a:[NOW]))}static now(){return NOW}}
  const env={DB},cw={'cloudflare:workers':{env}};let user={userId:'owner',role:'restaurant_owner'};
- const http=load('app/http.ts',cw),noLimit={...http,throttle:async()=>{}},plans=load('app/plans.ts',{...cw,'./http':http}),waitlist=load('app/waitlist.ts',{...cw,'./telegram':load('app/telegram.ts',cw)}),pass=load('app/booking-pass.ts',cw);
+ const http=load('app/http.ts',cw),noLimit={...http,throttle:async()=>{}},plans=load('app/plans.ts',{...cw,'./http':http}),waitlist=load('app/waitlist.ts',{...cw,'./telegram':load('app/telegram.ts',{...cw,'./otp-store':load('app/otp-store.ts',cw)})}),pass=load('app/booking-pass.ts',cw);
  const access={identity:async()=>user};
  const deps={...cw,'../../access':access,'../../http':noLimit,'../../plans':plans,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':load('app/booking-rules.ts',{'./http':http},{Date:FixedDate}),'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http})};Object.assign(deps,integrationDeps(env,http));
  const bookings=load('app/api/bookings/route.ts',deps);

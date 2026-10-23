@@ -4658,5 +4658,60 @@
     "uz": "Telegram webhook yangilandi.",
     "ru": "Telegram webhook обновлён.",
     "en": "Telegram webhook updated."
+  },
+  "Raqamingizni bepul tasdiqlang: bot “📱 Raqamni yuborish” tugmasini so‘raydi va darhol tasdiqlash kodini yuboradi.": {
+    "uz": "Raqamingizni bepul tasdiqlang: bot “📱 Raqamni yuborish” tugmasini so‘raydi va darhol tasdiqlash kodini yuboradi.",
+    "ru": "Подтвердите номер бесплатно: бот попросит нажать «📱 Raqamni yuborish» и сразу пришлёт код подтверждения.",
+    "en": "Verify your number for free: the bot asks you to tap “📱 Raqamni yuborish” and sends a code right away."
+  },
+  "Kod Telegram’ga yuborildi": {
+    "uz": "Kod Telegram’ga yuborildi",
+    "ru": "Код отправлен в Telegram",
+    "en": "Code sent to Telegram"
+  },
+  "TASDIQLASH KODI": {
+    "uz": "TASDIQLASH KODI",
+    "ru": "КОД ПОДТВЕРЖДЕНИЯ",
+    "en": "VERIFICATION CODE"
+  },
+  "Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing. Kod kelgach shu yerga kiriting.": {
+    "uz": "Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing. Kod kelgach shu yerga kiriting.",
+    "ru": "В Telegram нажмите «Start», затем «📱 Raqamni yuborish». Когда придёт код, введите его здесь.",
+    "en": "In Telegram tap “Start”, then “📱 Raqamni yuborish”. Enter the code here when it arrives."
+  },
+  "Jarima": {
+    "uz": "Jarima",
+    "ru": "Штраф",
+    "en": "Penalty"
+  },
+  "yechilmadi": {
+    "uz": "yechilmadi",
+    "ru": "не списан",
+    "en": "not charged"
+  },
+  "yechildi": {
+    "uz": "yechildi",
+    "ru": "списан",
+    "en": "charged"
+  },
+  "Karta kafolati": {
+    "uz": "Karta kafolati",
+    "ru": "Гарантия картой",
+    "en": "Card guarantee"
+  },
+  "Yechilgan jarimalar": {
+    "uz": "Yechilgan jarimalar",
+    "ru": "Списанные штрафы",
+    "en": "Charged penalties"
+  },
+  "yechilmagan": {
+    "uz": "yechilmagan",
+    "ru": "не списано",
+    "en": "uncharged"
+  },
+  "Kech bekor qilish va kelmaslik jarimalari mijoz kartasidan yechilib, restoran balansiga yoziladi. Pul platforma hisobidan restoranga o‘tkaziladi.": {
+    "uz": "Kech bekor qilish va kelmaslik jarimalari mijoz kartasidan yechilib, restoran balansiga yoziladi. Pul platforma hisobidan restoranga o‘tkaziladi.",
+    "ru": "Штрафы за позднюю отмену и неявку списываются с карты клиента и записываются на баланс ресторана. Деньги переводятся ресторану со счёта платформы.",
+    "en": "Late-cancellation and no-show penalties are charged to the customer’s card and credited to the restaurant balance. The money is paid out to the restaurant from the platform account."
   }
 }

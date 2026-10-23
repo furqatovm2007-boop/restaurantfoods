@@ -72,7 +72,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal((await vision.POST(frame({Origin:'https://evil'}))).status,403,'session uploads need same origin');
  db.prepare("UPDATE restaurants SET plan='business' WHERE id=?").run(id);assert.equal((await vision.POST(frame({Authorization:'Bearer '+key}))).status,402,'vision is Premium');assert.equal(visionCalls,2);
  // Smart Vision (on-device detection): statuses only, Business+ (liveTables), staff mark still wins.
- const occupancy=load('app/api/manage/occupancy/route.ts',{...cf,'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans,'../../../waitlist':load('app/waitlist.ts',{...cf,'./telegram':load('app/telegram.ts',cf)})});
+ const occupancy=load('app/api/manage/occupancy/route.ts',{...cf,'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans,'../../../waitlist':load('app/waitlist.ts',{...cf,'./telegram':load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf)})})});
  const occ=(headers,tables)=>occupancy.POST(new Request('https://test/api/manage/occupancy',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({restaurantId:id,tables})}));
  const savedLive=db.prepare('SELECT * FROM table_live_status WHERE restaurant_id=?').all(id);db.prepare('DELETE FROM table_live_status WHERE restaurant_id=?').run(id);
  assert.equal((await occ({Authorization:'Bearer '+key},[{number:1,status:'occupied',confidence:.8}])).status,402,'Business: no AI camera');db.prepare("UPDATE restaurants SET plan='premium' WHERE id=?").run(id);

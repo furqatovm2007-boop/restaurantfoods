@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { issueOtp, recentOtps } from './otp-store';
 
 /*
  * Telegram bot.
@@ -6,9 +7,10 @@ import { env } from 'cloudflare:workers';
  *  bookings are sent there with Confirm / Cancel buttons that act on the booking after checking
  *  the chat still belongs to that restaurant.
  *  Customers: /start c_CODE (from the profile) links the customer's chat; the bot then asks for
- *  the phone via Telegram's own "share contact" button — Telegram vouches the number belongs to
- *  that account, so the profile phone becomes verified without an SMS. Linked customers get their
- *  one-time codes (OTP) and booking updates here. /stop unlinks.
+ *  the phone via Telegram's own "share contact" button (accepted only for the sender's own number).
+ *  The server immediately generates a one-time code and sends it here; the phone becomes verified
+ *  only after that code is typed on the site (contact-verify). Linked customers also get later
+ *  codes and booking updates here. Only the chat id and the phone are stored. /stop unlinks.
  */
 const API = 'https://api.telegram.org/bot';
 
@@ -171,9 +173,15 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
       await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: REMOVE_KEYBOARD });
       return 'contact_not_uz';
     }
-    await env.DB!.prepare('UPDATE accounts SET telegram_phone=?,contact_phone=?,contact_phone_verified=1 WHERE id=?').bind(phone, phone, account.id).run();
-    await telegram('sendMessage', { chat_id: chatId, text: `✅ Raqamingiz tasdiqlandi: ${prettyPhone(phone)}\nSaytga qayting — tasdiqlash kodlari va bron xabarlari shu yerga keladi.`, reply_markup: REMOVE_KEYBOARD });
-    return 'phone_verified';
+    // Not verified yet: the number is verified only when the code below is typed on the site.
+    await env.DB!.prepare('UPDATE accounts SET telegram_phone=? WHERE id=?').bind(phone, account.id).run();
+    if ((await recentOtps(account.id)) >= 5) {
+      await telegram('sendMessage', { chat_id: chatId, text: 'Juda ko‘p urinish. 10 daqiqadan keyin qayta urinib ko‘ring.', reply_markup: REMOVE_KEYBOARD });
+      return 'otp_throttled';
+    }
+    const { code } = await issueOtp(account.id, phone);
+    await telegram('sendMessage', { chat_id: chatId, text: `📱 ${prettyPhone(phone)}\n🔐 Tasdiqlash kodi: <b>${code}</b>\n\nKodni saytdagi maydonga kiriting — raqam shundan keyin tasdiqlanadi. Kod 5 daqiqa amal qiladi, uni hech kimga bermang.`, parse_mode: 'HTML', reply_markup: REMOVE_KEYBOARD });
+    return 'code_sent';
   }
   const text = msg.text?.trim() || '';
   if (text === '/stop') {
