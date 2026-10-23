@@ -58,3 +58,4 @@ body[data-theme=light] .theme-symbol{color:#946600}
 .telegram-connect h3{margin:0 0 6px}
 .telegram-connect p{margin:6px 0}
 .telegram-connect .telegram-button{background:#229ed9;border-color:#229ed9;color:#fff;max-width:100%;white-space:normal}
+.telegram-checks{list-style:none;padding:0;margin:8px 0 12px;display:grid;gap:6px;overflow-wrap:anywhere}

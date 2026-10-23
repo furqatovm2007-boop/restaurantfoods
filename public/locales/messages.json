@@ -4623,5 +4623,40 @@
     "uz": "Raqamni tasdiqlash kodi yoki Telegram orqali tasdiqlang.",
     "ru": "Подтвердите номер кодом или через Telegram.",
     "en": "Verify the number with a code or via Telegram."
+  },
+  "token noto‘g‘ri yoki Telegram javob bermadi": {
+    "uz": "token noto‘g‘ri yoki Telegram javob bermadi",
+    "ru": "токен неверный или Telegram не ответил",
+    "en": "token is wrong or Telegram did not answer"
+  },
+  "kutilayotgan": {
+    "uz": "kutilayotgan",
+    "ru": "в очереди",
+    "en": "pending"
+  },
+  "Oxirgi xato": {
+    "uz": "Oxirgi xato",
+    "ru": "Последняя ошибка",
+    "en": "Last error"
+  },
+  "Webhookni qayta yangilash": {
+    "uz": "Webhookni qayta yangilash",
+    "ru": "Обновить webhook ещё раз",
+    "en": "Update the webhook again"
+  },
+  "Cloudflare → Settings → Variables: yetishmayotgan qiymatlarni qo‘shing va Deploy qiling.": {
+    "uz": "Cloudflare → Settings → Variables: yetishmayotgan qiymatlarni qo‘shing va Deploy qiling.",
+    "ru": "Cloudflare → Settings → Variables: добавьте недостающие значения и сделайте Deploy.",
+    "en": "Cloudflare → Settings → Variables: add the missing values and Deploy."
+  },
+  "Botni ochish": {
+    "uz": "Botni ochish",
+    "ru": "Открыть бота",
+    "en": "Open the bot"
+  },
+  "Telegram webhook yangilandi.": {
+    "uz": "Telegram webhook yangilandi.",
+    "ru": "Telegram webhook обновлён.",
+    "en": "Telegram webhook updated."
   }
 }
