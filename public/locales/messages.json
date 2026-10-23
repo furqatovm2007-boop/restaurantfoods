@@ -4493,5 +4493,45 @@
     "uz": "Apple (iCloud) orqali kirish",
     "ru": "Войти через Apple (iCloud)",
     "en": "Sign in with Apple"
+  },
+  "Xizmat haqi, % (chekda)": {
+    "uz": "Xizmat haqi, % (chekda)",
+    "ru": "Плата за обслуживание, % (в чеке)",
+    "en": "Service charge, % (on the receipt)"
+  },
+  "Chek": {
+    "uz": "Chek",
+    "ru": "Чек",
+    "en": "Receipt"
+  },
+  "Chipta": {
+    "uz": "Chipta",
+    "ru": "Билет",
+    "en": "Pass"
+  },
+  "QR-kodni tekshirish": {
+    "uz": "QR-kodni tekshirish",
+    "ru": "Проверить QR-код",
+    "en": "Check QR code"
+  },
+  "Kelmay qoldi": {
+    "uz": "Kelmay qoldi",
+    "ru": "Не пришёл",
+    "en": "No-show"
+  },
+  "Keldi": {
+    "uz": "Keldi",
+    "ru": "Пришёл",
+    "en": "Arrived"
+  },
+  "Avval kelmagan": {
+    "uz": "Avval kelmagan",
+    "ru": "Ранее не приходил",
+    "en": "Previous no-shows"
+  },
+  "🔔 Bo‘shashi bilan xabar berish (navbatga yozilish)": {
+    "uz": "🔔 Bo‘shashi bilan xabar berish (navbatga yozilish)",
+    "ru": "🔔 Сообщить, когда освободится (встать в очередь)",
+    "en": "🔔 Notify me when it’s free (join the queue)"
   }
 }

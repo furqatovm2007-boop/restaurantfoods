@@ -317,3 +317,61 @@ dialog::backdrop{-webkit-backdrop-filter:none!important;backdrop-filter:none!imp
 .social-button.apple-button:hover{background:#1c1c1e}
 .social-button.apple-button[disabled]{opacity:.55}
 .apple-logo{flex:0 0 auto;margin-top:-2px}
+/* Booking receipt and QR pass. The paper is always light, like a real receipt. */
+.rf-receipt-dialog{width:min(460px,96vw);max-height:94dvh;padding:0;border:0;border-radius:22px;background:#0f1f2b;color:#ecf7f3;overflow:auto}
+.rf-receipt-dialog::backdrop{background:rgba(2,13,22,.78)}
+.rf-receipt-body{padding:14px}
+.rf-receipt-paper{background:#fff;color:#111;border-radius:14px;padding:20px 18px;font-size:14px;line-height:1.45}
+.rf-receipt-paper h2{margin:6px 0 2px;font-size:20px;color:#111}
+.rf-rc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px dashed #bbb;padding-bottom:10px}
+.rf-rc-head img{height:34px;width:auto;filter:invert(1) hue-rotate(180deg)}
+.rf-rc-head b{font-size:12px;color:#00866f}
+.rf-rc-muted{color:#555;font-size:13px;margin:4px 0}
+.rf-rc-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:13px}
+.rf-rc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;padding:10px;border-radius:10px;background:#f4f6f5}
+.rf-rc-grid div{min-width:0}.rf-rc-grid dt{font-size:11px;color:#666}.rf-rc-grid dd{margin:0;font-weight:700}
+.rf-rc-items{width:100%;border-collapse:collapse;margin:8px 0;font-size:13px}
+.rf-rc-items th{text-align:left;color:#666;font-weight:600;border-bottom:1px solid #ddd;padding:4px 2px}
+.rf-rc-items td{padding:5px 2px;border-bottom:1px dashed #e3e3e3;vertical-align:top;overflow-wrap:anywhere}
+.rf-rc-items th:not(:first-child),.rf-rc-items td:not(:first-child){text-align:right;white-space:nowrap}
+.rf-rc-totals{margin:8px 0}.rf-rc-totals div{display:flex;justify-content:space-between;gap:8px;padding:3px 0}.rf-rc-totals dd{margin:0;white-space:nowrap}
+.rf-rc-total{border-top:2px solid #111;margin-top:4px;padding-top:8px!important;font-size:18px;font-weight:800}
+.rf-rc-pass{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px dashed #bbb}
+.rf-rc-pass p{margin:4px 0;color:#444;font-size:13px}
+.rf-receipt-paper code{font-size:13px;letter-spacing:.06em;color:#111}
+.rf-qr{flex:0 0 auto;max-width:100%;height:auto}
+.rf-pass-paper{text-align:center}.rf-pass-paper .rf-qr{display:block;margin:12px auto;width:min(260px,70vw)}.rf-pass-paper .rf-rc-head{justify-content:center}
+.rf-receipt-actions{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 14px}
+.rf-receipt-actions button{flex:1 1 140px;min-height:46px}
+@media (max-width:420px){.rf-rc-grid{grid-template-columns:repeat(2,1fr)}.rf-rc-pass{flex-direction:column;text-align:center}}
+.rf-print-root{display:none}
+@media print{
+html.rf-printing body>*:not(.rf-print-root){display:none!important}
+html.rf-printing .rf-print-root{display:block}
+html.rf-printing body{background:#fff!important}
+.rf-print-root .rf-receipt-paper{border-radius:0;padding:0;max-width:80mm;margin:0 auto}
+}
+/* Staff QR check-in. */
+.manage-tools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.manage-tools button{min-height:46px}
+.rf-checkin-dialog{width:min(480px,96vw);max-height:94dvh;overflow:auto;border:0;border-radius:22px;background:#0f1f2b;color:#ecf7f3;padding:18px}
+.rf-checkin-dialog::backdrop{background:rgba(2,13,22,.78)}
+.rf-checkin-dialog h2{margin:0 0 4px;font-size:20px}
+.rf-scan{position:relative;aspect-ratio:1;max-height:56dvh;margin:10px auto;border-radius:16px;overflow:hidden;background:#050c12}
+.rf-scan video{width:100%;height:100%;object-fit:cover}
+.rf-scan-frame{position:absolute;inset:18%;border:3px solid #00c9a7;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.rf-scan-manual{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.rf-scan-manual label{flex:1 1 200px}
+.rf-scan-manual input{text-transform:uppercase;letter-spacing:.06em}
+.rf-scan-card{margin-top:12px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.14)}
+.rf-scan-card p{margin:6px 0}
+.rf-scan-ok{color:#22c55e;font-weight:700}
+.badge.ok{background:rgba(34,197,94,.18);color:#22c55e}
+.badge.warn{background:rgba(245,158,11,.18);color:#f59e0b}
+/* Waitlist: join button and the "your table is free" banner with countdown. */
+.waitlist-button{width:100%;min-height:46px;margin-top:8px}
+.rf-waitlist-banner{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;width:min(560px,calc(100vw - 24px));display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:14px 16px;border-radius:18px;background:#0f2a22;border:1px solid #22c55e;box-shadow:0 12px 40px rgba(0,0,0,.45);color:#eafff5}
+.rf-waitlist-banner b{flex:1 1 100%}
+.rf-waitlist-banner span{font-variant-numeric:tabular-nums;font-weight:700;color:#facc15}
+.rf-waitlist-banner a,.rf-waitlist-banner button{min-height:42px}
+@media (min-width:701px){.rf-waitlist-banner{bottom:24px}}
