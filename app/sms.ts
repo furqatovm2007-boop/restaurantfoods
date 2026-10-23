@@ -9,13 +9,15 @@ import { ApiError } from './http';
 const BASE = 'https://notify.eskiz.uz/api';
 let token: string | null = null;
 
-export const smsConfigured = () => !!(env.ESKIZ_EMAIL?.trim() && env.ESKIZ_PASSWORD?.trim());
+// Eskiz's login "password" is the secret key from the cabinet; ESKIZ_SECRET_KEY wins over ESKIZ_PASSWORD.
+const eskizKey = () => (env.ESKIZ_SECRET_KEY?.trim() || env.ESKIZ_PASSWORD?.trim() || '');
+export const smsConfigured = () => !!(env.ESKIZ_EMAIL?.trim() && eskizKey());
 export const bookingOtpRequired = () => env.BOOKING_PHONE_OTP === 'true';
 
 async function login() {
   const form = new FormData();
   form.set('email', env.ESKIZ_EMAIL!.trim());
-  form.set('password', env.ESKIZ_PASSWORD!.trim());
+  form.set('password', eskizKey());
   const res = await fetch(BASE + '/auth/login', { method: 'POST', body: form, signal: AbortSignal.timeout(8000) });
   const data = (await res.json().catch(() => ({}))) as { data?: { token?: string } };
   if (!res.ok || !data.data?.token) throw new Error('ESKIZ_LOGIN_FAILED');

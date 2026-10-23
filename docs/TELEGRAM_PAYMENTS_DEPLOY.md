@@ -44,7 +44,7 @@ To‘lov holati faqat Click/Payme serverlaridan keladigan so‘rovlar orqali o�
 
 ## 3. Bron uchun SMS OTP (Eskiz.uz)
 
-- `ESKIZ_EMAIL` (Text), `ESKIZ_PASSWORD` (Secret), ixtiyoriy `ESKIZ_FROM` (standart `4546`)
+- `ESKIZ_EMAIL` (Secret), `ESKIZ_SECRET_KEY` (Secret — Eskiz kabinetidagi maxfiy kalit, oddiy parol emas; eski `ESKIZ_PASSWORD` ham ishlaydi), ixtiyoriy `ESKIZ_FROM` (standart `4546`)
 - `BOOKING_PHONE_OTP` = `true` — bronda SMS kodni majburiy qiladi
 - Eskiz kabinetida shu shablonni tasdiqlating: `RestaurantFoods: bron tasdiqlash kodi %d. Kodni hech kimga bermang.`
 - Akkaunti aynan shu telefon raqami bilan tasdiqlangan mijozdan qayta kod so‘ralmaydi.

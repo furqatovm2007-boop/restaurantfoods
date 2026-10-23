@@ -19,6 +19,7 @@ declare namespace Cloudflare {
     /** Eskiz.uz SMS for booking phone OTP; BOOKING_PHONE_OTP='true' makes it mandatory. */
     ESKIZ_EMAIL?: string;
     ESKIZ_PASSWORD?: string;
+    ESKIZ_SECRET_KEY?: string;
     ESKIZ_FROM?: string;
     BOOKING_PHONE_OTP?: string;
     /** Shared with the Supabase Edge Function so only this Worker may call it. */
