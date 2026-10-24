@@ -3,9 +3,12 @@ import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { runCallAi } from "../app/call-ai";
 import { runBirthdays } from "../app/birthday";
+import { securityTxt } from "../app/security-txt";
 
 export default {
   fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
+    const path = new URL(request.url).pathname;
+    if ((path === "/.well-known/security.txt" || path === "/security.txt") && (request.method === "GET" || request.method === "HEAD")) return securityTxt();
     let binding = ctx.props?.CONNECTORS;
     // Local preview emulates the same request-scoped capability. This branch and
     // the auxiliary service binding are absent from production builds.

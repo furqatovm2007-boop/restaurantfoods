@@ -30,18 +30,24 @@ export interface ReceiptItem {
 }
 
 /** Line items, subtotal, the restaurant's service fee (percent, rounded to whole sum) and the total. */
-export function receiptTotals(items: { name: string; price: number; quantity: number }[], serviceFeePercent: number, discountPercent = 0, depositPaid = 0) {
+export type ReceiptDiscount = { percent?: number; amount?: number; minOrder?: number; gift?: string };
+export function receiptTotals(items: { name: string; price: number; quantity: number }[], serviceFeePercent: number, discountIn: number | ReceiptDiscount = 0, depositPaid = 0) {
   const lines: ReceiptItem[] = items.map((i) => ({ name: String(i.name), price: Number(i.price) || 0, quantity: Number(i.quantity) || 0, total: (Number(i.price) || 0) * (Number(i.quantity) || 0) }));
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
+  const d: ReceiptDiscount = typeof discountIn === 'number' ? { percent: discountIn } : discountIn || {};
   // Discount (birthday promo / happy hours) applies to the dishes; the service fee is counted after it.
-  const discountRate = Math.max(0, Math.min(90, Math.round(discountPercent || 0)));
-  const discount = Math.round((subtotal * discountRate) / 100);
+  // A fixed birthday bonus is taken off once the order reaches its minimum, never below zero.
+  const discountRate = Math.max(0, Math.min(90, Math.round(d.percent || 0)));
+  const fixed = Math.max(0, Math.round(d.amount || 0)),
+    minOrder = Math.max(0, Math.round(d.minOrder || 0));
+  const fixedApplies = fixed > 0 && subtotal > 0 && subtotal >= minOrder;
+  const discount = Math.min(subtotal, Math.round((subtotal * discountRate) / 100) + (fixedApplies ? fixed : 0));
   const percent = Math.max(0, Math.min(30, Math.round(serviceFeePercent || 0)));
   const serviceFee = Math.round(((subtotal - discount) * percent) / 100);
   const total = subtotal - discount + serviceFee;
   // A paid deposit is counted towards the bill.
   const deposit = Math.max(0, Math.round(depositPaid || 0));
-  return { lines, subtotal, discountPercent: discountRate, discount, serviceFeePercent: percent, serviceFee, total, depositPaid: deposit, due: Math.max(0, total - deposit) };
+  return { lines, subtotal, discountPercent: discountRate, discountAmount: fixed, minOrder, fixedApplies, discount, gift: String(d.gift || '').trim(), serviceFeePercent: percent, serviceFee, total, depositPaid: deposit, due: Math.max(0, total - deposit) };
 }
 
 /** Gives the booking a pass code if it has none yet and returns it. */

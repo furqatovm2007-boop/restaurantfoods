@@ -65,7 +65,7 @@ export function mergeSuggestions(tables: PlanTable[], busy: Set<number>, guests:
 // ---- Discounts: birthday promo codes and happy hours ----
 export async function validPromo(code: unknown, userId: string, restaurantId: string) {
   if (typeof code !== 'string' || !/^[A-Z0-9-]{6,20}$/.test(code.trim().toUpperCase())) return null;
-  return env.DB!.prepare('SELECT * FROM promo_codes WHERE code=? AND user_id=? AND restaurant_id=? AND used_booking_id IS NULL AND expires_at>?').bind(code.trim().toUpperCase(), userId, restaurantId, new Date().toISOString()).first<{ code: string; percent: number; kind: string }>();
+  return env.DB!.prepare('SELECT * FROM promo_codes WHERE code=? AND user_id=? AND restaurant_id=? AND used_booking_id IS NULL AND expires_at>?').bind(code.trim().toUpperCase(), userId, restaurantId, new Date().toISOString()).first<{ code: string; percent: number; kind: string; discount_type: string; amount: number; min_order: number; gift: string }>();
 }
 
 /** Happy hours: the hall is at least `threshold`% free right now (camera marks + bookings in progress). */
@@ -189,9 +189,9 @@ export async function checkServiceTimer(restaurantId: string, nowMs = Date.now()
 }
 
 // ---- Weekly analytics numbers (the AI report writes on top of these) ----
-export async function weeklyStats(restaurantId: string, nowMs = Date.now()) {
+export async function weeklyStats(restaurantId: string, nowMs = Date.now(), days = 7) {
   const today = new Date(nowMs + 5 * 3600000).toISOString().slice(0, 10);
-  const from = new Date(nowMs + 5 * 3600000 - 6 * 86400000).toISOString().slice(0, 10);
+  const from = new Date(nowMs + 5 * 3600000 - (days - 1) * 86400000).toISOString().slice(0, 10);
   const [bookings, orders, penalties] = await Promise.all([
     env.DB!.prepare('SELECT slot,status,guests,preorder_items,preorder_total FROM bookings WHERE restaurant_id=? AND date BETWEEN ? AND ?').bind(restaurantId, from, today).all<any>(),
     env.DB!.prepare("SELECT items,total,status FROM orders WHERE restaurant_id=? AND substr(created_at,1,10) BETWEEN ? AND ?").bind(restaurantId, from, today).all<any>(),

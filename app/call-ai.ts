@@ -59,6 +59,14 @@ export function parseAnswer(raw: string): 'yes' | 'no' | null {
   return null;
 }
 
+/** Yes / no from the customer's words: instant word matching first, then gpt-4o-mini (fast) for free-form replies. */
+export async function understand(text: string, l: Lang): Promise<'yes' | 'no' | null> {
+  const quick = parseAnswer(text);
+  if (quick || !text.trim()) return quick;
+  const r = (await serviceVoice({ mode: 'call_intent', lang: l, text: text.slice(0, 500) })) as { answer?: string } | null;
+  return r?.answer === 'yes' || r?.answer === 'no' ? r.answer : null;
+}
+
 export const lang = (v: unknown): Lang => (v === 'ru' || v === 'en' ? v : 'uz');
 export const CALL_TEXT = TEXT;
 const site = () => (env.SITE_URL?.trim() || 'https://restaurantfoods.online').replace(/\/$/, '');
@@ -278,7 +286,7 @@ export async function handleCallReply(update: Update) {
   const b = await env.DB!.prepare(SELECT + "WHERE a.telegram_chat_id=? AND b.call_status IN ('calling','no_answer') AND b.status IN ('pending','confirmed') ORDER BY b.call_sent_at DESC LIMIT 1").bind(chatId).first<CallRow>();
   if (!b) return null;
   const text = msg.voice ? ((msg.voice.duration ?? 0) <= 30 ? await transcribeVoice(msg.voice.file_id, lang(b.customer_lang)) : '') : msg.text || '';
-  const verdict = parseAnswer(text);
+  const verdict = await understand(text, lang(b.customer_lang));
   if (!verdict) {
     await telegram('sendMessage', { chat_id: chatId, text: TEXT[lang(b.customer_lang)].unclear });
     return 'call_unclear';

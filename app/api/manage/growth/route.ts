@@ -2,10 +2,11 @@ import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
 import { accessToken, authConfig } from '../../../auth-service';
 import { ApiError, json, failure, body, text, integer, throttle } from '../../../http';
-import { planState, BUSINESS_AI_REPORTS_DAILY, type Feature } from '../../../plans';
+import { planState, BUSINESS_AI_REPORTS_DAILY, BUSINESS_ADVISOR_DAILY, PREMIUM_ADVISOR_DAILY, type Feature } from '../../../plans';
 import { readSse } from '../../../sse';
 import { restaurantAccess, staffMemberships, STAFF_ROLES, atLeast } from '../../../staff';
 import { guestDossier, weeklyStats, vipUsers, happyNow } from '../../../growth';
+import { birthdayOffer, DEFAULT_PERCENT } from '../../../birthday';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
       features: Object.fromEntries((['peakDeposit', 'tableMerge', 'birthdayCrm', 'staffAccounts', 'aiReports', 'serviceTimer', 'vipGuests', 'happyHours', 'tableView'] as Feature[]).map((k) => [k, f[k]])),
       peak: peak.results,
       staff: staff.results,
-      settings: { birthdayPercent: r.birthday_percent, happyEnabled: !!r.happy_enabled, happyThreshold: r.happy_threshold, happyPercent: r.happy_percent, serviceTimerMin: r.service_timer_min },
+      settings: { birthdayEnabled: !!r.birthday_enabled, birthdayKind: birthdayOffer(r).type, birthdayPercent: r.birthday_percent || DEFAULT_PERCENT, birthdayAmount: r.birthday_amount, birthdayMinOrder: r.birthday_min_order, birthdayGift: r.birthday_gift, happyEnabled: !!r.happy_enabled, happyThreshold: r.happy_threshold, happyPercent: r.happy_percent, serviceTimerMin: r.service_timer_min },
       happy: await happyNow(r),
     });
   } catch (e) {
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
       return json({ ok: true });
     }
     if (b.action === 'report') return await aiReport(restaurantId, u, b.lang);
+    if (b.action === 'advisor') return await aiAdvisor(restaurantId, u, b);
     const { r } = await restaurantAccess(restaurantId, u, b.action === 'settings' || b.action?.startsWith('peak_') ? 'manager' : 'owner');
     if (b.action === 'peak_save') {
       need(r, 'peakDeposit');
@@ -139,7 +141,17 @@ export async function POST(request: Request) {
       const set: string[] = [],
         args: unknown[] = [];
       const put = (col: string, v: unknown) => (set.push(col + '=?'), args.push(v));
-      if (b.birthdayPercent !== undefined) (need(r, 'birthdayCrm'), put('birthday_percent', integer(b.birthdayPercent, 0, 50)));
+      if (b.birthdayPercent !== undefined) (need(r, 'birthdayCrm'), put('birthday_percent', integer(b.birthdayPercent, 5, 50)));
+      if (b.birthdayEnabled !== undefined) (need(r, 'birthdayCrm'), put('birthday_enabled', b.birthdayEnabled === true ? 1 : 0));
+      if (b.birthdayAmount !== undefined) (need(r, 'birthdayCrm'), put('birthday_amount', integer(b.birthdayAmount, 10000, 1000000)));
+      if (b.birthdayMinOrder !== undefined) (need(r, 'birthdayCrm'), put('birthday_min_order', integer(b.birthdayMinOrder, 0, 10000000)));
+      if (b.birthdayGift !== undefined) (need(r, 'birthdayCrm'), put('birthday_gift', typeof b.birthdayGift === 'string' ? b.birthdayGift.trim().slice(0, 120) : ''));
+      if (b.birthdayKind !== undefined) {
+        need(r, 'birthdayCrm');
+        if (!['percent', 'amount', 'gift'].includes(String(b.birthdayKind))) throw new ApiError(400, 'Chegirma turi: foiz, summa yoki sovg‘a.');
+        if (b.birthdayKind === 'gift' && !(typeof b.birthdayGift === 'string' ? b.birthdayGift : r.birthday_gift || '').trim()) throw new ApiError(400, 'Sovg‘a nomini yozing (masalan: bepul bayram torti).');
+        put('birthday_kind', b.birthdayKind);
+      }
       if (b.happyEnabled !== undefined) {
         if (b.happyEnabled === true && !f.happyHours) need(r, 'happyHours');
         put('happy_enabled', b.happyEnabled === true ? 1 : 0);
@@ -168,28 +180,55 @@ async function aiReport(restaurantId: string, u: { userId: string; role: string 
   });
   const stats = await weeklyStats(restaurantId);
   const l = ['uz', 'ru', 'en'].includes(String(lang)) ? String(lang) : 'uz';
-  let summary = '';
+  const summary = await askAnalysis(l, 'Write a weekly report for the owner: best-selling dishes, busiest hours, bookings, no-shows and penalty income, then 3-5 concrete recommendations with their expected effect. Max 220 words. Use only the numbers given.', { restaurant: r.name, weeklyStats: stats }, []);
+  return json({ stats, summary: summary.trim().slice(0, 3000), ai: !!summary.trim() });
+}
+
+/**
+ * Finance and business analytics on the larger model (gpt-4o via the Edge Function, analysis:true).
+ * Returns the written answer, or '' when the AI is unavailable (the numbers are still shown).
+ */
+async function askAnalysis(lang: string, message: string, context: unknown, history: { role: string; content: string }[]) {
   const token = await accessToken(),
     c = authConfig();
-  if (token && c.url && c.key) {
-    try {
-      const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) },
-        body: JSON.stringify({ mode: 'admin_chat', lang: l, voice: false, message: 'Write a weekly report for the owner: best-selling dishes, busiest hours, bookings, no-shows and penalty income, then 3 concrete recommendations. Max 120 words. Use only the numbers given.', context: { restaurant: r.name, weeklyStats: stats }, history: [] }),
-        signal: AbortSignal.timeout(28000),
-      });
-      if (res.ok && res.body)
-        for await (const ev of readSse(res.body)) {
-          if (ev.event !== 'delta') continue;
-          try {
-            const d = JSON.parse(ev.data);
-            if (typeof d?.text === 'string') summary += d.text;
-          } catch {}
-        }
-    } catch {
-      summary = '';
-    }
+  if (!token || !c.url || !c.key) return '';
+  let out = '';
+  try {
+    const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) },
+      body: JSON.stringify({ mode: 'admin_chat', analysis: true, lang, voice: false, message, context, history }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (res.ok && res.body)
+      for await (const ev of readSse(res.body)) {
+        if (ev.event !== 'delta') continue;
+        try {
+          const d = JSON.parse(ev.data);
+          if (typeof d?.text === 'string') out += d.text;
+        } catch {}
+      }
+  } catch {
+    return '';
   }
-  return json({ stats, summary: summary.trim().slice(0, 3000), ai: !!summary.trim() });
+  return out.trim().slice(0, 6000);
+}
+
+/** AI finance and business advisor (Business: limited per day, Premium: generous): the owner's question + 7 and 30 day numbers. */
+async function aiAdvisor(restaurantId: string, u: { userId: string; role: string }, b: any) {
+  const { r } = await restaurantAccess(restaurantId, u, 'manager');
+  need(r, 'aiReports');
+  const premium = planState(r).effective === 'premium';
+  const limit = premium ? PREMIUM_ADVISOR_DAILY : BUSINESS_ADVISOR_DAILY;
+  await throttle('ai-advisor-day:' + restaurantId, limit, 86400000).catch((e) => {
+    throw e instanceof ApiError && e.status === 429 ? new ApiError(429, (premium ? 'Bugungi savollar soni tugadi' : 'Business tarifida kuniga ' + limit + ' ta savol. Ko‘proq — Premium tarifida') + '.') : e;
+  });
+  const question = text(b.question, 3, 1200);
+  const l = ['uz', 'ru', 'en'].includes(String(b.lang)) ? String(b.lang) : 'uz';
+  const history = (Array.isArray(b.history) ? b.history : []).slice(-6).filter((m: any) => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.length <= 3000);
+  const [week, month] = await Promise.all([weeklyStats(restaurantId), weeklyStats(restaurantId, Date.now(), 30)]);
+  const context = { restaurant: r.name, plan: planState(r).effective, serviceFeePercent: r.service_fee_percent, depositAmount: r.deposit_amount, last7Days: week, last30Days: month };
+  const answer = await askAnalysis(l, question, context, history);
+  if (!answer) throw new ApiError(503, 'AI maslahatchi hozir javob bera olmadi. Birozdan keyin urinib ko‘ring.');
+  return json({ answer, model: 'gpt-4o', stats: { last7Days: week, last30Days: month } });
 }

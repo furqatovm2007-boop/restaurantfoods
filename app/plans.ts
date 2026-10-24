@@ -75,6 +75,9 @@ export function planState(row: PlanRow, now = Date.now()): PlanState {
 export const BUSINESS_ADMIN_AI_DAILY = 30;
 /** AI weekly report generations per restaurant per day on Business; Premium is unlimited. */
 export const BUSINESS_AI_REPORTS_DAILY = 1;
+/** AI finance advisor (gpt-4o) questions per restaurant per day: Business limited, Premium generous. */
+export const BUSINESS_ADVISOR_DAILY = 10;
+export const PREMIUM_ADVISOR_DAILY = 100;
 
 export const trialEnd = (now = Date.now()) => new Date(now + TRIAL_DAYS * DAY).toISOString();
 

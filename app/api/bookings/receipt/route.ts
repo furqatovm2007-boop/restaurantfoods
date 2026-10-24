@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       items = [];
     }
     const dep = await env.DB!.prepare('SELECT amount,state FROM deposits WHERE booking_id=? ORDER BY created_at DESC LIMIT 1').bind(b.id).first<{ amount: number; state: string }>();
-    const totals = receiptTotals(Array.isArray(items) ? items : [], b.service_fee_percent, b.discount_percent, dep?.state === 'paid' ? dep.amount : 0);
+    const totals = receiptTotals(Array.isArray(items) ? items : [], b.service_fee_percent, { percent: b.discount_percent, amount: b.discount_amount, minOrder: b.discount_min_order, gift: b.gift_text }, dep?.state === 'paid' ? dep.amount : 0);
     const active = ['pending', 'confirmed'].includes(b.status);
     const code = active ? await ensurePassCode(b.id, b.pass_code) : b.pass_code;
     return json({
@@ -32,7 +32,8 @@ export async function GET(request: Request) {
       serviceFeePercent: totals.serviceFeePercent,
       serviceFee: totals.serviceFee,
       total: totals.total,
-      discount: totals.discount ? { percent: totals.discountPercent, amount: totals.discount, reason: b.discount_reason, code: b.promo_code } : null,
+      discount: totals.discount || totals.discountAmount ? { percent: totals.discountPercent, amount: totals.discount, bonus: totals.discountAmount, minOrder: totals.minOrder, applied: totals.discount > 0, reason: b.discount_reason, code: b.promo_code } : null,
+      gift: totals.gift ? { text: totals.gift, code: b.promo_code } : null,
       due: totals.due,
       deposit: b.deposit_status && b.deposit_status !== 'not_required' ? { status: b.deposit_status, amount: dep?.amount ?? null } : null,
       pass: active && code ? { code, payload: PASS_PREFIX + code } : null,

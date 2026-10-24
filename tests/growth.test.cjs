@@ -27,7 +27,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const base=integrationDeps(env,http,'../../',extras),deep=integrationDeps(env,http,'../../../',extras);
  const deps={...cf,...base,'../../access':access,'../../http':noLimit,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':rules,'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../growth':growth,'../../plans':plans,'../../payme-cards':cards,'../../staff':staffMod,'../../account-admin':{audit:()=>{}},'../../demo-drinks':load('app/demo-drinks.ts',{}),'../../auth-service':{authConfig:()=>({url:'',key:''})}};
  const bookings=load('app/api/bookings/route.ts',deps,extras),manage=load('app/api/manage/route.ts',deps,extras),tables=load('app/api/tables/route.ts',deps,extras),receipt=load('app/api/bookings/receipt/route.ts',{...cf,'../../../access':access,'../../../http':http,'../../../booking-pass':load('app/booking-pass.ts',cf)});
- const ddeps={...cf,...deep,'../../../access':access,'../../../http':noLimit,'../../../growth':growth,'../../../plans':plans,'../../../staff':staffMod,'../../../sse':load('app/sse.ts',{}),'../../../auth-service':{accessToken:async()=>'user-token',authConfig:()=>({url:'https://x.supabase.co',key:'anon',proxy:''})},'../../../booking-pass':load('app/booking-pass.ts',cf)};
+ const ddeps={...cf,...deep,'../../../access':access,'../../../http':noLimit,'../../../growth':growth,'../../../plans':plans,'../../../staff':staffMod,'../../../sse':load('app/sse.ts',{}),'../../../auth-service':{accessToken:async()=>'user-token',authConfig:()=>({url:'https://x.supabase.co',key:'anon',proxy:''})},'../../../booking-pass':load('app/booking-pass.ts',cf),'../../../birthday':load('app/birthday.ts',{...cf,'./plans':plans,'./telegram':telegram},extras)};
  const growthRoute=load('app/api/manage/growth/route.ts',ddeps,extras),checkin=load('app/api/manage/checkin/route.ts',ddeps,extras),birthday=load('app/birthday.ts',{...cf,'./plans':plans,'./telegram':telegram},extras);
  const paid=new Date(NOW+30*86400000).toISOString();
  db.exec("INSERT INTO accounts(id,email,name,created_at,role,telegram_chat_id,birth_date) VALUES ('owner','o@x','Owner','now','restaurant_owner',NULL,NULL),('c1','c1@x','Aziz Karimov','now','customer','501',NULL),('c2','c2@x','Bek','now','customer','502',NULL),('h1','host@x','Hostess Nigora','now','customer',NULL,NULL),('w1','waiter@x','Waiter','now','customer',NULL,NULL),('m1','man@x','Manager','now','customer','777m',NULL)");
@@ -72,6 +72,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal((await book('c2','biz',3,tomorrow,'13:00','14:00',{promoCode:code})).status,400,'someone else’s code');
  r=await book('c1','biz',3,tomorrow,'13:00','14:00',{promoCode:code});assert.equal(r.status,201);res=await r.json();assert.deepEqual(res.discount,{percent:20,reason:'birthday'});
  assert.equal((await book('c1','biz',3,tomorrow,'15:00','16:00',{promoCode:code})).status,400,'used once');
+ // Flexible gifts: a fixed bonus with a minimum order (Premium restaurant), greeting 3 days before and on the day.
+ user={userId:'owner',role:'restaurant_owner'}; assert.equal((await g({action:'settings',restaurantId:'biz',birthdayKind:'gift',birthdayGift:''})).status,400,'gift needs a name');
+ assert.equal((await g({action:'settings',restaurantId:'biz',birthdayKind:'bonus'})).status,400);
+ assert.equal((await g({action:'settings',restaurantId:'pre',birthdayKind:'amount',birthdayAmount:100000,birthdayMinOrder:300000})).status,200);
+ let gs=await (await growthRoute.GET(new Request('https://test/api/manage/growth?restaurantId=pre'))).json();assert.equal(gs.settings.birthdayKind,'amount');assert.equal(gs.settings.birthdayPercent,15,'standard 15%');assert.equal(gs.settings.birthdayEnabled,true);
+ db.prepare("UPDATE accounts SET birth_date=? WHERE id='c2'").run('1990-'+bday);db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('old-pre','pre','c2','2026-01-01','12:00',1,2,'+998901112233','completed','now')").run();
+ tg.length=0;await birthday.runBirthdays(NOW,true);let m2=tg.filter(x=>x.body.chat_id==='502');assert.equal(m2.length,1);assert.ok(m2[0].body.text.includes('100 000 so‘m bonus')&&m2[0].body.text.includes('300 000 so‘m dan ortiq')&&m2[0].body.text.includes('Prem Saroy'),m2[0].body.text);
+ const code2=/(BD-[A-Z0-9]{6})/.exec(m2[0].body.text)[1];
+ tg.length=0;await birthday.runBirthdays(NOW+3*86400000,true);m2=tg.filter(x=>x.body.chat_id==='502');assert.equal(m2.length,1,'reminder on the day');assert.ok(m2[0].body.text.includes('muborak')&&m2[0].body.text.includes(code2));
+ tg.length=0;await birthday.runBirthdays(NOW+3*86400000,true);assert.equal(tg.filter(x=>x.body.chat_id==='502').length,0,'reminded once');
+ user={userId:'c2',role:'customer'};r=await book('c2','pre',3,tomorrow,'13:00','14:00',{promoCode:code2});assert.equal(r.status,201);res=await r.json();assert.equal(JSON.stringify(res.discount),JSON.stringify({percent:0,reason:'birthday',amount:100000,minOrder:300000}));
+ let rc2=await (await receipt.GET(new Request('https://test/api/bookings/receipt?id='+res.id))).json();assert.equal(rc2.discount.applied,false,'no dishes: below the minimum');assert.equal(rc2.discount.bonus,100000);assert.equal(rc2.discount.code,code2);db.exec("DELETE FROM bookings WHERE user_id='c2' AND restaurant_id='pre'");
+ const P=load('app/booking-pass.ts',cf);let tt=P.receiptTotals([{name:'Osh',price:200000,quantity:2}],10,{amount:100000,minOrder:300000});assert.equal(tt.discount,100000);assert.equal(tt.serviceFee,30000);assert.equal(tt.total,330000);
+ assert.equal(P.receiptTotals([{name:'Osh',price:200000,quantity:2}],0,{amount:100000,minOrder:500000}).discount,0);assert.equal(P.receiptTotals([{name:'Choy',price:20000,quantity:1}],0,{amount:100000}).total,0,'never below zero');
+ tt=P.receiptTotals([{name:'Osh',price:100000,quantity:1}],0,{gift:'Bepul bayram torti'});assert.equal(tt.gift,'Bepul bayram torti');assert.equal(tt.total,100000);assert.equal(P.receiptTotals([{name:'Osh',price:100000,quantity:1}],0,15).discount,15000,'old numeric form');
+ user={userId:'owner',role:'restaurant_owner'};assert.equal((await g({action:'settings',restaurantId:'biz',birthdayKind:'gift',birthdayGift:'Bepul bayram torti'})).status,200);
+ const B=load('app/birthday.ts',{...cf,'./plans':plans,'./telegram':telegram},extras);assert.ok(B.offerText(B.birthdayOffer({birthday_kind:'gift',birthday_gift:'Bepul tort'})).includes('Bepul tort'));assert.equal(B.birthdayOffer({birthday_kind:'gift',birthday_gift:''}).type,'percent');assert.equal(B.birthdayOffer({birthday_percent:0}).percent,15);
 
  // 4. Staff: owner adds a hostess and a waiter; the hostess sees bookings without money and cannot change them.
  user={userId:'owner',role:'restaurant_owner'};assert.equal((await g({action:'staff_add',restaurantId:'st',email:'host@x',role:'hostess'})).status,402,'Start: no staff');
@@ -97,6 +114,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  r=await growthLimited.POST(request('/api/manage/growth',{action:'report',restaurantId:'biz',lang:'uz'}));assert.equal(r.status,200);let rep=await r.json();assert.ok(rep.stats.bookings>=1);assert.equal(rep.ai,true);assert.ok(rep.summary.includes('Osh'));
  r=await growthLimited.POST(request('/api/manage/growth',{action:'report',restaurantId:'biz',lang:'uz'}));assert.equal(r.status,429,'Business: 1 a day');
  for(let i=0;i<3;i++)assert.equal((await growthLimited.POST(request('/api/manage/growth',{action:'report',restaurantId:'pre',lang:'uz'}))).status,200,'Premium: more');
+ // AI finance advisor (gpt-4o on the edge): manager+, needs aiReports.
+ r=await growthLimited.POST(request('/api/manage/growth',{action:'advisor',restaurantId:'biz',question:'Tushumni qanday oshiramiz?',lang:'uz'}));assert.equal(r.status,200);rep=await r.json();assert.equal(rep.model,'gpt-4o');assert.ok(rep.answer.includes('Osh'));
+ assert.equal((await growthLimited.POST(request('/api/manage/growth',{action:'advisor',restaurantId:'st',question:'Savol bormi?',lang:'uz'}))).status,402,'Start: no advisor');
 
  // 6. Service timer (Premium): seated 8 min without service -> alert to the owner chat and the manager; serving clears it.
  db.exec("INSERT INTO restaurant_staff(restaurant_id,user_id,role,created_by,created_at) VALUES ('pre','m1','manager','owner','now')");

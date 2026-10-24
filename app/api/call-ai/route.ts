@@ -1,6 +1,6 @@
 import { identity } from '../../access';
 import { ApiError, json, failure, body, text, throttle } from '../../http';
-import { callForWeb, openCallsFor, answerCall, parseAnswer, serviceVoice, lang, CALL_TEXT, type CallRow } from '../../call-ai';
+import { callForWeb, openCallsFor, answerCall, understand, serviceVoice, lang, CALL_TEXT, type CallRow } from '../../call-ai';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -53,11 +53,11 @@ export async function POST(request: Request) {
       if (!a || !['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/wav'].includes(a.mimeType) || typeof a.data !== 'string' || a.data.length > 600000) throw new ApiError(400, 'Ovoz yozuvi noto‘g‘ri.');
       const r = await serviceVoice({ mode: 'call_transcribe', lang: v.lang, audio: { mimeType: a.mimeType, data: a.data } });
       const transcript = r?.transcript || '';
-      return json({ transcript, verdict: parseAnswer(transcript) });
+      return json({ transcript, verdict: await understand(transcript, v.lang) });
     }
     if (b.action === 'answer') {
       if (!v.active) throw new ApiError(409, 'Bron faol emas.');
-      const verdict = b.verdict === 'yes' || b.verdict === 'no' ? b.verdict : parseAnswer(text(b.text, 1, 500));
+      const verdict = b.verdict === 'yes' || b.verdict === 'no' ? b.verdict : await understand(text(b.text, 1, 500), v.lang);
       if (!verdict) return json({ understood: false });
       const r = await answerCall(call, verdict);
       return json({ understood: true, verdict, message: r.message, restaurantPhone: v.restaurantPhone });
