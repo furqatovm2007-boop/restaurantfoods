@@ -33,5 +33,7 @@ declare namespace Cloudflare {
     BOOKING_PHONE_OTP?: string;
     /** Shared with the Supabase Edge Function so only this Worker may call it. */
     RF_PROXY_SECRET?: string;
+    /** Workers AI (reserve engine when OpenAI is unavailable). */
+    AI?: { run(model: string, input: unknown): Promise<unknown> };
   }
 }

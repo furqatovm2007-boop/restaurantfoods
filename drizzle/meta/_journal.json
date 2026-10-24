@@ -232,6 +232,13 @@
       "when": 1792823080073,
       "tag": "0032_birthday_gifts",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1792857042270,
+      "tag": "0033_app_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -115,7 +115,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  r=await growthLimited.POST(request('/api/manage/growth',{action:'report',restaurantId:'biz',lang:'uz'}));assert.equal(r.status,429,'Business: 1 a day');
  for(let i=0;i<3;i++)assert.equal((await growthLimited.POST(request('/api/manage/growth',{action:'report',restaurantId:'pre',lang:'uz'}))).status,200,'Premium: more');
  // AI finance advisor (gpt-4o on the edge): manager+, needs aiReports.
- r=await growthLimited.POST(request('/api/manage/growth',{action:'advisor',restaurantId:'biz',question:'Tushumni qanday oshiramiz?',lang:'uz'}));assert.equal(r.status,200);rep=await r.json();assert.equal(rep.model,'gpt-4o');assert.ok(rep.answer.includes('Osh'));
+ r=await growthLimited.POST(request('/api/manage/growth',{action:'advisor',restaurantId:'biz',question:'Tushumni qanday oshiramiz?',lang:'uz'}));assert.equal(r.status,200);rep=await r.json();assert.equal(rep.model,'gpt-6.1-sol');assert.ok(rep.answer.includes('Osh'));
  assert.equal((await growthLimited.POST(request('/api/manage/growth',{action:'advisor',restaurantId:'st',question:'Savol bormi?',lang:'uz'}))).status,402,'Start: no advisor');
 
  // 6. Service timer (Premium): seated 8 min without service -> alert to the owner chat and the manager; serving clears it.

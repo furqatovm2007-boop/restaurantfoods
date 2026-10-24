@@ -7,6 +7,8 @@ import { readSse } from '../../../sse';
 import { restaurantAccess, staffMemberships, STAFF_ROLES, atLeast } from '../../../staff';
 import { guestDossier, weeklyStats, vipUsers, happyNow } from '../../../growth';
 import { birthdayOffer, DEFAULT_PERCENT } from '../../../birthday';
+import { aiHeaders } from '../../../ai-key';
+import { fallbackAnalysis } from '../../../ai-fallback';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -180,38 +182,43 @@ async function aiReport(restaurantId: string, u: { userId: string; role: string 
   });
   const stats = await weeklyStats(restaurantId);
   const l = ['uz', 'ru', 'en'].includes(String(lang)) ? String(lang) : 'uz';
-  const summary = await askAnalysis(l, 'Write a weekly report for the owner: best-selling dishes, busiest hours, bookings, no-shows and penalty income, then 3-5 concrete recommendations with their expected effect. Max 220 words. Use only the numbers given.', { restaurant: r.name, weeklyStats: stats }, []);
-  return json({ stats, summary: summary.trim().slice(0, 3000), ai: !!summary.trim() });
+  const analysis = await askAnalysis(l, 'Write a weekly report for the owner: best-selling dishes, busiest hours, bookings, no-shows and penalty income, then 3-5 concrete recommendations with their expected effect. Max 220 words. Use only the numbers given.', { restaurant: r.name, weeklyStats: stats }, []);
+  return json({ stats, summary: analysis.text.slice(0, 3000), ai: !!analysis.text, model: analysis.model });
 }
 
 /**
  * Finance and business analytics on the larger model (gpt-4o via the Edge Function, analysis:true).
  * Returns the written answer, or '' when the AI is unavailable (the numbers are still shown).
  */
+/** Sol (gpt-6.1-sol, backup gpt-4o) through the Edge Function; the internal engine answers when OpenAI cannot. */
 async function askAnalysis(lang: string, message: string, context: unknown, history: { role: string; content: string }[]) {
   const token = await accessToken(),
     c = authConfig();
-  if (!token || !c.url || !c.key) return '';
-  let out = '';
-  try {
-    const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) },
-      body: JSON.stringify({ mode: 'admin_chat', analysis: true, lang, voice: false, message, context, history }),
-      signal: AbortSignal.timeout(60000),
-    });
-    if (res.ok && res.body)
-      for await (const ev of readSse(res.body)) {
-        if (ev.event !== 'delta') continue;
-        try {
-          const d = JSON.parse(ev.data);
-          if (typeof d?.text === 'string') out += d.text;
-        } catch {}
-      }
-  } catch {
-    return '';
-  }
-  return out.trim().slice(0, 6000);
+  let out = '',
+    model = '';
+  if (token && c.url && c.key)
+    try {
+      const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
+        method: 'POST',
+        headers: await aiHeaders({ 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) }),
+        body: JSON.stringify({ mode: 'admin_chat', analysis: true, lang, voice: false, message, context, history }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (res.ok && res.body)
+        for await (const ev of readSse(res.body)) {
+          try {
+            const d = JSON.parse(ev.data);
+            if (ev.event === 'delta' && typeof d?.text === 'string') out += d.text;
+            if (ev.event === 'done' && typeof d?.model === 'string') model = d.model;
+            if (ev.event === 'error') out = '';
+          } catch {}
+        }
+    } catch {
+      out = '';
+    }
+  if (out.trim()) return { text: out.trim().slice(0, 6000), model: model || 'gpt-6.1-sol' };
+  const fb = await fallbackAnalysis(lang as 'uz', message, context, history).catch(() => null);
+  return fb ? { text: fb.reply.slice(0, 6000), model: fb.engine === 'workers-ai' ? 'Workers AI' : 'RestaurantFoods AI' } : { text: '', model: '' };
 }
 
 /** AI finance and business advisor (Business: limited per day, Premium: generous): the owner's question + 7 and 30 day numbers. */
@@ -229,6 +236,6 @@ async function aiAdvisor(restaurantId: string, u: { userId: string; role: string
   const [week, month] = await Promise.all([weeklyStats(restaurantId), weeklyStats(restaurantId, Date.now(), 30)]);
   const context = { restaurant: r.name, plan: planState(r).effective, serviceFeePercent: r.service_fee_percent, depositAmount: r.deposit_amount, last7Days: week, last30Days: month };
   const answer = await askAnalysis(l, question, context, history);
-  if (!answer) throw new ApiError(503, 'AI maslahatchi hozir javob bera olmadi. Birozdan keyin urinib ko‘ring.');
-  return json({ answer, model: 'gpt-4o', stats: { last7Days: week, last30Days: month } });
+  if (!answer.text) throw new ApiError(503, 'AI maslahatchi hozir javob bera olmadi. Birozdan keyin urinib ko‘ring.');
+  return json({ answer: answer.text, model: answer.model, stats: { last7Days: week, last30Days: month } });
 }

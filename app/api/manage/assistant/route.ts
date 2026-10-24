@@ -4,6 +4,8 @@ import { accessToken, authConfig } from '../../../auth-service';
 import { ApiError, body, text, throttle, failure } from '../../../http';
 import { requireFeature, BUSINESS_ADMIN_AI_DAILY } from '../../../plans';
 import { readSse, sseFrame, sseHeaders } from '../../../sse';
+import { aiHeaders } from '../../../ai-key';
+import { fallbackAdmin } from '../../../ai-fallback';
 export const dynamic = 'force-dynamic';
 
 /** Samarkand calendar date (UTC+5), the same convention as bookings. */
@@ -48,23 +50,40 @@ export async function POST(request: Request) {
       });
     const token = await accessToken();
     const c = authConfig();
-    if (!token) throw new ApiError(401, 'AI_LOGIN_REQUIRED');
-    if (!c.url || !c.key) throw new ApiError(503, 'AI_UNAVAILABLE');
     const history = Array.isArray(b.history) ? b.history.slice(-8).filter((m: any) => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.length <= 1600) : [];
     const context = await restaurantContext(restaurantId, { status: state.status, plan: state.plan, effective: state.effective, daysLeft: state.daysLeft }, full);
 
+    // OpenAI unavailable: the internal engine (Workers AI + this restaurant's D1 data) answers.
+    const reserve = async () => (await fallbackAdmin(lang as 'uz', message, history, context).catch(() => null)) || null;
+    const reserveStream = (reply: string, engine: string) =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(sseFrame('delta', { text: reply }));
+            controller.enqueue(sseFrame('done', { reply, engine }));
+            controller.close();
+          },
+        }),
+        { headers: sseHeaders },
+      );
+    const failed = async (status: number, error: string) => {
+      const fb = await reserve();
+      if (fb) return reserveStream(fb.reply, fb.engine);
+      throw new ApiError(status, error);
+    };
+    if (!token || !c.url || !c.key) return await failed(token ? 503 : 401, token ? 'AI_UNAVAILABLE' : 'AI_LOGIN_REQUIRED');
     let upstream: Response;
     try {
       upstream = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) },
+        headers: await aiHeaders({ 'Content-Type': 'application/json', apikey: c.key, Authorization: 'Bearer ' + token, ...(c.proxy ? { 'X-RF-Proxy': c.proxy } : {}) }),
         body: JSON.stringify({ mode: 'admin_chat', message, lang, history, context, voice: b.voice === true }),
         signal: AbortSignal.timeout(35000),
       });
     } catch {
-      throw new ApiError(504, 'AI_TIMEOUT');
+      return await failed(504, 'AI_TIMEOUT');
     }
-    if (!upstream.ok || !upstream.body || !upstream.headers.get('content-type')?.includes('text/event-stream')) throw new ApiError(upstream.status === 429 ? 429 : 503, upstream.status === 429 ? 'AI_LIMIT' : 'AI_UNAVAILABLE');
+    if (!upstream.ok || !upstream.body || !upstream.headers.get('content-type')?.includes('text/event-stream')) return await failed(upstream.status === 429 ? 429 : 503, upstream.status === 429 ? 'AI_LIMIT' : 'AI_UNAVAILABLE');
     const source = upstream.body;
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
@@ -78,15 +97,17 @@ export async function POST(request: Request) {
             }
             if (e.event === 'delta' && typeof data.text === 'string') controller.enqueue(sseFrame('delta', { text: data.text.slice(0, 4000) }));
             else if (e.event === 'done') {
-              controller.enqueue(sseFrame('done', { reply: String(data.reply || '').slice(0, 8000) }));
+              controller.enqueue(sseFrame('done', { reply: String(data.reply || '').slice(0, 8000), model: typeof data.model === 'string' ? data.model : undefined }));
               break;
             } else if (e.event === 'error') {
-              controller.enqueue(sseFrame('error', { error: 'AI_UNAVAILABLE' }));
+              const fb = await reserve();
+              controller.enqueue(fb ? sseFrame('done', { reply: fb.reply, replaced: true, engine: fb.engine }) : sseFrame('error', { error: 'AI_UNAVAILABLE' }));
               break;
             }
           }
         } catch {
-          controller.enqueue(sseFrame('error', { error: 'AI_UNAVAILABLE' }));
+          const fb = await reserve();
+          controller.enqueue(fb ? sseFrame('done', { reply: fb.reply, replaced: true, engine: fb.engine }) : sseFrame('error', { error: 'AI_UNAVAILABLE' }));
         }
         controller.close();
       },

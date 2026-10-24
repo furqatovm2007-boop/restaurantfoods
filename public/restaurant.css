@@ -139,3 +139,9 @@ body[data-theme=light] .theme-symbol{color:#946600}
 .telegram-code label{margin:0}
 .telegram-code .contact-phone-actions{margin-top:4px}
 .contact-phone-actions{row-gap:10px}
+/* Admin: AI status card. */
+.ai-models{display:grid;gap:10px;margin:10px 0}
+.ai-model{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px}
+.ai-model small{display:block;color:var(--muted);margin-top:2px}
+.ai-model .badge.warn{background:rgba(238,209,139,.15);color:var(--gold)}
+.ai-key-form{margin-top:12px}

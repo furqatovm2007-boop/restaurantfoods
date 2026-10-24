@@ -5038,5 +5038,105 @@
     "uz": "Telefonni tasdiqlash xizmati hozir ishlamayapti. Birozdan keyin qayta urinib ko‘ring.",
     "ru": "Подтверждение телефона сейчас недоступно. Попробуйте немного позже.",
     "en": "Phone verification is unavailable right now. Please try again a bit later."
+  },
+  "AI holati": {
+    "uz": "AI holati",
+    "ru": "Статус AI",
+    "en": "AI status"
+  },
+  "zaxira": {
+    "uz": "zaxira",
+    "ru": "резерв",
+    "en": "backup"
+  },
+  "ishlamayapti": {
+    "uz": "ishlamayapti",
+    "ru": "не работает",
+    "en": "not working"
+  },
+  "Kalit faol": {
+    "uz": "Kalit faol",
+    "ru": "Ключ активен",
+    "en": "Key active"
+  },
+  "admin panelda saqlangan": {
+    "uz": "admin panelda saqlangan",
+    "ru": "сохранён в админ-панели",
+    "en": "saved in admin panel"
+  },
+  "Supabase secret": {
+    "uz": "Supabase secret",
+    "ru": "секрет Supabase",
+    "en": "Supabase secret"
+  },
+  "Kalit noto‘g‘ri yoki o‘chirilgan": {
+    "uz": "Kalit noto‘g‘ri yoki o‘chirilgan",
+    "ru": "Ключ неверный или отключён",
+    "en": "The key is wrong or disabled"
+  },
+  "Kalit holatini tekshirib bo‘lmadi": {
+    "uz": "Kalit holatini tekshirib bo‘lmadi",
+    "ru": "Не удалось проверить ключ",
+    "en": "Could not check the key"
+  },
+  "Mijoz AI roboti, Call AI, Admin AI": {
+    "uz": "Mijoz AI roboti, Call AI, Admin AI",
+    "ru": "AI-робот клиентов, Call AI, Admin AI",
+    "en": "Customer AI robot, Call AI, Admin AI"
+  },
+  "Biznes analitika va moliyaviy maslahatchi": {
+    "uz": "Biznes analitika va moliyaviy maslahatchi",
+    "ru": "Бизнес-аналитика и финансовый консультант",
+    "en": "Business analytics and finance advisor"
+  },
+  "Zaxira": {
+    "uz": "Zaxira",
+    "ru": "Резерв",
+    "en": "Reserve"
+  },
+  "ulanmagan": {
+    "uz": "ulanmagan",
+    "ru": "не подключён",
+    "en": "not connected"
+  },
+  "ichki ma’lumotlar motori": {
+    "uz": "ichki ma’lumotlar motori",
+    "ru": "внутренний движок данных",
+    "en": "internal data engine"
+  },
+  "OpenAI ishlamasa (kalit yo‘q, balans tugagan, limit), AI oynalari shu zaxira orqali javob beradi.": {
+    "uz": "OpenAI ishlamasa (kalit yo‘q, balans tugagan, limit), AI oynalari shu zaxira orqali javob beradi.",
+    "ru": "Если OpenAI недоступен (нет ключа, закончился баланс, лимит), окна AI отвечают через этот резерв.",
+    "en": "If OpenAI is unavailable (no key, no balance, limits), the AI windows answer through this reserve."
+  },
+  "Yangi OpenAI API kaliti": {
+    "uz": "Yangi OpenAI API kaliti",
+    "ru": "Новый ключ OpenAI API",
+    "en": "New OpenAI API key"
+  },
+  "Tekshirish va saqlash": {
+    "uz": "Tekshirish va saqlash",
+    "ru": "Проверить и сохранить",
+    "en": "Check and save"
+  },
+  "Saqlangan kalitni o‘chirish": {
+    "uz": "Saqlangan kalitni o‘chirish",
+    "ru": "Удалить сохранённый ключ",
+    "en": "Remove saved key"
+  },
+  "Kalit shifrlangan holda saqlanadi va brauzerga qaytarilmaydi.": {
+    "uz": "Kalit shifrlangan holda saqlanadi va brauzerga qaytarilmaydi.",
+    "ru": "Ключ хранится в зашифрованном виде и не возвращается в браузер.",
+    "en": "The key is stored encrypted and never sent back to the browser."
+  },
+  "Kalit saqlandi": {
+    "uz": "Kalit saqlandi",
+    "ru": "Ключ сохранён",
+    "en": "Key saved"
+  },
+  "Saqlangan kalit o‘chirilsinmi? Supabase secret’dagi kalit ishlatiladi.": {
+    "uz": "Saqlangan kalit o‘chirilsinmi? Supabase secret’dagi kalit ishlatiladi.",
+    "ru": "Удалить сохранённый ключ? Будет использоваться ключ из секрета Supabase.",
+    "en": "Remove the saved key? The Supabase secret key will be used."
   }
 }

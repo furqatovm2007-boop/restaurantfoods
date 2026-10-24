@@ -2,6 +2,8 @@ import { env } from 'cloudflare:workers';
 import { authConfig } from './auth-service';
 import { planState } from './plans';
 import { telegram, telegramConfigured, html } from './telegram';
+import { aiHeaders } from './ai-key';
+import { fallbackIntent } from './ai-fallback';
 
 /*
  * Call AI (Premium only): two hours before a booking the assistant calls the customer, free of charge:
@@ -64,7 +66,9 @@ export async function understand(text: string, l: Lang): Promise<'yes' | 'no' | 
   const quick = parseAnswer(text);
   if (quick || !text.trim()) return quick;
   const r = (await serviceVoice({ mode: 'call_intent', lang: l, text: text.slice(0, 500) })) as { answer?: string } | null;
-  return r?.answer === 'yes' || r?.answer === 'no' ? r.answer : null;
+  if (r?.answer === 'yes' || r?.answer === 'no') return r.answer;
+  // OpenAI unavailable: Workers AI classifies the reply instead.
+  return r ? null : await fallbackIntent(text.slice(0, 500)).catch(() => null);
 }
 
 export const lang = (v: unknown): Lang => (v === 'ru' || v === 'en' ? v : 'uz');
@@ -79,7 +83,7 @@ export async function serviceVoice(payload: Record<string, unknown>) {
   const c = authConfig();
   if (!c.url || !c.key || !c.proxy) return null;
   try {
-    const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', { method: 'POST', headers: { apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json', 'X-RF-Proxy': c.proxy, 'X-RF-Service': 'call' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(26000) });
+    const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', { method: 'POST', headers: await aiHeaders({ apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json', 'X-RF-Proxy': c.proxy, 'X-RF-Service': 'call' }), body: JSON.stringify(payload), signal: AbortSignal.timeout(26000) });
     if (!res.ok) return null;
     return (await res.json()) as { audio?: string; mimeType?: string; transcript?: string };
   } catch {
