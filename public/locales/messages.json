@@ -4998,5 +4998,45 @@
     "uz": "Biznes-Reja (PDF)",
     "ru": "Бизнес-план (PDF)",
     "en": "Business plan (PDF)"
+  },
+  "Raqam tasdiqlandi": {
+    "uz": "Raqam tasdiqlandi",
+    "ru": "Номер подтверждён",
+    "en": "Number verified"
+  },
+  "SMS orqali": {
+    "uz": "SMS orqali",
+    "ru": "Через SMS",
+    "en": "Via SMS"
+  },
+  "Raqamingizga 6 xonali kod yuboriladi.": {
+    "uz": "Raqamingizga 6 xonali kod yuboriladi.",
+    "ru": "На ваш номер придёт 6-значный код.",
+    "en": "A 6-digit code will be sent to your number."
+  },
+  "Telefon raqamni tasdiqlang": {
+    "uz": "Telefon raqamni tasdiqlang",
+    "ru": "Подтвердите номер телефона",
+    "en": "Verify your phone number"
+  },
+  "Manzil": {
+    "uz": "Manzil",
+    "ru": "Адрес",
+    "en": "Address"
+  },
+  "Avval “Kod olish” tugmasini bosing.": {
+    "uz": "Avval “Kod olish” tugmasini bosing.",
+    "ru": "Сначала нажмите «Получить код».",
+    "en": "First tap “Get code”."
+  },
+  "Avval 1-qadamda telefon raqamni tasdiqlang (Telegram yoki SMS).": {
+    "uz": "Avval 1-qadamda telefon raqamni tasdiqlang (Telegram yoki SMS).",
+    "ru": "Сначала подтвердите номер на шаге 1 (Telegram или SMS).",
+    "en": "First verify your phone in step 1 (Telegram or SMS)."
+  },
+  "Telefonni tasdiqlash xizmati hozir ishlamayapti. Birozdan keyin qayta urinib ko‘ring.": {
+    "uz": "Telefonni tasdiqlash xizmati hozir ishlamayapti. Birozdan keyin qayta urinib ko‘ring.",
+    "ru": "Подтверждение телефона сейчас недоступно. Попробуйте немного позже.",
+    "en": "Phone verification is unavailable right now. Please try again a bit later."
   }
 }

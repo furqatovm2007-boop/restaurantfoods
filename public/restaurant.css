@@ -124,3 +124,18 @@ body[data-theme=light] .theme-symbol{color:#946600}
 .pricing-table th,.pricing-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:center}
 .pricing-table td:first-child,.pricing-table th:first-child{text-align:left}
 .pricing-table .yes{color:#2dd4bf;font-weight:700}.pricing-table .no{opacity:.4}
+/* Profile completion: step headings and separate Telegram / SMS verification cards. */
+.profile-setup .setup-step{display:flex;align-items:center;gap:10px;margin:22px 0 10px;font-size:1.05rem}
+.profile-setup .setup-step span{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--teal);color:#06221c;font-size:.9rem;font-weight:800;flex:none}
+.verify-options{display:grid;gap:14px}
+@media (min-width:720px){.verify-options:has(.verify-sms):has(.verify-telegram){grid-template-columns:1fr 1fr}}
+.verify-card{padding:16px;border-radius:16px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 85%,transparent);min-width:0}
+.verify-card h3{margin:0 0 6px;font-size:1rem}
+.verify-card .telegram-connect{margin:0;padding:0;border:0;background:none}
+.verify-telegram{border-color:rgba(42,171,238,.45);background:rgba(42,171,238,.07)}
+.verify-sms .form{gap:12px}
+.verify-done{padding:12px 14px;border-radius:12px;background:rgba(0,184,148,.12);border:1px solid rgba(0,184,148,.35);margin:0}
+.telegram-code{display:grid;gap:12px}
+.telegram-code label{margin:0}
+.telegram-code .contact-phone-actions{margin-top:4px}
+.contact-phone-actions{row-gap:10px}
