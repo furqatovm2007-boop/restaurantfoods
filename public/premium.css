@@ -463,3 +463,18 @@ a:hover>.nav-chev,a:focus-visible>.nav-chev{transform:translateX(4px);opacity:1}
 #topbar #globalLanguage .lang-trigger{min-height:40px;padding:6px 10px}
 @media (max-width:520px){.profile-shortcuts{grid-template-columns:1fr}.profile-shortcuts>a.profile-shortcut{font-size:15px}}
 .profile-shortcuts>a.profile-shortcut>span:nth-child(2){white-space:normal;overflow-wrap:anywhere}
+/* ---- Sign-in / sign-up screen: never cut at the top, equal social buttons, no floating AI button ---- */
+#auth .premium-auth{min-height:100dvh;overflow-y:auto;padding-top:max(2.5rem,calc(env(safe-area-inset-top) + 1.5rem));padding-bottom:max(2rem,calc(env(safe-area-inset-bottom) + 1.5rem))}
+#auth .auth-center{margin-top:24px}
+#auth .social-button{min-height:64px;align-self:stretch;align-content:center}
+body:has(#auth:not([hidden]):not(:empty)) .rf-ai-launch,body:has(#auth:not([hidden]):not(:empty)) .rf-robot,body:has(#auth:not([hidden]):not(:empty)) .rf-robot-panel{display:none!important}
+/* ---- Mobile drawer grid: 2 columns, labels stay inside their own card ---- */
+@media (max-width:760px){
+ #drawer .drawer-links{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ #drawer .drawer-links a{min-width:0;overflow:hidden}
+ #drawer .drawer-links a>span:nth-child(2){display:block;width:100%;min-width:0;text-align:center;line-height:1.25;overflow-wrap:break-word;word-break:break-word;hyphens:auto;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+}
+#auth .social-providers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}
+#auth .social-providers>.social-button{width:100%;height:100%}
+.premium-auth .lang-trigger{background:#fff;color:#17332d;border-color:#cfe3dc}
+.premium-auth .lang-trigger .language-globe,.premium-auth .lang-chevron{color:#139b7a}
