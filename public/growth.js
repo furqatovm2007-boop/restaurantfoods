@@ -8,6 +8,7 @@
   'use strict';
   const COPY = {
     uz: {
+      newBooking: (b) => `📅 Yangi bron: ${b.table_number}${b.merged_table ? '+' + b.merged_table : ''}-stol · ${b.date} ${String(b.slot).slice(0, 5)} · ${b.guests} kishi`, soundOn: '🔔 Ovozli signal yoqilgan', soundOff: '🔕 Ovozli signal o‘chirilgan', live: 'Jonli kuzatuv',
       request: (n, k) => (k === 'bill' ? `🧾 ${n}-stol hisobni so‘ramoqda` : `🔔 ${n}-stol ofitsiantni chaqirmoqda`), 
       tools: 'Biznes vositalari', locked: 'Business va Premium tariflarida', lockedP: 'Faqat Premium tarifida', sum: 'so‘m', save: 'Saqlash', del: 'O‘chirish', add: 'Qo‘shish', saved: 'Saqlandi',
       peak: '⏰ Tig‘iz vaqt depoziti', peakHint: 'Belgilangan kun va soatlarga bron qilganda mijozdan majburiy depozit olinadi va chekda hisobga olinadi.', days: ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'], orDate: 'yoki bayram sanasi', from: 'Boshlanish', to: 'Tugash', amount: 'Depozit (so‘m)', label: 'Nomi (masalan: Juma kechasi)', noRules: 'Hali qoida yo‘q.', payNote: 'Depozit Payme/Click yoki mijozning ulangan kartasi orqali olinadi.',
@@ -24,6 +25,7 @@
       pricing: 'Tariflar', perMonth: 'so‘m / oy', popular: 'Eng mashhur', best: 'Eng kuchli', start: 'Boshlash', features: 'Imkoniyatlar', trial: '14 kun Premium bepul sinov — karta talab qilinmaydi.',
     },
     ru: {
+      newBooking: (b) => `📅 Новая бронь: стол ${b.table_number}${b.merged_table ? '+' + b.merged_table : ''} · ${b.date} ${String(b.slot).slice(0, 5)} · гостей: ${b.guests}`, soundOn: '🔔 Звуковой сигнал включён', soundOff: '🔕 Звуковой сигнал выключен', live: 'Живое отслеживание',
       request: (n, k) => (k === 'bill' ? `🧾 Стол ${n} просит счёт` : `🔔 Стол ${n} зовёт официанта`), 
       tools: 'Бизнес-инструменты', locked: 'На тарифах Business и Premium', lockedP: 'Только на тарифе Premium', sum: 'сум', save: 'Сохранить', del: 'Удалить', add: 'Добавить', saved: 'Сохранено',
       peak: '⏰ Депозит в часы пик', peakHint: 'При брони на отмеченные дни и часы с клиента берётся обязательный депозит; он учитывается в чеке.', days: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'], orDate: 'или праздничная дата', from: 'Начало', to: 'Конец', amount: 'Депозит (сум)', label: 'Название (напр.: вечер пятницы)', noRules: 'Правил пока нет.', payNote: 'Депозит берётся через Payme/Click или с привязанной карты клиента.',
@@ -40,6 +42,7 @@
       pricing: 'Тарифы', perMonth: 'сум / мес', popular: 'Популярный', best: 'Максимум', start: 'Начать', features: 'Возможности', trial: '14 дней Premium бесплатно — карта не нужна.',
     },
     en: {
+      newBooking: (b) => `📅 New booking: table ${b.table_number}${b.merged_table ? '+' + b.merged_table : ''} · ${b.date} ${String(b.slot).slice(0, 5)} · ${b.guests} guests`, soundOn: '🔔 Sound alerts on', soundOff: '🔕 Sound alerts off', live: 'Live feed',
       request: (n, k) => (k === 'bill' ? `🧾 Table ${n} asks for the bill` : `🔔 Table ${n} is calling the waiter`), 
       tools: 'Business tools', locked: 'On Business and Premium', lockedP: 'Premium only', sum: 'UZS', save: 'Save', del: 'Delete', add: 'Add', saved: 'Saved',
       peak: '⏰ Peak-hour deposit', peakHint: 'Bookings on the marked days and hours require a deposit; it is counted on the receipt.', days: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], orDate: 'or a holiday date', from: 'Start', to: 'End', amount: 'Deposit (UZS)', label: 'Name (e.g. Friday night)', noRules: 'No rules yet.', payNote: 'The deposit is taken via Payme/Click or the customer’s linked card.',
@@ -164,19 +167,112 @@ ${d.level === 'owner' ? `<section class="growth-block"><h4>${c.staff}</h4>${f.st
     }
   }
 
+  // ---- Staff sound alerts (Web Audio, no audio file): a soft two-note chime for a new booking and a
+  // brighter bell for a guest calling the waiter or asking for the bill. Browsers allow sound only after
+  // the first tap on the page, so the context is created and resumed on that tap. ----
+  let audio = null;
+  const soundOn = () => {
+    try {
+      return localStorage.getItem('rf-staff-sound') !== 'off';
+    } catch {
+      return true;
+    }
+  };
+  const audioCtx = () => {
+    try {
+      audio ??= new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume().catch(() => {});
+    } catch {
+      audio = null;
+    }
+    return audio;
+  };
+  ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => soundOn() && audioCtx(), { once: true, capture: true }));
+  function chime(kind) {
+    if (!soundOn()) return;
+    const ctx = audioCtx();
+    if (!ctx || ctx.state !== 'running') return;
+    const notes = kind === 'request' ? [1318.5, 1760, 1318.5, 1760] : [784, 1175];
+    const step = kind === 'request' ? 0.16 : 0.22;
+    const t0 = ctx.currentTime + 0.02;
+    notes.forEach((f, i) => {
+      const osc = ctx.createOscillator(),
+        gain = ctx.createGain(),
+        at = t0 + i * step;
+      osc.type = kind === 'request' ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(f, at);
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(0.32, at + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + (kind === 'request' ? 0.5 : 0.9));
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(at);
+      osc.stop(at + 1);
+    });
+  }
+  /** A bright pop-up at the top of the screen (several stack), gone after 9 s or on tap. */
+  function flash(text, kind) {
+    let stack = document.getElementById('rfStaffToasts');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = 'rfStaffToasts';
+      stack.className = 'rf-staff-toasts';
+      stack.setAttribute('aria-live', 'assertive');
+      document.body.append(stack);
+    }
+    const el = document.createElement('div');
+    el.className = 'rf-staff-toast ' + kind;
+    el.setAttribute('role', 'alert');
+    el.textContent = text;
+    el.onclick = () => el.remove();
+    stack.prepend(el);
+    [...stack.children].slice(4).forEach((x) => x.remove());
+    setTimeout(() => el.remove(), 9000);
+  }
+  const baseTitle = document.title;
+  function badgeTitle(n) {
+    document.title = n ? '(' + n + ') 🔔 ' + baseTitle : baseTitle;
+  }
+
   /** "Guest waiting" banner (Premium service timer), refreshed every 30 s while the host is on screen. */
   const alertTimers = new WeakMap();
+  const seenFeed = new Map(); // restaurantId -> Set of booking / request ids already announced
   function alerts(host, restaurantId) {
     if (!host) return;
     clearInterval(alertTimers.get(host));
     const c = w();
     const load = async () => {
-      if (!document.body.contains(host)) return clearInterval(alertTimers.get(host));
-      if (document.visibilityState === 'hidden') return;
+      // Keeps polling in a background tab: staff hear the chime even when the panel is not in front.
+      if (!document.body.contains(host)) return (clearInterval(alertTimers.get(host)), badgeTitle(0));
       try {
-        const { alerts: list, requests = [] } = await api(G + '?view=alerts&restaurantId=' + encodeURIComponent(restaurantId));
-        host.hidden = !list.length && !requests.length;
-        host.innerHTML = requests.map((q) => `<div class="service-alert service-request" role="alert"><b>${esc(c.request(q.table_number, q.kind))}</b><button type="button" class="primary" data-request="${esc(q.id)}">${c.done}</button></div>`).join('') + list.map((a) => `<div class="service-alert" role="alert"><b>${esc(c.alert(a.table_number, a.minutes))}</b><button type="button" class="primary" data-served="${esc(a.id)}">${c.served}</button></div>`).join('');
+        const { alerts: list, requests = [], bookings = [], canResolve = true } = await api(G + '?view=alerts&restaurantId=' + encodeURIComponent(restaurantId));
+        // First load only remembers what is already there; later ids ring and pop up once.
+        const known = seenFeed.get(restaurantId),
+          seen = known || new Set();
+        if (known) {
+          const freshRequests = requests.filter((q) => !seen.has(q.id)),
+            freshBookings = bookings.filter((b) => !seen.has(b.id));
+          freshBookings.forEach((b) => flash(c.newBooking(b), 'booking'));
+          freshRequests.forEach((q) => flash(c.request(q.table_number, q.kind), 'request'));
+          if (freshRequests.length) chime('request');
+          else if (freshBookings.length) chime('booking');
+        }
+        requests.forEach((q) => seen.add(q.id));
+        bookings.forEach((b) => seen.add(b.id));
+        seenFeed.set(restaurantId, seen);
+        badgeTitle(requests.length + list.length);
+        const soundBtn = `<button type="button" class="quiet staff-sound" data-sound aria-pressed="${soundOn()}">${soundOn() ? c.soundOn : c.soundOff}</button>`;
+        host.hidden = false;
+        host.classList.add('staff-feed');
+        host.classList.toggle('ringing', requests.length + list.length > 0);
+        host.innerHTML = `<div class="staff-live"><span class="staff-live-dot" aria-hidden="true"></span>${esc(c.live)}${soundBtn}</div>` + requests.map((q) => `<div class="service-alert service-request" role="alert"><b>${esc(c.request(q.table_number, q.kind))}</b>${canResolve ? `<button type="button" class="primary" data-request="${esc(q.id)}">${c.done}</button>` : ''}</div>`).join('') + list.map((a) => `<div class="service-alert" role="alert"><b>${esc(c.alert(a.table_number, a.minutes))}</b>${canResolve ? `<button type="button" class="primary" data-served="${esc(a.id)}">${c.served}</button>` : ''}</div>`).join('');
+        host.querySelector('[data-sound]').onclick = () => {
+          const on = !soundOn();
+          try {
+            localStorage.setItem('rf-staff-sound', on ? 'on' : 'off');
+          } catch {}
+          if (on) (audioCtx(), setTimeout(() => chime('booking'), 60));
+          load();
+        };
         host.querySelectorAll('[data-request]').forEach((b) => (b.onclick = async () => {
           b.disabled = true;
           await api(G, 'POST', { action: 'request_resolve', restaurantId, id: b.dataset.request }).catch((e) => toast(e.message));
@@ -225,7 +321,7 @@ ${d.level === 'owner' ? `<section class="growth-block"><h4>${c.staff}</h4>${f.st
       root.innerHTML = `${memberships.length > 1 ? `<label>${c.staffPanel}<select data-pick>${memberships.map((m) => `<option value="${esc(m.restaurantId)}" ${m.restaurantId === current ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label>` : ''}<p>${esc(d.restaurant.name)} · ${c.role}: <b>${esc(c.roles[d.level] || d.level)}</b></p><div data-alerts hidden></div><div class="manage-tools"><button type="button" class="primary" data-qr>${c.qr}</button></div>${d.finance ? `<section class="panel"><h3>${c.finance}</h3><p>${c.penalties}: <b>${money(d.finance.paid)}</b></p></section>` : ''}<section class="panel"><h3>${c.today}</h3>${d.bookings.length ? d.bookings.map((b) => `<article class="row"><div><strong>${esc(b.date)} · ${esc(String(b.slot).slice(0, 5))} · ${b.table_number}${b.merged_table ? '+' + b.merged_table : ''}-stol · ${b.guests}</strong><p>${esc(b.customer || '')} ${b.vip ? '<span class="badge ok">⭐ VIP</span>' : ''} <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>${b.checked_in_at ? ' · ✓' : ''}${b.preorder_total ? ' · ' + money(b.preorder_total) : ''}</p><span class="badge">${esc(c.status[b.status] || b.status)}</span></div><div class="row-actions">${b.vip || d.features.vipGuests ? `<button type="button" class="quiet" data-dossier="${esc(b.id)}">${c.dossier}</button>` : ''}${canAct && b.status === 'pending' ? `<button type="button" class="primary" data-st="confirmed" data-id="${esc(b.id)}">${c.confirm}</button>` : ''}${canAct && b.status === 'confirmed' ? `<button type="button" class="quiet" data-st="completed" data-id="${esc(b.id)}">${c.done}</button>` : ''}</div></article>`).join('') : `<p>${c.none}</p>`}</section>${canAct ? `<section class="panel"><h3>${c.orders}</h3>${d.orders.length ? d.orders.map((o) => `<article class="row"><div><strong>${esc(String(o.created_at).slice(11, 16))} · ${esc(o.fulfillment)}</strong><p>${(() => { try { return JSON.parse(o.items).map((i) => esc(i.name) + ' × ' + i.quantity).join(', '); } catch { return ''; } })()}${o.total != null ? ' · ' + money(o.total) : ''}</p><span class="badge">${esc(c.status[o.status] || o.status)}</span></div></article>`).join('') : `<p>${c.none}</p>`}</section>` : ''}`;
       root.querySelector('[data-pick]')?.addEventListener('change', (e) => ((current = e.target.value), render()));
       root.querySelector('[data-qr]').onclick = () => window.RFCheckin?.open?.();
-      if (canAct) alerts(root.querySelector('[data-alerts]'), current);
+      alerts(root.querySelector('[data-alerts]'), current);
       root.querySelectorAll('[data-dossier]').forEach((b) => (b.onclick = () => dossier(current, b.dataset.dossier)));
       root.querySelectorAll('[data-st]').forEach((b) => (b.onclick = async () => {
         b.disabled = true;
@@ -279,5 +375,5 @@ ${d.level === 'owner' ? `<section class="growth-block"><h4>${c.staff}</h4>${f.st
     box.querySelector('img').addEventListener('load', () => (box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2));
   }
 
-  window.RFGrowth = { ownerPanel, alerts, dossier, dossierHtml, staffPanel, pricing, panorama };
+  window.RFGrowth = { chime, ownerPanel, alerts, dossier, dossierHtml, staffPanel, pricing, panorama };
 })();

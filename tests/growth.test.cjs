@@ -127,6 +127,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  db.exec("UPDATE table_live_status SET status='cleaning' WHERE restaurant_id='pre' AND table_number=2");await growth.trackSeats('pre',[2]);
  assert.ok(db.prepare("SELECT served_at FROM table_live_status WHERE restaurant_id='pre' AND table_number=2").get().served_at,'waiter at the table = served');
  al=await (await growthRoute.GET(new Request('https://test/api/manage/growth?view=alerts&restaurantId=pre'))).json();assert.equal(al.alerts.length,0,'resolved');
+ // Live feed for the staff chime: new pending bookings of the last 6 hours; a hostess sees it but cannot resolve.
+ db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at) VALUES ('feed1','pre','c9','2099-01-01','19:00','21:00',3,2,'+998901112233','pending',?),('feed0','pre','c9','2099-01-01','12:00','14:00',4,2,'+998901112233','pending',?)").run(new Date(NOW-60000).toISOString(),new Date(NOW-7*3600000).toISOString());
+ db.exec("INSERT INTO restaurant_staff(restaurant_id,user_id,role,created_by,created_at) VALUES ('pre','h1','hostess','owner','now')");
+ user={userId:'h1',role:'customer'};al=await (await growthRoute.GET(new Request('https://test/api/manage/growth?view=alerts&restaurantId=pre'))).json();
+ assert.deepEqual(al.bookings.map(b=>b.id),['feed1'],'only the last 6 hours');assert.equal(al.canResolve,false,'hostess: view only');
+ user={userId:'m1',role:'customer'};assert.equal((await (await growthRoute.GET(new Request('https://test/api/manage/growth?view=alerts&restaurantId=pre'))).json()).canResolve,true);
+ db.exec("DELETE FROM bookings WHERE id IN ('feed0','feed1')");
 
  // 7. VIP dossier (Premium): 4 visits -> VIP with favourite dishes and table; shown at QR check-in.
  for(let i=0;i<4;i++)db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at,preorder_items,preorder_total) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)").run('v'+i,'pre','c2','2026-0'+(i+1)+'-10','19:00','',4,2,'+998901234567','completed','now',JSON.stringify([{name:'Osh',quantity:2},{name:i%2?'Somsa':'Choy',quantity:1}]),100000);

@@ -44,7 +44,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  calls.length=0;r=await order({deliveryType:'table',bookingId:'bk',note:'Tug‘ilgan kun'});assert.equal(r.status,201);let o=await r.json();
  assert.equal(o.total,300000);assert.equal(o.commission,9000,'3%');
  assert.equal(calls.find(c=>c.method==='receipts.create').params.amount,30000000);assert.equal(calls.find(c=>c.method==='receipts.pay').params.token,'tok-c1');
- let row=db.prepare('SELECT * FROM flower_orders WHERE id=?').get(o.id);assert.equal(row.status,'paid');assert.equal(row.florist_amount,291000);assert.ok(row.address.includes('Real')&&row.address.includes('2-stol'));assert.equal(row.deliver_at,'2099-01-01 19:00');
+ let row=db.prepare('SELECT * FROM flower_orders WHERE id=?').get(o.id);assert.equal(row.status,'paid');assert.equal(row.florist_amount,291000);assert.ok(row.address.includes('Real')&&row.address.includes('2-stol'));assert.equal(row.deliver_at,'2099-01-01 18:45');assert.ok(row.address.includes('mijoz 19:00 da keladi')&&row.note.startsWith('Stolga 18:45 gacha'));
+ // The booking receipt lists the bouquet (paid by card) and the grand total with flowers.
+ as('c1','c1@x');const receipt=load('app/api/bookings/receipt/route.ts',{...cf,'../../../access':access,'../../../http':http,'../../../booking-pass':load('app/booking-pass.ts',cf)});const rc=await (await receipt.GET(new Request('https://test/api/bookings/receipt?id=bk'))).json();assert.equal(rc.flowers.length,1);assert.equal(rc.flowersTotal,300000);
  r=await order({deliveryType:'home',latitude:39.66,longitude:66.95,address:'5-uy',deliverAt:'18:00'});const homeOrder=(await r.json()).id;
  assert.equal((await order({deliveryType:'home'})).status,400,'home needs a map point');
  // Payment failure: nothing paid, clear error.

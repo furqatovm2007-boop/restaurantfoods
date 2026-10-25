@@ -108,16 +108,23 @@ export async function POST(request: Request) {
         lat: number | null = null,
         lng: number | null = null,
         bookingId: string | null = null,
-        deliverAt = '';
+        deliverAt = '',
+        tableNote = '';
       if (b.deliveryType === 'table') {
         // To the customer's own upcoming booking: the restaurant, the table and its start time.
         const bk = await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.table_number,r.name,r.address,r.latitude,r.longitude FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE b.id=? AND b.user_id=? AND b.status IN ('pending','confirmed')").bind(text(b.bookingId), u.userId).first<any>();
         if (!bk) throw new ApiError(400, 'Faol broningizni tanlang.');
         bookingId = bk.id;
-        address = `${bk.name}${bk.address ? ', ' + bk.address : ''} — ${bk.table_number}-stol`;
+        // The florist sees the restaurant, the table and the guest's arrival; the bouquet must be on the
+        // table 15 minutes before it, so deliver_at is that earlier time.
+        const arrive = String(bk.slot).slice(0, 5),
+          [hh, mm] = arrive.split(':').map(Number),
+          ready = ((m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'))(Math.max(0, hh * 60 + mm - 15));
+        address = `${bk.name}${bk.address ? ', ' + bk.address : ''} — ${bk.table_number}-stol · mijoz ${arrive} da keladi`;
         lat = bk.latitude ?? null;
         lng = bk.longitude ?? null;
-        deliverAt = bk.date + ' ' + String(bk.slot).slice(0, 5);
+        deliverAt = bk.date + ' ' + ready;
+        tableNote = `Stolga ${ready} gacha (mijoz kelishidan 15 daqiqa oldin) tayyorlab qo‘ying.`;
       } else if (b.deliveryType === 'home') {
         [lat, lng] = point(b.latitude, b.longitude, true);
         address = typeof b.address === 'string' && b.address.trim() ? text(b.address, 1, 300) : 'Xaritada belgilangan joy';
@@ -125,7 +132,7 @@ export async function POST(request: Request) {
       } else throw new ApiError(400, 'Yetkazish turini tanlang.');
       const id = crypto.randomUUID(),
         now = new Date().toISOString();
-      await env.DB!.prepare("INSERT INTO flower_orders (id,user_id,florist_id,flower_id,title,quantity,total,commission,florist_amount,delivery_type,booking_id,address,lat,lng,phone,note,deliver_at,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending_payment',?)").bind(id, u.userId, f.florist_id, f.id, f.title, quantity, total, commission, total - commission, b.deliveryType, bookingId, address, lat, lng, contact, note, deliverAt, now).run();
+      await env.DB!.prepare("INSERT INTO flower_orders (id,user_id,florist_id,flower_id,title,quantity,total,commission,florist_amount,delivery_type,booking_id,address,lat,lng,phone,note,deliver_at,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending_payment',?)").bind(id, u.userId, f.florist_id, f.id, f.title, quantity, total, commission, total - commission, b.deliveryType, bookingId, address, lat, lng, contact, tableNote ? (tableNote + (note ? ' ' + note : '')).slice(0, 400) : note, deliverAt, now).run();
       try {
         const receipt = await chargeCard(card.token, total, { flower_order_id: id }, 'Gul: ' + f.title);
         await env.DB!.prepare("UPDATE flower_orders SET status='paid',receipt_id=?,paid_at=? WHERE id=?").bind(receipt, new Date().toISOString(), id).run();

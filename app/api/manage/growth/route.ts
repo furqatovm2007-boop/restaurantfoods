@@ -32,13 +32,16 @@ export async function GET(request: Request) {
     if (view === 'memberships') return json({ memberships: await staffMemberships(u.userId) });
     const restaurantId = text(url.searchParams.get('restaurantId'));
     if (view === 'alerts') {
-      await restaurantAccess(restaurantId, u, 'waiter');
+      // Hostesses get the feed too (new bookings, guest calls); resolving stays with waiters and up.
+      const { level } = await restaurantAccess(restaurantId, u, 'hostess');
       const alerts = (await env.DB!.prepare('SELECT id,table_number,minutes,created_at FROM service_alerts WHERE restaurant_id=? AND resolved_at IS NULL ORDER BY created_at DESC LIMIT 20').bind(restaurantId).all()).results;
       // Guests calling the waiter or asking for the bill from their booking (app/api/bookings/service).
       const requests = await (env.DB!.prepare("SELECT id,table_number,kind,created_at FROM service_requests WHERE restaurant_id=? AND resolved_at IS NULL AND created_at>? ORDER BY created_at DESC LIMIT 20").bind(restaurantId, new Date(Date.now() - 3 * 3600000).toISOString()).all()
         .then((r) => r.results)
         .catch(() => [])); // the table arrives with migration 0034; until then the timer alerts still work
-      return json({ alerts, requests });
+      // New bookings of the last 6 hours: the panel chimes once for each id it has not seen yet.
+      const bookings = (await env.DB!.prepare("SELECT id,table_number,merged_table,date,slot,guests,created_at FROM bookings WHERE restaurant_id=? AND status='pending' AND created_at>? ORDER BY created_at DESC LIMIT 20").bind(restaurantId, new Date(Date.now() - 6 * 3600000).toISOString()).all()).results;
+      return json({ alerts, requests, bookings, canResolve: level !== 'hostess' });
     }
     if (view === 'guest') {
       const { r } = await restaurantAccess(restaurantId, u, 'hostess');

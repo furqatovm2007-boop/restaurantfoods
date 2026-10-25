@@ -20,6 +20,8 @@ export async function GET(request: Request) {
     }
     const dep = await env.DB!.prepare('SELECT amount,state FROM deposits WHERE booking_id=? ORDER BY created_at DESC LIMIT 1').bind(b.id).first<{ amount: number; state: string }>();
     const totals = receiptTotals(Array.isArray(items) ? items : [], b.service_fee_percent, { percent: b.discount_percent, amount: b.discount_amount, minOrder: b.discount_min_order, gift: b.gift_text }, dep?.state === 'paid' ? dep.amount : 0);
+    // Bouquets ordered to this table (paid from the card, delivered by the florist).
+    const flowers = (await env.DB!.prepare("SELECT title,quantity,total,status FROM flower_orders WHERE booking_id=? AND status IN ('paid','accepted','delivering','delivered') ORDER BY created_at").bind(b.id).all<{ title: string; quantity: number; total: number; status: string }>()).results;
     const active = ['pending', 'confirmed'].includes(b.status);
     const code = active ? await ensurePassCode(b.id, b.pass_code) : b.pass_code;
     return json({
@@ -36,6 +38,8 @@ export async function GET(request: Request) {
       gift: totals.gift ? { text: totals.gift, code: b.promo_code } : null,
       due: totals.due,
       deposit: b.deposit_status && b.deposit_status !== 'not_required' ? { status: b.deposit_status, amount: dep?.amount ?? null } : null,
+      flowers,
+      flowersTotal: flowers.reduce((sum, f) => sum + (Number(f.total) || 0), 0),
       pass: active && code ? { code, payload: PASS_PREFIX + code } : null,
     });
   } catch (e) {

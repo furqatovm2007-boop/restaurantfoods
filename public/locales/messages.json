@@ -5448,5 +5448,45 @@
     "uz": "Ariza yuborildi. Administrator tasdiqlagach kabinet ochiladi.",
     "ru": "Заявка отправлена. Кабинет откроется после одобрения.",
     "en": "Application sent. The dashboard opens once approved."
+  },
+  "Asosiy": {
+    "uz": "Asosiy",
+    "ru": "Главная",
+    "en": "Home"
+  },
+  "kun": {
+    "uz": "kun",
+    "ru": "дн.",
+    "en": "d"
+  },
+  "Bron vaqtigacha": {
+    "uz": "Bron vaqtigacha",
+    "ru": "До брони",
+    "en": "Until your booking"
+  },
+  "2 soat qolganda Call AI kelishingizni tasdiqlashni so‘raydi. 2 soatdan kam qolganda bron ilova orqali bekor qilinmaydi — kech bekor qilish va kelmaslik uchun kartadan jarima yechiladi.": {
+    "uz": "2 soat qolganda Call AI kelishingizni tasdiqlashni so‘raydi. 2 soatdan kam qolganda bron ilova orqali bekor qilinmaydi — kech bekor qilish va kelmaslik uchun kartadan jarima yechiladi.",
+    "ru": "За 2 часа Call AI попросит подтвердить ваш визит. Когда до брони меньше 2 часов, отменить её в приложении нельзя — за позднюю отмену и неявку с карты списывается штраф.",
+    "en": "2 hours before, Call AI asks you to confirm your visit. With less than 2 hours left the booking cannot be cancelled in the app — a late cancellation or no-show is charged to your card."
+  },
+  "Gullar komissiyasi": {
+    "uz": "Gullar komissiyasi",
+    "ru": "Комиссия с цветов",
+    "en": "Flower commission"
+  },
+  "Jami platforma daromadi": {
+    "uz": "Jami platforma daromadi",
+    "ru": "Общий доход платформы",
+    "en": "Total platform revenue"
+  },
+  "Savatdagi taomlarni qo‘shish": {
+    "uz": "Savatdagi taomlarni qo‘shish",
+    "ru": "Добавить блюда из корзины",
+    "en": "Add dishes from the cart"
+  },
+  "Shu taomlar bilan stol bron qilish": {
+    "uz": "Shu taomlar bilan stol bron qilish",
+    "ru": "Забронировать стол с этими блюдами",
+    "en": "Book a table with these dishes"
   }
 }
