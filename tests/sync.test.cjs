@@ -47,6 +47,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  as('fl');cab=await (await GET(flowers,'/api/flowers?view=florist')).json();assert.equal(cab.orders[0].status,'delivering');assert.equal(cab.orders[0].courier_name,'Kuryer Ali');
  as(ADMIN);let adm=await (await GET(flowers,'/api/flowers?view=admin')).json();assert.equal(adm.orders[0].id,order);assert.equal(adm.orders[0].commission,5700,'3% of 190 000');assert.equal(adm.orders[0].courier_name,'Kuryer Ali');
  as('cr');assert.equal((await flowers.POST(request('/api/flowers',{action:'courier_done',id:order}))).status,200);assert.equal(db.prepare('SELECT status FROM flower_orders WHERE id=?').get(order).status,'delivered');
+ {const h=await (await GET(flowers,'/api/flowers?view=courier')).json();assert.deepEqual(h.history.map(x=>x.id),[order],'balance tab: delivered history');assert.ok('florist_address' in h.history[0]&&'florist_phone' in h.history[0],'pick-up address for the card');}
  as('c1');assert.equal((await (await GET(flowers,'/api/flowers?view=mine')).json()).orders[0].status,'delivered');
  as('c1');assert.equal((await GET(flowers,'/api/flowers?view=courier')).status,403,'only approved couriers');
 

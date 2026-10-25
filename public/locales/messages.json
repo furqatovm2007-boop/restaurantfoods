@@ -5488,5 +5488,200 @@
     "uz": "Shu taomlar bilan stol bron qilish",
     "ru": "Забронировать стол с этими блюдами",
     "en": "Book a table with these dishes"
+  },
+  "Admin": {
+    "uz": "Admin",
+    "ru": "Админ",
+    "en": "Admin"
+  },
+  "Avval restoranni tanlang yoki saqlang.": {
+    "uz": "Avval restoranni tanlang yoki saqlang.",
+    "ru": "Сначала выберите или сохраните ресторан.",
+    "en": "Select or save a restaurant first."
+  },
+  "Balans va tarix": {
+    "uz": "Balans va tarix",
+    "ru": "Баланс и история",
+    "en": "Balance & history"
+  },
+  "Blog": {
+    "uz": "Blog",
+    "ru": "Блог",
+    "en": "Blog"
+  },
+  "Bugungi bronlar": {
+    "uz": "Bugungi bronlar",
+    "ru": "Брони на сегодня",
+    "en": "Today’s bookings"
+  },
+  "Buyurtmani yetkazib berdingizmi?": {
+    "uz": "Buyurtmani yetkazib berdingizmi?",
+    "ru": "Вы доставили заказ?",
+    "en": "Have you delivered the order?"
+  },
+  "Faol yetkazish": {
+    "uz": "Faol yetkazish",
+    "ru": "Активные доставки",
+    "en": "Active deliveries"
+  },
+  "Faol yetkazish yo‘q": {
+    "uz": "Faol yetkazish yo‘q",
+    "ru": "Активных доставок нет",
+    "en": "No active deliveries"
+  },
+  "GPS va tafsilotlar": {
+    "uz": "GPS va tafsilotlar",
+    "ru": "GPS и детали",
+    "en": "GPS & details"
+  },
+  "Hali yetkazilgan buyurtma yo‘q.": {
+    "uz": "Hali yetkazilgan buyurtma yo‘q.",
+    "ru": "Доставленных заказов пока нет.",
+    "en": "No delivered orders yet."
+  },
+  "Kabinet": {
+    "uz": "Kabinet",
+    "ru": "Кабинет",
+    "en": "Dashboard"
+  },
+  "Kabinet bo‘limlari": {
+    "uz": "Kabinet bo‘limlari",
+    "ru": "Разделы кабинета",
+    "en": "Dashboard sections"
+  },
+  "Mijoz kelishidan 15 daqiqa oldin": {
+    "uz": "Mijoz kelishidan 15 daqiqa oldin",
+    "ru": "За 15 минут до прихода гостя",
+    "en": "15 minutes before the guest arrives"
+  },
+  "Oldindan taomlar": {
+    "uz": "Oldindan taomlar",
+    "ru": "Предзаказ блюд",
+    "en": "Pre-ordered dishes"
+  },
+  "Qayerdan olish": {
+    "uz": "Qayerdan olish",
+    "ru": "Откуда забрать",
+    "en": "Pick up from"
+  },
+  "Qayerga yetkazish": {
+    "uz": "Qayerga yetkazish",
+    "ru": "Куда доставить",
+    "en": "Deliver to"
+  },
+  "Restoran sizni biriktirsa yoki gulchi buyurtmani qabul qilsa, shu yerda chiqadi.": {
+    "uz": "Restoran sizni biriktirsa yoki gulchi buyurtmani qabul qilsa, shu yerda chiqadi.",
+    "ru": "Заказ появится здесь, когда ресторан назначит вас или флорист примет заказ.",
+    "en": "Orders appear here when a restaurant assigns you or a florist accepts an order."
+  },
+  "Saqlandi.": {
+    "uz": "Saqlandi.",
+    "ru": "Сохранено.",
+    "en": "Saved."
+  },
+  "Tasdiq kutmoqda": {
+    "uz": "Tasdiq kutmoqda",
+    "ru": "Ждут подтверждения",
+    "en": "Awaiting confirmation"
+  },
+  "Yangi buyurtma yo‘q": {
+    "uz": "Yangi buyurtma yo‘q",
+    "ru": "Новых заказов нет",
+    "en": "No new orders"
+  },
+  "Yangi buyurtmalar": {
+    "uz": "Yangi buyurtmalar",
+    "ru": "Новые заказы",
+    "en": "New orders"
+  },
+  "Yetkazish haqlari (ma’lumot uchun)": {
+    "uz": "Yetkazish haqlari (ma’lumot uchun)",
+    "ru": "Стоимость доставок (справочно)",
+    "en": "Delivery fees (for reference)"
+  },
+  "gul do‘koni": {
+    "uz": "gul do‘koni",
+    "ru": "цветочный магазин",
+    "en": "flower shop"
+  },
+  "restoran": {
+    "uz": "restoran",
+    "ru": "ресторан",
+    "en": "restaurant"
+  },
+  "“Yangi buyurtmalar”dan birini oling.": {
+    "uz": "“Yangi buyurtmalar”dan birini oling.",
+    "ru": "Возьмите заказ во вкладке «Новые заказы».",
+    "en": "Take one from “New orders”."
+  },
+  "⚙️ Sozlamalar": {
+    "uz": "⚙️ Sozlamalar",
+    "ru": "⚙️ Настройки",
+    "en": "⚙️ Settings"
+  },
+  "✅ Yetkazib berdim": {
+    "uz": "✅ Yetkazib berdim",
+    "ru": "✅ Доставил",
+    "en": "✅ Delivered"
+  },
+  "🍽 Menyu": {
+    "uz": "🍽 Menyu",
+    "ru": "🍽 Меню",
+    "en": "🍽 Menu"
+  },
+  "🎂 Tug‘ilgan kun CRM": {
+    "uz": "🎂 Tug‘ilgan kun CRM",
+    "ru": "🎂 CRM дней рождения",
+    "en": "🎂 Birthday CRM"
+  },
+  "👥 Xodimlar": {
+    "uz": "👥 Xodimlar",
+    "ru": "👥 Сотрудники",
+    "en": "👥 Staff"
+  },
+  "💎 Tariflar": {
+    "uz": "💎 Tariflar",
+    "ru": "💎 Тарифы",
+    "en": "💎 Plans"
+  },
+  "📅 Bronlar": {
+    "uz": "📅 Bronlar",
+    "ru": "📅 Брони",
+    "en": "📅 Bookings"
+  },
+  "📊 Dashboard": {
+    "uz": "📊 Dashboard",
+    "ru": "📊 Обзор",
+    "en": "📊 Overview"
+  },
+  "📦 Oldim — yo‘lga chiqdim": {
+    "uz": "📦 Oldim — yo‘lga chiqdim",
+    "ru": "📦 Забрал — в пути",
+    "en": "📦 Picked up — on my way"
+  },
+  "📷 Smart Vision": {
+    "uz": "📷 Smart Vision",
+    "ru": "📷 Smart Vision",
+    "en": "📷 Smart Vision"
+  },
+  "🛵 Olaman": {
+    "uz": "🛵 Olaman",
+    "ru": "🛵 Беру",
+    "en": "🛵 Take it"
+  },
+  "🤖 AI Analitika": {
+    "uz": "🤖 AI Analitika",
+    "ru": "🤖 AI-аналитика",
+    "en": "🤖 AI analytics"
+  },
+  "🧾 Buyurtmalar": {
+    "uz": "🧾 Buyurtmalar",
+    "ru": "🧾 Заказы",
+    "en": "🧾 Orders"
+  },
+  "🪑 Zal xaritasi": {
+    "uz": "🪑 Zal xaritasi",
+    "ru": "🪑 Карта зала",
+    "en": "🪑 Floor plan"
   }
 }

@@ -57,6 +57,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // 5. Florist: sees paid orders (not failed), moves them along, cancel refunds.
  as('fl','fl@x');let cab=await (await flowers.GET(new Request('https://test/api/flowers?view=florist'))).json();
  assert.equal(cab.orders.length,2,'only paid orders reach the florist');assert.deepEqual({...cab.totals},{earned:291000*2,commission:9000*2,count:2});
+ // Table order card data: the restaurant, the table and the guest's arrival for the florist's badge.
+ {const tbl=cab.orders.find(x=>x.delivery_type==='table');assert.ok(tbl.restaurant_name.includes('Real'));assert.equal(tbl.table_number,2);assert.equal(tbl.arrive_at,'19:00');}
  const st=(id,status)=>flowers.POST(request('/api/flowers',{action:'status',id,status}));
  assert.equal((await st(o.id,'delivered')).status,409,'no skipping');
  for(const s of ['accepted','delivering','delivered'])assert.equal((await st(o.id,s)).status,200,s);

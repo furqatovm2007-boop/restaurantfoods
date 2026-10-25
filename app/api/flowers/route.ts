@@ -41,7 +41,8 @@ export async function GET(request: Request) {
       if (!['florist', 'admin'].includes(u.role)) throw new ApiError(403, 'Gulchi kabineti faqat admin tasdiqlagan gulchilar uchun.');
       const [flowers, orders, sums] = await Promise.all([
         env.DB!.prepare('SELECT * FROM flowers WHERE florist_id=? ORDER BY created_at DESC').bind(u.userId).all(),
-        env.DB!.prepare('SELECT id,title,quantity,total,commission,florist_amount,delivery_type,address,lat,lng,phone,note,deliver_at,status,created_at,(SELECT name FROM accounts WHERE id=courier_id) AS courier_name FROM flower_orders WHERE florist_id=? AND status NOT IN (?,?) ORDER BY created_at DESC LIMIT 200').bind(u.userId, 'pending_payment', 'payment_failed').all(),
+        // Table orders also carry the restaurant, the table and the guest's arrival, shown as one badge.
+        env.DB!.prepare('SELECT o.id,o.title,o.quantity,o.total,o.commission,o.florist_amount,o.delivery_type,o.address,o.lat,o.lng,o.phone,o.note,o.deliver_at,o.status,o.created_at,(SELECT name FROM accounts WHERE id=o.courier_id) AS courier_name,r.name AS restaurant_name,b.table_number,b.merged_table,b.slot AS arrive_at FROM flower_orders o LEFT JOIN bookings b ON b.id=o.booking_id LEFT JOIN restaurants r ON r.id=b.restaurant_id WHERE o.florist_id=? AND o.status NOT IN (?,?) ORDER BY o.created_at DESC LIMIT 200').bind(u.userId, 'pending_payment', 'payment_failed').all(),
         env.DB!.prepare(`SELECT COALESCE(SUM(florist_amount),0) AS earned,COALESCE(SUM(commission),0) AS commission,COUNT(*) AS count FROM flower_orders WHERE florist_id=? AND status IN ${PAID}`).bind(u.userId).first(),
       ]);
       return json({ flowers: flowers.results, orders: orders.results, totals: sums, commissionRate: COMMISSION_RATE });
@@ -57,8 +58,14 @@ export async function GET(request: Request) {
     if (view === 'courier') {
       // Approved couriers: paid orders the florist accepted, not yet taken by someone else.
       if (u.role !== 'courier' || !u.courierApproved) throw new ApiError(403, 'Kuryer akkaunti tasdiqlanmagan.');
-      const rows = await env.DB!.prepare("SELECT o.id,o.title,o.quantity,o.delivery_type,o.address,o.lat,o.lng,o.phone,o.note,o.deliver_at,o.status,o.courier_id,COALESCE(f.name,'') AS florist_name FROM flower_orders o LEFT JOIN accounts f ON f.id=o.florist_id WHERE (o.status='accepted' AND o.courier_id IS NULL) OR (o.courier_id=? AND o.status IN ('accepted','delivering')) ORDER BY o.created_at LIMIT 50").bind(u.userId).all();
-      return json({ orders: rows.results });
+      // Pick-up: the florist's shop (account address and phone); drop-off: the customer or the restaurant table.
+      const cols = "o.id,o.title,o.quantity,o.delivery_type,o.address,o.lat,o.lng,o.phone,o.note,o.deliver_at,o.status,o.courier_id,o.created_at,COALESCE(f.name,'') AS florist_name,COALESCE(f.address,'') AS florist_address,COALESCE(f.contact_phone,'') AS florist_phone,f.address_lat AS florist_lat,f.address_lng AS florist_lng,r.name AS restaurant_name,b.table_number,b.slot AS arrive_at";
+      const from = ' FROM flower_orders o LEFT JOIN accounts f ON f.id=o.florist_id LEFT JOIN bookings b ON b.id=o.booking_id LEFT JOIN restaurants r ON r.id=b.restaurant_id';
+      const [rows, history] = await Promise.all([
+        env.DB!.prepare('SELECT ' + cols + from + " WHERE (o.status='accepted' AND o.courier_id IS NULL) OR (o.courier_id=? AND o.status IN ('accepted','delivering')) ORDER BY o.created_at LIMIT 50").bind(u.userId).all(),
+        env.DB!.prepare('SELECT ' + cols + from + " WHERE o.courier_id=? AND o.status='delivered' ORDER BY o.created_at DESC LIMIT 50").bind(u.userId).all(),
+      ]);
+      return json({ orders: rows.results, history: history.results });
     }
     throw new ApiError(400, 'Noma’lum bo‘lim.');
   } catch (e) {
