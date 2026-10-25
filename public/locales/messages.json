@@ -5208,5 +5208,245 @@
     "uz": "Restoran o‘chirildi.",
     "ru": "Ресторан удалён.",
     "en": "Restaurant deleted."
+  },
+  "TUG‘ILGAN KUN": {
+    "uz": "TUG‘ILGAN KUN",
+    "ru": "ДЕНЬ РОЖДЕНИЯ",
+    "en": "BIRTHDAY"
+  },
+  "Tug‘ilgan kuningizda 15% chegirma berishimiz uchun kiriting.": {
+    "uz": "Tug‘ilgan kuningizda 15% chegirma berishimiz uchun kiriting.",
+    "ru": "Укажите, чтобы получить скидку 15% в день рождения.",
+    "en": "Add it to get a 15% discount on your birthday."
+  },
+  "Davom etish — manzil": {
+    "uz": "Davom etish — manzil",
+    "ru": "Далее — адрес",
+    "en": "Continue — address"
+  },
+  "Ma’lumotlarni yakunlash": {
+    "uz": "Ma’lumotlarni yakunlash",
+    "ru": "Завершение профиля",
+    "en": "Finish your profile"
+  },
+  "Telefon raqam va tug‘ilgan kun": {
+    "uz": "Telefon raqam va tug‘ilgan kun",
+    "ru": "Телефон и день рождения",
+    "en": "Phone and birthday"
+  },
+  "Telegram orqali biriktirish": {
+    "uz": "Telegram orqali biriktirish",
+    "ru": "Привязать через Telegram",
+    "en": "Link with Telegram"
+  },
+  "Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing.": {
+    "uz": "Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing.",
+    "ru": "В Telegram нажмите «Start», затем «📱 Отправить номер».",
+    "en": "In Telegram tap “Start”, then “📱 Share number”."
+  },
+  "Raqam tasdiqlangach shu sahifa o‘zi kiradi.": {
+    "uz": "Raqam tasdiqlangach shu sahifa o‘zi kiradi.",
+    "ru": "После подтверждения номера эта страница войдёт сама.",
+    "en": "Once the number is confirmed, this page signs in by itself."
+  },
+  "Telegram’ni qayta ochish": {
+    "uz": "Telegram’ni qayta ochish",
+    "ru": "Открыть Telegram снова",
+    "en": "Open Telegram again"
+  },
+  "Vaqt tugadi. Qayta urinib ko‘ring.": {
+    "uz": "Vaqt tugadi. Qayta urinib ko‘ring.",
+    "ru": "Время вышло. Попробуйте снова.",
+    "en": "Time is up. Please try again."
+  },
+  "Bu raqam bilan Telegram orqali kirib bo‘lmadi. Boshqa usulni tanlang.": {
+    "uz": "Bu raqam bilan Telegram orqali kirib bo‘lmadi. Boshqa usulni tanlang.",
+    "ru": "Войти через Telegram с этим номером нельзя. Выберите другой способ.",
+    "en": "You cannot sign in with Telegram using this number. Choose another way."
+  },
+  "To‘lovlarim va kartalar": {
+    "uz": "To‘lovlarim va kartalar",
+    "ru": "Мои платежи и карты",
+    "en": "My payments and cards"
+  },
+  "📱 Telefon raqami (+998)": {
+    "uz": "📱 Telefon raqami (+998)",
+    "ru": "📱 Номер телефона (+998)",
+    "en": "📱 Phone number (+998)"
+  },
+  "Tezkor filtrlar": {
+    "uz": "Tezkor filtrlar",
+    "ru": "Быстрые фильтры",
+    "en": "Quick filters"
+  },
+  "Hozir bo‘sh stollar": {
+    "uz": "Hozir bo‘sh stollar",
+    "ru": "Свободные столы сейчас",
+    "en": "Free tables now"
+  },
+  "Tug‘ilgan kun (-15%)": {
+    "uz": "Tug‘ilgan kun (-15%)",
+    "ru": "День рождения (-15%)",
+    "en": "Birthday (-15%)"
+  },
+  "Oilaviy / Kabinali": {
+    "uz": "Oilaviy / Kabinali",
+    "ru": "Семейные / с кабинками",
+    "en": "Family / private booths"
+  },
+  "Milliy taomlar": {
+    "uz": "Milliy taomlar",
+    "ru": "Национальная кухня",
+    "en": "National cuisine"
+  },
+  "4.8+ Reyting": {
+    "uz": "4.8+ Reyting",
+    "ru": "Рейтинг 4.8+",
+    "en": "Rating 4.8+"
+  },
+  "Bu filtr bo‘yicha restoran topilmadi": {
+    "uz": "Bu filtr bo‘yicha restoran topilmadi",
+    "ru": "По этому фильтру ресторанов нет",
+    "en": "No restaurants for this filter"
+  },
+  "Boshqa shahar yoki filtrni tanlang.": {
+    "uz": "Boshqa shahar yoki filtrni tanlang.",
+    "ru": "Выберите другой город или фильтр.",
+    "en": "Choose another city or filter."
+  },
+  "Hozir": {
+    "uz": "Hozir",
+    "ru": "Сейчас",
+    "en": "Now"
+  },
+  "ta stol bo‘sh": {
+    "uz": "ta stol bo‘sh",
+    "ru": "столов свободно",
+    "en": "tables free"
+  },
+  "Hozir bo‘sh stol yo‘q": {
+    "uz": "Hozir bo‘sh stol yo‘q",
+    "ru": "Сейчас свободных столов нет",
+    "en": "No free tables right now"
+  },
+  "Ofitsiantni chaqirish": {
+    "uz": "Ofitsiantni chaqirish",
+    "ru": "Позвать официанта",
+    "en": "Call the waiter"
+  },
+  "Hisobni so‘rash": {
+    "uz": "Hisobni so‘rash",
+    "ru": "Попросить счёт",
+    "en": "Ask for the bill"
+  },
+  "Hisob so‘raldi — ofitsiant olib keladi.": {
+    "uz": "Hisob so‘raldi — ofitsiant olib keladi.",
+    "ru": "Счёт запрошен — официант принесёт.",
+    "en": "Bill requested — the waiter will bring it."
+  },
+  "Ofitsiant chaqirildi — hozir keladi.": {
+    "uz": "Ofitsiant chaqirildi — hozir keladi.",
+    "ru": "Официант вызван — сейчас подойдёт.",
+    "en": "Waiter called — on the way."
+  },
+  "Bayramona kayfiyat: stolingizga yangi guldasta tayyorlab qo‘yilsinmi?": {
+    "uz": "Bayramona kayfiyat: stolingizga yangi guldasta tayyorlab qo‘yilsinmi?",
+    "ru": "Праздничное настроение: подготовить свежий букет к вашему столу?",
+    "en": "Festive mood: shall we have a fresh bouquet waiting at your table?"
+  },
+  "Yo‘q, rahmat": {
+    "uz": "Yo‘q, rahmat",
+    "ru": "Нет, спасибо",
+    "en": "No, thanks"
+  },
+  "Gul bron bilan birga stolingizga keltiriladi; to‘lov ulangan kartadan.": {
+    "uz": "Gul bron bilan birga stolingizga keltiriladi; to‘lov ulangan kartadan.",
+    "ru": "Цветы будут ждать на столе; оплата с привязанной карты.",
+    "en": "The flowers will wait on your table; paid from your linked card."
+  },
+  "Bron bilan: stolga tayyorlab qo‘yilsin": {
+    "uz": "Bron bilan: stolga tayyorlab qo‘yilsin",
+    "ru": "К брони: подготовить на столе",
+    "en": "With booking: have it on the table"
+  },
+  "Guldasta buyurtma qilindi — stolingizda kutadi.": {
+    "uz": "Guldasta buyurtma qilindi — stolingizda kutadi.",
+    "ru": "Букет заказан — будет ждать на столе.",
+    "en": "Bouquet ordered — it will wait on your table."
+  },
+  "Restoranni tizimga ulash": {
+    "uz": "Restoranni tizimga ulash",
+    "ru": "Подключить ресторан",
+    "en": "Connect your restaurant"
+  },
+  "Gul do‘konini ulash": {
+    "uz": "Gul do‘konini ulash",
+    "ru": "Подключить цветочный магазин",
+    "en": "Connect your flower shop"
+  },
+  "Bron, 3D menyu, AI va jonli stollar": {
+    "uz": "Bron, 3D menyu, AI va jonli stollar",
+    "ru": "Брони, 3D-меню, AI и живые столы",
+    "en": "Bookings, 3D menu, AI and live tables"
+  },
+  "Gullaringizni restoran bronlariga soting": {
+    "uz": "Gullaringizni restoran bronlariga soting",
+    "ru": "Продавайте цветы к броням ресторанов",
+    "en": "Sell flowers with restaurant bookings"
+  },
+  "Gullaringiz katalogda va bron oynasida": {
+    "uz": "Gullaringiz katalogda va bron oynasida",
+    "ru": "Ваши цветы в каталоге и окне брони",
+    "en": "Your flowers in the catalog and booking window"
+  },
+  "Kartadan avtomatik to‘lov, 3% komissiya": {
+    "uz": "Kartadan avtomatik to‘lov, 3% komissiya",
+    "ru": "Автоплатёж с карты, комиссия 3%",
+    "en": "Automatic card payment, 3% commission"
+  },
+  "Kuryer yoki restoranga yetkazish": {
+    "uz": "Kuryer yoki restoranga yetkazish",
+    "ru": "Доставка курьером или в ресторан",
+    "en": "Delivery by courier or to the restaurant"
+  },
+  "Onlayn bron va QR chipta": {
+    "uz": "Onlayn bron va QR chipta",
+    "ru": "Онлайн-бронь и QR-билет",
+    "en": "Online booking and QR pass"
+  },
+  "3D menyu va AI yordamchi": {
+    "uz": "3D menyu va AI yordamchi",
+    "ru": "3D-меню и AI-помощник",
+    "en": "3D menu and AI assistant"
+  },
+  "Jonli stol xaritasi va Telegram xabarlari": {
+    "uz": "Jonli stol xaritasi va Telegram xabarlari",
+    "ru": "Живая карта столов и уведомления в Telegram",
+    "en": "Live table map and Telegram alerts"
+  },
+  "Ariza yuborish uchun avval ro‘yxatdan o‘ting yoki kiring.": {
+    "uz": "Ariza yuborish uchun avval ro‘yxatdan o‘ting yoki kiring.",
+    "ru": "Чтобы отправить заявку, зарегистрируйтесь или войдите.",
+    "en": "Sign up or sign in to apply."
+  },
+  "Akkauntingiz allaqachon hamkor sifatida ishlaydi yoki boshqa rolda.": {
+    "uz": "Akkauntingiz allaqachon hamkor sifatida ishlaydi yoki boshqa rolda.",
+    "ru": "Ваш аккаунт уже работает как партнёр или в другой роли.",
+    "en": "Your account is already a partner or has another role."
+  },
+  "DO‘KON NOMI VA MANZILI": {
+    "uz": "DO‘KON NOMI VA MANZILI",
+    "ru": "НАЗВАНИЕ И АДРЕС МАГАЗИНА",
+    "en": "SHOP NAME AND ADDRESS"
+  },
+  "RESTORAN NOMI, MANZILI VA TELEFONI": {
+    "uz": "RESTORAN NOMI, MANZILI VA TELEFONI",
+    "ru": "НАЗВАНИЕ, АДРЕС И ТЕЛЕФОН РЕСТОРАНА",
+    "en": "RESTAURANT NAME, ADDRESS AND PHONE"
+  },
+  "Ariza yuborildi. Administrator tasdiqlagach kabinet ochiladi.": {
+    "uz": "Ariza yuborildi. Administrator tasdiqlagach kabinet ochiladi.",
+    "ru": "Заявка отправлена. Кабинет откроется после одобрения.",
+    "en": "Application sent. The dashboard opens once approved."
   }
 }

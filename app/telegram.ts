@@ -103,7 +103,7 @@ export async function notifyBooking(id: string) {
 const TRANSITIONS: Record<string, Record<string, string>> = { c: { pending: 'confirmed' }, x: { pending: 'cancelled', confirmed: 'cancelled' } };
 
 interface Update {
-  message?: { chat: { id: number }; from?: { id: number }; text?: string; contact?: { phone_number: string; user_id?: number } };
+  message?: { chat: { id: number }; from?: { id: number; first_name?: string; last_name?: string }; text?: string; contact?: { phone_number: string; user_id?: number } };
   callback_query?: { id: string; data?: string; message?: { chat: { id: number }; message_id: number } };
 }
 
@@ -154,6 +154,40 @@ export async function notifyWaitlist(entryId: string) {
   }
 }
 
+const ADMIN_ID = 'sb:4fcd0d25-6ec1-4e10-a15f-8005d683edfe';
+/** Telegram birthday ("YYYY-MM-DD") when the user shows it to bots with the year; otherwise null. */
+async function telegramBirthday(chatId: string) {
+  const chat = (await telegram('getChat', { chat_id: chatId })) as { birthdate?: { day: number; month: number; year?: number } } | null;
+  const b = chat?.birthdate;
+  if (!b?.year || !b.month || !b.day) return null;
+  return `${b.year}-${String(b.month).padStart(2, '0')}-${String(b.day).padStart(2, '0')}`;
+}
+/** The shared own contact approves a sign-in request: existing account with that verified number, or a new one. */
+async function approveLogin(code: string, chatId: string, from: { id: number; first_name?: string; last_name?: string } | undefined, phone: string | null) {
+  const deny = async (reason: string, text: string) => {
+    await env.DB!.prepare("UPDATE telegram_logins SET status='denied' WHERE code=?").bind(code).run();
+    await telegram('sendMessage', { chat_id: chatId, text, reply_markup: REMOVE_KEYBOARD });
+    return reason;
+  };
+  if (!phone || !from) return deny('login_not_uz', 'Hozircha faqat O‘zbekiston raqamlari (+998) bilan kirish mumkin.');
+  const digits = phone.slice(1);
+  const existing = await env.DB!.prepare("SELECT id,role,status FROM accounts WHERE telegram_chat_id=? OR (contact_phone=? AND contact_phone_verified=1) OR (phone=? AND phone_verified=1) ORDER BY CASE WHEN telegram_chat_id=? THEN 0 ELSE 1 END LIMIT 1").bind(chatId, phone, digits, chatId).first<{ id: string; role: string; status: string }>();
+  if (existing && (existing.id === ADMIN_ID || existing.role === 'admin')) return deny('login_admin', 'Administrator akkaunti Telegram orqali kira olmaydi. Saytda odatdagidek kiring.');
+  if (existing?.status === 'suspended') return deny('login_suspended', 'Akkaunt to‘xtatilgan. Supportga murojaat qiling.');
+  const birthday = await telegramBirthday(chatId);
+  const name = [from.first_name, from.last_name].filter(Boolean).join(' ').trim().slice(0, 80) || 'Mijoz';
+  const userId = existing?.id || 'tg:' + from.id;
+  // One chat per account.
+  await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=? AND id<>?').bind(chatId, userId).run();
+  if (existing)
+    await env.DB!.prepare("UPDATE accounts SET telegram_chat_id=?,telegram_phone=?,contact_phone=CASE WHEN contact_phone='' THEN ? ELSE contact_phone END,contact_phone_verified=CASE WHEN contact_phone IN ('',?) THEN 1 ELSE contact_phone_verified END,birth_date=COALESCE(birth_date,?) WHERE id=?").bind(chatId, phone, phone, phone, birthday, userId).run();
+  else
+    await env.DB!.prepare("INSERT INTO accounts (id,email,name,created_at,role,role_selected,phone,phone_verified,provider,contact_phone,contact_phone_verified,telegram_chat_id,telegram_phone,birth_date) VALUES (?,?,?,?,'customer',1,?,1,'telegram',?,1,?,?,?) ON CONFLICT(id) DO UPDATE SET telegram_chat_id=excluded.telegram_chat_id,telegram_phone=excluded.telegram_phone,contact_phone=excluded.contact_phone,contact_phone_verified=1,birth_date=COALESCE(accounts.birth_date,excluded.birth_date)").bind(userId, '', name, new Date().toISOString(), digits, phone, chatId, phone, birthday).run();
+  await env.DB!.prepare("UPDATE telegram_logins SET status='approved',user_id=? WHERE code=?").bind(userId, code).run();
+  await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi.\nSaytga qayting — kirish avtomatik yakunlanadi.`, reply_markup: REMOVE_KEYBOARD });
+  return 'login_approved';
+}
+
 /** Customer side of the webhook: /start c_CODE, the shared contact, /stop. Null when not a customer message. */
 async function customerUpdate(msg: NonNullable<Update['message']>) {
   const chatId = String(msg.chat.id);
@@ -164,6 +198,9 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
       return 'contact_not_own';
     }
     const phone = telegramPhone(msg.contact.phone_number);
+    // Sign-in with Telegram: this chat opened a login request from the site (app/telegram-login.ts).
+    const login = await env.DB!.prepare("SELECT code FROM telegram_logins WHERE chat_id=? AND status='awaiting_contact' AND expires_at>? ORDER BY created_at DESC LIMIT 1").bind(chatId, Date.now()).first<{ code: string }>();
+    if (login) return approveLogin(login.code, chatId, msg.from, phone);
     const account = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
     if (!account) {
       await telegram('sendMessage', { chat_id: chatId, text: 'Avval saytdagi profilingizdan “Telegram orqali tasdiqlash” tugmasini bosing.', reply_markup: REMOVE_KEYBOARD });
@@ -190,6 +227,11 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
     return 'unlinked';
   }
   const code = text.startsWith('/start') ? text.split(/\s+/)[1]?.trim() : '';
+  if (code && /^l_[A-Za-z0-9]{24}$/.test(code)) {
+    const opened = await env.DB!.prepare("UPDATE telegram_logins SET chat_id=?,status='awaiting_contact' WHERE code=? AND status IN ('pending','awaiting_contact') AND expires_at>?").bind(chatId, code, Date.now()).run();
+    await telegram('sendMessage', opened.meta.changes ? { chat_id: chatId, text: '👋 RestaurantFoods’ga kirish.\nPastdagi “📱 Raqamni yuborish” tugmasini bosing — raqamingiz tasdiqlanadi va saytga kirasiz.', reply_markup: CONTACT_KEYBOARD } : { chat_id: chatId, text: 'Havola eskirgan. Saytda “Telegram orqali kirish”ni qayta bosing.' });
+    return opened.meta.changes ? 'login_opened' : 'login_expired';
+  }
   if (!code?.startsWith('c_')) return null;
   const link = /^c_[A-Za-z0-9]{24}$/.test(code) ? await env.DB!.prepare('DELETE FROM telegram_user_links WHERE code=? AND expires_at>? RETURNING user_id').bind(code, Date.now()).first<{ user_id: string }>() : null;
   if (!link) {

@@ -8,6 +8,7 @@
   'use strict';
   const COPY = {
     uz: {
+      request: (n, k) => (k === 'bill' ? `🧾 ${n}-stol hisobni so‘ramoqda` : `🔔 ${n}-stol ofitsiantni chaqirmoqda`), 
       tools: 'Biznes vositalari', locked: 'Business va Premium tariflarida', lockedP: 'Faqat Premium tarifida', sum: 'so‘m', save: 'Saqlash', del: 'O‘chirish', add: 'Qo‘shish', saved: 'Saqlandi',
       peak: '⏰ Tig‘iz vaqt depoziti', peakHint: 'Belgilangan kun va soatlarga bron qilganda mijozdan majburiy depozit olinadi va chekda hisobga olinadi.', days: ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'], orDate: 'yoki bayram sanasi', from: 'Boshlanish', to: 'Tugash', amount: 'Depozit (so‘m)', label: 'Nomi (masalan: Juma kechasi)', noRules: 'Hali qoida yo‘q.', payNote: 'Depozit Payme/Click yoki mijozning ulangan kartasi orqali olinadi.',
       bday: '🎂 Marketing / Tug‘ilgan kun sozlamalari', bdayHint: 'Tashrif buyurgan mijozlarga tug‘ilgan kunidan 3 kun oldin va bayram kuni Telegram orqali tabrik va shaxsiy promokod yuboriladi. Kod bilan bron qilinganda chekda alohida qator bo‘lib chiqadi.', bdayOn: 'Tug‘ilgan kun tabrigini yoqish', bdayKind: 'Sovg‘a turi', kinds: { percent: 'Foizli chegirma (umumiy hisobdan)', amount: 'Aniq summa bonus', gift: 'Maxsus sovg‘a' }, bdayPercent: 'Chegirma (%)', bdayAmount: 'Bonus summasi (so‘m)', bdayMin: 'Minimal buyurtma (so‘m, 0 — shartsiz)', bdayGift: 'Sovg‘a (masalan: bepul bayram torti)', adv: '💼 AI moliyaviy maslahatchi', advHint: 'Professional biznes-konsultant (GPT-6.1 Sol) tushum, jarimalar, top taomlar va xarajatlaringiz bo‘yicha savolingizga javob beradi. Business: kuniga 10 ta, Premium: 100 ta.', advAsk: 'Savol (masalan: Tushumni qanday oshiramiz?)', advSend: 'Maslahat olish',
@@ -23,6 +24,7 @@
       pricing: 'Tariflar', perMonth: 'so‘m / oy', popular: 'Eng mashhur', best: 'Eng kuchli', start: 'Boshlash', features: 'Imkoniyatlar', trial: '14 kun Premium bepul sinov — karta talab qilinmaydi.',
     },
     ru: {
+      request: (n, k) => (k === 'bill' ? `🧾 Стол ${n} просит счёт` : `🔔 Стол ${n} зовёт официанта`), 
       tools: 'Бизнес-инструменты', locked: 'На тарифах Business и Premium', lockedP: 'Только на тарифе Premium', sum: 'сум', save: 'Сохранить', del: 'Удалить', add: 'Добавить', saved: 'Сохранено',
       peak: '⏰ Депозит в часы пик', peakHint: 'При брони на отмеченные дни и часы с клиента берётся обязательный депозит; он учитывается в чеке.', days: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'], orDate: 'или праздничная дата', from: 'Начало', to: 'Конец', amount: 'Депозит (сум)', label: 'Название (напр.: вечер пятницы)', noRules: 'Правил пока нет.', payNote: 'Депозит берётся через Payme/Click или с привязанной карты клиента.',
       bday: '🎂 Маркетинг / Настройки дня рождения', bdayHint: 'Гостям, которые у вас бывали, за 3 дня до дня рождения и в сам день в Telegram уходит поздравление с личным промокодом. При брони с кодом скидка видна в чеке отдельной строкой.', bdayOn: 'Включить поздравления', bdayKind: 'Тип подарка', kinds: { percent: 'Скидка в процентах (от суммы)', amount: 'Фиксированный бонус', gift: 'Особый подарок' }, bdayPercent: 'Скидка (%)', bdayAmount: 'Сумма бонуса (сум)', bdayMin: 'Минимальный заказ (сум, 0 — без условия)', bdayGift: 'Подарок (напр.: праздничный торт бесплатно)', adv: '💼 AI финансовый консультант', advHint: 'Профессиональный бизнес-консультант (GPT-6.1 Sol) ответит на вопрос о выручке, штрафах, топ-блюдах и расходах. Business: 10 в день, Premium: 100.', advAsk: 'Вопрос (напр.: как увеличить выручку?)', advSend: 'Получить совет',
@@ -38,6 +40,7 @@
       pricing: 'Тарифы', perMonth: 'сум / мес', popular: 'Популярный', best: 'Максимум', start: 'Начать', features: 'Возможности', trial: '14 дней Premium бесплатно — карта не нужна.',
     },
     en: {
+      request: (n, k) => (k === 'bill' ? `🧾 Table ${n} asks for the bill` : `🔔 Table ${n} is calling the waiter`), 
       tools: 'Business tools', locked: 'On Business and Premium', lockedP: 'Premium only', sum: 'UZS', save: 'Save', del: 'Delete', add: 'Add', saved: 'Saved',
       peak: '⏰ Peak-hour deposit', peakHint: 'Bookings on the marked days and hours require a deposit; it is counted on the receipt.', days: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'], orDate: 'or a holiday date', from: 'Start', to: 'End', amount: 'Deposit (UZS)', label: 'Name (e.g. Friday night)', noRules: 'No rules yet.', payNote: 'The deposit is taken via Payme/Click or the customer’s linked card.',
       bday: '🎂 Marketing / Birthday settings', bdayHint: 'Guests who have visited get a Telegram greeting with a personal promo code 3 days before their birthday and on the day. A booking with the code shows the discount as a separate receipt line.', bdayOn: 'Send birthday greetings', bdayKind: 'Gift type', kinds: { percent: 'Percent off the bill', amount: 'Fixed bonus amount', gift: 'Special gift' }, bdayPercent: 'Discount (%)', bdayAmount: 'Bonus amount (UZS)', bdayMin: 'Minimum order (UZS, 0 — none)', bdayGift: 'Gift (e.g. free birthday cake)', adv: '💼 AI finance advisor', advHint: 'A professional business consultant (GPT-6.1 Sol) answers questions about revenue, penalties, top dishes and costs. Business: 10 a day, Premium: 100.', advAsk: 'Question (e.g. how do we grow revenue?)', advSend: 'Get advice',
@@ -171,9 +174,14 @@ ${d.level === 'owner' ? `<section class="growth-block"><h4>${c.staff}</h4>${f.st
       if (!document.body.contains(host)) return clearInterval(alertTimers.get(host));
       if (document.visibilityState === 'hidden') return;
       try {
-        const { alerts: list } = await api(G + '?view=alerts&restaurantId=' + encodeURIComponent(restaurantId));
-        host.hidden = !list.length;
-        host.innerHTML = list.map((a) => `<div class="service-alert" role="alert"><b>${esc(c.alert(a.table_number, a.minutes))}</b><button type="button" class="primary" data-served="${esc(a.id)}">${c.served}</button></div>`).join('');
+        const { alerts: list, requests = [] } = await api(G + '?view=alerts&restaurantId=' + encodeURIComponent(restaurantId));
+        host.hidden = !list.length && !requests.length;
+        host.innerHTML = requests.map((q) => `<div class="service-alert service-request" role="alert"><b>${esc(c.request(q.table_number, q.kind))}</b><button type="button" class="primary" data-request="${esc(q.id)}">${c.done}</button></div>`).join('') + list.map((a) => `<div class="service-alert" role="alert"><b>${esc(c.alert(a.table_number, a.minutes))}</b><button type="button" class="primary" data-served="${esc(a.id)}">${c.served}</button></div>`).join('');
+        host.querySelectorAll('[data-request]').forEach((b) => (b.onclick = async () => {
+          b.disabled = true;
+          await api(G, 'POST', { action: 'request_resolve', restaurantId, id: b.dataset.request }).catch((e) => toast(e.message));
+          load();
+        }));
         host.querySelectorAll('[data-served]').forEach((b) => (b.onclick = async () => {
           b.disabled = true;
           await api(G, 'POST', { action: 'alert_resolve', restaurantId, id: b.dataset.served }).catch((e) => toast(e.message));
@@ -184,7 +192,7 @@ ${d.level === 'owner' ? `<section class="growth-block"><h4>${c.staff}</h4>${f.st
       }
     };
     load();
-    alertTimers.set(host, setInterval(load, 30000));
+    alertTimers.set(host, setInterval(load, 15000));
   }
 
   function dossierHtml(g) {
@@ -217,7 +225,7 @@ ${d.level === 'owner' ? `<section class="growth-block"><h4>${c.staff}</h4>${f.st
       root.innerHTML = `${memberships.length > 1 ? `<label>${c.staffPanel}<select data-pick>${memberships.map((m) => `<option value="${esc(m.restaurantId)}" ${m.restaurantId === current ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></label>` : ''}<p>${esc(d.restaurant.name)} · ${c.role}: <b>${esc(c.roles[d.level] || d.level)}</b></p><div data-alerts hidden></div><div class="manage-tools"><button type="button" class="primary" data-qr>${c.qr}</button></div>${d.finance ? `<section class="panel"><h3>${c.finance}</h3><p>${c.penalties}: <b>${money(d.finance.paid)}</b></p></section>` : ''}<section class="panel"><h3>${c.today}</h3>${d.bookings.length ? d.bookings.map((b) => `<article class="row"><div><strong>${esc(b.date)} · ${esc(String(b.slot).slice(0, 5))} · ${b.table_number}${b.merged_table ? '+' + b.merged_table : ''}-stol · ${b.guests}</strong><p>${esc(b.customer || '')} ${b.vip ? '<span class="badge ok">⭐ VIP</span>' : ''} <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>${b.checked_in_at ? ' · ✓' : ''}${b.preorder_total ? ' · ' + money(b.preorder_total) : ''}</p><span class="badge">${esc(c.status[b.status] || b.status)}</span></div><div class="row-actions">${b.vip || d.features.vipGuests ? `<button type="button" class="quiet" data-dossier="${esc(b.id)}">${c.dossier}</button>` : ''}${canAct && b.status === 'pending' ? `<button type="button" class="primary" data-st="confirmed" data-id="${esc(b.id)}">${c.confirm}</button>` : ''}${canAct && b.status === 'confirmed' ? `<button type="button" class="quiet" data-st="completed" data-id="${esc(b.id)}">${c.done}</button>` : ''}</div></article>`).join('') : `<p>${c.none}</p>`}</section>${canAct ? `<section class="panel"><h3>${c.orders}</h3>${d.orders.length ? d.orders.map((o) => `<article class="row"><div><strong>${esc(String(o.created_at).slice(11, 16))} · ${esc(o.fulfillment)}</strong><p>${(() => { try { return JSON.parse(o.items).map((i) => esc(i.name) + ' × ' + i.quantity).join(', '); } catch { return ''; } })()}${o.total != null ? ' · ' + money(o.total) : ''}</p><span class="badge">${esc(c.status[o.status] || o.status)}</span></div></article>`).join('') : `<p>${c.none}</p>`}</section>` : ''}`;
       root.querySelector('[data-pick]')?.addEventListener('change', (e) => ((current = e.target.value), render()));
       root.querySelector('[data-qr]').onclick = () => window.RFCheckin?.open?.();
-      if (d.features.serviceTimer && canAct) alerts(root.querySelector('[data-alerts]'), current);
+      if (canAct) alerts(root.querySelector('[data-alerts]'), current);
       root.querySelectorAll('[data-dossier]').forEach((b) => (b.onclick = () => dossier(current, b.dataset.dossier)));
       root.querySelectorAll('[data-st]').forEach((b) => (b.onclick = async () => {
         b.disabled = true;

@@ -34,7 +34,9 @@ export async function GET(request: Request) {
     if (view === 'alerts') {
       await restaurantAccess(restaurantId, u, 'waiter');
       const alerts = (await env.DB!.prepare('SELECT id,table_number,minutes,created_at FROM service_alerts WHERE restaurant_id=? AND resolved_at IS NULL ORDER BY created_at DESC LIMIT 20').bind(restaurantId).all()).results;
-      return json({ alerts });
+      // Guests calling the waiter or asking for the bill from their booking (app/api/bookings/service).
+      const requests = (await env.DB!.prepare("SELECT id,table_number,kind,created_at FROM service_requests WHERE restaurant_id=? AND resolved_at IS NULL AND created_at>? ORDER BY created_at DESC LIMIT 20").bind(restaurantId, new Date(Date.now() - 3 * 3600000).toISOString()).all()).results;
+      return json({ alerts, requests });
     }
     if (view === 'guest') {
       const { r } = await restaurantAccess(restaurantId, u, 'hostess');
@@ -87,6 +89,11 @@ export async function POST(request: Request) {
     if (!u) throw new ApiError(401, 'Avval kiring.');
     const restaurantId = text(b.restaurantId);
     await throttle('growth:' + u.userId, 120);
+    if (b.action === 'request_resolve') {
+      await restaurantAccess(restaurantId, u, 'waiter');
+      await env.DB!.prepare('UPDATE service_requests SET resolved_at=? WHERE id=? AND restaurant_id=? AND resolved_at IS NULL').bind(new Date().toISOString(), text(b.id), restaurantId).run();
+      return json({ ok: true });
+    }
     if (b.action === 'alert_resolve') {
       await restaurantAccess(restaurantId, u, 'waiter');
       const a = await env.DB!.prepare('UPDATE service_alerts SET resolved_at=? WHERE id=? AND restaurant_id=? AND resolved_at IS NULL RETURNING table_number').bind(new Date().toISOString(), text(b.id), restaurantId).first<{ table_number: number }>();
