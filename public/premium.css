@@ -375,3 +375,61 @@ html.rf-printing body{background:#fff!important}
 .rf-waitlist-banner span{font-variant-numeric:tabular-nums;font-weight:700;color:#facc15}
 .rf-waitlist-banner a,.rf-waitlist-banner button{min-height:42px}
 @media (min-width:701px){.rf-waitlist-banner{bottom:24px}}
+/* ---- Drawer: its own scroll, no visible scrollbar; the page behind it stays still. ---- */
+#drawer{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch}
+#drawer::-webkit-scrollbar{display:none;width:0;height:0}
+html.rf-scroll-lock{overflow:hidden;overscroll-behavior:none}
+body.rf-scroll-lock{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
+/* Profile card: the same dark-emerald card in every language and theme; long names are cut, never overlap. */
+#nav .drawer-profile{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:14px 14px;border:1px solid rgba(0,211,181,.38);border-radius:18px;background:linear-gradient(135deg,#0f3d36 0%,#0b2632 100%);color:#ecf7f3;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+#nav .drawer-profile .profile-copy{display:grid;gap:4px;min-width:0}
+#nav .drawer-profile .profile-copy strong,#nav .drawer-profile .profile-copy small{display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.3}
+#nav .drawer-profile .profile-copy strong{font-size:15px;color:#fff}
+#nav .drawer-profile .profile-copy small{font-size:12px;color:#9ed9cc;letter-spacing:.01em}
+#nav .drawer-profile>span:last-child{color:#9ed9cc}
+body[data-theme=light] #nav .drawer-profile{background:linear-gradient(135deg,#0f3d36 0%,#0b2632 100%);color:#ecf7f3}
+/* Language switcher: globe icon + select in one even pill. */
+.language-control{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 6px 0 12px;border:1px solid rgba(113,152,140,.45);border-radius:12px;background:rgba(0,211,181,.06);color:inherit;max-width:100%}
+.language-control .language-globe{flex:none;color:var(--teal,#00d3b5)}
+.language-control select{min-width:0;width:auto;margin:0;padding:8px 26px 8px 2px;border:0;background-color:transparent;color:inherit;font-size:14px;box-shadow:none}
+.language-control select:focus{outline:none}
+.language-control:focus-within{border-color:var(--teal,#00d3b5);box-shadow:0 0 0 3px rgba(0,211,181,.18)}
+.drawer-language .language-control{display:flex;width:100%}
+.drawer-language .language-control select{flex:1}
+/* Number fields: no native spinner arrows anywhere. */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+/* ---- Custom file picker (public/file-upload.js) ---- */
+.rf-upload{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px 14px;width:100%;min-height:96px;margin-top:8px;padding:16px;border:1.5px dashed rgba(0,211,181,.45);border-radius:16px;background:linear-gradient(135deg,rgba(0,211,181,.08),rgba(11,38,50,.55));color:var(--text);cursor:pointer;text-transform:none;letter-spacing:normal;font-weight:500;transition:border-color .2s,background .2s,box-shadow .2s}
+.rf-upload:hover,.rf-upload:focus-within,.rf-upload:focus-visible,.rf-upload.dragging{border-color:var(--teal,#00d3b5);background:linear-gradient(135deg,rgba(0,211,181,.16),rgba(11,38,50,.6));box-shadow:0 0 0 3px rgba(0,211,181,.15);outline:none}
+.rf-upload input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip-path:inset(50%);pointer-events:none}
+.rf-upload-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:rgba(0,211,181,.14);color:var(--teal,#00d3b5)}
+.rf-upload-copy{display:grid;gap:4px;min-width:0}
+.rf-upload-text{font-size:14px;line-height:1.35;color:var(--text);overflow-wrap:anywhere}
+.rf-upload-text::before{content:"📷 "}
+.rf-upload-hint{font-size:12px;color:var(--muted)}
+.rf-upload-hint:empty{display:none}
+.rf-upload-preview{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.rf-upload-preview:empty{display:none}
+.rf-upload-preview img{width:96px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.rf-upload-name{padding:6px 10px;border-radius:999px;background:rgba(0,211,181,.12);font-size:12px;overflow-wrap:anywhere}
+.rf-upload.has-file{border-style:solid}
+body[data-theme=light] .rf-upload{background:linear-gradient(135deg,rgba(0,211,181,.10),rgba(255,255,255,.7))}
+/* ---- Profile completion: two separate verification buttons and the address window ---- */
+.verify-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:6px 0 14px}
+.verify-choice-btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:12px 16px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(0,211,181,.10),rgba(11,38,50,.6));color:var(--text);font-weight:700;font-size:15px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s}
+.verify-choice-btn span{font-size:20px;line-height:1}
+.verify-choice-btn:hover{transform:translateY(-1px);border-color:var(--teal,#00d3b5)}
+.verify-choice-btn.active{border-color:var(--teal,#00d3b5);box-shadow:0 0 0 3px rgba(0,211,181,.18)}
+.verify-choice-btn.telegram{background:linear-gradient(135deg,rgba(34,158,217,.22),rgba(11,38,50,.6));border-color:rgba(42,171,238,.45)}
+.verify-choice-btn.telegram.active{border-color:#2aabee;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
+.verify-pick{margin:0}
+.profile-setup .muted-step{opacity:.75}
+dialog.address-modal{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:20px;border:1px solid rgba(0,211,181,.35);border-radius:22px;background:var(--panel,#142d3a);color:var(--text);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+dialog.address-modal::-webkit-scrollbar{display:none}
+dialog.address-modal::backdrop{background:#020d17c4;backdrop-filter:blur(4px)}
+dialog.address-modal .rf-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+dialog.address-modal h2{margin:0;font-size:20px}
+dialog.address-modal .form{gap:14px}
+@media (max-width:560px){dialog.address-modal[open]{margin:auto 0 0;width:100%;max-width:100%;border-radius:22px 22px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom))}}
+.verify-sms.form h3,.verify-sms.form>p.muted{margin:0}

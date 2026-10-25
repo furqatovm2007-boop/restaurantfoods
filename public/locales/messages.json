@@ -5138,5 +5138,40 @@
     "uz": "Saqlangan kalit o‘chirilsinmi? Supabase secret’dagi kalit ishlatiladi.",
     "ru": "Удалить сохранённый ключ? Будет использоваться ключ из секрета Supabase.",
     "en": "Remove the saved key? The Supabase secret key will be used."
+  },
+  "SMS orqali tasdiqlash": {
+    "uz": "SMS orqali tasdiqlash",
+    "ru": "Подтвердить по SMS",
+    "en": "Verify by SMS"
+  },
+  "Telegram orqali kirish": {
+    "uz": "Telegram orqali kirish",
+    "ru": "Войти через Telegram",
+    "en": "Continue with Telegram"
+  },
+  "Tasdiqlash usulini tanlang.": {
+    "uz": "Tasdiqlash usulini tanlang.",
+    "ru": "Выберите способ подтверждения.",
+    "en": "Choose how to verify."
+  },
+  "Raqam tasdiqlangach manzil alohida oynada so‘raladi.": {
+    "uz": "Raqam tasdiqlangach manzil alohida oynada so‘raladi.",
+    "ru": "После подтверждения номера адрес спросим в отдельном окне.",
+    "en": "Once the number is verified, the address is asked in a separate window."
+  },
+  "Manzilni kiritish": {
+    "uz": "Manzilni kiritish",
+    "ru": "Указать адрес",
+    "en": "Enter address"
+  },
+  "Xaritada joyingizni belgilang — kuryer va restoran shu manzilni ko‘radi.": {
+    "uz": "Xaritada joyingizni belgilang — kuryer va restoran shu manzilni ko‘radi.",
+    "ru": "Отметьте место на карте — курьер и ресторан увидят этот адрес.",
+    "en": "Mark your place on the map — the courier and restaurant will see this address."
+  },
+  "Saqlash va davom etish": {
+    "uz": "Saqlash va davom etish",
+    "ru": "Сохранить и продолжить",
+    "en": "Save and continue"
   }
 }
