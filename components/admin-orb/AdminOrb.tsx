@@ -326,10 +326,12 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
         </li>
       ))}
     </ol>
-    <div className="rf:fixed rf:right-4 rf:bottom-[calc(16px+env(safe-area-inset-bottom))] rf:z-[2147482000] rf:flex rf:flex-col rf:items-end rf:gap-3 rf:max-sm:bottom-[calc(84px+env(safe-area-inset-bottom))]">
+    {/* The wrapper itself never takes taps: on phones its box (sized by the hidden panel) spans most of the
+        screen width above the bottom bar and used to swallow taps meant for the page under it. */}
+    <div className="rf:pointer-events-none rf:fixed rf:right-4 rf:bottom-[calc(16px+env(safe-area-inset-bottom))] rf:z-[2147482000] rf:flex rf:flex-col rf:items-end rf:gap-3 rf:max-sm:bottom-[calc(84px+env(safe-area-inset-bottom))]">
       <section
         aria-label={t.title}
-        className={`rf:w-[min(360px,calc(100vw-32px))] rf:origin-bottom-right rf:overflow-hidden rf:rounded-2xl rf:border rf:border-line rf:bg-panel/95 rf:text-text rf:shadow-2xl rf:backdrop-blur rf:transition rf:duration-300 ${open ? 'rf:scale-100 rf:opacity-100' : 'rf:pointer-events-none rf:scale-90 rf:opacity-0'}`}
+        className={`rf:w-[min(360px,calc(100vw-32px))] rf:origin-bottom-right rf:overflow-hidden rf:rounded-2xl rf:border rf:border-line rf:bg-panel/95 rf:text-text rf:shadow-2xl rf:backdrop-blur rf:transition rf:duration-300 ${open ? 'rf:pointer-events-auto rf:scale-100 rf:opacity-100' : 'rf:pointer-events-none rf:scale-90 rf:opacity-0'}`}
         inert={!open}
         aria-hidden={!open}
       >
@@ -454,7 +456,7 @@ export function AdminOrb({ lang: rawLang = 'uz', pollSeconds = 15, manageHref = 
         }}
         aria-label={t.open}
         aria-expanded={open}
-        className="rf:relative rf:size-[72px] rf:cursor-pointer rf:rounded-full rf:border-0 rf:bg-transparent rf:p-0 rf:shadow-[0_10px_40px_rgba(0,201,167,0.35)] rf:transition rf:hover:scale-105 rf:focus-visible:outline-2 rf:focus-visible:outline-offset-4 rf:focus-visible:outline-blue"
+        className="rf:pointer-events-auto rf:relative rf:size-[72px] rf:cursor-pointer rf:rounded-full rf:border-0 rf:bg-transparent rf:p-0 rf:shadow-[0_10px_40px_rgba(0,201,167,0.35)] rf:transition rf:hover:scale-105 rf:focus-visible:outline-2 rf:focus-visible:outline-offset-4 rf:focus-visible:outline-blue"
       >
         <Canvas resize={{ offsetSize: true }} dpr={canvasDpr()} camera={{ position: [0, 0, 3.1], fov: 45 }} gl={{ alpha: true, antialias: true }} frameloop={!tabVisible ? 'never' : calm ? 'demand' : 'always'} style={{ pointerEvents: 'none' }}>
           <OrbMesh signal={signal} calm={calm} level={level} />

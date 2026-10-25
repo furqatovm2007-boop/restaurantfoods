@@ -10,11 +10,15 @@
  function clear(){presses.clear();contacts.clear();for(const [el,timer] of effects){clearTimeout(timer);el.remove()}effects.clear();if(frame)cancelAnimationFrame(frame);frame=0;unlight()}
  function burst(el,x,y){if(reduced.matches||performance.now()-lastBurst<80||!Element.prototype.animate)return;lastBurst=performance.now();
   while(effects.size>=4){const first=effects.keys().next().value;clearTimeout(effects.get(first));first.remove();effects.delete(first)}
-  const layer=document.createElement('div');layer.className='neon-burst';layer.setAttribute('aria-hidden','true');layer.style.left=x+'px';layer.style.top=y+'px';(el.closest('dialog[open]')||document.body).append(layer);
+  // Inside an open dialog (which may be transformed or scrolled) the burst is placed relative to the
+  // dialog, so it lights up exactly under the finger; elsewhere it is fixed to the viewport.
+  const host=el.closest('dialog[open]')||document.body,layer=document.createElement('div');layer.className='neon-burst';layer.setAttribute('aria-hidden','true');
+  if(host===document.body){layer.style.left=x+'px';layer.style.top=y+'px'}else{const r=host.getBoundingClientRect();layer.style.position='absolute';layer.style.left=(x-r.left-host.clientLeft+host.scrollLeft)+'px';layer.style.top=(y-r.top-host.clientTop+host.scrollTop)+'px'}host.append(layer);
   const ripple=document.createElement('i');ripple.className='neon-ripple';layer.append(ripple);
   ripple.animate([{transform:'translate(-50%,-50%) scale(.1)',opacity:.6},{transform:'translate(-50%,-50%) scale(1)',opacity:0}],{duration:600,easing:'cubic-bezier(.15,.6,.3,1)',fill:'forwards'});
-  for(let i=0;i<24;i++){const p=document.createElement('i'),angle=(i+Math.random()*.4)*Math.PI*2/24,distance=34+Math.random()*42,size=2+Math.random()*3;p.className='neon-particle';p.style.width=p.style.height=size+'px';layer.append(p);p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(${Math.cos(angle)*distance}px,${Math.sin(angle)*distance}px) scale(0)`,opacity:0}],{duration:450+Math.random()*180,easing:'cubic-bezier(.15,.65,.3,1)',fill:'forwards'})}
-  if(el instanceof HTMLElement)el.animate([{scale:'1'},{scale:'1.025',offset:.4},{scale:'1'}],{duration:220,easing:'ease-out'});
+  const light=!fine.matches;
+  for(let i=0;i<(light?0:24);i++){const p=document.createElement('i'),angle=(i+Math.random()*.4)*Math.PI*2/24,distance=34+Math.random()*42,size=2+Math.random()*3;p.className='neon-particle';p.style.width=p.style.height=size+'px';layer.append(p);p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(${Math.cos(angle)*distance}px,${Math.sin(angle)*distance}px) scale(0)`,opacity:0}],{duration:450+Math.random()*180,easing:'cubic-bezier(.15,.65,.3,1)',fill:'forwards'})}
+  if(!light&&el instanceof HTMLElement)el.animate([{scale:'1'},{scale:'1.025',offset:.4},{scale:'1'}],{duration:220,easing:'ease-out'});
   effects.set(layer,setTimeout(()=>{layer.remove();effects.delete(layer)},650));
  }
  document.addEventListener('pointerdown',e=>{if(e.button!==0||reduced.matches)return;contacts.add(e.pointerId);if(contacts.size>1){presses.clear();return}const el=target(e.target);if(el)presses.set(e.pointerId,{el,x:e.clientX,y:e.clientY,at:performance.now(),moved:false})},{passive:true,capture:true});
