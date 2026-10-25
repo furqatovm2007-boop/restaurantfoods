@@ -58,31 +58,67 @@
     };
   }
 
-  /** Plays the server voice (OGG/Opus) or speaks with the browser's synthesis. */
+  // Sound on/off for the AI voice (🔊 / 🔇), remembered on this device; the text is always on screen.
+  const muted = () => {
+    try {
+      return localStorage.getItem('rf-call-muted') === '1';
+    } catch {
+      return false;
+    }
+  };
+  let playing = null;
+  /** Plays the natural server voice (OGG/Opus, or MP3 where OGG is not supported). In Uzbek the browser's
+   *  robotic synthesis is never used: without the server voice the question is read from the screen. */
   async function say(call, text, which, k) {
-    let audio = null;
+    if (muted()) return;
+    let audio = null,
+      mime = 'audio/ogg';
     try {
       const canOgg = !!document.createElement('audio').canPlayType?.('audio/ogg; codecs=opus');
-      if (canOgg) audio = (await api('POST', { action: 'speech', id: call.id, k, say: which })).audio;
+      const r = await api('POST', { action: 'speech', id: call.id, k, say: which, ...(canOgg ? {} : { format: 'mp3' }) });
+      audio = r.audio;
+      mime = r.mimeType || mime;
     } catch {}
-    if (audio) {
-      const el = new Audio('data:audio/ogg;base64,' + audio);
+    if (audio && !muted()) {
+      const el = new Audio('data:' + mime + ';base64,' + audio);
+      playing = el;
       await new Promise((done) => {
-        el.onended = el.onerror = done;
+        el.onended = el.onerror = el.onpause = done;
         el.play().catch(done);
       });
+      playing = null;
       return;
     }
-    if (!('speechSynthesis' in window)) return;
+    if (call.lang === 'uz' || !('speechSynthesis' in window) || muted()) return;
     await new Promise((done) => {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = SPEECH_LANG[call.lang] || 'uz-UZ';
-      const voice = speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith(call.lang)) || speechSynthesis.getVoices().find((v) => /tr|ru/i.test(v.lang || ''));
+      u.lang = SPEECH_LANG[call.lang] || 'ru-RU';
+      const voice = speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith(call.lang));
       if (voice) u.voice = voice;
       u.onend = u.onerror = done;
       speechSynthesis.speak(u);
       setTimeout(done, 12000);
     });
+  }
+  function soundButton() {
+    return `<button type="button" class="rf-call-sound" data-sound aria-pressed="${!muted()}" aria-label="${muted() ? 'Ovozni yoqish' : 'Ovozni o‘chirish'}">${muted() ? '🔇' : '🔊'}</button>`;
+  }
+  function bindSound(root) {
+    const b = root.querySelector('[data-sound]');
+    if (!b) return;
+    b.onclick = () => {
+      const off = !muted();
+      try {
+        localStorage.setItem('rf-call-muted', off ? '1' : '0');
+      } catch {}
+      if (off) {
+        playing?.pause();
+        window.speechSynthesis?.cancel?.();
+      }
+      b.textContent = off ? '🔇' : '🔊';
+      b.setAttribute('aria-pressed', String(!off));
+      b.setAttribute('aria-label', off ? 'Ovozni yoqish' : 'Ovozni o‘chirish');
+    };
   }
 
   /** One spoken answer: SpeechRecognition, else a 5 s recording sent for transcription. */
@@ -167,11 +203,13 @@
       }));
     const live = async () => {
       ring.stop();
-      root.innerHTML = `<div class="rf-call-card live"><div class="rf-call-avatar" aria-hidden="true">AI</div><h1>${esc(c.caller)}</h1><p class="rf-call-muted">${info}</p><p class="rf-call-state" data-state>${esc(c.speaking)}</p><p class="rf-call-line">${esc(call.question)}</p><div class="rf-call-heard" data-heard></div>${answerButtons}<button type="button" class="rf-call-hang" data-hang aria-label="${esc(c.decline)}">✆</button></div>`;
+      root.innerHTML = `<div class="rf-call-card live">${soundButton()}<div class="rf-call-avatar" aria-hidden="true">AI</div><h1>${esc(c.caller)}</h1><p class="rf-call-muted">${info}</p><p class="rf-call-state" data-state>${esc(c.speaking)}</p><p class="rf-call-line">${esc(call.question)}</p><div class="rf-call-heard" data-heard></div>${answerButtons}<button type="button" class="rf-call-hang" data-hang aria-label="${esc(c.decline)}">✆</button></div>`;
       bindAnswers();
+      bindSound(root);
       let active = true;
       root.querySelector('[data-hang]').onclick = () => {
         active = false;
+        playing?.pause();
         window.speechSynthesis?.cancel?.();
         root.innerHTML = `<div class="rf-call-card"><h1>${esc(c.ended)}</h1><p>${esc(c.declined)}</p>${answerButtons}</div>`;
         bindAnswers();

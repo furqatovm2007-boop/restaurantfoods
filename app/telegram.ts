@@ -163,7 +163,7 @@ async function telegramBirthday(chatId: string) {
   return `${b.year}-${String(b.month).padStart(2, '0')}-${String(b.day).padStart(2, '0')}`;
 }
 /** The shared own contact approves a sign-in request: existing account with that verified number, or a new one. */
-async function approveLogin(code: string, chatId: string, from: { id: number; first_name?: string; last_name?: string } | undefined, phone: string | null) {
+async function approveLogin(code: string, chatId: string, from: { id: number; first_name?: string; last_name?: string } | undefined, phone: string | null, viaContact = true) {
   const deny = async (reason: string, text: string) => {
     await env.DB!.prepare("UPDATE telegram_logins SET status='denied' WHERE code=?").bind(code).run();
     await telegram('sendMessage', { chat_id: chatId, text, reply_markup: REMOVE_KEYBOARD });
@@ -184,7 +184,10 @@ async function approveLogin(code: string, chatId: string, from: { id: number; fi
   else
     await env.DB!.prepare("INSERT INTO accounts (id,email,name,created_at,role,role_selected,phone,phone_verified,provider,contact_phone,contact_phone_verified,telegram_chat_id,telegram_phone,birth_date) VALUES (?,?,?,?,'customer',1,?,1,'telegram',?,1,?,?,?) ON CONFLICT(id) DO UPDATE SET telegram_chat_id=excluded.telegram_chat_id,telegram_phone=excluded.telegram_phone,contact_phone=excluded.contact_phone,contact_phone_verified=1,birth_date=COALESCE(accounts.birth_date,excluded.birth_date)").bind(userId, '', name, new Date().toISOString(), digits, phone, chatId, phone, birthday).run();
   await env.DB!.prepare("UPDATE telegram_logins SET status='approved',user_id=? WHERE code=?").bind(userId, code).run();
-  await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi.\nSaytga qayting — kirish avtomatik yakunlanadi.`, reply_markup: REMOVE_KEYBOARD });
+  // The shared-contact keyboard goes away first; then one button back to the site (the browser that asked is
+  // signed in by its own polling, the button is for coming back to it).
+  if (viaContact) await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi.`, reply_markup: REMOVE_KEYBOARD });
+  await telegram('sendMessage', { chat_id: chatId, text: viaContact ? 'Kirish tayyor — saytga qayting.' : `✅ Siz tanildingiz (${prettyPhone(phone)}). Raqam qayta so‘ralmaydi — kirish tayyor.`, reply_markup: { inline_keyboard: [[{ text: '🚀 Saytga kirish', url: site() + '/#/discover' }]] } });
   return 'login_approved';
 }
 
@@ -229,6 +232,10 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
   const code = text.startsWith('/start') ? text.split(/\s+/)[1]?.trim() : '';
   if (code && /^l_[A-Za-z0-9]{24}$/.test(code)) {
     const opened = await env.DB!.prepare("UPDATE telegram_logins SET chat_id=?,status='awaiting_contact' WHERE code=? AND status IN ('pending','awaiting_contact') AND expires_at>?").bind(chatId, code, Date.now()).run();
+    // This Telegram account already belongs to a site account with a verified number: approve at once,
+    // without asking for the contact again.
+    const known = opened.meta.changes ? await env.DB!.prepare("SELECT contact_phone FROM accounts WHERE telegram_chat_id=? AND contact_phone_verified=1 AND contact_phone<>'' LIMIT 1").bind(chatId).first<{ contact_phone: string }>() : null;
+    if (known && msg.from) return approveLogin(code, chatId, msg.from, known.contact_phone, false);
     await telegram('sendMessage', opened.meta.changes ? { chat_id: chatId, text: '👋 RestaurantFoods’ga kirish.\nPastdagi “📱 Raqamni yuborish” tugmasini bosing — raqamingiz tasdiqlanadi va saytga kirasiz.', reply_markup: CONTACT_KEYBOARD } : { chat_id: chatId, text: 'Havola eskirgan. Saytda “Telegram orqali kirish”ni qayta bosing.' });
     return opened.meta.changes ? 'login_opened' : 'login_expired';
   }

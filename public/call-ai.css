@@ -28,3 +28,6 @@
 .rf-call-card.ok .rf-call-avatar{background:var(--call-ok);color:#fff}
 .rf-call-card.warn .rf-call-avatar{background:#f59e0b;color:#fff}
 @media (prefers-reduced-motion:reduce){.rf-call-avatar.pulse,.rf-call-accept span{animation:none}}
+.rf-call-card.live{position:relative}
+.rf-call-sound{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.rf-call-sound[aria-pressed=false]{background:rgba(255,107,129,.18);border-color:rgba(255,107,129,.45)}

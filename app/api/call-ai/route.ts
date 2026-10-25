@@ -1,6 +1,7 @@
 import { identity } from '../../access';
 import { ApiError, json, failure, body, text, throttle } from '../../http';
 import { callForWeb, openCallsFor, answerCall, understand, serviceVoice, lang, CALL_TEXT, type CallRow } from '../../call-ai';
+import { serviceTts } from '../../ai-voice';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -45,6 +46,11 @@ export async function POST(request: Request) {
     const v = view(call);
     if (b.action === 'speech') {
       const which = b.say === 'thanks' ? v.thanks : b.say === 'sorry' ? v.sorry : v.question;
+      // MP3 (nova voice) for browsers without OGG/Opus, e.g. Safari on iPhone; OGG otherwise.
+      if (b.format === 'mp3') {
+        const mp3 = await serviceTts(which, v.lang, 'nova');
+        return json({ text: which, audio: mp3?.audio || null, mimeType: 'audio/mpeg' });
+      }
       const voice = await serviceVoice({ mode: 'call_speech', lang: v.lang, text: which });
       return json({ text: which, audio: voice?.audio && voice.mimeType === 'audio/ogg' ? voice.audio : null, mimeType: 'audio/ogg' });
     }

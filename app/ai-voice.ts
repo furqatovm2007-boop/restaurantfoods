@@ -8,6 +8,13 @@ import {fallbackTranscribe} from './ai-fallback';
  * Callers check who may use it first: /api/ai-voice for customers, /api/manage/voice for
  * the restaurant Admin AI; each has its own rate-limit bucket.
  */
+/** Natural MP3 voice through the Edge Function's proxy-only "tts" service (OpenAI nova / onyx). Works for every
+ *  signed-in user, also Telegram sessions that have no Supabase token; null when the voice is unavailable. */
+export async function serviceTts(text:string,lang:string,voice='nova'):Promise<{audio:string,mimeType:string}|null>{
+ const c=authConfig();if(!c.url||!c.key||!c.proxy)return null;
+ try{const res=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:await aiHeaders({apikey:c.key,Authorization:'Bearer '+c.key,'Content-Type':'application/json','X-RF-Proxy':c.proxy,'X-RF-Service':'tts'}),body:JSON.stringify({text,lang,voice}),signal:AbortSignal.timeout(28000)});if(!res.ok)return null;const data:any=await res.json();
+  if(typeof data.audio!=='string'||data.mimeType!=='audio/mpeg'||data.audio.length>5000000||!/^[A-Za-z0-9+/]+={0,2}$/.test(data.audio))return null;return {audio:data.audio,mimeType:'audio/mpeg'}}catch{return null}
+}
 export async function voiceProxy(request:Request,bucket:string){
  sameOrigin(request);
  if(request.headers.get('content-type')?.split(';')[0]!=='application/json')throw new ApiError(415,'JSON_REQUIRED');
@@ -16,10 +23,10 @@ export async function voiceProxy(request:Request,bucket:string){
  let b:any;try{b=JSON.parse(raw)}catch{throw new ApiError(400,'INVALID_REQUEST')}
  if(!b||!['uz','ru','en'].includes(b.lang)||!['speech','greeting','transcribe'].includes(b.mode))throw new ApiError(400,'INVALID_REQUEST');
  const payload:any={mode:b.mode,lang:b.lang};
- if(b.mode==='speech'){if(typeof b.text!=='string'||!b.text.trim()||b.text.length>1600)throw new ApiError(400,'INVALID_REQUEST');payload.text=b.text;}
+ if(b.mode==='speech'){if(typeof b.text!=='string'||!b.text.trim()||b.text.length>1600)throw new ApiError(400,'INVALID_REQUEST');payload.text=b.text;}if(b.mode==='greeting'&&typeof b.text==='string'&&b.text.trim()&&b.text.length<=1600)payload.text=b.text;
  if(b.mode==='transcribe'){if(!b.audio||!['audio/webm','audio/mp4','audio/ogg','audio/wav'].includes(b.audio.mimeType)||typeof b.audio.data!=='string'||b.audio.data.length>600000||!/^[A-Za-z0-9+/]+={0,2}$/.test(b.audio.data))throw new ApiError(400,'INVALID_AUDIO');payload.audio=b.audio;}
  await throttle(bucket,60);await throttle('voice:global',500);
- const c=authConfig(),token=await accessToken();if(!token){if(b.mode==='transcribe'){const text=await fallbackTranscribe(b.audio.data,b.lang).catch(()=>null);if(text)return json({transcript:text,engine:'workers-ai'})}throw new ApiError(401,'AI_LOGIN_REQUIRED')}
+ const c=authConfig(),token=await accessToken();if(!token&&b.mode!=='transcribe'){const voice=await serviceTts(payload.text||'',b.lang);if(voice)return json({...voice,sampleRate:24000});throw new ApiError(503,'AI_VOICE_UNAVAILABLE')}if(!token){if(b.mode==='transcribe'){const text=await fallbackTranscribe(b.audio.data,b.lang).catch(()=>null);if(text)return json({transcript:text,engine:'workers-ai'})}throw new ApiError(401,'AI_LOGIN_REQUIRED')}
  let res:Response|null=null,data:any={};try{res=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:await aiHeaders({apikey:c.key,Authorization:'Bearer '+token,'Content-Type':'application/json',...(c.proxy?{'X-RF-Proxy':c.proxy}:{})}),body:JSON.stringify(payload),signal:AbortSignal.timeout(28000)});data=await res.json()}catch{res=null}
  // OpenAI transcription unavailable: Workers AI Whisper turns the speech into text instead.
  if(b.mode==='transcribe'&&!res?.ok){const text=await fallbackTranscribe(b.audio.data,b.lang).catch(()=>null);if(text)return json({transcript:text,engine:'workers-ai'});}

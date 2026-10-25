@@ -11,7 +11,8 @@ import { env } from 'cloudflare:workers';
 type Lang = 'uz' | 'ru' | 'en';
 type Msg = { role: string; content: string };
 export type Engine = 'workers-ai' | 'rules';
-const WORKERS_AI_MODELS = ['@cf/google/gemma-3-12b-it', '@cf/meta/llama-3.3-70b-instruct-fp8-fast'];
+// The large 70B model first (better Uzbek); the small one only when it is unavailable.
+const WORKERS_AI_MODELS = ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/google/gemma-3-12b-it'];
 const LANG_NAME = { uz: 'Uzbek (Latin script)', ru: 'Russian', en: 'English' };
 const sum = (n: unknown) => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/\s/g, ' ');
 const pick = (l: Lang, uz: string, ru: string, en: string) => (l === 'ru' ? ru : l === 'en' ? en : uz);
@@ -27,7 +28,8 @@ export async function workersAi(system: string, data: unknown, history: Msg[], m
     try {
       const out: any = await Promise.race([ai.run(model, { messages, max_tokens: maxTokens }), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 15000))]);
       const text = typeof out?.response === 'string' ? out.response.trim() : '';
-      if (text) return text.replace(/\*\*/g, '').slice(0, 4000);
+      // Uzbek replies only (the Uzbek style rule is in the prompt): the ‘ letters and stray foreign words.
+      if (text) return (system.includes(UZ_STYLE) ? polishUz(text.replace(/\*\*/g, '')) : text.replace(/\*\*/g, '')).slice(0, 4000);
     } catch {
       /* next model */
     }
@@ -35,7 +37,22 @@ export async function workersAi(system: string, data: unknown, history: Msg[], m
   return '';
 }
 
+/** Smooths common slips of small models in Uzbek: the ‘ letters, Turkish and Russian words. */
+export function polishUz(text: string) {
+  return text
+    .replace(/([OoGg])['`´ʻʼ’]/g, '$1‘')
+    .replace(/\bMerhaba\b/gi, 'Assalomu alaykum')
+    .replace(/\b(teşekkür(?:ler)?(?: ederim)?|tesekkurler)\b/gi, 'rahmat')
+    .replace(/\blütfen\b/gi, 'iltimos')
+    .replace(/\bevet\b/gi, 'ha')
+    .replace(/\bgüzel\b/gi, 'ajoyib')
+    .replace(/\bспасибо\b/gi, 'rahmat')
+    .replace(/\bпожалуйста\b/gi, 'marhamat');
+}
+const UZ_STYLE =
+  ' When replying in Uzbek: pure, literary yet warm Uzbek in the Latin script with o‘ and g‘; no Turkish words or suffixes (merhaba, evet, teşekkür, lütfen, güzel, -yor), no Russian or Kazakh words; polite "siz". Sound like a friendly restaurant host or waiter: start the first reply with "Assalomu alaykum! Xush kelibsiz", and use "Marhamat", "Juda ajoyib tanlov", "Albatta", "Yoqimli ishtaha" naturally.';
 const rules = (l: Lang) =>
+  (l === 'uz' ? UZ_STYLE : '') +
   `You are RestaurantFoods' assistant. Reply in ${LANG_NAME[l]} only, warm and short (2-6 sentences), no Markdown tables. Use only the DATA; if something is not there, say so. Never invent restaurants, dishes, prices, numbers or availability. Restaurants marked is_demo are DEMO examples: always call them DEMO. You cannot create, confirm or cancel bookings, orders or payments; tell the person which button or dashboard section to use.`;
 
 // ---- Customer robot ----
@@ -68,12 +85,14 @@ export function clientRules(l: Lang, message: string, catalog: any[], flowers: a
     const dishes = (r.menu || []).slice(0, 3).map((m: any) => `${m.name} — ${sum(m.price)}`).join(', ');
     return `${r.name}${demo(r)}${r.cuisine ? ' (' + r.cuisine + ')' : ''}${dishes ? ': ' + dishes : ''}`;
   });
-  return { reply: pick(l, `Sizga mos variantlar: ${lines.join('; ')} so‘m. Taomni savatga qo‘shish yoki menyuni ochish uchun quyidagi tugmalardan foydalaning.`, `Подходящие варианты: ${lines.join('; ')} сум. Откройте меню или добавьте блюда кнопками ниже.`, `Good options: ${lines.join('; ')} UZS. Use the buttons below to open the menu or add dishes.`), recommendations };
+  return { reply: pick(l, `Marhamat, sizga mos variantlar: ${lines.join('; ')} so‘m. Juda ajoyib tanlov bo‘ladi! Taomni savatga qo‘shish yoki menyuni ochish uchun quyidagi tugmalardan foydalaning.`, `Подходящие варианты: ${lines.join('; ')} сум. Откройте меню или добавьте блюда кнопками ниже.`, `Good options: ${lines.join('; ')} UZS. Use the buttons below to open the menu or add dishes.`), recommendations };
 }
 
 export async function fallbackClient(lang: Lang, message: string, history: Msg[], catalog: any[]) {
   const flowers = await clientFlowers();
   const base = clientRules(lang, message, catalog, flowers);
+  // First answer of a conversation greets the guest like a host would.
+  if (lang === 'uz' && !history.length && !/^assalomu/i.test(base.reply)) base.reply = 'Assalomu alaykum! Xush kelibsiz. ' + base.reply;
   const text = await workersAi(rules(lang) + ' Help the customer choose a restaurant and dishes from the catalog (exact names and prices in UZS) or flowers.', { restaurants: catalog, flowers }, history, message);
   return { reply: text || base.reply, recommendations: base.recommendations, engine: (text ? 'workers-ai' : 'rules') as Engine };
 }

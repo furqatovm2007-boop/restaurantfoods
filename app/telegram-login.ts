@@ -18,6 +18,8 @@ const LOGIN_COOKIE = '__Host-rf-tglogin';
 const SESSION_COOKIE = '__Host-rf-tg';
 const LOGIN_TTL = 10 * 60000;
 const SESSION_DAYS = 30;
+const DEVICE_COOKIE = '__Host-rf-device';
+const DEVICE_DAYS = 180;
 const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const random = (n: number) => Array.from(crypto.getRandomValues(new Uint8Array(n)), (v) => ABC[v % 62]).join('');
 export async function sha256(text: string) {
@@ -49,12 +51,59 @@ export async function pollTelegramLogin() {
   // One-time: the request is consumed by the browser that started it.
   const claimed = await env.DB!.prepare("DELETE FROM telegram_logins WHERE code=? AND status='approved' RETURNING user_id").bind(code).first<{ user_id: string }>();
   if (!claimed) throw new ApiError(410, 'So‘rov allaqachon ishlatilgan.');
-  const token = random(48),
-    now = Date.now();
-  await env.DB!.prepare('INSERT INTO telegram_sessions (token_hash,user_id,expires_at,created_at) VALUES (?,?,?,?)').bind(await sha256(token), claimed.user_id, now + SESSION_DAYS * 86400000, now).run();
-  jar.set(SESSION_COOKIE, token, cookieOptions(SESSION_DAYS * 86400));
+  await issueSession(claimed.user_id);
+  await rememberDevice(claimed.user_id);
   jar.set(LOGIN_COOKIE, '', cookieOptions(0));
   return { status: 'approved' };
+}
+
+/** A site session of its own for this browser (30 days, HttpOnly cookie, only the hash in D1). */
+async function issueSession(userId: string) {
+  const token = random(48),
+    now = Date.now();
+  await env.DB!.prepare('INSERT INTO telegram_sessions (token_hash,user_id,expires_at,created_at) VALUES (?,?,?,?)').bind(await sha256(token), userId, now + SESSION_DAYS * 86400000, now).run();
+  (await cookies()).set(SESSION_COOKIE, token, cookieOptions(SESSION_DAYS * 86400));
+}
+
+/*
+ * Remembered device: after a sign-in with a verified phone (Telegram or SMS), this browser keeps a separate
+ * device key for 180 days in an HttpOnly cookie that "Chiqish" does not remove. The next "Telegram orqali
+ * kirish" on this browser signs in at once, without the bot or the phone number. Only the hash is stored
+ * (in telegram_sessions under a "device:" prefix, so it can never pass as a session token); the key is
+ * replaced on every use, and "Bu qurilmani unutish" deletes it. Never for the site administrator.
+ */
+export const hasDevice = async () => !!(await cookies()).get(DEVICE_COOKIE)?.value;
+export async function rememberDevice(userId: string) {
+  const token = random(48),
+    now = Date.now();
+  await env.DB!.prepare('INSERT INTO telegram_sessions (token_hash,user_id,expires_at,created_at) VALUES (?,?,?,?)').bind(await sha256('device:' + token), userId, now + DEVICE_DAYS * 86400000, now).run();
+  (await cookies()).set(DEVICE_COOKIE, token, cookieOptions(DEVICE_DAYS * 86400));
+}
+export async function deviceLogin() {
+  const jar = await cookies(),
+    token = jar.get(DEVICE_COOKIE)?.value;
+  if (!token || token.length < 32) throw new ApiError(410, 'Bu qurilma eslab qolinmagan. Telegram orqali kiring.');
+  const hash = await sha256('device:' + token);
+  const row = await env.DB!.prepare('SELECT a.id,a.role,a.status FROM telegram_sessions s JOIN accounts a ON a.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?').bind(hash, Date.now()).first<{ id: string; role: string; status: string }>();
+  // One use per key: the old one is gone whatever happens next.
+  await env.DB!.prepare('DELETE FROM telegram_sessions WHERE token_hash=?').bind(hash).run();
+  if (!row) {
+    jar.set(DEVICE_COOKIE, '', cookieOptions(0));
+    throw new ApiError(410, 'Qurilma kaliti eskirgan. Telegram orqali qayta kiring.');
+  }
+  if (row.role === 'admin' || row.status === 'suspended') {
+    jar.set(DEVICE_COOKIE, '', cookieOptions(0));
+    throw new ApiError(403, 'Bu akkaunt bilan tezkor kirish mumkin emas.');
+  }
+  await issueSession(row.id);
+  await rememberDevice(row.id);
+  return { ok: true };
+}
+export async function forgetDevice() {
+  const jar = await cookies(),
+    token = jar.get(DEVICE_COOKIE)?.value;
+  if (token) await env.DB!.prepare('DELETE FROM telegram_sessions WHERE token_hash=?').bind(await sha256('device:' + token)).run();
+  jar.set(DEVICE_COOKIE, '', cookieOptions(0));
 }
 
 /** Identity for a Telegram session (same shape as the Supabase one), or null. */

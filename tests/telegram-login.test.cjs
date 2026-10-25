@@ -24,7 +24,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const me=await login.telegramIdentity();assert.equal(me.userId,'tg:42');assert.equal(me.phoneVerified,true);assert.equal(me.phone,'998901234567');assert.equal(me.source,'telegram');
  assert.ok(!db.prepare('SELECT token_hash FROM telegram_sessions').get().token_hash.includes(jar.get('__Host-rf-tg')),'only the hash is stored');
  await assert.rejects(login.pollTelegramLogin(),/eskirgan|ishlatilgan/,'one-time');
- await login.endTelegramSession();assert.equal(await login.telegramIdentity(),null);
+ // Remembered device: "Chiqish" ends the session but keeps the device key; one tap signs in again, the key rotates.
+ const device=jar.get('__Host-rf-device');assert.ok(device&&device.length>=32,'device key set on sign-in');
+ await login.endTelegramSession();assert.equal(await login.telegramIdentity(),null);assert.equal(jar.get('__Host-rf-device'),device,'logout keeps the device');
+ assert.ok(!db.prepare('SELECT token_hash FROM telegram_sessions').all().some(r=>r.token_hash.includes(device)),'device key stored as a hash only');
+ jar.set('__Host-rf-tg',device);assert.equal(await login.telegramIdentity(),null,'a device key is not a session');jar.delete('__Host-rf-tg');
+ assert.equal((await login.deviceLogin()).ok,true);assert.equal((await login.telegramIdentity()).userId,'tg:42','signed in without the bot');
+ const rotated=jar.get('__Host-rf-device');assert.notEqual(rotated,device,'key rotates');
+ jar.set('__Host-rf-device',device);await assert.rejects(login.deviceLogin(),/eskirgan/,'old key is single-use');assert.equal(jar.get('__Host-rf-device'),undefined);
+ jar.set('__Host-rf-device',rotated);await login.forgetDevice();assert.equal(jar.get('__Host-rf-device'),undefined);jar.set('__Host-rf-device',rotated);await assert.rejects(login.deviceLogin(),/eskirgan/,'forgotten');
+ await login.endTelegramSession();
+ // Another browser, same Telegram account: the bot recognises the chat and approves without asking for the number.
+ code=await start();sent.length=0;assert.equal(await telegram.handleUpdate(msg(42,{text:'/start '+code})),'login_approved');
+ assert.ok(!sent.some(m=>JSON.stringify(m.body).includes('request_contact')),'no contact request');assert.ok(sent.some(m=>JSON.stringify(m.body).includes('Saytga kirish')),'inline button to the site');
+ assert.equal((await login.pollTelegramLogin()).status,'approved');assert.equal((await login.telegramIdentity()).userId,'tg:42');await login.endTelegramSession();
  // Existing account with this verified number signs in to that account.
  db.exec("INSERT INTO accounts(id,email,name,created_at,contact_phone,contact_phone_verified) VALUES ('sb:old','old@x','Old','now','+998907777777',1)");
  code=await start();await telegram.handleUpdate(msg(55,{text:'/start '+code}));assert.equal(await telegram.handleUpdate(msg(55,{contact:{phone_number:'+998907777777',user_id:55}})),'login_approved');
@@ -32,6 +45,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // The administrator never signs in through Telegram.
  db.exec("INSERT INTO accounts(id,email,name,created_at,role,contact_phone,contact_phone_verified) VALUES ('sb:4fcd0d25-6ec1-4e10-a15f-8005d683edfe','a@x','Admin','now','admin','+998905555555',1)");
  code=await start();await telegram.handleUpdate(msg(66,{text:'/start '+code}));assert.equal(await telegram.handleUpdate(msg(66,{contact:{phone_number:'998905555555',user_id:66}})),'login_admin');assert.equal((await login.pollTelegramLogin()).status,'denied');
+ // The admin never gets a device key login.
+ await login.rememberDevice('sb:4fcd0d25-6ec1-4e10-a15f-8005d683edfe');await assert.rejects(login.deviceLogin(),/tezkor kirish mumkin emas/);
  // Expired links and foreign numbers.
  assert.equal(await telegram.handleUpdate(msg(77,{text:'/start l_AAAAAAAAAAAAAAAAAAAAAAAA'})),'login_expired');
  code=await start();await telegram.handleUpdate(msg(88,{text:'/start '+code}));assert.equal(await telegram.handleUpdate(msg(88,{contact:{phone_number:'+79001234567',user_id:88}})),'login_not_uz');

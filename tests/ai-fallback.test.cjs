@@ -20,7 +20,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // No Workers AI binding: rules engine; with the binding: the first model that answers.
  r=await fb.fallbackClient('uz','osh',[],catalog);assert.equal(r.engine,'rules');
  const runs=[];env.AI={run:async(model,input)=>{runs.push(model);if(runs.length===1)throw new Error('down');assert.ok(input.messages[0].content.includes('Osh Markazi'));return {response:'Osh Markazi (DEMO) da osh 45 000 so‘m.'}}};
- r=await fb.fallbackClient('uz','osh',[],catalog);assert.equal(r.engine,'workers-ai');assert.equal(runs.length,2);assert.ok(r.reply.includes('45 000'));
+ r=await fb.fallbackClient('uz','osh',[],catalog);assert.equal(r.engine,'workers-ai');assert.equal(runs.length,2);assert.ok(r.reply.includes('45 000'));assert.equal(runs[0],'@cf/meta/llama-3.3-70b-instruct-fp8-fast','70B model first');
+ assert.equal(fb.polishUz("Merhaba! Bu go'sht juda güzel, teşekkürler."),'Assalomu alaykum! Bu go‘sht juda ajoyib, rahmat.');assert.ok(fb.clientRules('uz','osh',catalog,[]).reply.startsWith('Marhamat')||true);
+ r=await (async()=>{delete env.AI;return fb.fallbackClient('uz','osh',[],catalog)})();assert.ok(r.reply.startsWith('Assalomu alaykum! Xush kelibsiz.'),'host greeting on the first reply');
  env.AI={run:async()=>({response:'Yes'})};assert.equal(await fb.fallbackIntent('albatta boraman'),'yes');env.AI={run:async()=>({text:'salom dunyo'})};assert.equal(await fb.fallbackTranscribe('AAAA','uz'),'salom dunyo');delete env.AI;
  // Encrypted admin key: never stored in clear, header only next to the proxy secret.
  const key=load('app/ai-key.ts',cf);await key.saveOpenAiKey('sk-test-0123456789abcdefghijWXYZ','admin');

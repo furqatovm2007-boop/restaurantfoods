@@ -19,7 +19,7 @@ const HEADERS = {
 
 export function GET() {
   return new Response(
-    `<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#06141a"><title>RestaurantFoods AI — qo‘ng‘iroq</title><link rel="stylesheet" href="/call-ai.css?v=1"></head><body class="rf-call-page"><main id="rfCall" class="rf-call" aria-live="polite"><p class="rf-call-muted">RestaurantFoods AI…</p></main><script src="/call-ai.js?v=1" defer></script></body></html>`,
+    `<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#06141a"><title>RestaurantFoods AI — qo‘ng‘iroq</title><link rel="stylesheet" href="/call-ai.css?v=2"></head><body class="rf-call-page"><main id="rfCall" class="rf-call" aria-live="polite"><p class="rf-call-muted">RestaurantFoods AI…</p></main><script src="/call-ai.js?v=2" defer></script></body></html>`,
     { headers: HEADERS },
   );
 }
