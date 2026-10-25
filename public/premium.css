@@ -508,3 +508,10 @@ body:has(#auth:not([hidden]):not(:empty)) .rf-ai-launch,body:has(#auth:not([hidd
 .rf-checkin-dialog .row-actions{display:block;margin-top:14px}
 .rf-checkin-dialog .row-actions [data-close]{width:100%;min-height:46px;border-radius:12px;font-weight:700}
 .rf-checkin-dialog .row-actions [data-close]{font-size:15px}
+/* ---- Admin Telegram card: buttons side by side with breathing room ---- */
+.telegram-admin .tg-actions{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0 22px}
+.telegram-admin .tg-actions>*{flex:1 1 200px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;margin:0;text-align:center}
+.telegram-admin ul{display:grid;gap:8px;margin:12px 0;padding:0;list-style:none}
+.telegram-admin h4{margin:24px 0 8px}
+.telegram-admin #callAiRun{min-height:48px}
+.row-actions{display:flex;flex-wrap:wrap;gap:12px}

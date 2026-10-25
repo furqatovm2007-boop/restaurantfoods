@@ -147,5 +147,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(db.prepare("SELECT status FROM restaurants WHERE id='st'").get().status,'deleted');assert.ok(db.prepare("SELECT 1 FROM bookings WHERE id='st-open'").get(),'history kept');
  const listed=await (await manage.GET(new Request('https://test/api/manage'))).json();assert.ok(!listed.restaurants.some(x=>x.id==='st'),'not in dashboard');
  assert.equal((await manage.POST(request('/api/manage',{action:'restaurant_delete',id:'st',confirm:'Start Kafe'}))).status,403,'already gone');
+ // After deleting their only restaurant an owner can be given another role (deleted ones do not count).
+ db.exec("INSERT INTO accounts(id,email,name,created_at,role) VALUES ('o2','o2@x','Owner Two','now','restaurant_owner')");db.exec("INSERT INTO restaurants(id,name,owner_id,status) VALUES ('gone','Gone','o2','deleted')");
+ const accountAdmin=load('app/account-admin.ts',{...cf,'./http':http});await accountAdmin.assignRole('admin','o2','courier');assert.equal(db.prepare("SELECT role FROM accounts WHERE id='o2'").get().role,'courier');
  console.log('PASS growth: plan split, peak deposit (card, receipt), table merging, birthday promo once, staff levels (hostess no money), AI report quota, service timer alerts, VIP dossier, happy hours');
 })().catch(e=>{console.error(e);process.exitCode=1});
