@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { md5 } from '../../../md5';
 import { sameSecret } from '../../../http';
-import { active,payable,depositById,markPaid,cancelDeposit } from '../../../deposits';
+import { active,payable,depositById,markPaid,cancelDeposit,paymentTable,stateColumn } from '../../../deposits';
 export const dynamic='force-dynamic';
 
 /*
@@ -29,7 +29,7 @@ export async function POST(request:Request){
   if(action==='0'){
     if(!payable(d))return reply(base,-9,'Transaction cancelled');
     const merchantPrepareId=d.click_prepare_id??crypto.getRandomValues(new Uint32Array(1))[0]%2000000000+1;
-    await env.DB!.prepare("UPDATE deposits SET click_trans_id=?,click_prepare_id=? WHERE id=? AND state='pending'").bind(clickTransId,merchantPrepareId,d.id).run();
+    await env.DB!.prepare('UPDATE '+paymentTable(d.id)+' SET click_trans_id=?,click_prepare_id=? WHERE id=? AND '+stateColumn(d.id)+"='pending'").bind(clickTransId,merchantPrepareId,d.id).run();
     return reply({...base,merchant_prepare_id:merchantPrepareId},0,'Success');
   }
   if(!d.click_prepare_id||String(d.click_prepare_id)!==prepareId||d.click_trans_id!==clickTransId)return reply(base,-6,'Transaction does not exist');

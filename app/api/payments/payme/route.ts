@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { sameSecret } from '../../../http';
-import { active,payable,depositById,depositByPayme,markPaid,cancelDeposit,type DepositRow } from '../../../deposits';
+import { active,payable,depositById,depositByPayme,markPaid,cancelDeposit,paymentTable,type DepositRow } from '../../../deposits';
 export const dynamic='force-dynamic';
 
 /*
@@ -20,8 +20,8 @@ async function account(p:any){const id=p?.account?.deposit_id;if(typeof id!=='st
 
 async function cancel(d:DepositRow,reason:unknown){
   const code=Number.isInteger(reason)?Number(reason):null,now=Date.now();
-  if(d.payme_state===1){await env.DB!.prepare('UPDATE deposits SET payme_state=-1,payme_cancel_time=?,payme_reason=? WHERE id=? AND payme_state=1').bind(now,code,d.id).run();await cancelDeposit(d.id)}
-  else if(d.payme_state===2){await env.DB!.prepare('UPDATE deposits SET payme_state=-2,payme_cancel_time=?,payme_reason=? WHERE id=? AND payme_state=2').bind(now,code,d.id).run();await cancelDeposit(d.id,true)}
+  if(d.payme_state===1){await env.DB!.prepare('UPDATE '+paymentTable(d.id)+' SET payme_state=-1,payme_cancel_time=?,payme_reason=? WHERE id=? AND payme_state=1').bind(now,code,d.id).run();await cancelDeposit(d.id)}
+  else if(d.payme_state===2){await env.DB!.prepare('UPDATE '+paymentTable(d.id)+' SET payme_state=-2,payme_cancel_time=?,payme_reason=? WHERE id=? AND payme_state=2').bind(now,code,d.id).run();await cancelDeposit(d.id,true)}
   return (await depositById(d.id))!;
 }
 
@@ -34,7 +34,7 @@ const methods:Record<string,(p:any)=>Promise<unknown>>={
     const d=await account(p);
     if(d.payme_transaction)fail(-31099,'deposit_id');
     const now=Date.now();
-    const saved=await env.DB!.prepare('UPDATE deposits SET payme_transaction=?,payme_state=1,payme_create_time=? WHERE id=? AND payme_transaction IS NULL').bind(p.id,now,d.id).run();
+    const saved=await env.DB!.prepare('UPDATE '+paymentTable(d.id)+' SET payme_transaction=?,payme_state=1,payme_create_time=? WHERE id=? AND payme_transaction IS NULL').bind(p.id,now,d.id).run();
     if(!saved.meta.changes)fail(-31099,'deposit_id');
     return {create_time:now,transaction:d.id,state:1};
   },
@@ -46,7 +46,7 @@ const methods:Record<string,(p:any)=>Promise<unknown>>={
     // Mark the deposit paid first: if Click already paid it, Payme must not take the money too.
     if(!(await markPaid(d!.id,'payme'))){await cancel(d!,4);fail(-31008)}
     const now=Date.now();
-    await env.DB!.prepare('UPDATE deposits SET payme_state=2,payme_perform_time=? WHERE id=? AND payme_state=1').bind(now,d!.id).run();
+    await env.DB!.prepare('UPDATE '+paymentTable(d!.id)+' SET payme_state=2,payme_perform_time=? WHERE id=? AND payme_state=1').bind(now,d!.id).run();
     return {transaction:d!.id,perform_time:now,state:2};
   },
   async CancelTransaction(p){const d=typeof p?.id==='string'?await depositByPayme(p.id):null;if(!d)fail(-31003);const c=await cancel(d!,p.reason);return {transaction:c.id,cancel_time:c.payme_cancel_time,state:c.payme_state}},
@@ -54,7 +54,9 @@ const methods:Record<string,(p:any)=>Promise<unknown>>={
   async GetStatement(p){
     if(!Number.isSafeInteger(p?.from)||!Number.isSafeInteger(p?.to))fail(-32600);
     const rows=await env.DB!.prepare('SELECT d.*,b.status AS booking_status FROM deposits d JOIN bookings b ON b.id=d.booking_id WHERE d.payme_transaction IS NOT NULL AND d.payme_create_time BETWEEN ? AND ? ORDER BY d.payme_create_time LIMIT 1000').bind(p.from,p.to).all<DepositRow>();
-    return {transactions:rows.results.map(d=>({id:d.payme_transaction,time:d.payme_create_time,amount:d.amount*100,account:{deposit_id:d.id},...state(d)}))};
+    // POS cash-desk sales paid through Payme are part of the same statement.
+    const pos=(await env.DB!.prepare('SELECT id,total,status,payme_transaction,payme_state,payme_create_time,payme_perform_time,payme_cancel_time,payme_reason,created_at FROM pos_sales WHERE payme_transaction IS NOT NULL AND payme_create_time BETWEEN ? AND ? ORDER BY payme_create_time LIMIT 1000').bind(p.from,p.to).all<any>()).results.map((s:any)=>({...s,amount:s.total}));
+    return {transactions:[...rows.results,...pos].map((d:any)=>({id:d.payme_transaction,time:d.payme_create_time,amount:d.amount*100,account:{deposit_id:d.id},...state(d)}))};
   },
 };
 

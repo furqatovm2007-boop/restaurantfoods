@@ -5693,5 +5693,20 @@
     "uz": "Qurilma unutildi.",
     "ru": "Устройство забыто.",
     "en": "Device forgotten."
+  },
+  "Kassa": {
+    "uz": "Kassa",
+    "ru": "Касса",
+    "en": "Till"
+  },
+  "Elektron chek": {
+    "uz": "Elektron chek",
+    "ru": "Электронный чек",
+    "en": "Electronic receipt"
+  },
+  "🧾 Kassa": {
+    "uz": "🧾 Kassa",
+    "ru": "🧾 Касса",
+    "en": "🧾 Till"
   }
 }

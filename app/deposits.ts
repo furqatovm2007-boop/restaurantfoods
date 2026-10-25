@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { notifyBooking, notifyCustomer } from './telegram';
+import { isPosId, saleById, completeSale, cancelSale, type PosSaleRow } from './pos';
 
 /*
  * Booking deposits paid through Click or Payme. A deposit holds the table for HOLD_MS;
@@ -53,8 +54,32 @@ export interface DepositRow {
 }
 
 const SELECT = 'SELECT d.*,b.status AS booking_status FROM deposits d JOIN bookings b ON b.id=d.booking_id WHERE ';
-export const depositById = (id: string) => env.DB!.prepare(SELECT + 'd.id=?').bind(id).first<DepositRow>();
-export const depositByPayme = (transaction: string) => env.DB!.prepare(SELECT + 'd.payme_transaction=?').bind(transaction).first<DepositRow>();
+// POS cash-desk sales ("pos_" ids, app/pos.ts) are paid through the same Payme / Click callbacks; they are
+// shown to them in the deposit shape (a pending sale counts as an active "booking").
+const asDeposit = (s: PosSaleRow | null): DepositRow | null =>
+  s && {
+    id: s.id,
+    booking_id: '',
+    restaurant_id: s.restaurant_id,
+    amount: s.total,
+    state: s.status,
+    provider: s.provider,
+    click_trans_id: s.click_trans_id,
+    click_prepare_id: s.click_prepare_id,
+    payme_transaction: s.payme_transaction,
+    payme_state: s.payme_state,
+    payme_create_time: s.payme_create_time,
+    payme_perform_time: s.payme_perform_time,
+    payme_cancel_time: s.payme_cancel_time,
+    payme_reason: s.payme_reason,
+    created_at: s.created_at,
+    booking_status: s.status === 'pending' ? 'pending' : 'cancelled',
+  };
+export const depositById = async (id: string) => (isPosId(id) ? asDeposit(await saleById(id)) : env.DB!.prepare(SELECT + 'd.id=?').bind(id).first<DepositRow>());
+export const depositByPayme = async (transaction: string) => (await env.DB!.prepare(SELECT + 'd.payme_transaction=?').bind(transaction).first<DepositRow>()) || asDeposit(await env.DB!.prepare('SELECT * FROM pos_sales WHERE payme_transaction=?').bind(transaction).first<PosSaleRow>());
+/** Table and state column that hold this payment's provider fields. */
+export const paymentTable = (id: string) => (isPosId(id) ? 'pos_sales' : 'deposits');
+export const stateColumn = (id: string) => (isPosId(id) ? 'status' : 'state');
 
 /** Unpaid and its booking still active. */
 export const active = (d: DepositRow | null): d is DepositRow => !!d && d.state === 'pending' && ['pending', 'confirmed'].includes(d.booking_status);
@@ -63,6 +88,7 @@ export const payable = (d: DepositRow | null): d is DepositRow => active(d) && D
 
 /** Marks the deposit paid once and sends the Telegram card. Returns false if it was not pending. */
 export async function markPaid(id: string, provider: Provider) {
+  if (isPosId(id)) return completeSale(id, provider);
   const done = await env.DB!.prepare("UPDATE deposits SET state='paid',provider=?,paid_at=? WHERE id=? AND state='pending'").bind(provider, new Date().toISOString(), id).run();
   if (!done.meta.changes) return false;
   const d = await depositById(id);
@@ -76,6 +102,7 @@ export async function markPaid(id: string, provider: Provider) {
 
 /** Cancels an unpaid deposit and frees its table, or marks a paid one refunded. */
 export async function cancelDeposit(id: string, refunded = false) {
+  if (isPosId(id)) return cancelSale(id, refunded);
   const from = refunded ? 'paid' : 'pending',
     to = refunded ? 'refunded' : 'cancelled';
   const done = await env.DB!.prepare('UPDATE deposits SET state=? WHERE id=? AND state=?').bind(to, id, from).run();
