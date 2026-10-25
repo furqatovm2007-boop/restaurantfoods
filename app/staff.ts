@@ -24,7 +24,7 @@ interface Who {
 export async function restaurantAccess(restaurantId: string, u: Who | null, need: Level = 'owner') {
   if (!u) throw new ApiError(401, 'Avval kiring.');
   const r = await env.DB!.prepare('SELECT * FROM restaurants WHERE id=?').bind(restaurantId).first<any>();
-  if (!r) throw new ApiError(403, 'Restoranga ruxsat yo‘q.');
+  if (!r || r.status === 'deleted') throw new ApiError(403, 'Restoranga ruxsat yo‘q.');
   let level: Level | null = u.role === 'admin' || r.owner_id === u.userId ? 'owner' : null;
   if (!level) {
     const staff = await env.DB!.prepare('SELECT role FROM restaurant_staff WHERE restaurant_id=? AND user_id=?').bind(restaurantId, u.userId).first<{ role: Level }>();

@@ -25,7 +25,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  let user={userId:'c1',role:'customer'};
  const access={identity:async()=>user,privateHeaders:{}};
  const base=integrationDeps(env,http,'../../',extras),deep=integrationDeps(env,http,'../../../',extras);
- const deps={...cf,...base,'../../access':access,'../../http':noLimit,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':rules,'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../growth':growth,'../../plans':plans,'../../payme-cards':cards,'../../staff':staffMod,'../../account-admin':{audit:()=>{}},'../../demo-drinks':load('app/demo-drinks.ts',{}),'../../auth-service':{authConfig:()=>({url:'',key:''})}};
+ const deps={...cf,...base,'../../access':access,'../../http':noLimit,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':rules,'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../growth':growth,'../../plans':plans,'../../payme-cards':cards,'../../staff':staffMod,'../../account-admin':{audit:()=>DB.prepare('SELECT 1')},'../../demo-drinks':load('app/demo-drinks.ts',{}),'../../auth-service':{authConfig:()=>({url:'',key:''})}};
  const bookings=load('app/api/bookings/route.ts',deps,extras),manage=load('app/api/manage/route.ts',deps,extras),tables=load('app/api/tables/route.ts',deps,extras),receipt=load('app/api/bookings/receipt/route.ts',{...cf,'../../../access':access,'../../../http':http,'../../../booking-pass':load('app/booking-pass.ts',cf)});
  const ddeps={...cf,...deep,'../../../access':access,'../../../http':noLimit,'../../../growth':growth,'../../../plans':plans,'../../../staff':staffMod,'../../../sse':load('app/sse.ts',{}),'../../../auth-service':{accessToken:async()=>'user-token',authConfig:()=>({url:'https://x.supabase.co',key:'anon',proxy:''})},'../../../booking-pass':load('app/booking-pass.ts',cf),'../../../birthday':load('app/birthday.ts',{...cf,'./plans':plans,'./telegram':telegram},extras)};
  const growthRoute=load('app/api/manage/growth/route.ts',ddeps,extras),checkin=load('app/api/manage/checkin/route.ts',ddeps,extras),birthday=load('app/birthday.ts',{...cf,'./plans':plans,'./telegram':telegram},extras);
@@ -137,5 +137,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  db.exec("DELETE FROM table_live_status");user={userId:'c1',role:'customer'};let pl=await (await tables.GET(new Request('https://test/api/tables?restaurantId=pre&date='+today))).json();assert.deepEqual(pl.happy,{percent:15,freePercent:100});
  r=await book('c1','pre',1,today,'13:30','14:30');assert.deepEqual((await r.json()).discount,{percent:15,reason:'happy_hours'});
  r=await book('c1','pre',3,tomorrow,'19:00','20:00');assert.equal((await r.json()).discount,null,'not within 3 hours');
+ // Deleting a restaurant: owner only, typed name, refused while bookings are open; hidden afterwards, history kept.
+ user={userId:'c1',role:'customer'};assert.equal((await manage.POST(request('/api/manage',{action:'restaurant_delete',id:'st',confirm:'Start Kafe'}))).status,403,'customers cannot');
+ user={userId:'owner',role:'restaurant_owner'};assert.equal((await manage.POST(request('/api/manage',{action:'restaurant_delete',id:'st',confirm:'Boshqa'}))).status,400,'name must match');
+ db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('st-open','st','c2',?,'12:00',1,2,'+998901112233','confirmed','now')").run(tomorrow);
+ r=await manage.POST(request('/api/manage',{action:'restaurant_delete',id:'st',confirm:'start kafe'}));assert.equal(r.status,409,'open bookings block');assert.ok((await r.json()).error.includes('1 ta faol bron'));
+ db.exec("UPDATE bookings SET status='completed' WHERE id='st-open'");
+ r=await manage.POST(request('/api/manage',{action:'restaurant_delete',id:'st',confirm:'  Start Kafe '}));assert.equal(r.status,200);
+ assert.equal(db.prepare("SELECT status FROM restaurants WHERE id='st'").get().status,'deleted');assert.ok(db.prepare("SELECT 1 FROM bookings WHERE id='st-open'").get(),'history kept');
+ const listed=await (await manage.GET(new Request('https://test/api/manage'))).json();assert.ok(!listed.restaurants.some(x=>x.id==='st'),'not in dashboard');
+ assert.equal((await manage.POST(request('/api/manage',{action:'restaurant_delete',id:'st',confirm:'Start Kafe'}))).status,403,'already gone');
  console.log('PASS growth: plan split, peak deposit (card, receipt), table merging, birthday promo once, staff levels (hostess no money), AI report quota, service timer alerts, VIP dossier, happy hours');
 })().catch(e=>{console.error(e);process.exitCode=1});

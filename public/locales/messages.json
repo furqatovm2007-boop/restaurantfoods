@@ -5178,5 +5178,35 @@
     "uz": "Maydonni to‘g‘ri to‘ldiring.",
     "ru": "Заполните поле правильно.",
     "en": "Please fill in this field correctly."
+  },
+  "Restoranni o‘chirish": {
+    "uz": "Restoranni o‘chirish",
+    "ru": "Удалить ресторан",
+    "en": "Delete restaurant"
+  },
+  "Restoran katalogdan va kabinetdan olib tashlanadi. O‘tgan bronlar va to‘lovlar tarixi saqlanadi. Faol bronlar bo‘lsa, avval ularni yakunlang.": {
+    "uz": "Restoran katalogdan va kabinetdan olib tashlanadi. O‘tgan bronlar va to‘lovlar tarixi saqlanadi. Faol bronlar bo‘lsa, avval ularni yakunlang.",
+    "ru": "Ресторан исчезнет из каталога и кабинета. История прошлых броней и платежей сохранится. Если есть активные брони, сначала завершите их.",
+    "en": "The restaurant is removed from the catalog and dashboard. Past bookings and payments are kept. Finish any active bookings first."
+  },
+  "Bu amalni qaytarib bo‘lmaydi. Tasdiqlash uchun restoran nomini yozing:": {
+    "uz": "Bu amalni qaytarib bo‘lmaydi. Tasdiqlash uchun restoran nomini yozing:",
+    "ru": "Это действие нельзя отменить. Для подтверждения введите название ресторана:",
+    "en": "This cannot be undone. To confirm, type the restaurant name:"
+  },
+  "RESTORAN NOMI": {
+    "uz": "RESTORAN NOMI",
+    "ru": "НАЗВАНИЕ РЕСТОРАНА",
+    "en": "RESTAURANT NAME"
+  },
+  "Butunlay o‘chirish": {
+    "uz": "Butunlay o‘chirish",
+    "ru": "Удалить навсегда",
+    "en": "Delete permanently"
+  },
+  "Restoran o‘chirildi.": {
+    "uz": "Restoran o‘chirildi.",
+    "ru": "Ресторан удалён.",
+    "en": "Restaurant deleted."
   }
 }

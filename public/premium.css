@@ -480,3 +480,31 @@ body:has(#auth:not([hidden]):not(:empty)) .rf-ai-launch,body:has(#auth:not([hidd
 .premium-auth .lang-trigger .language-globe,.premium-auth .lang-chevron{color:#139b7a}
 /* Dashboard on phones: the last buttons of long forms stay clear of the bottom bar and the Admin AI orb. */
 @media (max-width:760px){body.rf-manager #content{padding-bottom:calc(150px + env(safe-area-inset-bottom))}}
+/* ---- Plan cards: every action (Choose / Selected) on one line at the bottom ---- */
+.plan-grid{align-items:stretch}
+.plan-card{display:flex;flex-direction:column;gap:6px;padding:18px}
+.plan-card ul{flex:1;margin-bottom:14px}
+.plan-action{margin-top:auto}
+.plan-action>button,.plan-action>.plan-chosen{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin:0;border-radius:12px;font-weight:700;font-size:14px}
+.plan-chosen{background:rgba(16,185,129,.16);border:1px solid rgba(16,185,129,.45);color:#6ee7b7}
+/* ---- Danger zone + destructive button ---- */
+.danger-zone{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-top:22px;padding:16px;border:1px solid rgba(248,113,113,.35);border-radius:16px;background:rgba(127,29,29,.12)}
+.danger-zone>div{flex:1 1 260px;min-width:0}
+.danger-zone h4{margin:0 0 4px;color:#fca5a5}
+.danger-zone p{margin:0}
+.danger-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 18px;border:1px solid rgba(248,113,113,.55);border-radius:12px;background:rgba(220,38,38,.16);color:#fecaca;font:inherit;font-weight:700;cursor:pointer;transition:background .2s,border-color .2s}
+.danger-button:hover:not(:disabled){background:rgba(220,38,38,.3);border-color:#f87171}
+.danger-button:disabled{opacity:.45;cursor:not-allowed}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions>button{min-height:46px;width:100%}
+/* ---- QR check-in window: code field and button on one even row, full-width close ---- */
+.rf-checkin-dialog{padding:20px}
+.rf-checkin-dialog .rf-scan-manual{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;margin:14px 0 0}
+.rf-checkin-dialog .rf-scan-manual label{display:grid;gap:8px;margin:0;min-width:0;font-size:13px;color:var(--muted,#a0b8be)}
+.rf-checkin-dialog .rf-scan-manual input{width:100%;min-height:48px;margin:0;letter-spacing:.08em}
+.rf-checkin-dialog .rf-scan-manual button{min-height:48px;margin:0;padding:0 18px;border-radius:12px;font-weight:700}
+.rf-checkin-dialog .rf-scan-result:not(:empty){margin-top:12px}
+.rf-checkin-dialog .rf-scan-result .notice{margin:0;border-radius:12px}
+.rf-checkin-dialog .row-actions{display:block;margin-top:14px}
+.rf-checkin-dialog .row-actions [data-close]{width:100%;min-height:46px;border-radius:12px;font-weight:700}
+.rf-checkin-dialog .row-actions [data-close]{font-size:15px}
