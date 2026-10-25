@@ -13,7 +13,7 @@
   'use strict';
   const COPY = {
     uz: {
-      tabs: { till: '🧾 Kassa', stock: '📦 Ombor', sales: '📊 Sotuvlar' }, restaurant: 'Restoran', scanOn: '📷 Skanerni yoqish', scanOff: '⏹ Skanerni o‘chirish', scanHint: 'Shtrix-kodni ramka ichiga tuting — bitta o‘qishda chekka qo‘shiladi.',
+      hid: '⌨️ USB / Bluetooth skaner tayyor', hidHit: '⌨️ Skaner o‘qidi', paper: 'Chek qog‘ozi', autoPrint: 'To‘lovdan keyin avtomatik chop etish', notFiscal: 'Fiskal chek emas — elektron chek', thanks: 'Xaridingiz uchun rahmat!', cashier: 'Kassir', tabs: { till: '🧾 Kassa', stock: '📦 Ombor', sales: '📊 Sotuvlar' }, restaurant: 'Restoran', scanOn: '📷 Skanerni yoqish', scanOff: '⏹ Skanerni o‘chirish', scanHint: 'Shtrix-kodni ramka ichiga tuting — bitta o‘qishda chekka qo‘shiladi.',
       manual: 'Shtrix-kod yoki nom', add: 'Qo‘shish', photo: '🖼 Rasmdan o‘qish', empty: 'Chek bo‘sh. Mahsulotni skanerlang yoki ro‘yxatdan tanlang.', total: 'Jami', pay: '💳 To‘lov qilish', clear: 'Tozalash', notFound: 'Bu shtrix-kod bazada yo‘q', addToBase: 'Bazaga qo‘shish', stockLeft: 'qoldiq', noStock: 'Omborda qolmagan',
       httpsTitle: 'Kamera bu manzilda ochilmaydi', https: (o) => `Brauzer kamerani faqat xavfsiz (HTTPS) manzilda ochadi. Siz ${o} orqali kirdingiz. https://restaurantfoods.online orqali oching yoki hozircha rasmdan o‘qing / kodni qo‘lda kiriting.`,
       denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida (manzil yonidagi 🔒 belgisi) kameraga ruxsat bering yoki rasmdan o‘qing.', noCamera: 'Kamera topilmadi yoki band. Rasmdan o‘qing yoki kodni qo‘lda kiriting.', unsupported: 'Bu brauzer kamerani qo‘llamaydi. Rasmdan o‘qing yoki kodni qo‘lda kiriting.',
@@ -25,7 +25,7 @@
       status: { pending: 'Kutilmoqda', paid: 'To‘langan', cancelled: 'Bekor qilingan', refunded: 'Qaytarilgan' }, methods: { cash: 'Naqd', card: 'Karta', payme: 'Payme', click: 'Click' }, sumUnit: 'so‘m', noRestaurant: 'Kassa uchun restoran topilmadi.', receiptTitle: 'Elektron chek', gone: 'Chek topilmadi.',
     },
     ru: {
-      tabs: { till: '🧾 Касса', stock: '📦 Склад', sales: '📊 Продажи' }, restaurant: 'Ресторан', scanOn: '📷 Включить сканер', scanOff: '⏹ Выключить сканер', scanHint: 'Наведите штрих-код в рамку — одно считывание добавляет товар в чек.',
+      hid: '⌨️ USB / Bluetooth сканер готов', hidHit: '⌨️ Сканер считал', paper: 'Бумага чека', autoPrint: 'Печатать чек сразу после оплаты', notFiscal: 'Не фискальный чек — электронный чек', thanks: 'Спасибо за покупку!', cashier: 'Кассир', tabs: { till: '🧾 Касса', stock: '📦 Склад', sales: '📊 Продажи' }, restaurant: 'Ресторан', scanOn: '📷 Включить сканер', scanOff: '⏹ Выключить сканер', scanHint: 'Наведите штрих-код в рамку — одно считывание добавляет товар в чек.',
       manual: 'Штрих-код или название', add: 'Добавить', photo: '🖼 Считать с фото', empty: 'Чек пуст. Отсканируйте товар или выберите из списка.', total: 'Итого', pay: '💳 Оплата', clear: 'Очистить', notFound: 'Этого штрих-кода нет в базе', addToBase: 'Добавить в базу', stockLeft: 'остаток', noStock: 'Нет на складе',
       httpsTitle: 'Камера не открывается по этому адресу', https: (o) => `Браузер открывает камеру только на защищённом (HTTPS) адресе. Вы зашли через ${o}. Откройте https://restaurantfoods.online или пока считайте с фото / введите код вручную.`,
       denied: 'Доступ к камере не разрешён. Разрешите камеру в настройках браузера (значок 🔒 у адреса) или считайте с фото.', noCamera: 'Камера не найдена или занята. Считайте с фото или введите код.', unsupported: 'Этот браузер не поддерживает камеру. Считайте с фото или введите код.',
@@ -37,7 +37,7 @@
       status: { pending: 'Ожидает', paid: 'Оплачен', cancelled: 'Отменён', refunded: 'Возврат' }, methods: { cash: 'Наличные', card: 'Карта', payme: 'Payme', click: 'Click' }, sumUnit: 'сум', noRestaurant: 'Нет ресторана для кассы.', receiptTitle: 'Электронный чек', gone: 'Чек не найден.',
     },
     en: {
-      tabs: { till: '🧾 Till', stock: '📦 Stock', sales: '📊 Sales' }, restaurant: 'Restaurant', scanOn: '📷 Start scanner', scanOff: '⏹ Stop scanner', scanHint: 'Hold the barcode inside the frame — one read adds it to the receipt.',
+      hid: '⌨️ USB / Bluetooth scanner ready', hidHit: '⌨️ Scanner read', paper: 'Receipt paper', autoPrint: 'Print the receipt right after payment', notFiscal: 'Not a fiscal receipt — electronic receipt', thanks: 'Thank you for your purchase!', cashier: 'Cashier', tabs: { till: '🧾 Till', stock: '📦 Stock', sales: '📊 Sales' }, restaurant: 'Restaurant', scanOn: '📷 Start scanner', scanOff: '⏹ Stop scanner', scanHint: 'Hold the barcode inside the frame — one read adds it to the receipt.',
       manual: 'Barcode or name', add: 'Add', photo: '🖼 Read from photo', empty: 'The receipt is empty. Scan a product or pick it from the list.', total: 'Total', pay: '💳 Take payment', clear: 'Clear', notFound: 'This barcode is not in the base', addToBase: 'Add to base', stockLeft: 'left', noStock: 'Out of stock',
       httpsTitle: 'The camera cannot open on this address', https: (o) => `Browsers open the camera only on a secure (HTTPS) address. You opened ${o}. Use https://restaurantfoods.online, or read from a photo / type the code for now.`,
       denied: 'Camera permission was denied. Allow the camera in the browser settings (🔒 next to the address) or read from a photo.', noCamera: 'No camera found or it is busy. Read from a photo or type the code.', unsupported: 'This browser has no camera support. Read from a photo or type the code.',
@@ -176,6 +176,77 @@
     return esc(c.noCamera);
   };
 
+  // ---- USB / Bluetooth (HID) barcode scanners ----
+  // They type the code as very fast key presses ending with Enter (or Tab). A sequence of 4+ keys with
+  // gaps under ~40 ms is a scan; people type far slower. Keys typed into another field (cash amount,
+  // product form) are left alone; the Enter of a scan is swallowed so it never clicks a focused button.
+  const hid = { handler: null, buf: '', times: [] };
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (!hid.handler || e.ctrlKey || e.altKey || e.metaKey) return;
+      if (document.querySelector('dialog[open]')) return;
+      const t = e.target;
+      if (t?.matches?.('input,textarea,select,[contenteditable=true]') && !t.matches('[data-manual],[name=barcode]')) return;
+      const now = performance.now();
+      if (hid.times.length && now - hid.times[hid.times.length - 1] > 80) ((hid.buf = ''), (hid.times = []));
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        const gaps = hid.times.slice(1).map((v, i) => v - hid.times[i]);
+        const fast = hid.buf.length >= 4 && gaps.length && gaps.reduce((a, b) => a + b, 0) / gaps.length < 40;
+        const code = hid.buf;
+        hid.buf = '';
+        hid.times = [];
+        if (!fast) return;
+        e.preventDefault();
+        e.stopPropagation();
+        // A scan typed into the manual / barcode field: clear what the scanner typed there.
+        if (t?.matches?.('[data-manual],[name=barcode]')) t.value = t.matches('[name=barcode]') ? code : '';
+        hid.handler(code);
+        return;
+      }
+      if (e.key.length === 1) {
+        hid.buf += e.key;
+        hid.times.push(now);
+      }
+    },
+    true,
+  );
+
+  // ---- Thermal receipt (58 / 80 mm) printed from a hidden frame: only the receipt, monospace ----
+  const pref = (k, d) => {
+    try {
+      return localStorage.getItem(k) ?? d;
+    } catch {
+      return d;
+    }
+  };
+  const setPref = (k, v) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {}
+  };
+  const paper = () => (pref('rf-pos-paper', '80') === '58' ? 58 : 80);
+  async function printThermal(r) {
+    const c = w(), mm = paper(), qr = await qrSvg(r.url, mm === 58 ? 140 : 180);
+    const row = (a, b, cls = '') => `<div class="row ${cls}"><span>${a}</span><span>${b}</span></div>`;
+    const date = new Date(r.date).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' });
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(r.no)}</title><style>@page{size:${mm}mm auto;margin:0}*{box-sizing:border-box}body{margin:0;padding:3mm 2.5mm;width:${mm}mm;font:${mm === 58 ? 11 : 12}px/1.35 "Courier New",ui-monospace,monospace;color:#000;background:#fff}h1{font-size:${mm === 58 ? 14 : 16}px;margin:0;text-align:center}.c{text-align:center}.row{display:flex;justify-content:space-between;gap:6px}.row span:last-child{white-space:nowrap;text-align:right}.name{font-weight:700;margin-top:3px;word-break:break-word}.hr{border-top:1px dashed #000;margin:5px 0}.t{font-size:${mm === 58 ? 15 : 17}px;font-weight:700}svg{display:block;margin:6px auto 2px;width:${mm === 58 ? 32 : 40}mm;height:auto}small{font-size:10px}</style></head><body><h1>${esc(r.restaurant)}</h1>${r.address ? `<div class="c"><small>${esc(r.address)}</small></div>` : ''}${r.phone ? `<div class="c"><small>${esc(r.phone)}</small></div>` : ''}<div class="hr"></div>${row(esc(c.receiptNo) + ' ' + esc(r.no), '')}${row(esc(date), '')}${r.cashier ? row(esc(c.cashier) + ': ' + esc(r.cashier), '') : ''}<div class="hr"></div>${r.items.map((i) => `<div class="name">${esc(i.name)}</div>${row(i.qty + ' × ' + esc(money(i.price)), esc(money(i.sum)))}`).join('')}<div class="hr"></div>${row(esc(c.total), esc(money(r.total)), 't')}${row(esc(c.methods[r.method] || r.method || ''), '')}${r.change ? row(esc(c.change), esc(money(r.change))) : ''}<div class="hr"></div>${qr}<div class="c"><small>${esc(c.notFiscal)}</small></div><div class="c" style="margin-top:4px">${esc(c.thanks)}</div></body></html>`;
+    const f = document.createElement('iframe');
+    f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    f.onload = () => {
+      try {
+        f.contentWindow.focus();
+        f.contentWindow.print();
+      } catch {
+        window.print();
+      }
+      setTimeout(() => f.remove(), 60000);
+    };
+    f.srcdoc = html;
+    document.body.append(f);
+  }
+
   // ---- The page ----
   let active = null; // { stop } of the running camera
   const stopCamera = () => {
@@ -237,6 +308,9 @@
     }
     async function onCode(code) {
       if (!code) return;
+      if (!document.body.contains(root)) return (hid.handler = null);
+      const chip = root.querySelector('[data-hid]');
+      if (chip) ((chip.textContent = c.hidHit + ': ' + code), chip.classList.add('hit'), setTimeout(() => chip.isConnected && (chip.classList.remove('hit'), (chip.textContent = c.hid)), 1500));
       let p = data.products.find((x) => x.barcode === code);
       if (!p) {
         try {
@@ -283,7 +357,7 @@
 
     const scannerBlock = (hint) => {
       const problem = cameraProblem();
-      return `<section class="pos-scanner">${problem ? `<p class="notice pos-camera-note">${cameraMessage()}</p>` : `<button type="button" class="primary pos-scan-toggle" data-scan>${esc(active ? c.scanOff : c.scanOn)}</button>`}<div class="pos-camera" id="posCamera" data-scan-box ${active ? '' : 'hidden'}></div><p class="muted pos-scan-hint">${esc(hint)}</p><p class="pos-scan-note" data-scan-note role="status"></p><div class="pos-manual"><input type="search" inputmode="search" enterkeyhint="go" data-manual placeholder="${esc(c.manual)}" autocomplete="off" list="posProducts"><button type="button" class="quiet" data-manual-add>${esc(c.add)}</button><label class="quiet pos-photo">${esc(c.photo)}<input type="file" accept="image/*" capture="environment" data-photo data-native hidden></label></div><datalist id="posProducts">${data.products.map((p) => `<option value="${esc(p.barcode)}">${esc(p.name)} — ${esc(money(p.price))}</option>`).join('')}</datalist></section>`;
+      return `<section class="pos-scanner">${problem ? `<p class="notice pos-camera-note">${cameraMessage()}</p>` : `<button type="button" class="primary pos-scan-toggle" data-scan>${esc(active ? c.scanOff : c.scanOn)}</button>`}<div class="pos-camera" id="posCamera" data-scan-box ${active ? '' : 'hidden'}></div><p class="muted pos-scan-hint">${esc(hint)}</p><p class="pos-hid" data-hid>${esc(c.hid)}</p><p class="pos-scan-note" data-scan-note role="status"></p><div class="pos-manual"><input type="search" inputmode="search" enterkeyhint="go" data-manual placeholder="${esc(c.manual)}" autocomplete="off" list="posProducts"><button type="button" class="quiet" data-manual-add>${esc(c.add)}</button><label class="quiet pos-photo">${esc(c.photo)}<input type="file" accept="image/*" capture="environment" data-photo data-native hidden></label></div><datalist id="posProducts">${data.products.map((p) => `<option value="${esc(p.barcode)}">${esc(p.name)} — ${esc(money(p.price))}</option>`).join('')}</datalist></section>`;
     };
     function bindScanner() {
       const toggle = root.querySelector('[data-scan]');
@@ -357,7 +431,7 @@
     }
     function tillHtml() {
       const quick = data.products.filter((p) => p.stock > 0).slice(0, 12);
-      return `<div class="pos-till"><div>${scannerBlock(c.scanHint)}${quick.length ? `<div class="pos-quick">${quick.map((p) => `<button type="button" class="quiet" data-quick="${esc(p.id)}"><b>${esc(p.name)}</b><small>${esc(money(p.price))}</small></button>`).join('')}</div>` : ''}</div><aside class="pos-receipt-panel"><div data-cart></div><div class="pos-total"><span>${esc(c.total)}</span><strong data-total>0</strong></div><div class="pos-actions"><button type="button" class="quiet" data-clear>${esc(c.clear)}</button><button type="button" class="primary" data-pay>${esc(c.pay)}</button></div></aside></div>`;
+      return `<div class="pos-till"><div>${scannerBlock(c.scanHint)}${quick.length ? `<div class="pos-quick">${quick.map((p) => `<button type="button" class="quiet" data-quick="${esc(p.id)}"><b>${esc(p.name)}</b><small>${esc(money(p.price))}</small></button>`).join('')}</div>` : ''}</div><aside class="pos-receipt-panel"><div data-cart></div><div class="pos-total"><span>${esc(c.total)}</span><strong data-total>0</strong></div><div class="pos-print-prefs"><label class="check"><input type="checkbox" data-autoprint ${pref('rf-pos-autoprint', '0') === '1' ? 'checked' : ''}> ${esc(c.autoPrint)}</label><label>${esc(c.paper)}<select data-paper><option value="80" ${paper() === 80 ? 'selected' : ''}>80 mm</option><option value="58" ${paper() === 58 ? 'selected' : ''}>58 mm</option></select></label></div><div class="pos-actions"><button type="button" class="quiet" data-clear>${esc(c.clear)}</button><button type="button" class="primary" data-pay>${esc(c.pay)}</button></div></aside></div>`;
     }
     function bindTill() {
       bindScanner();
@@ -369,6 +443,8 @@
         drawCart();
       };
       root.querySelector('[data-pay]').onclick = () => payDialog();
+      root.querySelector('[data-autoprint]').onchange = (e) => setPref('rf-pos-autoprint', e.target.checked ? '1' : '0');
+      root.querySelector('[data-paper]').onchange = (e) => setPref('rf-pos-paper', e.target.value);
     }
 
     // ---- Payment ----
@@ -386,6 +462,7 @@
       let poll = 0;
       const step = d.querySelector('[data-step]');
       const items = () => cart.map((l) => ({ productId: l.productId, qty: l.qty }));
+      const thermal = (sale) => ({ restaurant: data.restaurant?.name || '', no: sale.receiptNo, date: sale.paidAt || sale.createdAt, items: sale.items, total: sale.total, method: sale.provider || sale.method, change: sale.change, url: sale.receiptUrl, cashier: (typeof state !== 'undefined' && state.user?.name) || '' });
       const finished = async (sale) => {
         clearInterval(poll);
         cart = [];
@@ -393,7 +470,9 @@
         beep(true);
         d.querySelector('.pos-methods').hidden = true;
         step.innerHTML = `<div class="pos-done pos-print"><div class="pos-done-mark">✓</div><h3>${esc(c.done)}</h3><p>${esc(c.receiptNo)} <b>${esc(sale.receiptNo)}</b> · ${esc(c.methods[sale.provider || sale.method] || '')}</p><p class="pos-due">${esc(money(sale.total))}</p>${sale.change ? `<p>${esc(c.change)}: <b>${esc(money(sale.change))}</b></p>` : ''}<ul class="pos-mini">${sale.items.map((i) => `<li><span>${esc(i.name)} × ${i.qty}</span><b>${esc(money(i.sum))}</b></li>`).join('')}</ul><div class="pos-qr-box">${await qrSvg(sale.receiptUrl, 180)}<small>${esc(c.eReceipt)}</small></div><div class="pos-actions no-print"><button type="button" class="quiet" data-print>${esc(c.print)}</button><button type="button" class="primary" data-next>${esc(c.next)}</button></div></div>`;
-        step.querySelector('[data-print]').onclick = () => window.print();
+        step.querySelector('[data-print]').onclick = () => printThermal(thermal(sale));
+        // One click: the receipt goes to the thermal printer as soon as the payment is in.
+        if (pref('rf-pos-autoprint', '0') === '1') printThermal(thermal(sale));
         step.querySelector('[data-next]').onclick = () => d.close();
         // Only the receipt list is redrawn, so a running camera keeps scanning for the next customer.
         await reload().catch(() => {});
@@ -607,6 +686,7 @@
       else drawSales();
     }
 
+    hid.handler = onCode;
     loadCart();
     try {
       await reload();
@@ -623,7 +703,7 @@
     try {
       const r = (await api('/api/pos/receipt?id=' + encodeURIComponent(id) + '&k=' + encodeURIComponent(key))).receipt;
       root.innerHTML = `<article class="pos-ereceipt pos-print"><div class="pos-ereceipt-head"><img src="/brand-transparent.png" alt="RestaurantFoods" width="150" height="47"><h2>${esc(r.restaurant)}</h2><p>${esc(r.address || '')}${r.phone ? ' · ' + esc(r.phone) : ''}</p></div><p class="pos-ereceipt-meta"><span>${esc(c.receiptNo)} <b>${esc(r.receiptNo || r.no)}</b></span><span>${esc(new Date(r.paidAt || r.createdAt).toLocaleString(document.documentElement.lang === 'en' ? 'en-GB' : 'ru-RU', { timeZone: 'Asia/Tashkent' }))}</span></p><ul class="pos-mini">${r.items.map((i) => `<li><span>${esc(i.name)}<small>${i.qty} × ${esc(money(i.price))}</small></span><b>${esc(money(i.sum))}</b></li>`).join('')}</ul><div class="pos-total"><span>${esc(c.total)}</span><strong>${esc(money(r.total))}</strong></div><p>${esc(c.methods[r.method] || r.method)} · <span class="badge ${r.status === 'paid' ? 'ok' : 'warn'}">${esc(c.status[r.status] || r.status)}</span>${r.change ? ` · ${esc(c.change)}: ${esc(money(r.change))}` : ''}</p><div class="pos-qr-box">${await qrSvg(location.href, 150)}</div><div class="pos-actions no-print"><button type="button" class="quiet" data-print>${esc(c.print)}</button></div></article>`;
-      root.querySelector('[data-print]').onclick = () => window.print();
+      root.querySelector('[data-print]').onclick = () => printThermal({ restaurant: r.restaurant, address: r.address, phone: r.phone, no: r.no, date: r.paidAt || r.createdAt, items: r.items, total: r.total, method: r.method, change: r.change, url: location.href });
     } catch (e) {
       root.innerHTML = `<div class="panel"><p class="notice">${esc(c.gone)}</p></div>`;
     }
