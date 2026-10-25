@@ -478,3 +478,5 @@ body:has(#auth:not([hidden]):not(:empty)) .rf-ai-launch,body:has(#auth:not([hidd
 #auth .social-providers>.social-button{width:100%;height:100%}
 .premium-auth .lang-trigger{background:#fff;color:#17332d;border-color:#cfe3dc}
 .premium-auth .lang-trigger .language-globe,.premium-auth .lang-chevron{color:#139b7a}
+/* Dashboard on phones: the last buttons of long forms stay clear of the bottom bar and the Admin AI orb. */
+@media (max-width:760px){body.rf-manager #content{padding-bottom:calc(150px + env(safe-area-inset-bottom))}}
