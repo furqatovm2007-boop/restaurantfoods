@@ -11,7 +11,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const plans=load('app/plans.ts',{...cf,'./http':http}),staff=load('app/staff.ts',{...cf,'./http':http,'./plans':plans}),pos=load('app/pos.ts',{...cf,'./http':http});
  let user=null;const access={identity:async()=>user};
  const route=load('app/api/pos/route.ts',{...cf,'../../access':access,'../../http':noLimit,'../../staff':staff,'../../deposits':two['../../deposits'],'../../pos':pos});
- const receipt=load('app/api/pos/receipt/route.ts',{...cf,'../../../http':http,'../../../pos':pos});
+ const receipt=load('app/api/pos/receipt/route.ts',{...cf,'../../../http':http,'../../../pos':pos,'../../../hall':load('app/hall.ts',{...cf,'./http':http})});
  const payme=load('app/api/payments/payme/route.ts',{...cf,...deep,'../../../http':http},extras),click=load('app/api/payments/click/route.ts',{...cf,...deep,'../../../http':http},extras);
  const {md5}=deep['../../../md5'];
  db.prepare("INSERT INTO restaurants(id,name,status,owner_id,plan,paid_until) VALUES ('r','Osh Markazi','active','owner','business',?)").run(new Date(Date.now()+30*86400000).toISOString());

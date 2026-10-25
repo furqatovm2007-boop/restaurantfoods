@@ -253,6 +253,13 @@
       "when": 1792940461115,
       "tag": "0035_pos_inventory_sales",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1792942696015,
+      "tag": "0036_hall_table_orders",
+      "breakpoints": true
     }
   ]
 }

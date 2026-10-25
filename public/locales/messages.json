@@ -5708,5 +5708,15 @@
     "uz": "🧾 Kassa",
     "ru": "🧾 Касса",
     "en": "🧾 Till"
+  },
+  "🍽 Zal kassasi": {
+    "uz": "🍽 Zal kassasi",
+    "ru": "🍽 Касса зала",
+    "en": "🍽 Hall till"
+  },
+  "📦 Do‘kon va ombor": {
+    "uz": "📦 Do‘kon va ombor",
+    "ru": "📦 Магазин и склад",
+    "en": "📦 Shop & stock"
   }
 }
