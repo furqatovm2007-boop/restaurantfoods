@@ -35,7 +35,9 @@ export async function GET(request: Request) {
       await restaurantAccess(restaurantId, u, 'waiter');
       const alerts = (await env.DB!.prepare('SELECT id,table_number,minutes,created_at FROM service_alerts WHERE restaurant_id=? AND resolved_at IS NULL ORDER BY created_at DESC LIMIT 20').bind(restaurantId).all()).results;
       // Guests calling the waiter or asking for the bill from their booking (app/api/bookings/service).
-      const requests = (await env.DB!.prepare("SELECT id,table_number,kind,created_at FROM service_requests WHERE restaurant_id=? AND resolved_at IS NULL AND created_at>? ORDER BY created_at DESC LIMIT 20").bind(restaurantId, new Date(Date.now() - 3 * 3600000).toISOString()).all()).results;
+      const requests = await (env.DB!.prepare("SELECT id,table_number,kind,created_at FROM service_requests WHERE restaurant_id=? AND resolved_at IS NULL AND created_at>? ORDER BY created_at DESC LIMIT 20").bind(restaurantId, new Date(Date.now() - 3 * 3600000).toISOString()).all()
+        .then((r) => r.results)
+        .catch(() => [])); // the table arrives with migration 0034; until then the timer alerts still work
       return json({ alerts, requests });
     }
     if (view === 'guest') {
