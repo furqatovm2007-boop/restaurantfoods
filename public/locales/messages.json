@@ -5918,5 +5918,25 @@
     "uz": "eng erta",
     "ru": "самое раннее",
     "en": "earliest"
+  },
+  "Akkauntga kirilmoqda…": {
+    "uz": "Akkauntga kirilmoqda…",
+    "ru": "Входим в аккаунт…",
+    "en": "Signing you in…"
+  },
+  "Havola eskirgan. Telegram orqali qayta kiring.": {
+    "uz": "Havola eskirgan. Telegram orqali qayta kiring.",
+    "ru": "Ссылка устарела. Войдите через Telegram снова.",
+    "en": "The link has expired. Sign in with Telegram again."
+  },
+  "Havola eskirgan yoki allaqachon ishlatilgan. Telegram orqali qayta kiring.": {
+    "uz": "Havola eskirgan yoki allaqachon ishlatilgan. Telegram orqali qayta kiring.",
+    "ru": "Ссылка устарела или уже использована. Войдите через Telegram снова.",
+    "en": "The link has expired or was already used. Sign in with Telegram again."
+  },
+  "Bu akkaunt bilan tezkor kirish mumkin emas.": {
+    "uz": "Bu akkaunt bilan tezkor kirish mumkin emas.",
+    "ru": "Для этого аккаунта быстрый вход недоступен.",
+    "en": "Quick sign-in is not available for this account."
   }
 }

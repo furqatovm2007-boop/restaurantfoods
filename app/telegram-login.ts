@@ -57,6 +57,29 @@ export async function pollTelegramLogin() {
   return { status: 'approved' };
 }
 
+/*
+ * "🚀 Saytga kirish" in the bot: the button opens in Telegram's own browser (or another one), not in the
+ * browser that polls, so it carries a one-time sign-in link of its own: 10 minutes, one use, sent only to
+ * the chat that just proved the phone number (only the code's hash is kept). Never for the administrator.
+ */
+const MAGIC_TTL = 10 * 60000;
+export async function createMagicLink(userId: string) {
+  const code = 'm_' + random(32),
+    now = Date.now();
+  await env.DB!.prepare('INSERT INTO telegram_logins (code,browser_hash,status,user_id,expires_at,created_at) VALUES (?,?,?,?,?,?)').bind(await sha256(code), 'magic', 'approved', userId, now + MAGIC_TTL, now).run();
+  return code;
+}
+export async function magicLogin(code: unknown) {
+  if (typeof code !== 'string' || !/^m_[A-Za-z0-9]{32}$/.test(code)) throw new ApiError(410, 'Havola eskirgan. Telegram orqali qayta kiring.');
+  const row = await env.DB!.prepare("DELETE FROM telegram_logins WHERE code=? AND browser_hash='magic' AND status='approved' AND expires_at>? RETURNING user_id").bind(await sha256(code), Date.now()).first<{ user_id: string }>();
+  const acc = row ? await env.DB!.prepare('SELECT id,role,status FROM accounts WHERE id=?').bind(row.user_id).first<{ id: string; role: string; status: string }>() : null;
+  if (!acc) throw new ApiError(410, 'Havola eskirgan yoki allaqachon ishlatilgan. Telegram orqali qayta kiring.');
+  if (acc.role === 'admin' || acc.status === 'suspended') throw new ApiError(403, 'Bu akkaunt bilan tezkor kirish mumkin emas.');
+  await issueSession(acc.id);
+  await rememberDevice(acc.id);
+  return { ok: true };
+}
+
 /** A site session of its own for this browser (30 days, HttpOnly cookie, only the hash in D1). */
 async function issueSession(userId: string) {
   const token = random(48),

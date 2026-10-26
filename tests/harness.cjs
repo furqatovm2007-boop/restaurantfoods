@@ -7,5 +7,5 @@ exports.integrationDeps=(env,http,prefix='../../',extras={})=>{const L=(f,i)=>ex
 // exactly; tests/ai-fallback.test.cjs covers the reserve itself.
 exports.aiKeyStub={aiHeaders:async b=>b,storedOpenAiKey:async()=>'',storedKeyInfo:async()=>({saved:false}),keyStorageAvailable:()=>false,saveOpenAiKey:async()=>{}};
 exports.aiFallbackStub={fallbackClient:async()=>null,fallbackAdmin:async()=>null,fallbackAnalysis:async()=>null,fallbackIntent:async()=>null,fallbackTranscribe:async()=>null};
-exports.telegramLoginStub={telegramIdentity:async()=>null,startTelegramLogin:async()=>({url:''}),pollTelegramLogin:async()=>({status:'pending'}),endTelegramSession:async()=>{},telegramLoginAvailable:()=>false,botUsername:()=>'',hasDevice:async()=>false,rememberDevice:async()=>{},deviceLogin:async()=>({ok:true}),forgetDevice:async()=>{}};
+exports.telegramLoginStub={telegramIdentity:async()=>null,startTelegramLogin:async()=>({url:''}),pollTelegramLogin:async()=>({status:'pending'}),endTelegramSession:async()=>{},telegramLoginAvailable:()=>false,botUsername:()=>'',hasDevice:async()=>false,rememberDevice:async()=>{},deviceLogin:async()=>({ok:true}),forgetDevice:async()=>{},createMagicLink:async()=>'m_'+'x'.repeat(32),magicLogin:async()=>({ok:true})};
 exports.aiVoiceStub={serviceTts:async()=>null,voiceProxy:async()=>{throw new Error('voice')}};

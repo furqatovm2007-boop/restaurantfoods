@@ -1071,3 +1071,41 @@ body[data-theme=light] .hp-badge.busy{background:#fef3c7;color:#b45309}
 body[data-theme=light] .hp-badge.reserved{background:#dbeafe;color:#1d4ed8}
 body[data-theme=light] .hp-total dd,body[data-theme=light] .pos-total strong{color:#00705d}
 body[data-theme=light] .hp-total,body[data-theme=light] .pos-total{border-top-color:#c4d8d5}
+
+/* ===== Light theme for dialogs and floating panels that were always dark ===== */
+/* Booking room (table picker) */
+body[data-theme=light] .booking-room{background:#f4f9f8;color:#123540;border-color:#c4d8d5;box-shadow:0 30px 80px rgba(21,50,66,.25)}
+body[data-theme=light] .booking-room::backdrop{background:rgba(18,53,64,.45)}
+body[data-theme=light] .room-header{background:#fff;border-bottom-color:#c4d8d5}
+body[data-theme=light] .room-header small{color:#4b6b74}
+body[data-theme=light] .room-body input,body[data-theme=light] .room-body select{background:#fff;color:#123540;border-color:#c4d8d5}
+body[data-theme=light] .room-body #planMessage,body[data-theme=light] .room-body p,body[data-theme=light] .room-body small{color:#4b6b74}
+body[data-theme=light] .room-body h2,body[data-theme=light] .room-body h3,body[data-theme=light] .room-body label{color:#123540}
+body[data-theme=light] .booking-room .floor-tabs .primary{background:#00a58a;color:#fff}
+body[data-theme=light] .room-body p.hold-timer{color:#04221b}
+body[data-theme=light] .room-body p.hold-timer.expired{color:#9f1239}
+/* Receipt / QR pass / check-in and POS payment dialogs: the frame follows the theme (the paper is always white) */
+body[data-theme=light] .rf-receipt-dialog,body[data-theme=light] .rf-checkin-dialog{background:#f1f7f6;color:#123540;box-shadow:0 30px 80px rgba(21,50,66,.25)}
+body[data-theme=light] .rf-receipt-dialog::backdrop,body[data-theme=light] .rf-checkin-dialog::backdrop,body[data-theme=light] .pos-dialog::backdrop{background:rgba(18,53,64,.45)}
+body[data-theme=light] .rf-rc-offline{color:#7c4a03;background:#fff4d6;border-color:#f5c451}
+body[data-theme=light] .pos-dialog{background:#fff;color:#123540;border-color:#c4d8d5}
+body[data-theme=light] .pos-dialog .pos-due{color:#00705d}
+body[data-theme=light] .pos-method{background:#f1f7f6;border-color:#c4d8d5;color:#123540}
+body[data-theme=light] .pos-method.chosen{background:#00c9a7;color:#04221b}
+/* Drawer profile card */
+body[data-theme=light] #nav .drawer-profile,body[data-theme=light] .management-sidebar .drawer-profile{background:linear-gradient(135deg,#e3f4f0 0%,#fff 100%);border-color:#9fd3c7;color:#123540}
+body[data-theme=light] #nav .drawer-profile .profile-copy strong{color:#123540}
+body[data-theme=light] #nav .drawer-profile .profile-copy small,body[data-theme=light] #nav .drawer-profile>span:last-child,body[data-theme=light] .management-sidebar .drawer-profile .profile-copy small{color:#00705d}
+/* Customer AI robot panel */
+body[data-theme=light] .rf-robot-panel{background:rgba(255,255,255,.97);color:#123540;border-color:#c4d8d5;box-shadow:0 18px 40px rgba(21,50,66,.18)}
+body[data-theme=light] .rf-robot-panel [data-login]{color:#00705d}
+body[data-theme=light] .rf-robot-privacy{color:#4b6b74}
+/* Admin AI orb panel (Tailwind island): its colour tokens follow the theme */
+body[data-theme=light] [data-rf-admin-orb]{--rf-color-panel:#ffffff;--rf-color-card:#f1f7f6;--rf-color-line:#c4d8d5;--rf-color-text:#123540;--rf-color-night:#e9f3f1}
+body[data-theme=light] [data-rf-admin-orb] .rf\:text-night{color:#04221b}
+/* 3D menu launch button */
+body[data-theme=light] .menu-3d-launch{background:linear-gradient(120deg,#e3f4f0,#fdf6e6);color:#123540;border-color:#d9b866}
+body[data-theme=light] .menu-3d-launch small{color:#4b6b74}
+/* Native controls (date pickers, scrollbars) follow the theme too */
+body[data-theme=light]{color-scheme:light}
+body:not([data-theme=light]){color-scheme:dark}

@@ -9,7 +9,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const sent=[];const fetch=async(url,init)=>{const method=String(url).split('/').pop(),body=JSON.parse(init.body);sent.push({method,body});if(method==='getChat')return Response.json({ok:true,result:{id:body.chat_id,birthdate:{day:5,month:3,year:1995}}});return Response.json({ok:true,result:{}})};
  const cf={'cloudflare:workers':{env}},http=load('app/http.ts',cf);
  const login=load('app/telegram-login.ts',{...cf,'next/headers':{cookies},'./http':http});
- const telegram=load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf)},{fetch});
+ const telegram=load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf),'./telegram-login':login},{fetch});
  const start=async()=>{jar=new Map();const r=await login.startTelegramLogin();assert.ok(r.url.startsWith('https://t.me/restaurantfoods_bot?start=l_'));return r.url.split('start=')[1]};
  const msg=(chat,extra)=>({message:{chat:{id:chat},from:{id:chat,first_name:'Aziz',last_name:'Karimov'},...extra}});
  // New user.
@@ -37,6 +37,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // Another browser, same Telegram account: the bot recognises the chat and approves without asking for the number.
  code=await start();sent.length=0;assert.equal(await telegram.handleUpdate(msg(42,{text:'/start '+code})),'login_approved');
  assert.ok(!sent.some(m=>JSON.stringify(m.body).includes('request_contact')),'no contact request');assert.ok(sent.some(m=>JSON.stringify(m.body).includes('Saytga kirish')),'inline button to the site');
+ // The bot's button is a one-time sign-in link for whichever browser opens it (Telegram's own included).
+ const pollingJar=jar;const btn=[...sent].reverse().find(m=>JSON.stringify(m.body).includes('Saytga kirish')).body.reply_markup.inline_keyboard[0][0].url;
+ const magic=btn.split('#/tg/')[1];assert.match(magic,/^m_[A-Za-z0-9]{32}$/);
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM telegram_logins WHERE code=?").get(magic).n,0,'only the hash is stored');
+ jar=new Map();assert.equal((await login.magicLogin(magic)).ok,true);assert.ok(jar.get('__Host-rf-tg'),'session in the opening browser');assert.ok(jar.get('__Host-rf-device'));
+ jar=new Map();await assert.rejects(login.magicLogin(magic),e=>e.status===410,'one use');assert.equal(jar.get('__Host-rf-tg'),undefined);
+ await assert.rejects(login.magicLogin('m_bad'),e=>e.status===410);
+ db.exec("UPDATE telegram_logins SET expires_at=0 WHERE browser_hash='magic'");jar=pollingJar;
  assert.equal((await login.pollTelegramLogin()).status,'approved');assert.equal((await login.telegramIdentity()).userId,'tg:42');await login.endTelegramSession();
  // Existing account with this verified number signs in to that account.
  db.exec("INSERT INTO accounts(id,email,name,created_at,contact_phone,contact_phone_verified) VALUES ('sb:old','old@x','Old','now','+998907777777',1)");

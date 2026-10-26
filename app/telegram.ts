@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { issueOtp, recentOtps } from './otp-store';
+import { createMagicLink } from './telegram-login';
 
 /*
  * Telegram bot.
@@ -187,7 +188,9 @@ async function approveLogin(code: string, chatId: string, from: { id: number; fi
   // The shared-contact keyboard goes away first; then one button back to the site (the browser that asked is
   // signed in by its own polling, the button is for coming back to it).
   if (viaContact) await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi.`, reply_markup: REMOVE_KEYBOARD });
-  await telegram('sendMessage', { chat_id: chatId, text: viaContact ? 'Kirish tayyor — saytga qayting.' : `✅ Siz tanildingiz (${prettyPhone(phone)}). Raqam qayta so‘ralmaydi — kirish tayyor.`, reply_markup: { inline_keyboard: [[{ text: '🚀 Saytga kirish', url: site() + '/#/discover' }]] } });
+  // The button signs in whichever browser opens it (Telegram's own included) with a one-time link.
+  const magic = await createMagicLink(userId);
+  await telegram('sendMessage', { chat_id: chatId, text: viaContact ? 'Kirish tayyor — “🚀 Saytga kirish” tugmasini bosing.' : `✅ Siz tanildingiz (${prettyPhone(phone)}). Raqam qayta so‘ralmaydi — “🚀 Saytga kirish” tugmasini bosing.`, reply_markup: { inline_keyboard: [[{ text: '🚀 Saytga kirish', url: site() + '/#/tg/' + magic }]] } });
   return 'login_approved';
 }
 
