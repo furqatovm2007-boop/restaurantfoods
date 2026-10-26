@@ -88,10 +88,13 @@ blockquote{margin:8px 0;padding:14px 16px;border-left:4px solid var(--brand2);ba
 .budget-head{grid-template-columns:46mm 1fr}
 .donut{max-width:46mm}
 .legend{font-size:12px;gap:4px}
-.chart{height:52mm}
-.fc{font-size:10.5px}
+.chart{height:46mm}
+.fc{font-size:10px}
 .fc td,.fc th{padding:3.5px 5px}
 @media (max-width:820px){.chart{height:auto}}
 .chart{height:43mm}
 figure{margin:6px 0}
 .fc + figure + .note,.page .note{font-size:10px;padding:6px 8px}
+
+@media print{.fc td,.fc th{padding:4px 5px}}
+@media print{.budget td,.budget th{padding:3px 8px;font-size:10.5px}.budget-head .donut{width:40mm;height:40mm}}
