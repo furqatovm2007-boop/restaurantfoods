@@ -59,7 +59,7 @@
       link.rel = 'manifest';
       document.head.append(link);
     }
-    link.href = '/manifest-' + app + '.webmanifest';
+    link.href = '/manifest-' + app + '.webmanifest?v=2';
   }
 
   function install() {
@@ -76,7 +76,7 @@
     document.querySelector('.rf-app-sheet')?.remove();
     const d = document.createElement('dialog');
     d.className = 'rf-app-sheet';
-    d.innerHTML = '<img src="/app-icons/' + app + '-192.png" alt="" width="64" height="64"><h2></h2><div class="rf-app-sheet-body">' + html + '</div><div class="rf-app-sheet-actions"></div>';
+    d.innerHTML = '<img src="/app-icons/' + app + '-192.png?v=2" alt="" width="64" height="64"><h2></h2><div class="rf-app-sheet-body">' + html + '</div><div class="rf-app-sheet-actions"></div>';
     d.querySelector('h2').textContent = title;
     for (const [label, run] of actions) {
       const b = document.createElement('button');
@@ -105,7 +105,7 @@
     bar.className = 'rf-app-bar';
     bar.setAttribute('role', 'region');
     bar.setAttribute('aria-label', w.install);
-    bar.innerHTML = '<img src="/app-icons/' + app + '-192.png" alt="" width="36" height="36"><span></span><button type="button" class="primary" data-install></button><button type="button" class="icon" data-close>×</button>';
+    bar.innerHTML = '<img src="/app-icons/' + app + '-192.png?v=2" alt="" width="36" height="36"><span></span><button type="button" class="primary" data-install></button><button type="button" class="icon" data-close>×</button>';
     bar.querySelector('span').textContent = w.bar;
     bar.querySelector('[data-install]').textContent = w.install;
     bar.querySelector('[data-close]').setAttribute('aria-label', w.close);
