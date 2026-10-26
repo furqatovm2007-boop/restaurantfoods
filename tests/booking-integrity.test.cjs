@@ -55,5 +55,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 
  // 4. Stop-list / prep columns exist with safe defaults.
  assert.equal(db.prepare("SELECT prep_status FROM bookings WHERE id='bk'").get().prep_status,'');
- console.log('PASS booking integrity: birth date saved once and locked, birthday promo ±3 days once a year, 5-minute exclusive table hold (expiry, own hold, real active tables, booked overlap)');
+ // 5. Public rating: only reviews of existing active accounts (and a demo restaurant's own demo reviews).
+ const {countedReview}=load('app/review-rules.ts',{});
+ db.exec("INSERT INTO restaurants(id,name,owner_id,status,tables,floors,booking_open,booking_close,is_demo) VALUES ('rf-demo-x','[DEMO] X','o','active',3,1,'08:00','23:00',1)");
+ db.exec("INSERT INTO reviews(id,restaurant_id,user_id,stars,comment,created_at,updated_at) VALUES ('rv1','r','c1',5,'ok','now','now'),('rv2','r','ghost',1,'seeded','now','now'),('rf-demo-review-1','r','rf-demo-u',1,'demo on a real restaurant','now','now'),('rf-demo-review-2','rf-demo-x','rf-demo-u',4,'demo','now','now')");
+ const rated=id=>db.prepare("SELECT COUNT(*) n,AVG(v.stars) avg FROM reviews v JOIN restaurants r ON r.id=v.restaurant_id WHERE v.restaurant_id=? AND "+countedReview('v','r')).get(id);
+ assert.equal(rated('r').n,1,'orphan and demo reviews do not count for a real restaurant');assert.equal(rated('r').avg,5);
+ assert.equal(rated('rf-demo-x').n,1,'a demo restaurant keeps its labelled demo reviews');
+ db.exec("UPDATE accounts SET status='suspended' WHERE id='c1'");assert.equal(rated('r').n,0,'suspended accounts do not count');
+ console.log('PASS booking integrity: birth date saved once and locked, birthday promo ±3 days once a year, 5-minute exclusive table hold (expiry, own hold, real active tables, booked overlap), ratings from real accounts only');
 })().catch(e=>{console.error(e);process.exit(1)});

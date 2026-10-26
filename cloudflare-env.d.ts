@@ -10,6 +10,7 @@ declare namespace Cloudflare {
     TELEGRAM_WEBHOOK_SECRET?: string;
     TELEGRAM_BOT_USERNAME?: string;
     SITE_URL?: string;
+    ADMIN_TELEGRAM_CHAT_ID?: string;
     VAPI_API_KEY?: string;
     VAPI_ASSISTANT_ID?: string;
     VAPI_PHONE_NUMBER_ID?: string;

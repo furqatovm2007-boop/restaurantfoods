@@ -4,9 +4,10 @@ import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 import { runCallAi } from "../app/call-ai";
 import { runBirthdays } from "../app/birthday";
 import { securityTxt } from "../app/security-txt";
+import { recordServerError, runHealthCheck } from "../app/health";
 
 export default {
-  fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
+  async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
     const path = new URL(request.url).pathname;
     if ((path === "/.well-known/security.txt" || path === "/security.txt") && (request.method === "GET" || request.method === "HEAD")) return securityTxt();
     let binding = ctx.props?.CONNECTORS;
@@ -28,12 +29,17 @@ export default {
         },
       };
     }
-    return runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+    const response = await runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+    // Health watch: 5xx API responses are counted after the response (see app/health.ts).
+    if (response.status >= 500 && path.startsWith("/api/")) ctx.waitUntil(recordServerError().catch(() => {}));
+    return response;
   },
-  // Cron trigger (vite.config.ts): Call AI confirmation calls 2 hours before bookings and the daily
-  // birthday promos (10:00 Tashkent).
+  // Cron trigger (vite.config.ts): Call AI confirmation calls 2 hours before bookings, the daily
+  // birthday promos (10:00 Tashkent) and the health watch.
   scheduled(_controller: ScheduledController, _env: Cloudflare.Env, ctx: ExecutionContext) {
     ctx.waitUntil(runCallAi().catch(() => console.error(JSON.stringify({ event: "call_ai_failed" }))));
     ctx.waitUntil(runBirthdays().catch(() => console.error(JSON.stringify({ event: "birthday_failed" }))));
+    // Health watch: Telegram webhook and API error bursts → a Telegram message to the administrator.
+    ctx.waitUntil(runHealthCheck().catch(() => console.error(JSON.stringify({ event: "health_check_failed" }))));
   },
 };

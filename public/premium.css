@@ -1132,3 +1132,7 @@ body[data-theme=light] .sv-pop{background:rgba(255,255,255,.97);color:#123540;bo
 body[data-theme=light] .sv-pop header button{background:#e3f4f0}
 body[data-theme=light] .sv-pop a{color:#00705d}
 body[data-theme=light] .sv-cam header .sv-ai{color:#0369a1;border-color:#7dd3fc}
+.health-card{margin:.8rem 0;padding:.7rem .9rem;border-radius:12px;border:1px solid rgba(47,227,181,.2);background:rgba(47,227,181,.05)}
+.health-card p{margin:.2rem 0}
+.health-card ul{margin:.3rem 0;padding-left:1rem}
+body[data-theme=light] .health-card{background:#f1f7f6;border-color:#c4d8d5}

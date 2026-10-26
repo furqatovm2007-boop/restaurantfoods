@@ -5938,5 +5938,35 @@
     "uz": "Bu akkaunt bilan tezkor kirish mumkin emas.",
     "ru": "Для этого аккаунта быстрый вход недоступен.",
     "en": "Quick sign-in is not available for this account."
+  },
+  "Tizim nazorati": {
+    "uz": "Tizim nazorati",
+    "ru": "Мониторинг системы",
+    "en": "System health"
+  },
+  "oxirgi tekshiruv": {
+    "uz": "oxirgi tekshiruv",
+    "ru": "последняя проверка",
+    "en": "last check"
+  },
+  "hali tekshirilmagan": {
+    "uz": "hali tekshirilmagan",
+    "ru": "ещё не проверялось",
+    "en": "not checked yet"
+  },
+  "Muammo yo‘q": {
+    "uz": "Muammo yo‘q",
+    "ru": "Проблем нет",
+    "en": "No problems"
+  },
+  "Muammo bo‘lsa, admin Telegram’iga xabar keladi.": {
+    "uz": "Muammo bo‘lsa, admin Telegram’iga xabar keladi.",
+    "ru": "При проблеме администратор получит сообщение в Telegram.",
+    "en": "If something breaks, the admin gets a Telegram message."
+  },
+  "Ogohlantirishlar kelishi uchun admin akkauntiga Telegram’ni ulang: Profil → “Telegram orqali tasdiqlash”.": {
+    "uz": "Ogohlantirishlar kelishi uchun admin akkauntiga Telegram’ni ulang: Profil → “Telegram orqali tasdiqlash”.",
+    "ru": "Чтобы получать оповещения, подключите Telegram к аккаунту администратора: Профиль → «Подтвердить через Telegram».",
+    "en": "To receive alerts, link Telegram to the admin account: Profile → “Verify via Telegram”."
   }
 }

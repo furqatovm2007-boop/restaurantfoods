@@ -26,3 +26,32 @@ Maps / delivery design (not implemented): restaurant owner/admin supplies verifi
 - Last observed production signup error remains captcha_failed / invalid-input-response. No successful end-to-end signup or email delivery verified in this review.
 - Restaurant coordinates and courier GPS are not implemented. Courier tracking must be restricted to the assigned courier, customer for that order, authorized restaurant and administrator; stop collecting after delivery/cancellation.
 - Source and mocked adversarial tests are not a complete external penetration test.
+
+
+## Follow-up review — 2026-10-26
+Scope: source review, `pnpm audit`, the regression suite (63 test files) and browser checks of every role on a local Worker. No production data was modified by tests. Still not an external penetration test.
+
+### Current controls (verified in code and tests)
+- **Sessions:** Supabase sessions and own Telegram sessions use `__Host-` HttpOnly, Secure, SameSite=Lax cookies; D1 keeps only SHA-256 hashes of session, device and one-time sign-in tokens. Telegram sign-in links are browser-bound (nonce cookie) or one-time (10 minutes, hash only); remembered-device keys rotate on every use; the administrator can never sign in through Telegram or a device key.
+- **CSRF / input:** every JSON write goes through `body()` (same-origin check, `application/json` only, 20 KB streaming limit, object-only JSON). Camera agents (`/api/manage/occupancy`, `/api/manage/vision`) are the documented exception: key-holding agents send no Origin, browser sessions get the same-origin check inside `authorizeCamera`. Voice uploads use `sameOrigin` with a 650 KB limit.
+- **Authorization:** restaurant data goes through `restaurantAccess` (admin / owner / staff role, staff only while the plan includes staff accounts); admin-only routes check the verified role; prices, totals, holds, promo windows and stop-lists are enforced on the server.
+- **Anti-fraud (new):** birth date saved once and locked (admin-only reset, audited); birthday promo only within ±3 days, once a year per restaurant; 5-minute exclusive table holds checked again at booking; public ratings count only reviews of existing active accounts (plus labelled demo reviews of demo restaurants) — `app/review-rules.ts`.
+- **Privacy:** card numbers never reach the server (Payme tokens); Smart Vision analyses frames on the device and sends only per-table statuses; offline QR passes live in the customer's own browser and are cleared on sign-out.
+- **Headers:** CSP without inline scripts, `frame-ancestors 'none'`, HSTS, `nosniff`, `Referrer-Policy: same-origin`; the investor plan is admin-only, `no-store` and `noindex`.
+- **Abuse limits:** `throttle()` on sign-in, OTP, holds, table service, AI, cameras and payments.
+
+### Dependencies (2026-10-26)
+- Updated `next` 16.3.4 → 16.4.2, `eslint-config-next` → 16.4.2, `react`/`react-dom`/`react-server-dom-webpack` → 19.2.9, `vite` → 8.3.4, `zod` → 4.6.7; removed the unused `@hookform/resolvers`; pinned patched transitive versions in `pnpm-workspace.yaml` (sharp, browserslist, source-map-js, baseline-browser-mapping, @babel/core, image-size, undici 7, ws 8, js-yaml 4, brace-expansion).
+- `pnpm audit --prod`: **0** vulnerabilities. All dependencies including build/lint tools: 0 critical, 0 high, 5 moderate, 3 low (build-time only).
+- The Next.js advisories did not reach runtime before either: the site runs on Vinext, and `next/og`, `next/image`, `use cache` and Server Actions are not used.
+
+### Monitoring (new)
+- `app/health.ts`, on the existing 5-minute cron: the Telegram webhook must point at this site, deliver without errors (last 15 minutes) and not queue more than 20 updates; 5xx API responses are counted per 10 minutes by the Worker. A problem sends one Telegram message to the administrator (admin accounts with a linked chat, or `ADMIN_TELEGRAM_CHAT_ID`), repeats at most hourly, and a recovery message follows. The admin panel's Telegram card shows the last result.
+- Action needed: the administrator account has no linked Telegram chat yet, so alerts are only logged until it is linked (Profile → “Telegram orqali tasdiqlash”) or `ADMIN_TELEGRAM_CHAT_ID` is set.
+
+### Remaining risks and launch gates
+- **Data residency:** D1 runs in Cloudflare's EU region (Frankfurt). Uzbekistan's personal-data law requires citizens' personal data to be stored on servers in Uzbekistan; phone numbers, names and bookings are personal data. Needs a legal opinion and possibly a local data store.
+- **No external penetration test** and no load test.
+- **Subscriptions are recorded by the administrator**; there is no automatic recurring billing.
+- Inline styles are still allowed by the CSP (`style-src` is not nonce-based).
+- Production header stripping for the hosting proxy and real provider flows (Google OAuth, SMS delivery) still need periodic end-to-end checks.
