@@ -17,4 +17,21 @@ assert.equal(rawStatus([guest,waiter],zones,[0],aspect),'occupied','guests stay 
 assert.equal(rawStatus([],zones,[0],aspect),'free');
 assert.equal(strongest(['free','cleaning']),'cleaning');assert.equal(strongest(['cleaning','occupied','free']),'occupied','two cameras on one table: the strongest reading wins');assert.equal(strongest([]),'free');
 assert.ok(!fs.readFileSync('public/smart-vision.js','utf8').includes('toDataURL'),'no frames are captured or sent');
-console.log('PASS smart vision: one table per person, seated vs standing, cleaning state, no frame upload');
+// AI table finder: boxes seen in most frames become zones (grown for the chairs), numbered row by row,
+// left to right, free tables first; a box seen once (a passing tray, a false hit) is ignored.
+const {tableZones}=window.RFSmartVision;
+const jitter=(b,d)=>({x:b.x+d,y:b.y-d,w:b.w,h:b.h,score:.6});
+const A={x:.6,y:.55,w:.2,h:.15},B={x:.1,y:.6,w:.2,h:.15},C={x:.35,y:.15,w:.15,h:.1};
+const frames=Array.from({length:10},(_,i)=>[jitter(A,i%2?.005:-.005),jitter(B,.003),...(i<6?[jitter(C,0)]:[]),...(i===3?[{x:.9,y:.9,w:.05,h:.05,score:.4}]:[])]);
+let z=tableZones(frames,[1,2,3,4,5]);
+assert.equal(z.length,3,'three stable tables, the one-frame hit is dropped');
+assert.equal(z.map(t=>t.table).join(),'1,2,3');
+assert.ok(z[0].y<z[1].y&&z[1].x<z[2].x,'back row first, then left to right');
+assert.ok(z.every(t=>t.ai===true&&t.x>=0&&t.y>=0&&t.x+t.w<=1.0001&&t.y+t.h<=1.0001),'inside the picture, marked as AI');
+assert.ok(z[1].w>B.w&&z[1].h>B.h,'grown for the chairs');
+z=tableZones(frames,[1,2,3,4,5],[1,2]);assert.equal(z.map(t=>t.table).join(),'3,4,5','tables another camera covers are numbered last');
+assert.equal(tableZones(frames,[7]).length,1,'never more zones than tables');
+assert.equal(tableZones([[],[],[]],[1,2]).length,0,'nothing found');
+const svSrc=fs.readFileSync('public/smart-vision.js','utf8');
+assert.ok(svSrc.includes("free: '#10b981'")&&svSrc.includes("occupied: '#ef4444'"),'green/red box colours');
+console.log('PASS smart vision: one table per person, seated vs standing, cleaning state, AI table finder, no frame upload');

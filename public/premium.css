@@ -1109,3 +1109,26 @@ body[data-theme=light] .menu-3d-launch small{color:#4b6b74}
 /* Native controls (date pickers, scrollbars) follow the theme too */
 body[data-theme=light]{color-scheme:light}
 body:not([data-theme=light]){color-scheme:dark}
+
+/* Smart Vision: AI table finder button, AI zones and the tap-on-a-box info card */
+.sv-cam header .sv-ai{min-height:36px;padding:.35rem .8rem;font-size:.85rem;border-color:rgba(56,189,248,.45);color:#7dd3fc}
+.sv-chip.is-ai{border-color:rgba(56,189,248,.5);box-shadow:inset 0 0 0 1px rgba(56,189,248,.18)}
+.sv-stage canvas{cursor:pointer}
+.sv-pop{position:absolute;z-index:4;width:min(280px,calc(100% - 12px));padding:.75rem .85rem;border-radius:14px;background:rgba(8,21,33,.94);color:#ecf7f3;border:1px solid rgba(255,255,255,.14);box-shadow:0 14px 34px rgba(0,0,0,.45);font-size:.85rem;line-height:1.4}
+.sv-pop[hidden]{display:none}
+.sv-pop header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 .4rem;position:static;padding:0;background:none;border:0;height:auto;box-shadow:none}
+.sv-pop header b{font-size:1rem}
+.sv-pop header button{min-height:28px;width:28px;padding:0;border-radius:8px;background:rgba(255,255,255,.08);border:0;color:inherit;cursor:pointer}
+.sv-pop-state{display:flex;align-items:center;gap:6px;margin:0 0 .4rem}
+.sv-pop-state i{width:10px;height:10px;border-radius:50%;background:var(--sv);box-shadow:0 0 0 3px color-mix(in srgb,var(--sv) 30%,transparent)}
+.sv-pop dl{margin:.3rem 0;display:grid;gap:.25rem}
+.sv-pop dl div{display:grid;grid-template-columns:auto 1fr;gap:.5rem}
+.sv-pop dt{opacity:.7}
+.sv-pop dd{margin:0}
+.sv-pop a{color:#7dd3fc}
+.sv-pop-left{margin:.35rem 0 0;padding:.35rem .5rem;border-radius:8px;background:rgba(16,185,129,.14)}
+.sv-pop-bill{margin:.35rem 0 0}
+body[data-theme=light] .sv-pop{background:rgba(255,255,255,.97);color:#123540;border-color:#c4d8d5;box-shadow:0 14px 34px rgba(21,50,66,.2)}
+body[data-theme=light] .sv-pop header button{background:#e3f4f0}
+body[data-theme=light] .sv-pop a{color:#00705d}
+body[data-theme=light] .sv-cam header .sv-ai{color:#0369a1;border-color:#7dd3fc}

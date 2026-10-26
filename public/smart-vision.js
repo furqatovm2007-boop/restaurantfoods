@@ -11,19 +11,25 @@
  *      Bo‘sh (green)        nobody there for 3 s.
  *    With several cameras on one table the strongest wins (Band > Tozalanmoqda > Bo‘sh).
  *  - Statuses are sent on every change plus a heartbeat each minute so they do not expire.
- *   RFSmartVision.mount(host, { restaurantId, tables, lang, loadDetector, send, store }) → { destroy }
+ *  - AI table finder: coco-ssd also sees "dining table". Over ~10 frames the boxes that keep showing up
+ *    become table zones (a bit larger than the table, so the chairs around it count), numbered left to
+ *    right, row by row. It runs by itself for a camera without zones and on "🤖 AI: stollarni topish".
+ *  - Each zone is a green (Bo‘sh) / red (Band) box "Stol #X: …"; a tap on it shows the table's booking
+ *    (who, when, time left) and open bill, from opts.info() which the page refreshes every 2 seconds.
+ *   RFSmartVision.mount(host, { restaurantId, tables, lang, loadDetector, send, store, info }) → { destroy }
  */
 (() => {
   'use strict';
   const HOLD_MS = { occupied: 3000, cleaning: 1500, free: 3000 };
   const HEARTBEAT_MS = 60000, DETECT_EVERY_MS = 250, HANDLE = 18, SAVE_DELAY_MS = 800;
   const MOVE_WINDOW_MS = 1500, MOVE_LIMIT = 0.05, SEATED_RATIO = 2.0;
-  const COLOR = { free: '#22c55e', occupied: '#ef4444', cleaning: '#facc15' };
+  const COLOR = { free: '#10b981', occupied: '#ef4444', cleaning: '#facc15' };
+  const SCAN_FRAMES = 10, SCAN_GAP_MS = 220;
   const RANK = { free: 0, cleaning: 1, occupied: 2 };
   const COPY = {
-    uz: { start: 'Kameralarni ulash', stop: 'To‘xtatish', addCam: 'Kamera qo‘shish', addZone: 'Zona', table: 'Stol', free: 'Bo‘sh', occupied: 'Band', cleaning: 'Tozalanmoqda', loading: 'AI model yuklanmoqda (bir marta, ~20 MB)…', ready: 'AI ishlayapti', denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering.', nocam: 'Kamera topilmadi yoki brauzer qo‘llamaydi.', seated: 'O‘tirgan', standing: 'Turgan', test: 'Sinov rejimi: holat bazaga yuborilmaydi, kameralar faqat shu brauzerda saqlanadi.', sent: 'saqlandi', fail: 'Yuborib bo‘lmadi', hint: 'Zonani suring, o‘ng pastki burchagidan kattalashtiring. Qizil — mijoz o‘tiribdi, sariq — ofitsiant/tozalash, yashil — bo‘sh.', remove: 'O‘chirish', since: 'dan beri', off: 'Kameralar o‘chiq', name: 'Nomi', namePh: '1-Kamera: Asosiy zal', type: 'Turi', device: 'Shu qurilma kamerasi', stream: 'IP-kamera oqimi (https)', pick: 'Kamera', url: 'Oqim manzili', urlPh: 'https://…/stream.mjpg yoki .m3u8 / .mp4', save: 'Saqlash', cancel: 'Bekor', allow: 'Kameralar ro‘yxati uchun ruxsat berish', reconnect: 'Saqlangan kameralar avtomatik ulandi', askOnce: '«Kameralarni ulash» ni bosing — brauzer bir marta ruxsat so‘raydi, keyin avtomatik ulanadi.', empty: 'Hali kamera yo‘q. «Kamera qo‘shish» ni bosing.', cors: 'Oqimga ulanib bo‘ldi, lekin u CORS ruxsatisiz — AI tasvirni o‘qiy olmaydi.', streamFail: 'Oqimni ochib bo‘lmadi. MJPEG, MP4 yoki HLS (https) manzil bering; RTSP uchun shlyuz kerak.', other: 'Saqlangan kamera topilmadi — boshqa kamera ishlatildi.', confirmRemove: 'Kamera o‘chirilsinmi?', running: 'ishlayapti', paused: 'to‘xtagan' },
-    ru: { start: 'Подключить камеры', stop: 'Остановить', addCam: 'Добавить камеру', addZone: 'Зона', table: 'Стол', free: 'Свободен', occupied: 'Занят', cleaning: 'Уборка', loading: 'Загружается AI-модель (один раз, ~20 МБ)…', ready: 'AI работает', denied: 'Нет доступа к камере. Разрешите его в настройках браузера.', nocam: 'Камера не найдена или браузер её не поддерживает.', seated: 'Сидит', standing: 'Стоит', test: 'Тестовый режим: статусы не отправляются, камеры хранятся только в этом браузере.', sent: 'сохранено', fail: 'Не удалось отправить', hint: 'Перетаскивайте зону, размер — за правый нижний угол. Красный — гость сидит, жёлтый — официант/уборка, зелёный — свободен.', remove: 'Удалить', since: 'с', off: 'Камеры выключены', name: 'Название', namePh: 'Камера 1: Основной зал', type: 'Тип', device: 'Камера этого устройства', stream: 'Поток IP-камеры (https)', pick: 'Камера', url: 'Адрес потока', urlPh: 'https://…/stream.mjpg или .m3u8 / .mp4', save: 'Сохранить', cancel: 'Отмена', allow: 'Разрешить доступ к списку камер', reconnect: 'Сохранённые камеры подключены автоматически', askOnce: 'Нажмите «Подключить камеры» — браузер спросит разрешение один раз, дальше подключение автоматическое.', empty: 'Камер пока нет. Нажмите «Добавить камеру».', cors: 'Поток открыт, но без CORS — AI не может читать изображение.', streamFail: 'Не удалось открыть поток. Укажите MJPEG, MP4 или HLS (https); для RTSP нужен шлюз.', other: 'Сохранённая камера не найдена — использована другая.', confirmRemove: 'Удалить камеру?', running: 'работает', paused: 'остановлена' },
-    en: { start: 'Connect cameras', stop: 'Stop', addCam: 'Add camera', addZone: 'Zone', table: 'Table', free: 'Free', occupied: 'Occupied', cleaning: 'Cleaning', loading: 'Loading the AI model (once, ~20 MB)…', ready: 'AI running', denied: 'Camera access was denied. Allow it in the browser settings.', nocam: 'No camera found or the browser does not support it.', seated: 'Seated', standing: 'Standing', test: 'Test mode: statuses are not saved; cameras are kept in this browser only.', sent: 'saved', fail: 'Could not save', hint: 'Drag a zone; resize from its bottom-right corner. Red — guest seated, yellow — staff/cleaning, green — free.', remove: 'Remove', since: 'since', off: 'Cameras off', name: 'Name', namePh: 'Camera 1: Main hall', type: 'Type', device: 'Camera on this device', stream: 'IP camera stream (https)', pick: 'Camera', url: 'Stream URL', urlPh: 'https://…/stream.mjpg or .m3u8 / .mp4', save: 'Save', cancel: 'Cancel', allow: 'Allow access to the camera list', reconnect: 'Saved cameras reconnected automatically', askOnce: 'Press “Connect cameras” — the browser asks once, then it reconnects by itself.', empty: 'No cameras yet. Press “Add camera”.', cors: 'The stream opened but has no CORS — the AI cannot read the picture.', streamFail: 'Could not open the stream. Use MJPEG, MP4 or HLS (https); RTSP needs a gateway.', other: 'The saved camera was not found — another one is used.', confirmRemove: 'Remove this camera?', running: 'running', paused: 'stopped' },
+    uz: { start: 'Kameralarni ulash', stop: 'To‘xtatish', addCam: 'Kamera qo‘shish', addZone: 'Zona', table: 'Stol', free: 'Bo‘sh', occupied: 'Band', cleaning: 'Tozalanmoqda', loading: 'AI model yuklanmoqda (bir marta, ~20 MB)…', ready: 'AI ishlayapti', denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering.', nocam: 'Kamera topilmadi yoki brauzer qo‘llamaydi.', seated: 'O‘tirgan', standing: 'Turgan', test: 'Sinov rejimi: holat bazaga yuborilmaydi, kameralar faqat shu brauzerda saqlanadi.', sent: 'saqlandi', fail: 'Yuborib bo‘lmadi', hint: 'Zonani suring, o‘ng pastki burchagidan kattalashtiring. Qizil — mijoz o‘tiribdi, sariq — ofitsiant/tozalash, yashil — bo‘sh.', remove: 'O‘chirish', since: 'dan beri', off: 'Kameralar o‘chiq', name: 'Nomi', namePh: '1-Kamera: Asosiy zal', type: 'Turi', device: 'Shu qurilma kamerasi', stream: 'IP-kamera oqimi (https)', pick: 'Kamera', url: 'Oqim manzili', urlPh: 'https://…/stream.mjpg yoki .m3u8 / .mp4', save: 'Saqlash', cancel: 'Bekor', allow: 'Kameralar ro‘yxati uchun ruxsat berish', reconnect: 'Saqlangan kameralar avtomatik ulandi', askOnce: '«Kameralarni ulash» ni bosing — brauzer bir marta ruxsat so‘raydi, keyin avtomatik ulanadi.', empty: 'Hali kamera yo‘q. «Kamera qo‘shish» ni bosing.', cors: 'Oqimga ulanib bo‘ldi, lekin u CORS ruxsatisiz — AI tasvirni o‘qiy olmaydi.', streamFail: 'Oqimni ochib bo‘lmadi. MJPEG, MP4 yoki HLS (https) manzil bering; RTSP uchun shlyuz kerak.', other: 'Saqlangan kamera topilmadi — boshqa kamera ishlatildi.', confirmRemove: 'Kamera o‘chirilsinmi?', running: 'ishlayapti', paused: 'to‘xtagan', ai: '🤖 AI: stollarni topish', scanning: 'AI stollarni qidirmoqda…', found: 'AI {n} ta stol topdi va ramka qo‘ydi', noTables: 'AI stol topmadi — kamerani zalga qarating yoki zonani qo‘lda qo‘shing.', needStart: 'Avval kamerani ulang.', tableNo: 'Stol #', bookedBy: 'Bron qilgan', guests: 'Mehmonlar', startsIn: 'Bron boshlanishiga', endsIn: 'Bron tugashiga', left: 'qoldi', minutes: 'daq', hours: 'soat', noBooking: 'Bugun bu stolga bron yo‘q', bill: 'Ochiq hisob', camera: 'Kamera', close: 'Yopish', arrived: 'Mijoz keldi', pending: 'tasdiq kutilmoqda' },
+    ru: { start: 'Подключить камеры', stop: 'Остановить', addCam: 'Добавить камеру', addZone: 'Зона', table: 'Стол', free: 'Свободен', occupied: 'Занят', cleaning: 'Уборка', loading: 'Загружается AI-модель (один раз, ~20 МБ)…', ready: 'AI работает', denied: 'Нет доступа к камере. Разрешите его в настройках браузера.', nocam: 'Камера не найдена или браузер её не поддерживает.', seated: 'Сидит', standing: 'Стоит', test: 'Тестовый режим: статусы не отправляются, камеры хранятся только в этом браузере.', sent: 'сохранено', fail: 'Не удалось отправить', hint: 'Перетаскивайте зону, размер — за правый нижний угол. Красный — гость сидит, жёлтый — официант/уборка, зелёный — свободен.', remove: 'Удалить', since: 'с', off: 'Камеры выключены', name: 'Название', namePh: 'Камера 1: Основной зал', type: 'Тип', device: 'Камера этого устройства', stream: 'Поток IP-камеры (https)', pick: 'Камера', url: 'Адрес потока', urlPh: 'https://…/stream.mjpg или .m3u8 / .mp4', save: 'Сохранить', cancel: 'Отмена', allow: 'Разрешить доступ к списку камер', reconnect: 'Сохранённые камеры подключены автоматически', askOnce: 'Нажмите «Подключить камеры» — браузер спросит разрешение один раз, дальше подключение автоматическое.', empty: 'Камер пока нет. Нажмите «Добавить камеру».', cors: 'Поток открыт, но без CORS — AI не может читать изображение.', streamFail: 'Не удалось открыть поток. Укажите MJPEG, MP4 или HLS (https); для RTSP нужен шлюз.', other: 'Сохранённая камера не найдена — использована другая.', confirmRemove: 'Удалить камеру?', running: 'работает', paused: 'остановлена', ai: '🤖 AI: найти столы', scanning: 'AI ищет столы…', found: 'AI нашёл столов: {n} и поставил рамки', noTables: 'AI не нашёл столов — направьте камеру на зал или добавьте зону вручную.', needStart: 'Сначала подключите камеру.', tableNo: 'Стол #', bookedBy: 'Бронь', guests: 'Гостей', startsIn: 'До начала брони', endsIn: 'До конца брони', left: '', minutes: 'мин', hours: 'ч', noBooking: 'На сегодня броней на этот стол нет', bill: 'Открытый счёт', camera: 'Камера', close: 'Закрыть', arrived: 'Гость пришёл', pending: 'ждёт подтверждения' },
+    en: { start: 'Connect cameras', stop: 'Stop', addCam: 'Add camera', addZone: 'Zone', table: 'Table', free: 'Free', occupied: 'Occupied', cleaning: 'Cleaning', loading: 'Loading the AI model (once, ~20 MB)…', ready: 'AI running', denied: 'Camera access was denied. Allow it in the browser settings.', nocam: 'No camera found or the browser does not support it.', seated: 'Seated', standing: 'Standing', test: 'Test mode: statuses are not saved; cameras are kept in this browser only.', sent: 'saved', fail: 'Could not save', hint: 'Drag a zone; resize from its bottom-right corner. Red — guest seated, yellow — staff/cleaning, green — free.', remove: 'Remove', since: 'since', off: 'Cameras off', name: 'Name', namePh: 'Camera 1: Main hall', type: 'Type', device: 'Camera on this device', stream: 'IP camera stream (https)', pick: 'Camera', url: 'Stream URL', urlPh: 'https://…/stream.mjpg or .m3u8 / .mp4', save: 'Save', cancel: 'Cancel', allow: 'Allow access to the camera list', reconnect: 'Saved cameras reconnected automatically', askOnce: 'Press “Connect cameras” — the browser asks once, then it reconnects by itself.', empty: 'No cameras yet. Press “Add camera”.', cors: 'The stream opened but has no CORS — the AI cannot read the picture.', streamFail: 'Could not open the stream. Use MJPEG, MP4 or HLS (https); RTSP needs a gateway.', other: 'The saved camera was not found — another one is used.', confirmRemove: 'Remove this camera?', running: 'running', paused: 'stopped', ai: '🤖 AI: find tables', scanning: 'AI is looking for tables…', found: 'AI found {n} tables and boxed them', noTables: 'AI found no tables — point the camera at the hall or add a zone by hand.', needStart: 'Connect the camera first.', tableNo: 'Table #', bookedBy: 'Booked by', guests: 'Guests', startsIn: 'Starts in', endsIn: 'Ends in', left: '', minutes: 'min', hours: 'h', noBooking: 'No booking for this table today', bill: 'Open bill', camera: 'Camera', close: 'Close', arrived: 'Guest arrived', pending: 'awaiting confirmation' },
   };
 
   const local = {
@@ -74,6 +80,45 @@ const defaults = (tables, taken = []) => {
     if (here.some((p) => seated(p, aspect))) return 'occupied';
     return here.length ? 'cleaning' : 'free';
   }
+  const iou = (a, b) => {
+    const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)), iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    const i = ix * iy;
+    return i / Math.max(1e-6, a.w * a.h + b.w * b.h - i);
+  };
+  /**
+   * AI table finder: table boxes from several frames (normalised 0–1) → stable zones. A box counts when it
+   * shows up in at least 40 % of the frames; it is grown by 25 % on each side for the chairs around it.
+   * Zones are numbered row by row, left to right, with the tables no other camera covers taken first.
+   */
+  function tableZones(frames, tables, taken = []) {
+    const clusters = [];
+    frames.forEach((boxes, f) => {
+      for (const b of boxes) {
+        let best = null, score = 0.3;
+        for (const c of clusters) {
+          const v = iou(c.avg, b);
+          if (v > score && c.last !== f) (best = c), (score = v);
+        }
+        if (!best) clusters.push((best = { boxes: [], avg: b, last: -1 }));
+        best.boxes.push(b);
+        best.last = f;
+        const n = best.boxes.length, mean = (k) => best.boxes.reduce((s, x) => s + x[k], 0) / n;
+        best.avg = { x: mean('x'), y: mean('y'), w: mean('w'), h: mean('h') };
+      }
+    });
+    const need = Math.max(2, Math.ceil(frames.length * 0.4));
+    const found = clusters.filter((c) => c.boxes.length >= need).map((c) => {
+      const a = c.avg, gx = a.w * 0.25, gy = a.h * 0.25, x = Math.max(0, a.x - gx), y = Math.max(0, a.y - gy);
+      return { x, y, w: Math.max(0.06, Math.min(1 - x, a.w + gx * 2)), h: Math.max(0.06, Math.min(1 - y, a.h + gy * 2)) };
+    });
+    // Row by row: tables whose centres are within a quarter of the frame height share a row.
+    found.sort((a, b) => Math.round((a.y + a.h / 2) * 4) - Math.round((b.y + b.h / 2) * 4) || a.x + a.w / 2 - (b.x + b.w / 2));
+    const order = [...tables.filter((n) => !taken.includes(n)), ...tables.filter((n) => taken.includes(n))];
+    return found.slice(0, order.length).map((z, i) => ({ table: order[i], x: +z.x.toFixed(4), y: +z.y.toFixed(4), w: +z.w.toFixed(4), h: +z.h.toFixed(4), ai: true }));
+  }
+  /** Minutes until / since an "HH:MM" slot today in Tashkent. */
+  const tashkentMinutes = (now = Date.now()) => { const d = new Date(now + 5 * 3600000); return d.getUTCHours() * 60 + d.getUTCMinutes(); };
+  const slotMinutes = (v) => Number(String(v).slice(0, 2)) * 60 + Number(String(v).slice(3, 5));
   /** Several cameras on one table: the strongest reading wins. */
   const strongest = (list) => list.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), 'free');
 
@@ -98,7 +143,7 @@ const defaults = (tables, taken = []) => {
       status.lastChild.textContent = text;
     };
     say(w.off);
-    const clock = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const clock = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     const stateOf = (n) => {
       if (!tableState.has(n)) tableState.set(n, { status: 'free', since: Date.now(), target: null, pendingFrom: 0, confidence: 0 });
       return tableState.get(n);
@@ -127,10 +172,12 @@ const defaults = (tables, taken = []) => {
       const card = document.createElement('section');
       card.className = 'sv-cam';
       card.innerHTML =
-        '<header><b></b><small class="sv-cam-state"></small><button type="button" class="quiet sv-zone-add"></button><button type="button" class="sv-remove" aria-label="' + esc(w.remove) + '" title="' + esc(w.remove) + '">✕</button></header>' +
-        '<div class="sv-stage"><div class="sv-media"></div><canvas width="1280" height="720"></canvas></div><p class="sv-cam-error" hidden></p><div class="sv-zones"></div>';
+        '<header><b></b><small class="sv-cam-state"></small><button type="button" class="quiet sv-ai"></button><button type="button" class="quiet sv-zone-add"></button><button type="button" class="sv-remove" aria-label="' + esc(w.remove) + '" title="' + esc(w.remove) + '">✕</button></header>' +
+        '<div class="sv-stage"><div class="sv-media"></div><canvas width="1280" height="720"></canvas><div class="sv-pop" role="dialog" hidden></div></div><p class="sv-cam-error" hidden></p><div class="sv-zones"></div>';
       card.querySelector('b').textContent = cam.name;
       label(card.querySelector('.sv-zone-add'), '＋', w.addZone);
+      card.querySelector('.sv-ai').textContent = w.ai;
+      card.querySelector('.sv-ai').onclick = () => autoDetect(cam, true);
       cam.card = card;
       cam.canvas = card.querySelector('canvas');
       cam.ctx = cam.canvas.getContext('2d');
@@ -167,7 +214,7 @@ const defaults = (tables, taken = []) => {
     function renderZones(cam) {
       const box = cam.card.querySelector('.sv-zones');
       box.innerHTML = cam.zones
-        .map((z, i) => '<span class="sv-chip"><select data-zone="' + i + '" aria-label="' + esc(w.table) + '">' + opts.tables.map((n) => '<option value="' + n + '"' + (n === z.table ? ' selected' : '') + '>' + esc(w.table) + ' ' + n + '</option>').join('') + '</select><button type="button" data-remove="' + i + '" aria-label="' + esc(w.remove) + '">✕</button></span>')
+        .map((z, i) => '<span class="sv-chip' + (z.ai ? ' is-ai' : '') + '"><select data-zone="' + i + '" aria-label="' + esc(w.table) + '">' + opts.tables.map((n) => '<option value="' + n + '"' + (n === z.table ? ' selected' : '') + '>' + esc(w.table) + ' ' + n + '</option>').join('') + '</select><button type="button" data-remove="' + i + '" aria-label="' + esc(w.remove) + '">✕</button></span>')
         .join('');
       box.querySelectorAll('[data-zone]').forEach((el) => (el.onchange = () => ((cam.zones[+el.dataset.zone].table = Number(el.value)), persistSoon(cam), renderTables())));
       box.querySelectorAll('[data-remove]').forEach((el) => (el.onclick = () => (cam.zones.splice(+el.dataset.remove, 1), renderZones(cam), persistSoon(cam), renderTables())));
@@ -243,6 +290,44 @@ const defaults = (tables, taken = []) => {
       cam.tracks = [];
       if (cam.card) camLabel(cam);
     }
+    // ---- AI table finder ----
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    async function autoDetect(cam, manual) {
+      if (cam.scanning) return;
+      if (!cam.media || !detector?.detectAll) return manual && say(w.needStart, 'error');
+      cam.scanning = true;
+      cam.found = [];
+      say(w.scanning, 'busy');
+      const frames = [];
+      try {
+        for (let i = 0; i < SCAN_FRAMES && cam.media && alive; i++) {
+          const src = frameOf(cam);
+          if (src) {
+            const { tables } = await detector.detectAll(src.source);
+            frames.push(tables.map((t) => ({ x: t.bbox[0] / src.W, y: t.bbox[1] / src.H, w: t.bbox[2] / src.W, h: t.bbox[3] / src.H, score: t.score })));
+            cam.found = frames[frames.length - 1];
+          }
+          await sleep(SCAN_GAP_MS);
+        }
+      } catch {
+        /* a CORS stream cannot be read: handled by detectOne's message */
+      }
+      cam.scanning = false;
+      cam.found = [];
+      const taken = cams.filter((c) => c !== cam).flatMap((c) => c.zones.map((z) => z.table));
+      const zones = tableZones(frames, opts.tables, taken);
+      if (zones.length) {
+        cam.zones = zones;
+        say(w.found.replace('{n}', zones.length), 'ok');
+      } else {
+        if (!cam.zones.length) cam.zones = defaults(opts.tables, taken);
+        say(w.noTables, manual ? 'error' : 'idle');
+      }
+      renderZones(cam);
+      persistSoon(cam);
+      send(true);
+    }
+
     async function startAll(auto) {
       if (!cams.length) return say(w.empty);
       running = true;
@@ -264,6 +349,8 @@ const defaults = (tables, taken = []) => {
       }
       say((auto ? w.reconnect + ' · ' : '') + w.ready + ' (' + detector.backend + ')', 'ok');
       send(false);
+      // A camera without zones: the AI finds the tables by itself.
+      for (const cam of cams) if (cam.media && !cam.zones.length) await autoDetect(cam, false);
     }
     function stopAll(message) {
       running = false;
@@ -293,11 +380,11 @@ const defaults = (tables, taken = []) => {
       return found;
     }
     const size = (el) => (el.tagName === 'VIDEO' ? [el.videoWidth, el.videoHeight] : [el.naturalWidth, el.naturalHeight]);
-    async function detectOne(cam) {
+    function frameOf(cam) {
       const el = cam.media?.el;
-      if (!el) return;
+      if (!el) return null;
       const [W, H] = size(el);
-      if (!W || !H) return;
+      if (!W || !H) return null;
       let source = el;
       if (el.tagName === 'IMG') {
         cam.grab ??= document.createElement('canvas');
@@ -305,6 +392,13 @@ const defaults = (tables, taken = []) => {
         cam.grab.getContext('2d').drawImage(el, 0, 0, W, H);
         source = cam.grab;
       }
+      return { source, W, H };
+    }
+    async function detectOne(cam) {
+      if (cam.scanning) return;
+      const f = frameOf(cam);
+      if (!f) return;
+      const { source, W, H } = f;
       try {
         cam.people = track(cam, (await detector.detect(source)).map((p) => ({ x: p.bbox[0] / W, y: p.bbox[1] / H, w: p.bbox[2] / W, h: p.bbox[3] / H, score: p.score })), performance.now());
         cam.aspect = H / W;
@@ -358,63 +452,129 @@ const defaults = (tables, taken = []) => {
         const [W, H] = size(el);
         if (W && H && (c.width !== W || c.height !== H)) Object.assign(c, { width: W, height: H });
       }
-      const W = c.width, H = c.height, aspect = H / W;
+      const W = c.width, H = c.height, aspect = H / W, k = W / (c.clientWidth || W);
       ctx.clearRect(0, 0, W, H);
-      ctx.font = '600 16px system-ui, sans-serif';
+      ctx.font = '600 ' + Math.round(13 * k) + 'px system-ui, sans-serif';
       for (const p of cam.people) {
         const sit = seated(p, aspect);
-        ctx.setLineDash([8, 6]);
-        ctx.lineWidth = 2;
+        ctx.setLineDash([6 * k, 5 * k]);
+        ctx.lineWidth = 1.5 * k;
         ctx.strokeStyle = sit ? '#fca5a5' : '#fde68a';
         ctx.strokeRect(p.x * W, p.y * H, p.w * W, p.h * H);
         ctx.setLineDash([]);
-        const text = (sit ? w.seated : w.standing) + ' ' + Math.round(p.score * 100) + '%', tw = ctx.measureText(text).width + 12, tx = p.x * W, ty = Math.max(0, p.y * H - 24);
+        const text = (sit ? w.seated : w.standing) + ' ' + Math.round(p.score * 100) + '%', tw = ctx.measureText(text).width + 10 * k, tx = p.x * W, ty = Math.max(0, p.y * H - 20 * k);
         ctx.fillStyle = 'rgba(8,21,33,.8)';
-        ctx.fillRect(tx, ty, tw, 22);
+        ctx.fillRect(tx, ty, tw, 18 * k);
         ctx.fillStyle = sit ? '#fca5a5' : '#fde68a';
-        ctx.fillText(text, tx + 6, ty + 16);
+        ctx.fillText(text, tx + 5 * k, ty + 13 * k);
       }
+      // While the AI scans: the tables it sees in this frame, dashed blue.
+      for (const t of cam.found || []) {
+        ctx.setLineDash([10 * k, 6 * k]);
+        ctx.lineWidth = 2 * k;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.strokeRect(t.x * W, t.y * H, t.w * W, t.h * H);
+        ctx.setLineDash([]);
+      }
+      // Table boxes: border 2px green (Bo‘sh) / red (Band) / yellow (Tozalanmoqda) over a see-through fill.
       for (const z of cam.zones) {
         const s = stateOf(z.table), x = z.x * W, y = z.y * H, zw = z.w * W, zh = z.h * H, color = COLOR[s.status];
-        ctx.fillStyle = color + '26';
+        ctx.fillStyle = color + '2e';
         ctx.fillRect(x, y, zw, zh);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2 * k;
         ctx.strokeStyle = color;
         ctx.strokeRect(x, y, zw, zh);
+        if (cam.selected === z.table) {
+          ctx.lineWidth = 4 * k;
+          ctx.strokeRect(x - 3 * k, y - 3 * k, zw + 6 * k, zh + 6 * k);
+        }
         if (s.target) {
           ctx.fillStyle = COLOR[s.target];
-          ctx.fillRect(x, y + zh - 7, zw * Math.min(1, (now - s.pendingFrom) / HOLD_MS[s.target]), 7);
+          ctx.fillRect(x, y + zh - 5 * k, zw * Math.min(1, (now - s.pendingFrom) / HOLD_MS[s.target]), 5 * k);
         }
-        const text = w.table + ' ' + z.table + ' · ' + w[s.status], tw = ctx.measureText(text).width + 16;
+        const text = w.tableNo + z.table + ': ' + w[s.status] + (z.ai ? ' · AI' : ''), tw = ctx.measureText(text).width + 14 * k;
+        // The label may be wider than a small box; it stays inside the picture.
+        const lx = Math.min(x, Math.max(0, W - tw)), ly = y >= 24 * k ? y - 22 * k : y;
         ctx.fillStyle = color;
-        ctx.fillRect(x, y, Math.min(zw, tw), 26);
+        ctx.fillRect(lx, ly, tw, 22 * k);
         ctx.fillStyle = s.status === 'cleaning' ? '#1f2937' : '#fff';
-        ctx.fillText(text, x + 8, y + 18);
+        ctx.fillText(text, lx + 7 * k, ly + 15.5 * k);
         ctx.fillStyle = color;
-        ctx.fillRect(x + zw - HANDLE, y + zh - HANDLE, HANDLE, HANDLE);
+        ctx.fillRect(x + zw - HANDLE * k, y + zh - HANDLE * k, HANDLE * k, HANDLE * k);
       }
     }
+
+    // ---- Tap on a box: the table's booking, time left and open bill ----
+    function duration(m) {
+      const h = Math.floor(m / 60), r = m % 60;
+      return (h ? h + ' ' + w.hours + ' ' : '') + r + ' ' + w.minutes;
+    }
+    function infoHtml(n) {
+      const s = stateOf(n), data = opts.info?.() || null, t = data?.tables?.find((x) => x.number === n), b = t?.booking, now = tashkentMinutes();
+      let html = '<header><b>' + esc(w.tableNo + n) + '</b><button type="button" data-pop-close aria-label="' + esc(w.close) + '">✕</button></header>';
+      html += '<p class="sv-pop-state" style="--sv:' + COLOR[s.status] + '"><i></i>' + esc(w.camera) + ': <b>' + esc(w[s.status]) + '</b> · ' + esc(opts.lang === 'uz' ? clock(s.since) + ' ' + w.since : w.since + ' ' + clock(s.since)) + '</p>';
+      if (b) {
+        const start = slotMinutes(b.slot), end = slotMinutes(b.endSlot);
+        const left = now < start ? w.startsIn + ': <b>' + esc(duration(start - now)) + '</b> ' + esc(w.left) : w.endsIn + ': <b>' + esc(duration(Math.max(0, end - now))) + '</b> ' + esc(w.left);
+        html += '<dl><div><dt>' + esc(w.bookedBy) + '</dt><dd>' + esc(b.name || '—') + (b.phone ? '<br><a href="tel:' + esc(b.phone) + '">' + esc(b.phone) + '</a>' : '') + '</dd></div><div><dt>🕒</dt><dd>' + esc(b.slot + '–' + b.endSlot) + ' · ' + esc(w.guests) + ': ' + esc(b.guests) + (b.status === 'pending' ? ' · ' + esc(w.pending) : '') + (b.checkedIn ? ' · ✅ ' + esc(w.arrived) : '') + '</dd></div></dl><p class="sv-pop-left">⏳ ' + left + '</p>';
+      } else html += '<p class="muted">' + esc(data ? w.noBooking : '…') + '</p>';
+      if (t?.order) html += '<p class="sv-pop-bill">🧾 ' + esc(w.bill) + ': <b>' + esc(Math.round(t.order.total).toLocaleString('ru-RU')) + '</b> so‘m</p>';
+      return html;
+    }
+    function showInfo(cam, n, px, py) {
+      const pop = cam.card.querySelector('.sv-pop');
+      cam.selected = n;
+      pop.hidden = false;
+      pop.dataset.table = n;
+      pop.innerHTML = infoHtml(n);
+      // Next to the tap, kept inside the picture.
+      const stage = cam.card.querySelector('.sv-stage').getBoundingClientRect();
+      pop.style.left = Math.max(6, Math.min(stage.width - pop.offsetWidth - 6, px - stage.left + 10)) + 'px';
+      pop.style.top = Math.max(6, Math.min(stage.height - pop.offsetHeight - 6, py - stage.top + 10)) + 'px';
+      pop.querySelector('[data-pop-close]').onclick = () => hideInfo(cam);
+    }
+    function hideInfo(cam) {
+      const pop = cam.card.querySelector('.sv-pop');
+      pop.hidden = true;
+      cam.selected = null;
+    }
+    // Open boxes follow the latest data (the page refreshes bookings every 2 s).
+    const infoTimer = setInterval(() => {
+      for (const cam of cams) {
+        const pop = cam.card?.querySelector('.sv-pop');
+        if (pop && !pop.hidden) {
+          pop.innerHTML = infoHtml(Number(pop.dataset.table));
+          pop.querySelector('[data-pop-close]').onclick = () => hideInfo(cam);
+        }
+      }
+    }, 2000);
     function bindDrag(cam) {
-      let drag = null;
+      let drag = null, tap = null;
       const point = (e) => {
         const r = cam.canvas.getBoundingClientRect();
         return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, r };
       };
       cam.canvas.addEventListener('pointerdown', (e) => {
         const p = point(e), hx = HANDLE / p.r.width, hy = HANDLE / p.r.height;
-        for (let i = cam.zones.length - 1; i >= 0; i--) {
-          const z = cam.zones[i];
-          const corner = p.x >= z.x + z.w - hx * 2 && p.x <= z.x + z.w + hx && p.y >= z.y + z.h - hy * 2 && p.y <= z.y + z.h + hy;
-          if (corner || inside(z, p.x, p.y)) {
-            drag = { i, mode: corner ? 'size' : 'move', dx: p.x - z.x, dy: p.y - z.y };
-            cam.canvas.setPointerCapture(e.pointerId);
-            e.preventDefault();
-            return;
-          }
+        tap = { x: e.clientX, y: e.clientY, at: Date.now() };
+        // Overlapping boxes: a resize corner wins, then the smallest box under the finger.
+        let hit = -1, corner = false;
+        cam.zones.forEach((z, i) => {
+          const c = p.x >= z.x + z.w - hx * 2 && p.x <= z.x + z.w + hx && p.y >= z.y + z.h - hy * 2 && p.y <= z.y + z.h + hy;
+          if (!c && !inside(z, p.x, p.y)) return;
+          if (hit < 0 || (c && !corner) || (c === corner && z.w * z.h < cam.zones[hit].w * cam.zones[hit].h)) (hit = i), (corner = c);
+        });
+        if (hit >= 0) {
+          const z = cam.zones[hit];
+          drag = { i: hit, mode: corner ? 'size' : 'move', dx: p.x - z.x, dy: p.y - z.y, moved: false, corner };
+          cam.canvas.setPointerCapture(e.pointerId);
+          e.preventDefault();
         }
       });
       cam.canvas.addEventListener('pointermove', (e) => {
         if (!drag) return;
+        if (Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 6) return;
+        drag.moved = true;
         const p = point(e), z = cam.zones[drag.i];
         if (drag.mode === 'move') {
           z.x = Math.min(1 - z.w, Math.max(0, p.x - drag.dx));
@@ -424,8 +584,13 @@ const defaults = (tables, taken = []) => {
           z.h = Math.min(1 - z.y, Math.max(0.06, p.y - z.y));
         }
       });
-      const drop = () => {
-        if (drag) (persistSoon(cam), (drag = null));
+      const drop = (e) => {
+        // A tap (no drag) on a box opens its info; a tap on empty picture closes it.
+        if (e?.type === 'pointerup' && (!drag || !drag.moved) && Date.now() - (tap?.at || 0) < 600) {
+          if (drag && !drag.corner) showInfo(cam, cam.zones[drag.i].table, e.clientX, e.clientY);
+          else if (!drag) hideInfo(cam);
+        } else if (drag?.moved) persistSoon(cam);
+        drag = null;
       };
       cam.canvas.addEventListener('pointerup', drop);
       cam.canvas.addEventListener('pointercancel', drop);
@@ -481,13 +646,14 @@ const defaults = (tables, taken = []) => {
       form.onsubmit = async (e) => {
         e.preventDefault();
         const opt = form.elements.deviceId.selectedOptions[0];
-        const cam = { name: form.elements.name.value.trim(), kind: kind.value, deviceId: kind.value === 'device' ? form.elements.deviceId.value : '', deviceLabel: kind.value === 'device' ? opt?.dataset.label || '' : '', streamUrl: kind.value === 'stream' ? form.elements.streamUrl.value.trim() : '', zones: defaults(opts.tables, cams.flatMap((c) => c.zones.map((z) => z.table))), sort: cams.length };
+        const cam = { name: form.elements.name.value.trim(), kind: kind.value, deviceId: kind.value === 'device' ? form.elements.deviceId.value : '', deviceLabel: kind.value === 'device' ? opt?.dataset.label || '' : '', streamUrl: kind.value === 'stream' ? form.elements.streamUrl.value.trim() : '', zones: [], sort: cams.length };
         if (cam.kind === 'stream' && !/^https:\/\//i.test(cam.streamUrl)) return say(w.streamFail, 'error');
         form.hidden = true;
         cams.push(cam);
         addCard(cam);
         await persist(cam);
-        if (running) startCam(cam);
+        // The AI boxes the tables as soon as the camera runs (no zones yet).
+        if (running && (await startCam(cam)) && detector) autoDetect(cam, false);
       };
     }
 
@@ -526,11 +692,12 @@ const defaults = (tables, taken = []) => {
 
     function destroy() {
       alive = false;
+      clearInterval(infoTimer);
       cancelAnimationFrame(frame);
       cams.forEach((c) => (clearTimeout(c.saveTimer), stopCam(c)));
     }
     return { destroy };
   }
 
-  window.RFSmartVision = { mount, zoneOf, seated, rawStatus, strongest };
+  window.RFSmartVision = { mount, zoneOf, seated, rawStatus, strongest, tableZones };
 })();

@@ -64,7 +64,7 @@ export async function GET(request: Request) {
           vip: /vip/i.test(t.atmosphere || ''),
           status: o ? 'busy' : reserved ? 'reserved' : 'free',
           order: o ? orderView(o) : null,
-          booking: b ? { id: b.id, name: b.name, phone: b.phone, slot: b.slot, endSlot: b.endSlot, guests: b.guests, telegram: b.telegram, status: b.status, soon: b.startsIn <= 180 } : null,
+          booking: b ? { id: b.id, name: b.name, phone: b.phone, slot: b.slot, endSlot: b.endSlot, guests: b.guests, telegram: b.telegram, status: b.status, soon: b.startsIn <= 180, checkedIn: b.checkedIn } : null,
         };
       }),
       menu: menu.results,

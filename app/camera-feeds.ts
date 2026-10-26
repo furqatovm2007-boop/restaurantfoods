@@ -11,7 +11,8 @@ export function cleanZones(value: unknown) {
     const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 10000) / 10000 : NaN);
     const zone = { table: z?.table, x: n(z?.x), y: n(z?.y), w: n(z?.w), h: n(z?.h) };
     if (!Number.isInteger(zone.table) || zone.table < 1 || zone.table > 500 || [zone.x, zone.y].some((v) => !(v >= 0 && v <= 1)) || [zone.w, zone.h].some((v) => !(v >= 0.02 && v <= 1)) || zone.x + zone.w > 1.0001 || zone.y + zone.h > 1.0001) throw new ApiError(400, 'Zonalar noto‘g‘ri.');
-    return zone;
+    // Boxes found by the AI table finder keep a flag so the page can mark them.
+    return z?.ai === true ? { ...zone, ai: true } : zone;
   });
 }
 

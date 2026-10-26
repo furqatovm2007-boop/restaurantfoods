@@ -24,6 +24,12 @@ async function createDetector(minScore = 0.5) {
       const found = await model.detect(source, 20, minScore);
       return found.filter((p) => p.class === 'person').map((p) => ({ bbox: p.bbox as Person['bbox'], score: p.score }));
     },
+    /** People and dining tables in one pass (tables are found with a lower threshold: they are often half hidden). */
+    async detectAll(source: HTMLVideoElement | HTMLCanvasElement, tableScore = 0.3): Promise<{ people: Person[]; tables: Person[] }> {
+      const found = await model.detect(source, 40, Math.min(minScore, tableScore));
+      const pick = (cls: string, min: number) => found.filter((p) => p.class === cls && p.score >= min).map((p) => ({ bbox: p.bbox as Person['bbox'], score: p.score }));
+      return { people: pick('person', minScore), tables: pick('dining table', tableScore) };
+    },
     dispose: () => model.dispose(),
   };
 }

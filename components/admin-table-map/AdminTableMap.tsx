@@ -61,7 +61,7 @@ export function AdminTableMap({ restaurantId, lang: rawLang = 'uz', pollSeconds 
       }
     };
     load();
-    const timer = window.setInterval(load, Math.max(5, pollSeconds) * 1000);
+    const timer = window.setInterval(load, Math.max(2, pollSeconds) * 1000);
     const onChange = (e: Event) => {
       const id = (e as CustomEvent<{ restaurantId?: string }>).detail?.restaurantId;
       if (!id || id === restaurantId) load();
