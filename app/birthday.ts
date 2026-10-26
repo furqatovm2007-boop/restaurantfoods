@@ -7,7 +7,7 @@ import { telegram, telegramConfigured, html } from './telegram';
  * every restaurant they have visited that keeps the promo on (birthday_enabled) sends them, through
  * the Telegram bot, a congratulation with a personal promo code and a "Book a table" button; on the
  * birthday itself the same code is sent once more as a greeting. A code is created once per
- * restaurant, customer and year (unique index), is valid until a week after the birthday and works
+ * restaurant, customer and year (unique index), works for bookings within ±3 days of the birthday and
  * only for that customer at that restaurant.
  *
  * The owner picks the gift: a percent off the bill (standard 15%), a fixed amount off (with an
@@ -53,7 +53,8 @@ export async function runBirthdays(nowMs = Date.now(), force = false) {
       for (const r of places) {
         if (!planState(r).features.birthdayCrm) continue;
         const o = birthdayOffer(r);
-        const expires = new Date(Date.UTC(year, target.getUTCMonth(), target.getUTCDate() + 7)).toISOString();
+        // Valid through the third day after the birthday (bookings must also fall within ±3 days, see validPromo).
+        const expires = new Date(Date.UTC(year, target.getUTCMonth(), target.getUTCDate() + 4)).toISOString();
         const fresh = await env.DB!.prepare('INSERT INTO promo_codes (code,restaurant_id,user_id,percent,discount_type,amount,min_order,gift,reminded,kind,year,expires_at,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING').bind(promoCode(), r.id, p.id, o.type === 'percent' ? o.percent : 0, o.type, o.type === 'amount' ? o.amount : 0, o.type === 'amount' ? o.minOrder : 0, o.type === 'gift' ? o.gift : '', ahead === 0 ? 1 : 0, 'birthday', year, expires, new Date(nowMs).toISOString()).run();
         let promo: any;
         if (fresh.meta.changes) promo = await env.DB!.prepare("SELECT * FROM promo_codes WHERE restaurant_id=? AND user_id=? AND kind='birthday' AND year=?").bind(r.id, p.id, year).first<any>();

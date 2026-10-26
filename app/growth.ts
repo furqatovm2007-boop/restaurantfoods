@@ -63,9 +63,18 @@ export function mergeSuggestions(tables: PlanTable[], busy: Set<number>, guests:
 }
 
 // ---- Discounts: birthday promo codes and happy hours ----
-export async function validPromo(code: unknown, userId: string, restaurantId: string) {
+/** A customer's own unused promo code at this restaurant. A birthday code works only for a booking within
+ *  ±BIRTHDAY_WINDOW days of that year's birthday (once a year: one code per restaurant, customer and year). */
+export const BIRTHDAY_WINDOW = 3;
+export async function validPromo(code: unknown, userId: string, restaurantId: string, bookingDate?: string) {
   if (typeof code !== 'string' || !/^[A-Z0-9-]{6,20}$/.test(code.trim().toUpperCase())) return null;
-  return env.DB!.prepare('SELECT * FROM promo_codes WHERE code=? AND user_id=? AND restaurant_id=? AND used_booking_id IS NULL AND expires_at>?').bind(code.trim().toUpperCase(), userId, restaurantId, new Date().toISOString()).first<{ code: string; percent: number; kind: string; discount_type: string; amount: number; min_order: number; gift: string }>();
+  const promo = await env.DB!.prepare('SELECT * FROM promo_codes WHERE code=? AND user_id=? AND restaurant_id=? AND used_booking_id IS NULL AND expires_at>?').bind(code.trim().toUpperCase(), userId, restaurantId, new Date().toISOString()).first<{ code: string; percent: number; kind: string; discount_type: string; amount: number; min_order: number; gift: string; year: number }>();
+  if (!promo || promo.kind !== 'birthday' || !bookingDate) return promo;
+  const acc = await env.DB!.prepare('SELECT birth_date FROM accounts WHERE id=?').bind(userId).first<{ birth_date: string | null }>();
+  if (!acc?.birth_date) return null;
+  const birthday = Date.parse(promo.year + acc.birth_date.slice(4) + 'T00:00:00Z'),
+    booked = Date.parse(bookingDate + 'T00:00:00Z');
+  return Number.isFinite(birthday) && Math.abs(booked - birthday) <= BIRTHDAY_WINDOW * 86400000 ? promo : null;
 }
 
 /** Happy hours: the hall is at least `threshold`% free right now (camera marks + bookings in progress). */

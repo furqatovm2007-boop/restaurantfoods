@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url),
       view = url.searchParams.get('view') || 'catalog';
     if (view === 'catalog') {
-      const rows = await env.DB!.prepare("SELECT f.id,f.title,f.kind,f.size,f.price,f.image_url,f.description,f.florist_id,COALESCE(a.name,'RestaurantFoods') AS florist_name FROM flowers f LEFT JOIN accounts a ON a.id=f.florist_id WHERE " + PUBLIC + ' ORDER BY f.created_at DESC LIMIT 200').all();
+      const rows = await env.DB!.prepare("SELECT f.id,f.title,f.kind,f.size,f.price,f.image_url,f.description,f.florist_id,f.in_stock,COALESCE(a.name,'RestaurantFoods') AS florist_name FROM flowers f LEFT JOIN accounts a ON a.id=f.florist_id WHERE " + PUBLIC + ' ORDER BY f.created_at DESC LIMIT 200').all();
       return json({ flowers: rows.results, commissionRate: COMMISSION_RATE, card: cardBindingEnabled() });
     }
     const u = await identity();
@@ -93,6 +93,13 @@ export async function POST(request: Request) {
       await env.DB!.prepare("INSERT INTO flowers (id,florist_id,title,kind,size,price,image_url,description,active,status,is_approved,created_at) VALUES (?,?,?,?,?,?,?,?,1,'active',1,?)").bind(id, u.userId, row.title, row.kind, row.size, row.price, row.image, row.description, new Date().toISOString()).run();
       return json({ ok: true, id }, 201);
     }
+    if (b.action === 'stock') {
+      // Stop-list: "Vaqtincha tugadi" keeps the post on the showcase (dimmed) but nobody can order it.
+      if (!florist) throw new ApiError(403, 'Ruxsat yo‘q.');
+      const done = await env.DB!.prepare('UPDATE flowers SET in_stock=? WHERE id=? AND florist_id=?').bind(b.inStock === true ? 1 : 0, text(b.id), u.userId).run();
+      if (!done.meta.changes) throw new ApiError(404, 'Post topilmadi.');
+      return json({ ok: true, inStock: b.inStock === true });
+    }
     if (b.action === 'remove') {
       if (!florist) throw new ApiError(403, 'Ruxsat yo‘q.');
       await env.DB!.prepare('UPDATE flowers SET active=0 WHERE id=? AND florist_id=?').bind(text(b.id), u.userId).run();
@@ -105,6 +112,7 @@ export async function POST(request: Request) {
       if (!card) throw new ApiError(402, 'To‘lov uchun avval bank kartangizni ulang (Profil → Karta).');
       const f = await env.DB!.prepare('SELECT f.* FROM flowers f LEFT JOIN accounts a ON a.id=f.florist_id WHERE f.id=? AND ' + PUBLIC).bind(text(b.flowerId)).first<any>();
       if (!f) throw new ApiError(404, 'Gul topilmadi yoki sotuvda emas.');
+      if (!f.in_stock) throw new ApiError(409, 'Bu gul vaqtincha tugagan (stop-list).');
       if (f.florist_id === u.userId) throw new ApiError(400, 'O‘z gulingizni buyurtma qilib bo‘lmaydi.');
       const quantity = integer(b.quantity, 1, 20),
         total = f.price * quantity,

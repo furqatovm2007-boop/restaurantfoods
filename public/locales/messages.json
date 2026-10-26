@@ -5718,5 +5718,205 @@
     "uz": "📦 Do‘kon va ombor",
     "ru": "📦 Магазин и склад",
     "en": "📦 Shop & stock"
+  },
+  "Yetkazilmoqda": {
+    "uz": "Yetkazilmoqda",
+    "ru": "Доставляется",
+    "en": "On the way"
+  },
+  "Topshirildi": {
+    "uz": "Topshirildi",
+    "ru": "Выдан",
+    "en": "Handed over"
+  },
+  "Mavjud": {
+    "uz": "Mavjud",
+    "ru": "В наличии",
+    "en": "Available"
+  },
+  "Tanlangan stol siz uchun": {
+    "uz": "Tanlangan stol siz uchun",
+    "ru": "Выбранный стол удерживается для вас",
+    "en": "The selected table is held for you for"
+  },
+  "daqiqa saqlab turiladi": {
+    "uz": "daqiqa saqlab turiladi",
+    "ru": "мин.",
+    "en": "min"
+  },
+  "— o‘tib ketgan": {
+    "uz": "— o‘tib ketgan",
+    "ru": "— прошло",
+    "en": "— passed"
+  },
+  "Bugun bron vaqti tugadi — boshqa sanani tanlang.": {
+    "uz": "Bugun bron vaqti tugadi — boshqa sanani tanlang.",
+    "ru": "На сегодня время бронирования закончилось — выберите другую дату.",
+    "en": "Booking time for today is over — choose another date."
+  },
+  "Diqqat: sana bir marta saqlanadi va keyin o‘zgartirilmaydi.": {
+    "uz": "Diqqat: sana bir marta saqlanadi va keyin o‘zgartirilmaydi.",
+    "ru": "Внимание: дата сохраняется один раз и потом не меняется.",
+    "en": "Note: the date is saved once and cannot be changed later."
+  },
+  "Gul buyurtmasi bekor qilingan": {
+    "uz": "Gul buyurtmasi bekor qilingan",
+    "ru": "Заказ цветов отменён",
+    "en": "Flower order cancelled"
+  },
+  "Holat yangilandi — mijoz ekranida ko‘rinadi.": {
+    "uz": "Holat yangilandi — mijoz ekranida ko‘rinadi.",
+    "ru": "Статус обновлён — клиент видит его на экране.",
+    "en": "Status updated — the customer sees it live."
+  },
+  "Mijozning tug‘ilgan sanasi o‘chirilsinmi? U sanani qayta bir marta kiritadi.": {
+    "uz": "Mijozning tug‘ilgan sanasi o‘chirilsinmi? U sanani qayta bir marta kiritadi.",
+    "ru": "Сбросить дату рождения клиента? Он сможет ввести её ещё один раз.",
+    "en": "Reset the customer’s birth date? They can enter it once more."
+  },
+  "Restoran tasdig‘ini kutmoqda": {
+    "uz": "Restoran tasdig‘ini kutmoqda",
+    "ru": "Ожидает подтверждения ресторана",
+    "en": "Waiting for the restaurant to confirm"
+  },
+  "Sanani tanlang.": {
+    "uz": "Sanani tanlang.",
+    "ru": "Выберите дату.",
+    "en": "Choose a date."
+  },
+  "So‘rov bajarlmadi.": {
+    "uz": "So‘rov bajarlmadi.",
+    "ru": "Запрос не выполнен.",
+    "en": "Request failed."
+  },
+  "Stolga olib kelinmoqda": {
+    "uz": "Stolga olib kelinmoqda",
+    "ru": "Несут к столу",
+    "en": "Being brought to your table"
+  },
+  "Stolga tayyor": {
+    "uz": "Stolga tayyor",
+    "ru": "Готово на столе",
+    "en": "Ready at the table"
+  },
+  "🍽️ Stolga tayyor": {
+    "uz": "🍽️ Stolga tayyor",
+    "ru": "🍽️ Готово на столе",
+    "en": "🍽️ Ready at the table"
+  },
+  "👨‍🍳 Tayyorlanmoqda": {
+    "uz": "👨‍🍳 Tayyorlanmoqda",
+    "ru": "👨‍🍳 Готовится",
+    "en": "👨‍🍳 Preparing"
+  },
+  "🛎 Stolga olib kelinmoqda": {
+    "uz": "🛎 Stolga olib kelinmoqda",
+    "ru": "🛎 Несут к столу",
+    "en": "🛎 Bringing to the table"
+  },
+  "Stolingiz uchun taomlar": {
+    "uz": "Stolingiz uchun taomlar",
+    "ru": "Блюда для вашего стола",
+    "en": "Dishes for your table"
+  },
+  "Stolingizga gul": {
+    "uz": "Stolingizga gul",
+    "ru": "Цветы на ваш стол",
+    "en": "Flowers for your table"
+  },
+  "Stolingizga tayyorlab qo‘yildi": {
+    "uz": "Stolingizga tayyorlab qo‘yildi",
+    "ru": "Подано на ваш стол",
+    "en": "Served at your table"
+  },
+  "Stop-list (vaqtincha tugagan taomlar)": {
+    "uz": "Stop-list (vaqtincha tugagan taomlar)",
+    "ru": "Стоп-лист (временно закончившиеся блюда)",
+    "en": "Stop list (temporarily sold-out dishes)"
+  },
+  "Taom stop-listga qo‘shildi": {
+    "uz": "Taom stop-listga qo‘shildi",
+    "ru": "Блюдо добавлено в стоп-лист",
+    "en": "Dish added to the stop list"
+  },
+  "Taom yana sotuvda": {
+    "uz": "Taom yana sotuvda",
+    "ru": "Блюдо снова в продаже",
+    "en": "Dish is back on sale"
+  },
+  "Tug‘ilgan sana bir marta saqlanadi va keyin o‘zgartirib bo‘lmaydi. Davom etasizmi?": {
+    "uz": "Tug‘ilgan sana bir marta saqlanadi va keyin o‘zgartirib bo‘lmaydi. Davom etasizmi?",
+    "ru": "Дата рождения сохраняется один раз, и изменить её потом нельзя. Продолжить?",
+    "en": "Your birth date is saved once and cannot be changed later. Continue?"
+  },
+  "Tug‘ilgan sana tasdiqlangan va o‘zgartirilmaydi": {
+    "uz": "Tug‘ilgan sana tasdiqlangan va o‘zgartirilmaydi",
+    "ru": "Дата рождения подтверждена и не меняется",
+    "en": "Birth date is confirmed and cannot be changed"
+  },
+  "Tug‘ilgan sanani tiklash": {
+    "uz": "Tug‘ilgan sanani tiklash",
+    "ru": "Сбросить дату рождения",
+    "en": "Reset birth date"
+  },
+  "Ushlab turish vaqti tugadi — stol boshqalar uchun ochildi. Tezroq tasdiqlang yoki stolni qayta tanlang.": {
+    "uz": "Ushlab turish vaqti tugadi — stol boshqalar uchun ochildi. Tezroq tasdiqlang yoki stolni qayta tanlang.",
+    "ru": "Время удержания истекло — стол снова доступен другим. Подтвердите быстрее или выберите стол заново.",
+    "en": "The hold has expired — the table is open to others again. Confirm quickly or pick the table again."
+  },
+  "Vaqtincha tugadi": {
+    "uz": "Vaqtincha tugadi",
+    "ru": "Временно закончилось",
+    "en": "Temporarily sold out"
+  },
+  "Vaqtincha tugagan": {
+    "uz": "Vaqtincha tugagan",
+    "ru": "Временно нет в наличии",
+    "en": "Temporarily unavailable"
+  },
+  "Bron vaqti hozirdan kamida 30 daqiqa keyin va ko‘pi bilan 90 kun ichida bo‘lishi kerak.": {
+    "uz": "Bron vaqti hozirdan kamida 30 daqiqa keyin va ko‘pi bilan 90 kun ichida bo‘lishi kerak.",
+    "ru": "Время брони должно быть не раньше чем через 30 минут и не позже 90 дней.",
+    "en": "Booking time must be at least 30 minutes from now and within 90 days."
+  },
+  "Promokod noto‘g‘ri, boshqa restoranniki, muddati o‘tgan yoki bron sanasi tug‘ilgan kuningizdan ±3 kun oralig‘ida emas.": {
+    "uz": "Promokod noto‘g‘ri, boshqa restoranniki, muddati o‘tgan yoki bron sanasi tug‘ilgan kuningizdan ±3 kun oralig‘ida emas.",
+    "ru": "Промокод неверный, другого ресторана, истёк или дата брони не в пределах ±3 дней от дня рождения.",
+    "en": "The promo code is invalid, belongs to another restaurant, has expired, or the booking date is not within ±3 days of your birthday."
+  },
+  "🔒 Tug‘ilgan sana tasdiqlangan va o‘zgartirilmaydi. Xato bo‘lsa, Yordam markazi orqali murojaat qiling.": {
+    "uz": "🔒 Tug‘ilgan sana tasdiqlangan va o‘zgartirilmaydi. Xato bo‘lsa, Yordam markazi orqali murojaat qiling.",
+    "ru": "🔒 Дата рождения подтверждена и не меняется. Если есть ошибка, обратитесь в Центр поддержки.",
+    "en": "🔒 Your birth date is confirmed and cannot be changed. If it is wrong, contact the Help center."
+  },
+  "Avval bronni tasdiqlang.": {
+    "uz": "Avval bronni tasdiqlang.",
+    "ru": "Сначала подтвердите бронь.",
+    "en": "Confirm the booking first."
+  },
+  "Bu gul vaqtincha tugagan (stop-list).": {
+    "uz": "Bu gul vaqtincha tugagan (stop-list).",
+    "ru": "Эти цветы временно закончились (стоп-лист).",
+    "en": "These flowers are temporarily sold out (stop list)."
+  },
+  "Bu stol tanlangan vaqtda band. Boshqa stol yoki vaqt tanlang.": {
+    "uz": "Bu stol tanlangan vaqtda band. Boshqa stol yoki vaqt tanlang.",
+    "ru": "Этот стол занят в выбранное время. Выберите другой стол или время.",
+    "en": "This table is booked at that time. Choose another table or time."
+  },
+  "Bu stolni hozirgina boshqa mijoz tanladi — u 5 daqiqa ushlab turiladi. Boshqa stol tanlang.": {
+    "uz": "Bu stolni hozirgina boshqa mijoz tanladi — u 5 daqiqa ushlab turiladi. Boshqa stol tanlang.",
+    "ru": "Этот стол только что выбрал другой клиент — он удерживается 5 минут. Выберите другой стол.",
+    "en": "Another customer just picked this table — it is held for 5 minutes. Choose another table."
+  },
+  "Internet yo‘q — oxirgi saqlangan bronlar ko‘rsatilmoqda. QR chipta internetsiz ham ochiladi.": {
+    "uz": "Internet yo‘q — oxirgi saqlangan bronlar ko‘rsatilmoqda. QR chipta internetsiz ham ochiladi.",
+    "ru": "Нет интернета — показаны последние сохранённые брони. QR-билет открывается и без интернета.",
+    "en": "No internet — showing your last saved bookings. The QR pass opens offline too."
+  },
+  "eng erta": {
+    "uz": "eng erta",
+    "ru": "самое раннее",
+    "en": "earliest"
   }
 }

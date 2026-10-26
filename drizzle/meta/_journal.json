@@ -260,6 +260,13 @@
       "when": 1792942696015,
       "tag": "0036_hall_table_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1793001479312,
+      "tag": "0037_holds_stock_prep",
+      "breakpoints": true
     }
   ]
 }

@@ -948,3 +948,47 @@ body[data-zone=b2b] .rf-ai-launch,body[data-zone=b2b] .rf-robot,body[data-zone=b
  .hp-jump:not([hidden]){display:block;position:fixed;left:16px;right:16px;bottom:calc(5.6rem + env(safe-area-inset-bottom));z-index:7;padding:.85rem 1rem;border-radius:14px;background:#2fe3b5;color:#04221b;font-weight:800;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.45);text-decoration:none}
 }
 .hp-receipt-frame{display:block;width:100%;min-height:420px;border:0;background:#fff}
+.birth-locked{display:grid;gap:.25rem;padding:.75rem .9rem;border-radius:14px;border:1px solid rgba(47,227,181,.25);background:rgba(47,227,181,.06);margin:.5rem 0}
+.birth-locked small{color:#9fc9bf}
+.birth-once{margin:.25rem 0 0;font-size:.8rem}
+
+/* Stop-list: dishes and flowers "Vaqtincha tugagan" stay visible, dimmed and not orderable */
+.food-card.sold-out,.booking-meal-card.sold-out,.flower-card.sold-out{position:relative;opacity:.55;filter:grayscale(.6)}
+.food-card.sold-out button,.booking-meal-card.sold-out button,.flower-card.sold-out button{pointer-events:none}
+.sold-out-tag{position:absolute;top:10px;left:10px;z-index:2;padding:.3rem .7rem;border-radius:999px;background:#7f1d1d;color:#fff;font-size:.78rem;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.stop-list{margin:0 0 1rem;padding:.9rem;border-radius:14px;border:1px solid rgba(255,107,129,.25);background:rgba(255,107,129,.05)}
+.stop-list h4{margin:0 0 .6rem}
+.stop-list ul{list-style:none;margin:0;padding:0;display:grid;gap:.4rem;max-height:320px;overflow:auto}
+.stop-list li{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.35rem .5rem;border-radius:10px}
+.stop-list li.stopped span{text-decoration:line-through;opacity:.7}
+.stop-list button{min-height:38px;white-space:nowrap}
+.hold-timer{margin:.25rem 0 .75rem;padding:.6rem .9rem;border-radius:12px;font-weight:700;line-height:1.35;color:#04221b;background:linear-gradient(135deg,#2fe3b5,#1fb894);font-variant-numeric:tabular-nums}
+.hold-timer.soon{background:linear-gradient(135deg,#ffcf5a,#ff8a4c);color:#1d0c00}
+.hold-timer.expired{background:rgba(255,107,129,.15);color:#ffb3c0;border:1px solid rgba(255,107,129,.4)}
+
+/* Live order tracker: Qabul qilindi → Tayyorlanmoqda → Yetkazilmoqda → Stolga tayyor */
+.lt-block{margin:.6rem 0;padding:.7rem .8rem;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
+.lt-block>b{display:block;margin-bottom:.4rem;font-size:.9rem}
+.live-tracker{list-style:none;margin:.5rem 0;padding:0;display:grid;grid-template-columns:repeat(var(--lt-steps,4),minmax(0,1fr));gap:.25rem;position:relative}
+.live-tracker li{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.3rem;min-width:0}
+.live-tracker li:not(:first-child)::before{content:"";position:absolute;top:17px;right:50%;width:100%;height:3px;border-radius:3px;background:rgba(255,255,255,.12);z-index:0}
+.live-tracker li.done:not(:first-child)::before{background:linear-gradient(90deg,#1fb894,#2fe3b5)}
+.lt-dot{position:relative;z-index:1;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font-size:1rem;background:#1b2130;border:2px solid rgba(255,255,255,.15);transition:background .3s,border-color .3s,transform .3s}
+.live-tracker li.done .lt-dot{background:linear-gradient(135deg,#2fe3b5,#1fb894);border-color:#2fe3b5;color:#04221b;font-weight:900}
+.live-tracker li.now .lt-dot{transform:scale(1.12);box-shadow:0 0 0 0 rgba(47,227,181,.55);animation:lt-pulse 1.8s ease-out infinite}
+.live-tracker small{font-size:.72rem;line-height:1.3;opacity:.65;overflow-wrap:anywhere}
+.live-tracker li.done small{opacity:1;font-weight:700}
+.lt-wait{margin:.2rem 0 0;font-size:.8rem;opacity:.8}
+.prep-step{min-height:38px;white-space:nowrap}
+@keyframes lt-pulse{to{box-shadow:0 0 0 12px rgba(47,227,181,0)}}
+@media (prefers-reduced-motion:reduce){.live-tracker li.now .lt-dot{animation:none}}
+@media (max-width:420px){.lt-dot{width:30px;height:30px;font-size:.85rem}.live-tracker li:not(:first-child)::before{top:14px}.live-tracker small{font-size:.66rem}}
+body[data-theme=light] .lt-block{background:#f1f9f6;border-color:#bedbd7}
+body[data-theme=light] .lt-dot{background:#fff;border-color:#bedbd7}
+body[data-theme=light] .live-tracker li:not(:first-child)::before{background:#d6e7e3}
+body[data-theme=light] .hold-timer.expired{color:#9f1239}
+.rf-rc-offline{margin:0 0 10px;padding:8px 12px;border-radius:10px;background:#ffcf5a22;border:1px solid #ffcf5a66;color:#ffe2a0;font-size:13px;font-weight:700}
+.offline-note{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#ffcf5a1f;border:1px solid #ffcf5a55;font-weight:700}
+dialog p.hold-timer,.room-body p.hold-timer{color:#04221b}
+dialog p.hold-timer.soon,.room-body p.hold-timer.soon{color:#1d0c00}
+dialog p.hold-timer.expired,.room-body p.hold-timer.expired{color:#ffb3c0}

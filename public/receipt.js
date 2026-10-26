@@ -11,9 +11,9 @@
 (() => {
   'use strict';
   const COPY = {
-    uz: { flowers: 'Guldasta (kartadan to‘langan)', grand: 'Umumiy (gullar bilan)', gift: 'Sovg‘a', bonus: 'Tug‘ilgan kun bonusi', minOrder: 'buyurtma kamida', promo: 'Promokod', discount: 'Chegirma', due: 'Depozitdan keyin to‘lanadi', title: 'Bron cheki', pass: 'Bron chiptasi', show: 'Restoranga kelganda shu QR kodni ko‘rsating.', receiptNo: 'Chek №', date: 'Sana', time: 'Vaqt', table: 'Stol', guests: 'Mehmonlar', dish: 'Taom', qty: 'Soni', price: 'Narxi', sum: 'Summa', subtotal: 'Taomlar', fee: 'Xizmat haqi', total: 'Jami to‘lov', noItems: 'Oldindan taom tanlanmagan — faqat stol broni.', deposit: 'Depozit', paid: 'to‘langan', pending: 'kutilmoqda', print: 'Chekni chop etish', pdf: 'Chekni yuklab olish (PDF)', close: 'Yopish', payNote: 'To‘lov restoranda amalga oshiriladi.', status: { pending: 'Tasdiq kutilmoqda', confirmed: 'Tasdiqlangan', completed: 'Yakunlangan', cancelled: 'Bekor qilingan', no_show: 'Kelmagan' }, arrived: 'Mijoz keldi', error: 'Chekni ochib bo‘lmadi.', code: 'Kod', currency: 'so‘m', inactive: 'Bron faol emas — chipta yaroqsiz.' },
-    ru: { flowers: 'Букет (оплачен картой)', grand: 'Всего (с цветами)', gift: 'Подарок', bonus: 'Бонус ко дню рождения', minOrder: 'заказ от', promo: 'Промокод', discount: 'Скидка', due: 'К оплате после депозита', title: 'Чек бронирования', pass: 'Билет брони', show: 'Покажите этот QR-код в ресторане.', receiptNo: 'Чек №', date: 'Дата', time: 'Время', table: 'Стол', guests: 'Гостей', dish: 'Блюдо', qty: 'Кол-во', price: 'Цена', sum: 'Сумма', subtotal: 'Блюда', fee: 'Обслуживание', total: 'Итого к оплате', noItems: 'Блюда заранее не выбраны — бронь только стола.', deposit: 'Депозит', paid: 'оплачен', pending: 'ожидается', print: 'Распечатать чек', pdf: 'Скачать чек (PDF)', close: 'Закрыть', payNote: 'Оплата производится в ресторане.', status: { pending: 'Ждёт подтверждения', confirmed: 'Подтверждена', completed: 'Завершена', cancelled: 'Отменена', no_show: 'Не пришёл' }, arrived: 'Гость пришёл', error: 'Не удалось открыть чек.', code: 'Код', currency: 'сум', inactive: 'Бронь не активна — билет недействителен.' },
-    en: { flowers: 'Bouquet (paid by card)', grand: 'Grand total (with flowers)', gift: 'Gift', bonus: 'Birthday bonus', minOrder: 'order from', promo: 'Promo code', discount: 'Discount', due: 'Due after deposit', title: 'Booking receipt', pass: 'Booking pass', show: 'Show this QR code at the restaurant.', receiptNo: 'Receipt #', date: 'Date', time: 'Time', table: 'Table', guests: 'Guests', dish: 'Dish', qty: 'Qty', price: 'Price', sum: 'Amount', subtotal: 'Dishes', fee: 'Service charge', total: 'Total to pay', noItems: 'No dishes pre-ordered — table booking only.', deposit: 'Deposit', paid: 'paid', pending: 'pending', print: 'Print receipt', pdf: 'Download receipt (PDF)', close: 'Close', payNote: 'Payment is made at the restaurant.', status: { pending: 'Awaiting confirmation', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled', no_show: 'No-show' }, arrived: 'Guest arrived', error: 'Could not open the receipt.', code: 'Code', currency: 'UZS', inactive: 'Booking is not active — the pass is not valid.' },
+    uz: { flowers: 'Guldasta (kartadan to‘langan)', grand: 'Umumiy (gullar bilan)', gift: 'Sovg‘a', bonus: 'Tug‘ilgan kun bonusi', minOrder: 'buyurtma kamida', promo: 'Promokod', discount: 'Chegirma', due: 'Depozitdan keyin to‘lanadi', title: 'Bron cheki', pass: 'Bron chiptasi', show: 'Restoranga kelganda shu QR kodni ko‘rsating.', receiptNo: 'Chek №', date: 'Sana', time: 'Vaqt', table: 'Stol', guests: 'Mehmonlar', dish: 'Taom', qty: 'Soni', price: 'Narxi', sum: 'Summa', subtotal: 'Taomlar', fee: 'Xizmat haqi', total: 'Jami to‘lov', noItems: 'Oldindan taom tanlanmagan — faqat stol broni.', deposit: 'Depozit', paid: 'to‘langan', pending: 'kutilmoqda', print: 'Chekni chop etish', pdf: 'Chekni yuklab olish (PDF)', close: 'Yopish', payNote: 'To‘lov restoranda amalga oshiriladi.', status: { pending: 'Tasdiq kutilmoqda', confirmed: 'Tasdiqlangan', completed: 'Yakunlangan', cancelled: 'Bekor qilingan', no_show: 'Kelmagan' }, arrived: 'Mijoz keldi', error: 'Chekni ochib bo‘lmadi.', code: 'Kod', currency: 'so‘m', inactive: 'Bron faol emas — chipta yaroqsiz.', offline: 'Internet yo‘q — saqlangan nusxa' },
+    ru: { flowers: 'Букет (оплачен картой)', grand: 'Всего (с цветами)', gift: 'Подарок', bonus: 'Бонус ко дню рождения', minOrder: 'заказ от', promo: 'Промокод', discount: 'Скидка', due: 'К оплате после депозита', title: 'Чек бронирования', pass: 'Билет брони', show: 'Покажите этот QR-код в ресторане.', receiptNo: 'Чек №', date: 'Дата', time: 'Время', table: 'Стол', guests: 'Гостей', dish: 'Блюдо', qty: 'Кол-во', price: 'Цена', sum: 'Сумма', subtotal: 'Блюда', fee: 'Обслуживание', total: 'Итого к оплате', noItems: 'Блюда заранее не выбраны — бронь только стола.', deposit: 'Депозит', paid: 'оплачен', pending: 'ожидается', print: 'Распечатать чек', pdf: 'Скачать чек (PDF)', close: 'Закрыть', payNote: 'Оплата производится в ресторане.', status: { pending: 'Ждёт подтверждения', confirmed: 'Подтверждена', completed: 'Завершена', cancelled: 'Отменена', no_show: 'Не пришёл' }, arrived: 'Гость пришёл', error: 'Не удалось открыть чек.', code: 'Код', currency: 'сум', inactive: 'Бронь не активна — билет недействителен.', offline: 'Нет интернета — сохранённая копия' },
+    en: { flowers: 'Bouquet (paid by card)', grand: 'Grand total (with flowers)', gift: 'Gift', bonus: 'Birthday bonus', minOrder: 'order from', promo: 'Promo code', discount: 'Discount', due: 'Due after deposit', title: 'Booking receipt', pass: 'Booking pass', show: 'Show this QR code at the restaurant.', receiptNo: 'Receipt #', date: 'Date', time: 'Time', table: 'Table', guests: 'Guests', dish: 'Dish', qty: 'Qty', price: 'Price', sum: 'Amount', subtotal: 'Dishes', fee: 'Service charge', total: 'Total to pay', noItems: 'No dishes pre-ordered — table booking only.', deposit: 'Deposit', paid: 'paid', pending: 'pending', print: 'Print receipt', pdf: 'Download receipt (PDF)', close: 'Close', payNote: 'Payment is made at the restaurant.', status: { pending: 'Awaiting confirmation', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled', no_show: 'No-show' }, arrived: 'Guest arrived', error: 'Could not open the receipt.', code: 'Code', currency: 'UZS', inactive: 'Booking is not active — the pass is not valid.', offline: 'No internet — saved copy' },
   };
   const words = () => COPY[document.documentElement.lang] || COPY.uz;
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -33,18 +33,90 @@
     qr.make();
     return qr;
   }
+  let offlineQr = null;
   const qrSvg = (text, size) => {
+    if (!window.qrcode && offlineQr?.[size]) return offlineQr[size];
     const qr = qrModules(text), n = qr.getModuleCount(), q = 4, cell = size / (n + q * 2);
     let path = '';
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) path += 'M' + ((c + q) * cell).toFixed(2) + ' ' + ((r + q) * cell).toFixed(2) + 'h' + cell.toFixed(2) + 'v' + cell.toFixed(2) + 'h-' + cell.toFixed(2) + 'z';
     return '<svg class="rf-qr" viewBox="0 0 ' + size + ' ' + size + '" width="' + size + '" height="' + size + '" role="img" aria-label="QR"><rect width="100%" height="100%" fill="#fff"/><path d="' + path + '" fill="#000"/></svg>';
   };
 
+  /*
+   * Offline copy: every receipt of an active booking is kept in localStorage with its QR codes already
+   * drawn as SVG, so at the restaurant door the pass opens instantly even with no internet (also on the
+   * service worker's offline page). Entries go when the booking is over, cancelled or the user signs out.
+   */
+  const STORE = 'rf_offline_passes', TTL = 36 * 3600000;
+  const readStore = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORE) || '{}') || {};
+    } catch {
+      return {};
+    }
+  };
+  const writeStore = (all) => {
+    try {
+      localStorage.setItem(STORE, JSON.stringify(all));
+    } catch {}
+  };
+  const bookingEnd = (b) => Date.parse(b.date + 'T' + String(b.endSlot || b.slot || '23:59').slice(0, 5) + ':00+05:00') || 0;
+  function prune(all) {
+    const now = Date.now();
+    for (const [id, e] of Object.entries(all)) if (!e?.data?.pass || bookingEnd(e.data.booking) + 3600000 < now || now - (e.savedAt || 0) > 90 * 864e5) delete all[id];
+    return all;
+  }
+  function remember(data) {
+    const all = prune(readStore()), id = data.booking?.id;
+    if (!id) return;
+    if (!data.pass) delete all[id];
+    else if (window.qrcode) all[id] = { data, qr: { 168: qrSvg(data.pass.payload, 168), 260: qrSvg(data.pass.payload, 260) }, savedAt: Date.now() };
+    writeStore(all);
+  }
+  const cached = (id) => prune(readStore())[id] || null;
+
   async function fetchReceipt(id) {
-    const res = await fetch('/api/bookings/receipt?id=' + encodeURIComponent(id), { credentials: 'same-origin' });
+    let res;
+    try {
+      res = await fetch('/api/bookings/receipt?id=' + encodeURIComponent(id), { credentials: 'same-origin', cache: 'no-store' });
+    } catch (e) {
+      const c = cached(id);
+      if (c) return { ...c.data, offline: c };
+      throw e;
+    }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || words().error);
+    if (!res.ok) {
+      // A server or network hiccup falls back to the saved copy; "not found" means the booking is gone.
+      const c = res.status >= 500 || res.status === 401 ? cached(id) : null;
+      if (c) return { ...c.data, offline: c };
+      if (res.status === 404) forget(id);
+      throw new Error(data.error || words().error);
+    }
     return data;
+  }
+  function forget(id) {
+    const all = readStore();
+    delete all[id];
+    writeStore(all);
+  }
+  /** Warm the offline copy of these bookings' passes (called from "Bronlarim"). */
+  async function prefetch(ids) {
+    if (!navigator.onLine) return;
+    const fresh = readStore();
+    const todo = ids.filter((id) => !fresh[id] || Date.now() - fresh[id].savedAt > 10 * 60000).slice(0, 6);
+    if (!todo.length) return;
+    try {
+      await loadQr();
+    } catch {
+      return;
+    }
+    for (const id of todo) {
+      try {
+        const res = await fetch('/api/bookings/receipt?id=' + encodeURIComponent(id), { credentials: 'same-origin', cache: 'no-store' });
+        if (res.ok) remember(await res.json());
+        else if (res.status === 404) forget(id);
+      } catch {}
+    }
   }
 
   /** "Discount (15%)" or "Birthday bonus (order from 300 000)", with the promo code. */
@@ -207,11 +279,15 @@
       return b;
     };
     try {
-      const [data] = await Promise.all([fetchReceipt(id), loadQr()]);
-      body.innerHTML = options.mode === 'pass' ? passHtml(data, w) : receiptHtml(data, w);
+      // The receipt and the QR library load together; offline, the saved copy carries its QR drawn already.
+      const [data] = await Promise.all([fetchReceipt(id), loadQr().catch(() => null)]);
+      offlineQr = data.offline?.qr || null;
+      if (!window.qrcode && !offlineQr && data.pass) throw new Error(w.error);
+      if (!data.offline) remember(data);
+      body.innerHTML = (data.offline ? '<p class="rf-rc-offline">📡 ' + esc(w.offline) + ' · ' + esc(new Date(data.offline.savedAt).toLocaleString()) + '</p>' : '') + (options.mode === 'pass' ? passHtml(data, w) : receiptHtml(data, w));
       if (options.mode !== 'pass') {
         button('🖨 ' + w.print, 'quiet', () => print(body.querySelector('.rf-receipt-paper')));
-        button('⬇ ' + w.pdf, 'primary', () => downloadPdf(data));
+        if (window.qrcode || !data.pass) button('⬇ ' + w.pdf, 'primary', () => downloadPdf(data));
       }
     } catch (e) {
       body.innerHTML = '<p>' + esc(e.message || w.error) + '</p>';
@@ -220,5 +296,5 @@
     return dialog;
   }
 
-  window.RFReceipt = { open };
+  window.RFReceipt = { open, prefetch, forget, clear: () => writeStore({}), cachedIds: () => Object.keys(prune(readStore())) };
 })();

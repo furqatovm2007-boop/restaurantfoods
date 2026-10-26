@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       const { r, level } = await restaurantAccess(restaurantId, u, 'hostess');
       const f = planState(r).features;
       const money = atLeast(level, 'manager');
-      const rows = (await env.DB!.prepare("SELECT b.id,b.user_id,b.date,b.slot,b.end_slot,b.table_number,b.merged_table,b.guests,b.status,b.checked_in_at,b.call_status,b.phone,b.preorder_items,b.preorder_total,b.discount_percent,a.name AS customer_name,p.amount AS penalty_amount,p.status AS penalty_status FROM bookings b LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN penalties p ON p.booking_id=b.id WHERE b.restaurant_id=? AND b.date BETWEEN ? AND date(?,'+7 days') ORDER BY b.date,b.slot LIMIT 200").bind(restaurantId, today(), today()).all<any>()).results;
+      const rows = (await env.DB!.prepare("SELECT b.id,b.user_id,b.date,b.slot,b.end_slot,b.table_number,b.merged_table,b.guests,b.status,b.checked_in_at,b.call_status,b.phone,b.preorder_items,b.preorder_total,b.prep_status,b.discount_percent,a.name AS customer_name,p.amount AS penalty_amount,p.status AS penalty_status FROM bookings b LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN penalties p ON p.booking_id=b.id WHERE b.restaurant_id=? AND b.date BETWEEN ? AND date(?,'+7 days') ORDER BY b.date,b.slot LIMIT 200").bind(restaurantId, today(), today()).all<any>()).results;
       const vip = f.vipGuests ? await vipUsers(restaurantId) : new Set<string>();
       // Hostesses never see money: no pre-order totals, penalties or orders.
       const bookings = rows.map((b) => ({ id: b.id, date: b.date, slot: b.slot, end_slot: b.end_slot, table_number: b.table_number, merged_table: b.merged_table, guests: b.guests, status: b.status, checked_in_at: b.checked_in_at, call_status: b.call_status, phone: b.phone, customer: String(b.customer_name || '').split(' ')[0], vip: vip.has(b.user_id), ...(money ? { preorder_total: b.preorder_total, penalty_amount: b.penalty_amount, penalty_status: b.penalty_status, discount_percent: b.discount_percent } : {}) }));
@@ -97,6 +97,15 @@ export async function POST(request: Request) {
     if (b.action === 'request_resolve') {
       await restaurantAccess(restaurantId, u, 'waiter');
       await env.DB!.prepare('UPDATE service_requests SET resolved_at=? WHERE id=? AND restaurant_id=? AND resolved_at IS NULL').bind(new Date().toISOString(), text(b.id), restaurantId).run();
+      return json({ ok: true });
+    }
+    // Live tracker: the kitchen step of a confirmed booking's pre-ordered dishes, seen by the customer at once.
+    if (b.action === 'prep') {
+      await restaurantAccess(restaurantId, u, 'waiter');
+      const status = text(b.status);
+      if (!['preparing', 'serving', 'ready'].includes(status)) throw new ApiError(400, 'Holat noto‘g‘ri.');
+      const done = await env.DB!.prepare("UPDATE bookings SET prep_status=? WHERE id=? AND restaurant_id=? AND status IN ('confirmed','completed')").bind(status, text(b.id), restaurantId).run();
+      if (!done.meta.changes) throw new ApiError(409, 'Avval bronni tasdiqlang.');
       return json({ ok: true });
     }
     if (b.action === 'alert_resolve') {
