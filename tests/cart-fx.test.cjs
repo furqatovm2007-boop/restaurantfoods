@@ -24,7 +24,7 @@ cartCtx.bindMenuCart(restaurant,menu);assert.equal(quantity.value,3,'existing ca
 quantity.value=15;addButton.onclick();assert.equal(saved,2);assert.equal(accepted,2);assert.ok(quantity.error,'over-limit additions are explained');
 for(const invalid of [0,-1,1.5,21,'']){quantity.value=invalid;addButton.onclick();assert.equal(saved,2);assert.equal(accepted,2)}
 quantity.value=2;cartCtx.state.cart={restaurantId:'other',items:[{id:'other',quantity:1}],fulfillment:'pickup'};allow=false;form.oninput({target:quantity});assert.equal(asked,0,'draft changes never ask to replace another cart');addButton.onclick();assert.equal(asked,1);assert.equal(saved,2);assert.equal(accepted,2);assert.equal(cartCtx.state.cart.restaurantId,'other');assert.equal(quantity.value,2);
-allow=true;cartCtx.state.selectedFulfillment='delivery';addButton.onclick();assert.equal(cartCtx.state.cart.restaurantId,'demo');assert.equal(cartCtx.state.cart.items[0].quantity,2);assert.equal(cartCtx.state.cart.fulfillment,'delivery');assert.equal(saved,3);assert.equal(accepted,3);
+allow=true;addButton.onclick();assert.equal(cartCtx.state.cart.restaurantId,'demo');assert.equal(cartCtx.state.cart.items[0].quantity,2);assert.equal(cartCtx.state.cart.fulfillment,'','pickup or delivery is chosen in the cart, not on the menu');assert.equal(saved,3);assert.equal(accepted,3);
 quantity.disabled=true;addButton.onclick();quantity.disabled=false;menu[0].available=0;addButton.onclick();assert.equal(saved,3);assert.equal(accepted,3);
 console.log('PASS draft quantities, explicit selected-quantity additions, repeated additions, isolated dishes, limits and rejected restaurant replacement.');
 // Browser media branch: unlock silently during the gesture, then play audibly at arrival.

@@ -5968,5 +5968,35 @@
     "uz": "Ogohlantirishlar kelishi uchun admin akkauntiga Telegram’ni ulang: Profil → “Telegram orqali tasdiqlash”.",
     "ru": "Чтобы получать оповещения, подключите Telegram к аккаунту администратора: Профиль → «Подтвердить через Telegram».",
     "en": "To receive alerts, link Telegram to the admin account: Profile → “Verify via Telegram”."
+  },
+  "Olib ketasizmi yoki yetkazib beraylikmi?": {
+    "uz": "Olib ketasizmi yoki yetkazib beraylikmi?",
+    "ru": "Заберёте сами или доставить?",
+    "en": "Pick up yourself or shall we deliver?"
+  },
+  "O‘zim olib ketaman": {
+    "uz": "O‘zim olib ketaman",
+    "ru": "Заберу сам",
+    "en": "I’ll pick it up"
+  },
+  "Restorandan tayyor buyurtmani olasiz": {
+    "uz": "Restorandan tayyor buyurtmani olasiz",
+    "ru": "Заберёте готовый заказ в ресторане",
+    "en": "Collect the ready order at the restaurant"
+  },
+  "Yetkazib bering": {
+    "uz": "Yetkazib bering",
+    "ru": "Доставьте",
+    "en": "Deliver it"
+  },
+  "Manzilingizga": {
+    "uz": "Manzilingizga",
+    "ru": "На ваш адрес",
+    "en": "To your address"
+  },
+  "Olib ketasizmi yoki yetkazib beraylikmi? Birini tanlang.": {
+    "uz": "Olib ketasizmi yoki yetkazib beraylikmi? Birini tanlang.",
+    "ru": "Заберёте сами или доставить? Выберите вариант.",
+    "en": "Pick up or delivery? Please choose one."
   }
 }

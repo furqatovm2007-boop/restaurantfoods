@@ -1136,3 +1136,14 @@ body[data-theme=light] .sv-cam header .sv-ai{color:#0369a1;border-color:#7dd3fc}
 .health-card p{margin:.2rem 0}
 .health-card ul{margin:.3rem 0;padding-left:1rem}
 body[data-theme=light] .health-card{background:#f1f7f6;border-color:#c4d8d5}
+
+/* Cart: "Olib ketasizmi yoki yetkazib beraylikmi?" — two big choices, asked only at checkout */
+.fulfil-choice{margin:0 0 .4rem;padding:0;border:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:.6rem}
+.fulfil-choice legend{margin-bottom:.5rem;font-weight:800;font-size:1.05rem}
+.fulfil-choice label{position:relative;display:flex;align-items:center;gap:.7rem;padding:.85rem 1rem;border-radius:14px;border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);cursor:pointer;text-transform:none;letter-spacing:0;font-size:1rem;transition:border-color .2s,background .2s}
+.fulfil-choice label:has(input:checked){border-color:#10b981;background:rgba(16,185,129,.12)}
+.fulfil-choice input{width:20px;height:20px;accent-color:#10b981;flex:none;margin:0}
+.fulfil-choice span{display:grid;gap:2px;line-height:1.3}
+.fulfil-choice small{opacity:.75;font-size:.82rem;font-weight:500}
+body[data-theme=light] .fulfil-choice label{border-color:#c4d8d5;background:#fff}
+body[data-theme=light] .fulfil-choice label:has(input:checked){border-color:#00a58a;background:#e3f4f0}
