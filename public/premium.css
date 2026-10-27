@@ -1189,3 +1189,7 @@ body[data-theme=light] #auth .premium-auth .lang-trigger{background:#fff;color:#
 body[data-theme=light] #auth .premium-auth .lang-trigger .language-globe,body[data-theme=light] #auth .premium-auth .lang-chevron{color:#00826c}
 body[data-theme=light] .verify-choice-btn{background:#fff;border-color:#c4d8d5;color:#123540}
 body[data-theme=light] .verify-choice-btn.telegram{background:linear-gradient(135deg,#e6f4fb,#d3ecf9);border-color:#7cc3e8;color:#0b4f72}
+
+/* The page header keeps a transform from its entry animation, which traps the open city list under the
+   hero below it: while the list is open the header is lifted above the page content. */
+.page-head:has(.city-list:not([hidden])){position:relative;z-index:15}
