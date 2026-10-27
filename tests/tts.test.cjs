@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),{load,request}=require('./harness.cjs
 (async()=>{
  const env={};const cf={'cloudflare:workers':{env}},http=load('app/http.ts',cf),noLimit={...http,throttle:async()=>{}};
  const seen=[];let ok=true;const fetch=async(url,init)=>{seen.push({url,headers:init.headers,body:JSON.parse(init.body)});return ok?Response.json({audio:'QUJD',mimeType:'audio/mpeg'}):Response.json({error:'AI_CONFIGURATION'},{status:503})};
- const voice=load('app/ai-voice.ts',{'./auth-service':{authConfig:()=>({url:'https://x.supabase.co',key:'anon',proxy:'p'}),accessToken:async()=>null},'./http':noLimit,'./ai-key':{aiHeaders:async h=>h},'./ai-fallback':{fallbackTranscribe:async()=>null}},{fetch});
+ const voice=load('app/ai-voice.ts',{'./auth-service':{authConfig:()=>({url:'https://x.supabase.co',key:'anon',proxy:'p'}),accessToken:async()=>null},'./http':noLimit,'./ai-key':{aiHeaders:async h=>h,cloudflareOnly:async()=>false},'./ai-fallback':{fallbackTranscribe:async()=>null}},{fetch});
  let user=null;const route=load('app/api/ai/tts/route.ts',{'../../../access':{identity:async()=>user},'../../../http':noLimit,'../../../ai-voice':voice});
  assert.equal((await route.POST(request('/api/ai/tts',{text:'Salom',lang:'uz'}))).status,401,'sign-in needed');
  user={userId:'tg:1',role:'customer',source:'telegram'};

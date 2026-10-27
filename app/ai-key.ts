@@ -69,3 +69,30 @@ export async function aiHeaders(base: Record<string, string>) {
   const key = base['X-RF-Proxy'] ? await storedOpenAiKey() : '';
   return key ? { ...base, 'X-RF-OpenAI-Key': key } : base;
 }
+
+/*
+ * AI engine chosen by the site administrator (Admin → AI status):
+ *   'auto'        OpenAI first (GPT-6 Luna / Sol and backups), Cloudflare Workers AI as the reserve;
+ *   'cloudflare'  Cloudflare Workers AI only — no OpenAI key needed, OpenAI is never called.
+ * Workers AI runs through the Worker's own `AI` binding, so it needs no API key either way.
+ */
+export type AiEngine = 'auto' | 'cloudflare';
+const ENGINE_SETTING = 'ai_engine';
+let engineCache: { at: number; value: AiEngine } | null = null;
+export async function aiEngine(): Promise<AiEngine> {
+  if (engineCache && Date.now() - engineCache.at < 30000) return engineCache.value;
+  let value: AiEngine = 'auto';
+  try {
+    const r = await env.DB!.prepare('SELECT value FROM app_settings WHERE key=?').bind(ENGINE_SETTING).first<{ value: string }>();
+    if (r?.value === 'cloudflare') value = 'cloudflare';
+  } catch {
+    /* no table yet: auto */
+  }
+  engineCache = { at: Date.now(), value };
+  return value;
+}
+export const cloudflareOnly = async () => (await aiEngine()) === 'cloudflare';
+export async function saveAiEngine(value: AiEngine, by: string) {
+  engineCache = null;
+  await env.DB!.prepare('INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at,updated_by=excluded.updated_by').bind(ENGINE_SETTING, value, new Date().toISOString(), by).run();
+}

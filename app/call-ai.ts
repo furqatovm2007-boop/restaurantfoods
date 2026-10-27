@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import { authConfig } from './auth-service';
 import { planState } from './plans';
 import { telegram, telegramConfigured, html } from './telegram';
-import { aiHeaders } from './ai-key';
+import { aiHeaders, cloudflareOnly } from './ai-key';
 import { fallbackIntent } from './ai-fallback';
 
 /*
@@ -65,6 +65,7 @@ export function parseAnswer(raw: string): 'yes' | 'no' | null {
 export async function understand(text: string, l: Lang): Promise<'yes' | 'no' | null> {
   const quick = parseAnswer(text);
   if (quick || !text.trim()) return quick;
+  if (await cloudflareOnly()) return await fallbackIntent(text.slice(0, 500)).catch(() => null);
   const r = (await serviceVoice({ mode: 'call_intent', lang: l, text: text.slice(0, 500) })) as { answer?: string } | null;
   if (r?.answer === 'yes' || r?.answer === 'no') return r.answer;
   // OpenAI unavailable: Workers AI classifies the reply instead.

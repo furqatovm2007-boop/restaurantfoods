@@ -4,7 +4,7 @@ import { accessToken, authConfig } from '../../../auth-service';
 import { ApiError, body, text, throttle, failure } from '../../../http';
 import { requireFeature, BUSINESS_ADMIN_AI_DAILY } from '../../../plans';
 import { readSse, sseFrame, sseHeaders } from '../../../sse';
-import { aiHeaders } from '../../../ai-key';
+import { aiHeaders, cloudflareOnly } from '../../../ai-key';
 import { fallbackAdmin } from '../../../ai-fallback';
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +71,8 @@ export async function POST(request: Request) {
       if (fb) return reserveStream(fb.reply, fb.engine);
       throw new ApiError(status, error);
     };
+    // Admin chose Cloudflare Workers AI only: OpenAI is not called at all.
+    if (await cloudflareOnly()) return await failed(503, 'AI_UNAVAILABLE');
     if (!token || !c.url || !c.key) return await failed(token ? 503 : 401, token ? 'AI_UNAVAILABLE' : 'AI_LOGIN_REQUIRED');
     let upstream: Response;
     try {

@@ -1147,3 +1147,13 @@ body[data-theme=light] .health-card{background:#f1f7f6;border-color:#c4d8d5}
 .fulfil-choice small{opacity:.75;font-size:.82rem;font-weight:500}
 body[data-theme=light] .fulfil-choice label{border-color:#c4d8d5;background:#fff}
 body[data-theme=light] .fulfil-choice label:has(input:checked){border-color:#00a58a;background:#e3f4f0}
+.ai-engine{margin:.8rem 0;padding:0;border:0;display:grid;gap:.5rem}
+.ai-engine legend{font-weight:800;margin-bottom:.4rem}
+.ai-engine label{display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;border-radius:12px;border:2px solid rgba(255,255,255,.12);cursor:pointer;text-transform:none;letter-spacing:0;font-size:.95rem}
+.ai-engine label:has(input:checked){border-color:#10b981;background:rgba(16,185,129,.1)}
+.ai-engine label:has(input:disabled){opacity:.5;cursor:not-allowed}
+.ai-engine input{width:18px;height:18px;accent-color:#10b981;flex:none;margin:0}
+.ai-engine span{display:grid;gap:2px}
+.ai-engine small{opacity:.75;font-size:.8rem}
+body[data-theme=light] .ai-engine label{border-color:#c4d8d5;background:#fff}
+body[data-theme=light] .ai-engine label:has(input:checked){border-color:#00a58a;background:#e3f4f0}

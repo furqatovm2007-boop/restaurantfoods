@@ -3,7 +3,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 // staff see it in the alerts and resolve it; the catalog reports free tables now and quick-filter facts.
 (async()=>{
  // A fixed clock (13:00 Tashkent today): the at-table window and "free now" depend on the hour.
- const NOON=Date.parse(new Date(Date.now()+5*3600000).toISOString().slice(0,10)+'T13:00:00+05:00');Date.now=()=>NOON;
+ const RealDate=Date,NOON=RealDate.parse(new RealDate(RealDate.now()+5*3600000).toISOString().slice(0,10)+'T13:00:00+05:00');let clock=NOON;
+ globalThis.Date=class extends RealDate{constructor(...a){super(...(a.length?a:[clock]))}static now(){return clock}};
  const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
  const DB={prepare(sql){let args=[];return{bind(...v){args=v;return this},first:async()=>db.prepare(sql).get(...args)||null,all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...args).changes)}})}}};
  const env={DB,TELEGRAM_BOT_TOKEN:'bot:t'};const cf={'cloudflare:workers':{env}},http=load('app/http.ts',cf),noLimit={...http,throttle:async()=>{}};const tg=[];

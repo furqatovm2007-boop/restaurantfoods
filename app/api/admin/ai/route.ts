@@ -3,7 +3,8 @@ import { identity } from '../../../access';
 import { authConfig } from '../../../auth-service';
 import { ApiError, body, failure, json, sameOrigin, throttle } from '../../../http';
 import { audit } from '../../../account-admin';
-import { aiHeaders, keyStorageAvailable, saveOpenAiKey, storedKeyInfo } from '../../../ai-key';
+import { aiEngine, aiHeaders, keyStorageAvailable, saveAiEngine, saveOpenAiKey, storedKeyInfo } from '../../../ai-key';
+import { workersAi } from '../../../ai-fallback';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -35,7 +36,7 @@ async function edgeStatus(candidate?: string) {
 export async function GET() {
   try {
     await admin();
-    const [status, stored] = await Promise.all([edgeStatus(), storedKeyInfo()]);
+    const [status, stored, engine] = await Promise.all([edgeStatus(), storedKeyInfo(), aiEngine()]);
     const active = (pair?: { model: string; backup: string }) => (pair && status?.keyValid ? (status.models[pair.model] ? pair.model : status.models[pair.backup] ? pair.backup : null) : null);
     return json({
       edge: status,
@@ -43,6 +44,7 @@ export async function GET() {
       sol: { model: status?.sol.model || 'gpt-6.1-sol', backup: 'gpt-4o', active: active(status?.sol) },
       key: { source: status?.keySource || 'unknown', valid: status?.keyValid ?? null, stored, storageAvailable: keyStorageAvailable() },
       reserve: { workersAi: !!(env as unknown as { AI?: unknown }).AI, rules: true },
+      engine,
     });
   } catch (e) {
     return failure(e);
@@ -60,9 +62,27 @@ export async function POST(request: Request) {
       await audit(u.userId, 'openai-key', 'ai-key-remove', {}).run();
       return json({ ok: true });
     }
+    // Which AI answers: OpenAI first with the Cloudflare reserve, or Cloudflare Workers AI only (no key).
+    if (b.action === 'engine') {
+      if (!['auto', 'cloudflare'].includes(b.engine)) throw new ApiError(400, 'AI rejimi noto‘g‘ri.');
+      if (b.engine === 'cloudflare' && !(env as unknown as { AI?: unknown }).AI) throw new ApiError(503, 'Cloudflare Workers AI bu Worker’ga ulanmagan (AI binding yo‘q).');
+      await saveAiEngine(b.engine, u.userId);
+      await audit(u.userId, 'ai-engine', 'ai-engine-' + b.engine, {}).run();
+      return json({ ok: true, engine: b.engine });
+    }
+    // One short Workers AI answer, so the admin sees that Cloudflare AI really works.
+    if (b.action === 'test-cloudflare') {
+      const started = Date.now();
+      const reply = await workersAi('Reply in Uzbek (Latin script) with one short friendly sentence.', {}, [], 'Salom! Ishlayapsanmi?', 60).catch(() => '');
+      if (!reply) throw new ApiError(503, 'Cloudflare Workers AI javob bermadi. Birozdan keyin qayta urinib ko‘ring.');
+      return json({ ok: true, reply: reply.slice(0, 300), ms: Date.now() - started });
+    }
     if (b.action !== 'save') throw new ApiError(400, 'Noma’lum amal.');
     if (!keyStorageAvailable()) throw new ApiError(503, 'Kalitni saqlash uchun Worker’da RF_PROXY_SECRET sozlangan bo‘lishi kerak.');
     const key = typeof b.key === 'string' ? b.key.trim() : '';
+    // A Cloudflare API token pasted here is never stored: Workers AI runs through the Worker's own binding.
+    if (!key.startsWith('sk-') && /^[A-Za-z0-9_-]{30,80}$/.test(key))
+      throw new ApiError(400, 'Bu OpenAI kaliti emas — Cloudflare tokeniga o‘xshaydi. Cloudflare AI uchun kalit kerak emas: u saytga to‘g‘ridan-to‘g‘ri ulangan. Pastdagi “Faqat Cloudflare Workers AI” rejimini tanlang. Token saqlanmadi.');
     if (!/^sk-[A-Za-z0-9_-]{20,300}$/.test(key)) throw new ApiError(400, 'OpenAI kaliti “sk-” bilan boshlanadi. Uni to‘liq nusxalab qo‘ying.');
     const check = await edgeStatus(key);
     if (!check) throw new ApiError(503, 'Kalitni tekshirib bo‘lmadi: AI xizmati javob bermadi. Birozdan keyin urinib ko‘ring.');

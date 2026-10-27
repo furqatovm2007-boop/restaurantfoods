@@ -5998,5 +5998,45 @@
     "uz": "Olib ketasizmi yoki yetkazib beraylikmi? Birini tanlang.",
     "ru": "Заберёте сами или доставить? Выберите вариант.",
     "en": "Pick up or delivery? Please choose one."
+  },
+  "AI dvigateli": {
+    "uz": "AI dvigateli",
+    "ru": "Движок AI",
+    "en": "AI engine"
+  },
+  "Avtomatik": {
+    "uz": "Avtomatik",
+    "ru": "Автоматически",
+    "en": "Automatic"
+  },
+  "OpenAI asosiy, ishlamasa Cloudflare Workers AI": {
+    "uz": "OpenAI asosiy, ishlamasa Cloudflare Workers AI",
+    "ru": "OpenAI основной, при сбое — Cloudflare Workers AI",
+    "en": "OpenAI first, Cloudflare Workers AI when it fails"
+  },
+  "Faqat Cloudflare Workers AI": {
+    "uz": "Faqat Cloudflare Workers AI",
+    "ru": "Только Cloudflare Workers AI",
+    "en": "Cloudflare Workers AI only"
+  },
+  "Kalit kerak emas — Cloudflare hisobingiz orqali ishlaydi. Ovoz brauzerning o‘z ovozida o‘qiladi.": {
+    "uz": "Kalit kerak emas — Cloudflare hisobingiz orqali ishlaydi. Ovoz brauzerning o‘z ovozida o‘qiladi.",
+    "ru": "Ключ не нужен — работает через ваш аккаунт Cloudflare. Голос озвучивает сам браузер.",
+    "en": "No key needed — runs on your Cloudflare account. Replies are read by the browser’s own voice."
+  },
+  "Cloudflare AI’ni sinash": {
+    "uz": "Cloudflare AI’ni sinash",
+    "ru": "Проверить Cloudflare AI",
+    "en": "Test Cloudflare AI"
+  },
+  "Endi saytdagi barcha AI Cloudflare Workers AI orqali ishlaydi.": {
+    "uz": "Endi saytdagi barcha AI Cloudflare Workers AI orqali ishlaydi.",
+    "ru": "Теперь весь AI на сайте работает через Cloudflare Workers AI.",
+    "en": "All AI on the site now runs on Cloudflare Workers AI."
+  },
+  "AI rejimi: OpenAI asosiy, Cloudflare zaxira.": {
+    "uz": "AI rejimi: OpenAI asosiy, Cloudflare zaxira.",
+    "ru": "Режим AI: OpenAI основной, Cloudflare — резерв.",
+    "en": "AI mode: OpenAI first, Cloudflare as reserve."
   }
 }

@@ -6,7 +6,7 @@ import {guideActions,checkGuideAvailability,availabilitySpeech} from '../../../a
 import {requireFeature} from '../../../plans';
 import {assertClientAiUser,takeClientAiQuestion,refundClientAiQuestion} from '../../../client-ai';
 import {readSse,sseFrame,sseHeaders} from '../../../sse';
-import {aiHeaders} from '../../../ai-key';
+import {aiHeaders,cloudflareOnly} from '../../../ai-key';
 import {fallbackClient} from '../../../ai-fallback';
 export const dynamic='force-dynamic';
 
@@ -33,6 +33,8 @@ export async function POST(request:Request){try{
  const reserve=async()=>{const fb=await fallbackClient(lang as any,message,history,catalog);if(!fb)return null;return {reply:fb.reply,engine:fb.engine,recommendations:validRecommendations(fb.recommendations,catalog)}};
  const reserveStream=(fb:{reply:string,engine:string,recommendations:any[]})=>new Response(new ReadableStream<Uint8Array>({start(controller){controller.enqueue(sseFrame('delta',{text:fb.reply}));controller.enqueue(sseFrame('done',{reply:fb.reply,replaced:false,engine:fb.engine,recommendations:fb.recommendations,actions:[],quota:quota&&{remaining:quota.remaining,limit:quota.limit}}));controller.close()}}),{headers:sseHeaders});
  const failed=async(status:number,error:string)=>{const fb=await reserve();if(fb)return reserveStream(fb);await refund();throw new ApiError(status,error)};
+ // Admin chose Cloudflare Workers AI only: OpenAI is not called at all.
+ if(await cloudflareOnly())return await failed(503,'AI_UNAVAILABLE');
  if(!token||!c.url||!c.key)return await failed(token?503:401,token?'AI_UNAVAILABLE':'AI_LOGIN_REQUIRED');
  let upstream:Response;try{upstream=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:await aiHeaders({'Content-Type':'application/json',apikey:c.key,Authorization:'Bearer '+token,...(c.proxy?{'X-RF-Proxy':c.proxy}:{})}),body:JSON.stringify({message,lang,history,catalog,stream:true,voice:b.voice===true,currentRestaurantId:catalog.some(r=>r.id===restaurantId)?restaurantId:null,serverDate:new Date(Date.now()+5*3600000).toISOString().slice(0,10)}),signal:AbortSignal.timeout(35000)})}catch{return await failed(504,'AI_TIMEOUT')}
  if(!upstream.ok){let error='';try{error=(await upstream.clone().json() as any).error}catch{}return await failed(upstream.status===429?429:upstream.status===401?401:503,error==='AI_BILLING_REQUIRED'?'AI_BILLING_REQUIRED':upstream.status===429?'AI_LIMIT':upstream.status===401?'AI_LOGIN_REQUIRED':'AI_UNAVAILABLE')}

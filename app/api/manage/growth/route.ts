@@ -7,7 +7,7 @@ import { readSse } from '../../../sse';
 import { restaurantAccess, staffMemberships, STAFF_ROLES, atLeast } from '../../../staff';
 import { guestDossier, weeklyStats, vipUsers, happyNow } from '../../../growth';
 import { birthdayOffer, DEFAULT_PERCENT } from '../../../birthday';
-import { aiHeaders } from '../../../ai-key';
+import { aiHeaders, cloudflareOnly } from '../../../ai-key';
 import { fallbackAnalysis } from '../../../ai-fallback';
 export const dynamic = 'force-dynamic';
 
@@ -217,7 +217,8 @@ async function askAnalysis(lang: string, message: string, context: unknown, hist
     c = authConfig();
   let out = '',
     model = '';
-  if (token && c.url && c.key)
+  // Admin chose Cloudflare Workers AI only: skip OpenAI, the internal engine below answers.
+  if (token && c.url && c.key && !(await cloudflareOnly()))
     try {
       const res = await fetch(c.url + '/functions/v1/restaurantfoods-ai', {
         method: 'POST',

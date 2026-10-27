@@ -5,7 +5,7 @@ import {aiCatalog,validRecommendations} from '../../ai-catalog';
 import {guideActions,checkGuideAvailability,availabilitySpeech} from '../../ai-guide';
 import {requireFeature} from '../../plans';
 import {assertClientAiUser,takeClientAiQuestion,refundClientAiQuestion} from '../../client-ai';
-import {aiHeaders} from '../../ai-key';
+import {aiHeaders,cloudflareOnly} from '../../ai-key';
 import {fallbackClient} from '../../ai-fallback';
 export const dynamic='force-dynamic';
 export async function POST(request:Request){try{
@@ -19,6 +19,8 @@ export async function POST(request:Request){try{
  const quota=await takeClientAiQuestion(u);const refund=()=>quota?refundClientAiQuestion(u.userId,quota.day):Promise.resolve();
  // OpenAI unavailable (no key or session, billing, limits, timeout): the internal engine answers.
  const failed=async(status:number,error:string)=>{const fb=await fallbackClient(lang as any,message,history,catalog);if(fb)return json({reply:fb.reply,engine:fb.engine,recommendations:validRecommendations(fb.recommendations,catalog),actions:[],quota:quota&&{remaining:quota.remaining,limit:quota.limit}});await refund();throw new ApiError(status,error)};
+ // Admin chose Cloudflare Workers AI only: OpenAI is not called at all.
+ if(await cloudflareOnly())return await failed(503,'AI_UNAVAILABLE');
  if(!token||!c.url||!c.key)return await failed(token?503:401,token?'AI_UNAVAILABLE':'AI_LOGIN_REQUIRED');
  let response:Response;try{response=await fetch(c.url+'/functions/v1/restaurantfoods-ai',{method:'POST',headers:await aiHeaders({'Content-Type':'application/json',apikey:c.key,Authorization:'Bearer '+token,...(c.proxy?{'X-RF-Proxy':c.proxy}:{})}),body:JSON.stringify({message,lang,history,catalog,voice:b.voice===true,currentRestaurantId:catalog.some(r=>r.id===b.restaurantId)?b.restaurantId:null,serverDate:new Date(Date.now()+5*3600000).toISOString().slice(0,10)}),signal:AbortSignal.timeout(28000)})}catch{return await failed(504,'AI_TIMEOUT')}
  if(!response.ok){let error='';try{error=(await response.clone().json() as any).error}catch{}return await failed(response.status===429?429:response.status===401?401:503,error==='AI_BILLING_REQUIRED'?'AI_BILLING_REQUIRED':response.status===429?'AI_LIMIT':response.status===401?'AI_LOGIN_REQUIRED':['AI_CONFIGURATION','AI_MODEL_UNAVAILABLE','AI_TIMEOUT','AI_AUDIO_INVALID','AI_BILLING_REQUIRED'].includes(error)?error:'AI_UNAVAILABLE')}
