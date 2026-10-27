@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
 import { ApiError, json, failure, body, text, throttle } from '../../../http';
-import { telegram, html } from '../../../telegram';
+import { telegram, html, restaurantChats } from '../../../telegram';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const recent = await env.DB!.prepare('SELECT 1 FROM service_requests WHERE booking_id=? AND kind=? AND resolved_at IS NULL AND created_at>?').bind(bk.id, kind, new Date(Date.now() - 60000).toISOString()).first();
     if (recent) return json({ ok: true, repeated: true });
     await env.DB!.prepare('INSERT INTO service_requests (id,restaurant_id,booking_id,table_number,kind,created_at) VALUES (?,?,?,?,?,?)').bind(crypto.randomUUID(), bk.restaurant_id, bk.id, bk.table_number, kind, new Date().toISOString()).run();
-    if (bk.telegram_chat_id) await telegram('sendMessage', { chat_id: bk.telegram_chat_id, parse_mode: 'HTML', text: `<b>${bk.table_number}-stol: ${KINDS[kind]}</b>\n🏠 ${html(bk.restaurant_name)}` });
+    for (const chat_id of await restaurantChats(bk.restaurant_id)) await telegram('sendMessage', { chat_id, parse_mode: 'HTML', text: `<b>${bk.table_number}-stol: ${KINDS[kind]}</b>\n🏠 ${html(bk.restaurant_name)}` });
     return json({ ok: true });
   } catch (e) {
     return failure(e);

@@ -52,5 +52,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  tg.length=0;await call.runCallAi(Date.now()+30*60000);assert.ok(!tg.some(x=>x.body?.text?.includes('javob bermadi')),'reported once');
  // Manual call: Premium only.
  add('b9','biz','c3',300);assert.equal(await call.callNow('b9'),'plan');add('b10','prem','c3',300);assert.equal(await call.callNow('b10'),'calling');
+ // Restaurant alerts reach the owner's own Telegram when the restaurant chat was never linked (real case:
+ // a confirmed call was lost), plus managers while the plan has staff accounts; Telegram buttons follow.
+ db.exec("INSERT OR IGNORE INTO accounts(id,email,name,created_at,role,telegram_chat_id) VALUES ('o','o@x','Owner','now','restaurant_owner','901'),('m1','m@x','Manager','now','customer','902')");db.exec("UPDATE accounts SET telegram_chat_id='901' WHERE id='o'");
+ db.exec("INSERT INTO restaurant_staff(restaurant_id,user_id,role,created_by,created_at) VALUES ('prem','m1','manager','o','now')");
+ assert.deepEqual([...await telegram.restaurantChats('prem')],['777','902'],'linked restaurant chat first, managers too');
+ db.exec("UPDATE restaurants SET telegram_chat_id=NULL WHERE id='prem'");
+ assert.deepEqual([...await telegram.restaurantChats('prem')],['901','902'],'no restaurant chat: the owner gets it');
+ assert.deepEqual([...await telegram.restaurantChats('biz')],['888'],'its own linked chat; no managers without staff accounts');
+ add('bOwner','prem','c1',100);await call.runCallAi();tg.length=0;
+ assert.equal(await call.handleCallReply({callback_query:{id:'q9',data:'cc:y:bOwner',message:{chat:{id:500},message_id:9}}}),'call_confirmed');
+ assert.ok(tg.some(x=>x.body?.chat_id==='901'&&x.body.text.includes('tasdiqladi')),'confirmation reaches the owner');
  console.log('PASS call-ai: Premium-only T-2h calls (voice note + Yes/No), unreachable/no-answer/declined reported to the restaurant, Yes confirms, text/voice answers, own chat only, no double calls');
 })().catch(e=>{console.error(e);process.exitCode=1});

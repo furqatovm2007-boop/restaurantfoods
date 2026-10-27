@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { authConfig } from './auth-service';
 import { planState } from './plans';
-import { telegram, telegramConfigured, html } from './telegram';
+import { telegram, telegramConfigured, html, restaurantChats } from './telegram';
 import { aiHeaders, cloudflareOnly } from './ai-key';
 import { fallbackIntent } from './ai-fallback';
 
@@ -143,10 +143,10 @@ const REPORT: Record<string, string> = {
   unreachable: '⚠️ <b>Call AI:</b> mijozning Telegrami ulanmagan va telefon qo‘ng‘iroq xizmati sozlanmagan — mijoz faqat saytga kirsa javob bera oladi. Mijozga o‘zingiz qo‘ng‘iroq qiling.',
 };
 
-/** Tells the restaurant's linked Telegram chat; the dashboard shows the same call_status badge. */
+/** Tells the restaurant on Telegram (its chat, or the owner's own when none is linked); the dashboard shows the same call_status badge. */
 async function report(b: CallRow, outcome: keyof typeof REPORT) {
-  if (!b.restaurant_chat || !telegramConfigured()) return;
-  await telegram('sendMessage', { chat_id: b.restaurant_chat, parse_mode: 'HTML', text: `${REPORT[outcome]}\n🏠 ${html(b.restaurant_name)} · ${b.table_number}-stol · ${b.guests} kishi\n📅 ${html(b.date)} ${html(String(b.slot).slice(0, 5))}\n📞 ${html(b.phone)}` });
+  if (!telegramConfigured()) return;
+  for (const chat_id of await restaurantChats(b.restaurant_id)) await telegram('sendMessage', { chat_id, parse_mode: 'HTML', text: `${REPORT[outcome]}\n🏠 ${html(b.restaurant_name)} · ${b.table_number}-stol · ${b.guests} kishi\n📅 ${html(b.date)} ${html(String(b.slot).slice(0, 5))}\n📞 ${html(b.phone)}` });
 }
 
 /** Real phone call through Vapi, or a generic provider webhook. Returns true when the provider accepted it. */

@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { issueOtp, recentOtps } from './otp-store';
 import { createMagicLink } from './telegram-login';
+import { planState } from './plans';
 
 /*
  * Telegram bot.
@@ -89,13 +90,34 @@ async function loadBooking(id: string) {
     .first<BookingMessage & { restaurant_id: string; telegram_chat_id: string | null }>();
 }
 
-/** Sends the new-booking card to the restaurant's linked chat. Never throws. */
+/**
+ * Where a restaurant's alerts go: its linked restaurant chat, or the owner's own Telegram when no
+ * restaurant chat was linked, plus managers who linked theirs while the plan includes staff accounts.
+ */
+export async function restaurantChats(restaurantId: string) {
+  const r = await env.DB!.prepare('SELECT r.telegram_chat_id AS chat,a.telegram_chat_id AS owner_chat,r.plan,r.trial_ends_at,r.paid_until FROM restaurants r LEFT JOIN accounts a ON a.id=r.owner_id WHERE r.id=?')
+    .bind(restaurantId)
+    .first<{ chat: string | null; owner_chat: string | null; plan: string | null; trial_ends_at: string | null; paid_until: string | null }>();
+  if (!r) return [];
+  const chats = new Set<string>();
+  if (r.chat) chats.add(r.chat);
+  else if (r.owner_chat) chats.add(r.owner_chat);
+  if (planState(r).features.staffAccounts) {
+    const managers = await env.DB!.prepare("SELECT a.telegram_chat_id AS chat FROM restaurant_staff s JOIN accounts a ON a.id=s.user_id WHERE s.restaurant_id=? AND s.role='manager' AND a.telegram_chat_id IS NOT NULL AND a.telegram_chat_id<>''").bind(restaurantId).all<{ chat: string }>();
+    for (const m of managers.results) chats.add(m.chat);
+  }
+  return [...chats];
+}
+
+/** Sends the new-booking card to the restaurant's chats (restaurantChats). Never throws. */
 export async function notifyBooking(id: string) {
   if (!telegramConfigured()) return false;
   try {
     const b = await loadBooking(id);
-    if (!b?.telegram_chat_id) return false;
-    return !!(await telegram('sendMessage', { chat_id: b.telegram_chat_id, text: bookingText(b), parse_mode: 'HTML', reply_markup: b.status === 'pending' ? bookingKeyboard(b.id) : undefined }));
+    if (!b) return false;
+    let sent = false;
+    for (const chat_id of await restaurantChats(b.restaurant_id)) if (await telegram('sendMessage', { chat_id, text: bookingText(b), parse_mode: 'HTML', reply_markup: b.status === 'pending' ? bookingKeyboard(b.id) : undefined })) sent = true;
+    return sent;
   } catch {
     return false;
   }
@@ -284,8 +306,8 @@ export async function handleUpdate(update: Update) {
     const [, op, id] = cb.data.split(':');
     const answer = (text: string) => telegram('answerCallbackQuery', { callback_query_id: cb.id, text });
     const b = id ? await loadBooking(id) : null;
-    // Only the chat linked to the booking's restaurant may act on it.
-    if (!b || !TRANSITIONS[op] || b.telegram_chat_id !== String(cb.message.chat.id)) {
+    // Only a chat that receives this restaurant's alerts may act on it.
+    if (!b || !TRANSITIONS[op] || !(await restaurantChats(b.restaurant_id)).includes(String(cb.message.chat.id))) {
       await answer('Ruxsat yo‘q yoki bron topilmadi.');
       return 'denied';
     }

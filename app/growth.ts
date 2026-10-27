@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { planState } from './plans';
-import { telegram, telegramConfigured, html } from './telegram';
+import { telegram, telegramConfigured, html, restaurantChats } from './telegram';
 
 /*
  * Business/Premium growth features shared by the booking, table, camera and dashboard routes:
@@ -188,11 +188,8 @@ export async function checkServiceTimer(restaurantId: string, nowMs = Date.now()
     await env.DB!.prepare('INSERT INTO service_alerts (id,restaurant_id,table_number,minutes,created_at) VALUES (?,?,?,?,?)').bind(crypto.randomUUID(), restaurantId, t.table_number, waited, now).run();
     if (!telegramConfigured()) continue;
     const text = `⚠️ <b>${t.table_number}-stolda mijoz ${waited} daqiqadan beri kutmoqda!</b>\n🏠 ${html(r.name)}`;
-    // The owner's restaurant chat and every manager who linked Telegram.
-    const chats = new Set<string>();
-    if (r.telegram_chat_id) chats.add(r.telegram_chat_id);
-    for (const m of (await env.DB!.prepare("SELECT a.telegram_chat_id FROM restaurant_staff s JOIN accounts a ON a.id=s.user_id WHERE s.restaurant_id=? AND s.role='manager' AND a.telegram_chat_id IS NOT NULL").bind(restaurantId).all<{ telegram_chat_id: string }>()).results) chats.add(m.telegram_chat_id);
-    for (const chat of chats) await telegram('sendMessage', { chat_id: chat, text, parse_mode: 'HTML' });
+    // The restaurant chat (or the owner's own) and every manager who linked Telegram.
+    for (const chat of await restaurantChats(restaurantId)) await telegram('sendMessage', { chat_id: chat, text, parse_mode: 'HTML' });
   }
   return late.map((t) => t.table_number);
 }
