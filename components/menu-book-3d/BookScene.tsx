@@ -54,7 +54,12 @@ export interface BookSceneProps {
   assetsVersion: number;
   folioOf: (page: number) => number | null;
   onSpreadChange: (spread: number) => void;
-  onAction: (action: HotspotAction) => void;
+  /** `at` is the tap's screen point (for the cart flight animation). */
+  onAction: (action: HotspotAction, at?: { x: number; y: number }) => void;
+  /** − / + change the cart directly (no separate add button on the page). */
+  cartMode?: boolean;
+  /** Camera magnification, 1 = whole page or spread. Above 1 a drag pans instead of turning. */
+  zoom?: number;
   /** Called when a tap ran a hotspot, so the container does not also turn the page. */
   onHotspot?: () => void;
 }
@@ -91,6 +96,8 @@ interface Drag {
   moved: boolean;
   page: BookPage;
   uv: Vector2;
+  /** Zoomed in: the drag moves the view; pan at the start of the drag. */
+  pan?: { x: number; y: number };
 }
 
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
@@ -108,6 +115,12 @@ export function BookScene(props: BookSceneProps) {
   const light = useRef<DirectionalLight>(null);
   const count = sheets.length;
   const latest = useRef(props);
+  const pan = useRef({ x: 0, y: 0 });
+  // A zoom change moves the camera: render it, and back at 1× the view returns to the whole page.
+  useEffect(() => {
+    if ((props.zoom ?? 1) <= 1) pan.current = { x: 0, y: 0 };
+    invalidate();
+  }, [props.zoom, invalidate]);
   useLayoutEffect(() => {
     latest.current = props;
   });
@@ -157,7 +170,8 @@ export function BookScene(props: BookSceneProps) {
   }, [sheets]);
 
   const slots = useRef(new Map<number, PageSlot>());
-  const texWidth = narrow ? 720 : 1024;
+  // Sharp text and photos: page canvases near the screen's real pixel size (crisper still when zoomed).
+  const texWidth = narrow ? 1280 : 1600;
   const anisotropy = Math.min(narrow ? 4 : 8, gl.capabilities.getMaxAnisotropy());
 
   useEffect(
@@ -215,7 +229,7 @@ export function BookScene(props: BookSceneProps) {
         slot = { canvas, texture, hotspots: [], key: '' };
         slots.current.set(page.index, slot);
       }
-      slot.hotspots = drawPage(slot.canvas, page, { restaurantName, labels, quantities, flashed, images, side }, folioOf);
+      slot.hotspots = drawPage(slot.canvas, page, { restaurantName, labels, quantities, flashed, images, side, cartMode: props.cartMode }, folioOf);
       slot.key = key;
       slot.texture.needsUpdate = true;
       return slot;
@@ -372,12 +386,18 @@ export function BookScene(props: BookSceneProps) {
     const halfFov = MathUtils.degToRad(cam.fov / 2);
     const distance = Math.max(fitHeight / (2 * Math.tan(halfFov)), fitWidth / (2 * Math.tan(halfFov) * cam.aspect));
     const focusX = narrow && open ? (focus === 'left' ? -PAGE_WIDTH / 2 : PAGE_WIDTH / 2) : 0;
-    scratch.target.set(focusX, -0.06, distance);
+    // Zoom: the camera moves closer; the pan (kept inside the page area) picks the part in view.
+    const zoom = Math.max(1, latest.current.zoom ?? 1);
+    const limitX = (fitWidth / 2) * (1 - 1 / zoom),
+      limitY = (fitHeight / 2) * (1 - 1 / zoom);
+    pan.current.x = MathUtils.clamp(pan.current.x, -limitX, limitX);
+    pan.current.y = MathUtils.clamp(pan.current.y, -limitY, limitY);
+    scratch.target.set(focusX + pan.current.x, -0.06 + pan.current.y, distance / zoom);
     const before = cam.position.distanceToSquared(scratch.target);
     cam.position.x = MathUtils.damp(cam.position.x, scratch.target.x, 5, delta);
     cam.position.y = MathUtils.damp(cam.position.y, scratch.target.y, 5, delta);
     cam.position.z = MathUtils.damp(cam.position.z, scratch.target.z, 5, delta);
-    scratch.look.set(cam.position.x, 0, 0);
+    scratch.look.set(cam.position.x, cam.position.y + 0.06, 0);
     cam.lookAt(scratch.look);
     if (before > 1e-7) busy = true;
 
@@ -410,6 +430,16 @@ export function BookScene(props: BookSceneProps) {
       const d = drag.current;
       if (!d || e.pointerId !== d.pointerId) return;
       if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 8) return;
+      if (d.pan) {
+        // Zoomed in: drag the view (world units per screen pixel at the current camera distance).
+        d.moved = true;
+        const cam = camera as PerspectiveCamera;
+        const perPixel = (2 * Math.tan(MathUtils.degToRad(cam.fov / 2)) * cam.position.z) / size.height;
+        pan.current.x = d.pan.x - (e.clientX - d.startX) * perPixel;
+        pan.current.y = d.pan.y + (e.clientY - d.startY) * perPixel;
+        invalidate();
+        return;
+      }
       const x = localX(e.clientX, e.clientY);
       if (x === null) return;
       const now = performance.now();
@@ -444,8 +474,12 @@ export function BookScene(props: BookSceneProps) {
         const hit = hotspotAt(d.page, d.uv, d.sheet < current ? 'left' : 'right');
         if (hit) {
           onHotspot?.();
-          onAction(hit.action);
+          onAction(hit.action, { x: e.clientX, y: e.clientY });
         }
+        return;
+      }
+      if (d.pan) {
+        onHotspot?.();
         return;
       }
       const forwardDrag = d.sheet === current;
@@ -484,6 +518,7 @@ export function BookScene(props: BookSceneProps) {
     const m = motionOf().list[sheetIndex];
     if (!top || m.t !== m.to || !e.uv) return;
     const x = localX(e.clientX, e.clientY) ?? 0;
+    const zoomed = (latest.current.zoom ?? 1) > 1;
     drag.current = {
       sheet: sheetIndex,
       origin: x,
@@ -498,6 +533,7 @@ export function BookScene(props: BookSceneProps) {
       moved: false,
       page: side === 'right' ? sheet.front : sheet.back,
       uv: e.uv.clone(),
+      pan: zoomed ? { ...pan.current } : undefined,
     };
   };
 

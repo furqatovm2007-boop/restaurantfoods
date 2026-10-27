@@ -87,4 +87,7 @@ export interface BookLabels {
   soundOff: string;
   hint: string;
   empty: string;
+  zoomIn: string;
+  zoomOut: string;
+  cart: string;
 }

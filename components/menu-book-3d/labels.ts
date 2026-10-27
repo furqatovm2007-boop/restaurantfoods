@@ -20,6 +20,9 @@ export const defaultLabels: Record<BookLang, BookLabels> = {
     soundOff: 'Varaq ovozi o‘chirilgan',
     hint: 'Sahifa chetidan ushlab torting yoki strelkalardan foydalaning',
     empty: 'Taomlar yo‘q',
+    zoomIn: 'Kattalashtirish',
+    zoomOut: 'Kichiklashtirish',
+    cart: 'Savat',
   },
   ru: {
     menu: 'Меню',
@@ -40,6 +43,9 @@ export const defaultLabels: Record<BookLang, BookLabels> = {
     soundOff: 'Звук страниц выключен',
     hint: 'Потяните страницу за край или используйте стрелки',
     empty: 'Нет блюд',
+    zoomIn: 'Увеличить',
+    zoomOut: 'Уменьшить',
+    cart: 'Корзина',
   },
   en: {
     menu: 'Menu',
@@ -60,6 +66,9 @@ export const defaultLabels: Record<BookLang, BookLabels> = {
     soundOff: 'Page sound off',
     hint: 'Drag a page by its edge or use the arrows',
     empty: 'No dishes',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    cart: 'Cart',
   },
 };
 

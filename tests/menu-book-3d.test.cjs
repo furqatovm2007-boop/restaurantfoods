@@ -29,7 +29,8 @@ let formClick=null;const form={isConnected:true,classList:{add(c){form.added=c}}
 const attrs={},launcher={hidden:true,closest:()=>form,focus(){},getAttribute:k=>attrs[k]??null,setAttribute:(k,v)=>{attrs[k]=v},removeAttribute:k=>{delete attrs[k]}};
 const ctx={document:{documentElement:{lang:'uz'},querySelector:s=>s==='[data-menu-3d-open]'?launcher:null,createElement:()=>({getContext:()=>({})})},
  window:{RF3DLoad:async()=>({fullscreenMenu:{open(props){opened=props;return {close(){}}}}})},CSS:{escape:s=>s},Promise,Map,Boolean,String,JSON,matchMedia:()=>({matches:false}),setTimeout,
- t:s=>'T:'+s,money:n=>n+' sum',notify:()=>{},menuCategory:m=>m.category,menuCategories:['Salatlar','Desertlar'],readCart:()=>cart};
+ t:s=>'T:'+s,money:n=>n+' sum',notify:()=>{},menuCategory:m=>m.category,menuCategories:['Salatlar','Desertlar'],state:{cart:null},readCart:()=>ctx.state.cart||cart,saveCart:()=>{},confirm:()=>true};
+const flights=[];ctx.window.RFCartFX={arm(){},point:(at,photo,back)=>flights.push({at,photo,back})};
 vm.createContext(ctx);vm.runInContext(snippet,ctx);
 ctx.bindMenuBook3D({name:'Real'},[{id:'b',category:'Desertlar',price:5,available:true},{id:'a',category:'Salatlar',price:3,available:true,image_url:'/x.jpg'}]);
 assert.equal(launcher.hidden,false,'launcher shown once WebGL is available');assert.equal(form.added,'menu-3d-only','Business/Premium show only the 3D book');
@@ -37,8 +38,14 @@ assert.equal(launcher.hidden,false,'launcher shown once WebGL is available');ass
  assert.ok(opened,'full-screen menu opened');assert.equal(opened.lang,'uz');assert.equal(opened.origin,launcher,'book grows out of the launcher');
  assert.deepEqual([...opened.data.chapters.map(c=>c.title)],['T:Salatlar','T:Desertlar']);
  assert.equal(opened.data.chapters[0].dishes[0].price,'3 sum');assert.equal(opened.data.chapters[0].dishes[0].image,'/x.jpg');
- assert.equal(opened.onAddToCart({id:'a'},4),true);assert.equal(input.value,'4');assert.equal(clicked,1);
- assert.equal(opened.onAddToCart({id:'missing'},1),false);assert.equal(clicked,1);
+ // − / + in the book change the cart by one dish; + flies into the cart, − flies back out.
+ assert.equal(opened.onAddToCart,undefined,'no separate add-to-cart button');assert.equal(opened.cartQuantity('a'),0);
+ assert.equal(opened.onCartChange({id:'a'},1,{x:5,y:6}),true);assert.equal(opened.cartQuantity('a'),1);assert.deepEqual({...flights[0],at:{...flights[0].at}},{at:{x:5,y:6},photo:'/x.jpg',back:false});
+ assert.equal(opened.onCartChange({id:'a'},1,null),true);assert.equal(opened.cartQuantity('a'),2);
+ assert.equal(opened.onCartChange({id:'a'},-1,{x:1,y:2}),true);assert.equal(opened.cartQuantity('a'),1);assert.equal(flights.at(-1).back,true,'minus flies back from the cart');
+ assert.equal(opened.onCartChange({id:'a'},-1,null),true);assert.equal(ctx.state.cart.items.length,0,'zero leaves the cart');
+ assert.equal(opened.onCartChange({id:'a'},-1,null),false,'nothing to take out');assert.equal(opened.onCartChange({id:'missing'},1,null),false);
+ for(let i=0;i<20;i++)opened.onCartChange({id:'a'},1,null);assert.equal(opened.onCartChange({id:'a'},1,null),false,'20 at most');assert.equal(clicked,0,'the page add button is not used');
  // Tapping a dish photo opens the book on that dish, growing out of its card; controls do not.
  const card={dataset:{dish:'a'}},at=hit=>({target:{closest:s=>s==='.food-card[data-dish]'?card:s.startsWith('button')?(hit==='button'?{}:null):s==='.food-image,h3'?(hit==='photo'?{}:null):null}});
  opened=null;formClick(at('button'));await new Promise(r=>setTimeout(r,0));assert.equal(opened,null,'stepper buttons do not open the book');

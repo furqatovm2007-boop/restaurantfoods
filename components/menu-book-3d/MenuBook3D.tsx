@@ -14,6 +14,13 @@ export interface MenuBook3DProps {
   labels?: Partial<BookLabels>;
   /** Called by the explicit "Add to cart" control only. Return false when the cart rejected it. */
   onAddToCart?: (dish: MenuDish, quantity: number) => boolean | void;
+  /**
+   * Cart mode: − / + on the page change the cart by one (no "Add to cart" button). `at` is the tapped
+   * screen point for the flight animation. Return false when the cart rejected the change.
+   */
+  onCartChange?: (dish: MenuDish, delta: 1 | -1, at: { x: number; y: number } | null) => boolean | void;
+  /** How many of a dish are in the cart now (cart mode). */
+  cartQuantity?: (dishId: string) => number;
   soundSrc?: string;
   /** Open straight to the contents instead of showing the closed cover. */
   initiallyOpen?: boolean;
@@ -62,7 +69,9 @@ function useReducedMotion() {
 const isReadable = (page: BookPage | null) =>
   !!page && page.content.kind !== 'endpaper' && page.content.kind !== 'cover' && page.content.kind !== 'back-cover';
 
-export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, soundSrc, initiallyOpen = false, className = '', fill = false, ref }: MenuBook3DProps) {
+const ZOOMS = [1, 1.5, 2, 2.5, 3];
+
+export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, onCartChange, cartQuantity, soundSrc, initiallyOpen = false, className = '', fill = false, ref }: MenuBook3DProps) {
   const labels = useMemo(() => resolveLabels(lang, labelOverrides), [lang, labelOverrides]);
   const { pages, sheets, toc } = useMemo(() => buildBook(data), [data]);
   const dishes = useMemo(() => new Map(data.chapters.flatMap((c) => c.dishes.map((d) => [d.id, d] as const))), [data]);
@@ -79,6 +88,12 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
   const [spread, setSpread] = useState(initiallyOpen ? 1 : 0);
   const [focus, setFocus] = useState<'left' | 'right'>('right');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const cartMode = !!onCartChange;
+  // Cart mode shows what is in the cart; re-read after every change (the cart can also change elsewhere).
+  const readCartQty = useCallback(() => Object.fromEntries([...dishes.keys()].map((id) => [id, cartQuantity?.(id) ?? 0])), [dishes, cartQuantity]);
+  const [cartQty, setCartQty] = useState<Record<string, number>>(readCartQty);
+  const [zoom, setZoom] = useState(1);
+  const zoomBy = useCallback((step: number) => setZoom((z) => ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(z) + step))] ?? 1), []);
   const [flashed, setFlashed] = useState<ReadonlySet<string>>(() => new Set());
   const [assetsVersion, setAssetsVersion] = useState(0);
   const images = useMemo(() => new ImageCache(), []);
@@ -145,6 +160,8 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
     if (!tap || tap.id !== e.pointerId || Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10 || performance.now() - tap.t > 450) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const forward = e.clientX > rect.left + rect.width / 2;
+    // Zoomed in, a tap only presses buttons; drags pan the view.
+    if (zoom > 1) return;
     // The scene's own pointerup (hotspots) runs after this one; decide once it has.
     window.setTimeout(() => {
       if (performance.now() - hotspotAt.current < 300) return;
@@ -200,15 +217,60 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
     [pages, goToPage, turnTo, close],
   );
 
+  const cartStep = useCallback(
+    (id: string, delta: 1 | -1, at: { x: number; y: number } | null) => {
+      const dish = dishes.get(id);
+      if (!dish?.available || !onCartChange) return;
+      // Read the cart itself, not the last render: quick taps arrive before React re-renders.
+      if (delta < 0 && !(cartQuantity?.(id) ?? 0)) return;
+      if (onCartChange(dish, delta, at) === false) return;
+      setCartQty(readCartQty());
+    },
+    [dishes, onCartChange, cartQuantity, readCartQty],
+  );
+
   const onAction = useCallback(
-    (action: HotspotAction) => {
+    (action: HotspotAction, at?: { x: number; y: number }) => {
       if (action.type === 'open') turnTo(spread === last ? last - 1 : 1, 'right');
       else if (action.type === 'goto') goToPage(action.page);
+      else if (action.type === 'qty' && cartMode) cartStep(action.dishId, action.delta, at ?? null);
       else if (action.type === 'qty') changeQty(action.dishId, action.delta);
       else add(action.dishId);
     },
-    [turnTo, spread, last, goToPage, changeQty, add],
+    [turnTo, spread, last, goToPage, changeQty, add, cartMode, cartStep],
   );
+
+  // Pinch with two fingers or Ctrl + wheel / trackpad pinch zooms the book.
+  const pinch = useRef(new Map<number, { x: number; y: number }>());
+  const pinchStart = useRef<{ distance: number; zoom: number } | null>(null);
+  const trackPinch = (e: React.PointerEvent, phase: 'down' | 'move' | 'up') => {
+    const points = pinch.current;
+    if (phase === 'up') {
+      points.delete(e.pointerId);
+      if (points.size < 2) pinchStart.current = null;
+      return;
+    }
+    if (phase === 'down' || points.has(e.pointerId)) points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (points.size !== 2) return;
+    const [a, b] = [...points.values()];
+    const distance = Math.hypot(a.x - b.x, a.y - b.y);
+    if (!pinchStart.current) pinchStart.current = { distance, zoom };
+    else {
+      const wanted = pinchStart.current.zoom * (distance / Math.max(1, pinchStart.current.distance));
+      setZoom(Math.max(1, Math.min(3, Math.round(wanted * 4) / 4)));
+    }
+  };
+  useEffect(() => {
+    const el = container.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom((z) => Math.max(1, Math.min(3, Math.round((z - e.deltaY * 0.01) * 4) / 4)));
+    };
+    el.addEventListener('wheel', wheel, { passive: false });
+    return () => el.removeEventListener('wheel', wheel);
+  }, [container]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.altKey || e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest('button,input,select,textarea,a')) return;
@@ -245,7 +307,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
       aria-roledescription="3D menu book"
       aria-label={`${data.restaurantName} — ${labels.menu}`}
     >
-      <nav className={`rf:flex rf:items-center rf:gap-2 rf:overflow-x-auto rf:px-4 rf:pt-4 rf:pb-1 rf:[scrollbar-width:none] ${fill ? 'rf:pr-16' : ''}`} aria-label={labels.contents}>
+      <nav className={`rf:flex rf:items-center rf:gap-2 rf:overflow-x-auto rf:px-4 rf:pt-4 rf:pb-1 rf:[scrollbar-width:none] ${fill ? 'rf:pr-32' : ''}`} aria-label={labels.contents}>
         <button type="button" className={`${chip} ${spread === 1 ? 'rf:border-teal rf:bg-teal rf:text-night' : 'rf:border-line rf:bg-transparent rf:text-text/80 rf:hover:border-teal/60'}`} onClick={() => turnTo(1, 'right')}>
           {labels.contents}
         </button>
@@ -266,8 +328,16 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
         ref={container}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        onPointerDown={onZoneDown}
-        onPointerUp={onZoneUp}
+        onPointerDown={(e) => {
+          trackPinch(e, 'down');
+          onZoneDown(e);
+        }}
+        onPointerMove={(e) => trackPinch(e, 'move')}
+        onPointerUp={(e) => {
+          trackPinch(e, 'up');
+          onZoneUp(e);
+        }}
+        onPointerCancel={(e) => trackPinch(e, 'up')}
         onContextMenu={(e) => e.preventDefault()}
         className={`rf-book-surface rf:relative rf:w-full ${fill ? 'rf:touch-none rf:min-h-0 rf:flex-1' : 'rf:touch-pan-y rf:h-[min(78vh,calc(100vw*1.45))] rf:sm:h-[min(78vh,620px)] rf:lg:h-[min(76vh,680px)]'} rf:outline-none rf:focus-visible:ring-2 rf:focus-visible:ring-inset rf:focus-visible:ring-blue/40`}
       >
@@ -292,7 +362,9 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
               reducedMotion={reducedMotion}
               restaurantName={data.restaurantName}
               labels={labels}
-              quantities={quantities}
+              quantities={cartMode ? cartQty : quantities}
+              cartMode={cartMode}
+              zoom={zoom}
               flashed={flashed}
               images={images}
               assetsVersion={assetsVersion}
@@ -314,13 +386,23 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
           {status}
         </p>
         <div className="rf:flex rf:gap-2">
+          <button type="button" className={control} onClick={() => zoomBy(-1)} disabled={zoom <= 1} aria-label={labels.zoomOut} title={labels.zoomOut}>
+            <span aria-hidden="true">－</span>
+          </button>
+          <span className="rf:hidden rf:min-w-12 rf:items-center rf:justify-center rf:text-xs rf:text-text/70 rf:sm:inline-flex" aria-live="polite">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button type="button" className={control} onClick={() => zoomBy(1)} disabled={zoom >= 3} aria-label={labels.zoomIn} title={labels.zoomIn}>
+            <span aria-hidden="true">＋</span>
+          </button>
           <button type="button" className={control} onClick={sound.toggle} aria-pressed={sound.enabled} title={sound.enabled ? labels.soundOn : labels.soundOff}>
             <span aria-hidden="true">{sound.enabled ? '♫' : '♩'}</span>
             <span className="rf:sr-only">{sound.enabled ? labels.soundOn : labels.soundOff}</span>
           </button>
           {spread !== 0 && (
-            <button type="button" className={control} onClick={close}>
-              {labels.close}
+            <button type="button" className={control} onClick={close} aria-label={labels.close}>
+              <span className="rf:hidden rf:sm:inline">{labels.close}</span>
+              <span className="rf:sm:hidden" aria-hidden="true">📕</span>
             </button>
           )}
         </div>
@@ -337,7 +419,13 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, so
             <h4>{dish.name}</h4>
             <p>{dish.price}</p>
             {dish.description && <p>{dish.description}</p>}
-            {dish.available ? (
+            {dish.available && cartMode ? (
+              <>
+                <button type="button" onClick={(e) => cartStep(dish.id, -1, { x: e.clientX, y: e.clientY })}>−</button>
+                <span>{cartQty[dish.id] ?? 0}</span>
+                <button type="button" onClick={(e) => cartStep(dish.id, 1, { x: e.clientX, y: e.clientY })}>+</button>
+              </>
+            ) : dish.available ? (
               <>
                 <button type="button" onClick={() => changeQty(dish.id, -1)}>−</button>
                 <span>{quantities[dish.id] ?? 1}</span>

@@ -136,11 +136,17 @@ function menuBookData(r,menu){const groups=new Map();for(const m of menu){const 
  const keys=[...groups.keys()].sort((a,b)=>{const ai=menuCategories.indexOf(a),bi=menuCategories.indexOf(b);return (ai<0?99:ai)-(bi<0?99:bi)});
  return {restaurantName:r.name,chapters:keys.map((k,i)=>({key:'menuCategory'+i,title:t(k),dishes:groups.get(k).map(m=>({id:m.id,name:m.name,description:m.description||'',ingredients:m.ingredients||'',price:money(m.price),image:m.image_url||null,available:Boolean(m.available)}))}))}}
 function bindMenuBook3D(r,menu){const button=document.querySelector('[data-menu-3d-open]'),form=button?.closest('form');if(!button||!form||!menu.length)return;const probe=document.createElement('canvas');try{if(!(probe.getContext('webgl2')||probe.getContext('webgl')))return}catch{return}if(matchMedia('(hover:hover) and (prefers-reduced-motion:no-preference)').matches){button.onpointermove=e=>{const b=button.getBoundingClientRect(),x=(e.clientX-b.left)/b.width-.5,y=(e.clientY-b.top)/b.height-.5;button.style.setProperty('--rx',(-y*10).toFixed(2)+'deg');button.style.setProperty('--ry',(x*14).toFixed(2)+'deg');button.style.setProperty('--gx',((x+.5)*100).toFixed(1)+'%')};button.onpointerleave=()=>{for(const k of ['--rx','--ry','--gx'])button.style.removeProperty(k)}}
- // Adding goes through the existing button handler so cart validation, confirmation and flight effects stay identical.
- const onAddToCart=(dish,quantity)=>{const input=form.elements.namedItem(dish.id),add=form.querySelector('[data-menu-add="'+CSS.escape(dish.id)+'"]');if(!input||!add)return false;const before=JSON.stringify(readCart());input.value=String(quantity);add.click();return JSON.stringify(readCart())!==before};
  // origin: the element the full-screen book grows out of and shrinks back into.
  // The 3D bundle loads only on the first tap (no background preload: on phones it froze the page).
- const open=(revealDishId,origin=button)=>{if(button.getAttribute('aria-busy')==='true')return;button.setAttribute('aria-busy','true');return window.RF3DLoad?.().then(api=>{if(form.isConnected)api.fullscreenMenu.open({data:menuBookData(r,menu),lang:document.documentElement.lang,onAddToCart,revealDishId,origin,onClose:()=>button.focus()})}).catch(()=>notify('3D menyuni ochib bo‘lmadi.')).finally(()=>button.removeAttribute('aria-busy'))};
+ // In the book − / + change the cart itself by one dish: + flies the dish into the cart, − flies it back out.
+ const cartQuantity=id=>{const c=readCart();return c?.restaurantId===r.id?(c.items.find(i=>i.id===id)?.quantity||0):0};
+ const onCartChange=(dish,delta,at)=>{const m=menu.find(x=>x.id===dish.id);if(!m?.available)return false;const cart=readCart(),same=cart?.restaurantId===r.id,items=same?cart.items.map(i=>({...i})):[],existing=items.find(i=>i.id===m.id),next=(existing?.quantity||0)+delta;
+  if(next<0||next>20){if(next>20)notify(t('Savatda bir taomdan ko‘pi bilan 20 ta bo‘lishi mumkin.'));return false}
+  window.RFCartFX?.arm();if(delta>0&&cart?.items.length&&!same&&!confirm(t('Boshqa restoran tanlandi. Avvalgi savat almashtirilsinmi?')))return false;
+  if(existing)existing.quantity=next;else items.push({id:m.id,quantity:next});
+  state.cart={restaurantId:r.id,items:items.filter(i=>i.quantity>0),fulfillment:same?cart.fulfillment||'':''};saveCart();form.rfCartUpdate?.();
+  window.RFCartFX?.point?.(at,m.image_url||'',delta<0);return true};
+ const open=(revealDishId,origin=button)=>{if(button.getAttribute('aria-busy')==='true')return;button.setAttribute('aria-busy','true');return window.RF3DLoad?.().then(api=>{if(form.isConnected)api.fullscreenMenu.open({data:menuBookData(r,menu),lang:document.documentElement.lang,onCartChange,cartQuantity,revealDishId,origin,onClose:()=>{form.rfCartUpdate?.();button.focus()}})}).catch(()=>notify('3D menyuni ochib bo‘lmadi.')).finally(()=>button.removeAttribute('aria-busy'))};
  button.hidden=false;button.onclick=()=>open();button.onpointerdown=()=>{button.onpointerdown=null;window.RF3DLoad?.().catch(()=>{})};
  // Business/Premium: the 3D book is the menu. The plain list stays in the page (hidden) so cart
  // validation and the add buttons keep working; it shows again only if WebGL is missing.
@@ -432,6 +438,7 @@ function bindMenuCart(r,menu){
   state.cart={restaurantId:r.id,items,fulfillment:sameRestaurant?cart.fulfillment||'':''};
   saveCart();update();window.RFCartFX?.add(button)
  });
+ form.rfCartUpdate=update;
  form.onsubmit=e=>{e.preventDefault();location.hash='/cart'};update()
 }
 function cartQuote(cart,menu,r){const items=cart.items.map(i=>{const m=menu.find(m=>m.id===i.id&&m.restaurant_id===r.id&&m.available);return m?{...i,name:m.name,price:m.price}:null}),invalid=items.some(i=>!i),valid=items.filter(Boolean),subtotal=valid.reduce((s,i)=>s+i.price*i.quantity,0),fee=cart.fulfillment==='delivery'?Number(r.delivery_fee)||0:0;return {items:valid,invalid,subtotal,fee,total:subtotal+fee}}

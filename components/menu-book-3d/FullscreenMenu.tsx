@@ -28,6 +28,16 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: 'portrait') => Promi
  */
 export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }: FullscreenMenuProps) {
   const [shown, setShown] = useState(false);
+  // Cart mode: a cart badge in the corner is where dishes fly to (and back from); it opens the cart.
+  const cartCount = () => book.data.chapters.reduce((n, c) => n + c.dishes.reduce((m, d) => m + (book.cartQuantity?.(d.id) ?? 0), 0), 0);
+  const [inCart, setInCart] = useState(cartCount);
+  const onCartChange: FullscreenMenuProps['onCartChange'] = book.onCartChange
+    ? (dish, delta, at) => {
+        const ok = book.onCartChange!(dish, delta, at);
+        setInCart(cartCount());
+        return ok;
+      }
+    : undefined;
   // Phones held sideways: the book is designed for portrait, so ask to rotate.
   const sideways = useLandscapePhone();
   const handle = useRef<MenuBook3DHandle>(null);
@@ -80,6 +90,7 @@ export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }:
 
   const rotate = ROTATE_TEXT[lang === 'ru' || lang === 'en' ? lang : 'uz'];
   const closeLabel = { uz: 'Yopish', ru: 'Закрыть', en: 'Close' }[lang === 'ru' || lang === 'en' ? lang : 'uz'];
+  const cartLabel = { uz: 'Savat', ru: 'Корзина', en: 'Cart' }[lang === 'ru' || lang === 'en' ? lang : 'uz'];
 
   return (
     <div
@@ -102,8 +113,25 @@ export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }:
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
       </button>
+      {onCartChange && (
+        <a
+          href="#/cart"
+          data-rf-book-cart=""
+          onClick={() => close()}
+          aria-label={`${cartLabel}: ${inCart}`}
+          className="rf:absolute rf:top-3 rf:right-[4.5rem] rf:z-30 rf:grid rf:size-12 rf:place-items-center rf:rounded-full rf:border-2 rf:border-gold rf:bg-night/90 rf:text-gold rf:no-underline rf:shadow-[0_0_0_4px_rgba(8,21,33,0.6)] rf:transition rf:hover:scale-105"
+          style={{ marginTop: 'env(safe-area-inset-top)', marginRight: 'env(safe-area-inset-right)' }}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+            <path d="M2 3h3l3 13h11l3-9H6" />
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+          </svg>
+          {inCart > 0 && <b className="rf:absolute rf:-top-1 rf:-right-1 rf:grid rf:min-w-5 rf:h-5 rf:place-items-center rf:rounded-full rf:bg-teal rf:px-1 rf:text-[11px] rf:text-night">{inCart}</b>}
+        </a>
+      )}
       <div className={`rf:min-h-0 rf:flex-1 rf:transition rf:duration-300 rf:ease-out ${shown || genie ? 'rf:translate-y-0 rf:scale-100' : 'rf:translate-y-6 rf:scale-[0.97]'}`}>
-        <MenuBook3D {...book} lang={lang} ref={handle} fill />
+        <MenuBook3D {...book} onCartChange={onCartChange} lang={lang} ref={handle} fill />
       </div>
       {sideways && (
         <div className="rf:absolute rf:inset-0 rf:z-20 rf:grid rf:place-items-center rf:bg-night rf:p-6 rf:text-center" role="alert">

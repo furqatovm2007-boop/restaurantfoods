@@ -13,6 +13,8 @@ export interface PageDrawState {
   images: ImageCache;
   /** Left pages put the gutter shadow on the right edge. */
   side: 'left' | 'right';
+  /** − / + change the cart itself (quantities are the cart's); no separate add button. */
+  cartMode?: boolean;
 }
 
 type Ctx = CanvasRenderingContext2D;
@@ -360,7 +362,7 @@ function drawDish(ctx: Ctx, dish: MenuDish, x: number, y: number, width: number,
     ctx.fillText(state.labels.unavailable, x, ry + 42);
     return;
   }
-  const qty = state.quantities[dish.id] ?? 1;
+  const qty = state.quantities[dish.id] ?? (state.cartMode ? 0 : 1);
   const btn = rh;
   const stepper = (bx: number, glyph: string, delta: 1 | -1) => {
     roundRect(ctx, bx, ry, btn, rh, 14);
@@ -375,6 +377,36 @@ function drawDish(ctx: Ctx, dish: MenuDish, x: number, y: number, width: number,
     ctx.fillText(glyph, bx + btn / 2, ry + rh / 2 + 12);
     hot.push({ x: bx / w, y: ry / h, w: btn / w, h: rh / h, action: { type: 'qty', dishId: dish.id, delta } });
   };
+  if (state.cartMode) {
+    // Cart steppers across the whole row: − on the left, + on the right, the count in the cart between.
+    const wide = Math.min(150, (width - 120) / 2);
+    const big = (bx: number, glyph: string, delta: 1 | -1, strong: boolean) => {
+      roundRect(ctx, bx, ry, wide, rh, 16);
+      if (strong) {
+        const fill = ctx.createLinearGradient(bx, ry, bx + wide, ry + rh);
+        fill.addColorStop(0, palette.coverLight);
+        fill.addColorStop(1, palette.coverDark);
+        ctx.fillStyle = fill;
+      } else ctx.fillStyle = 'rgba(32,55,53,0.06)';
+      ctx.fill();
+      ctx.strokeStyle = strong ? 'rgba(32,55,53,0.5)' : 'rgba(32,55,53,0.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = strong ? palette.goldSoft : delta < 0 && !qty ? palette.inkMuted : palette.ink;
+      ctx.font = `600 40px ${uiFont}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(glyph, bx + wide / 2, ry + rh / 2 + 14);
+      hot.push({ x: bx / w, y: ry / h, w: wide / w, h: rh / h, action: { type: 'qty', dishId: dish.id, delta } });
+    };
+    big(x, '−', -1, false);
+    big(x + width - wide, '+', 1, true);
+    ctx.fillStyle = qty ? palette.ink : palette.inkMuted;
+    ctx.font = `700 36px ${uiFont}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(String(qty), x + width / 2, ry + rh / 2 + 13);
+    ctx.textAlign = 'left';
+    return;
+  }
   stepper(x, '−', -1);
   ctx.font = `600 32px ${uiFont}`;
   ctx.fillStyle = palette.ink;
