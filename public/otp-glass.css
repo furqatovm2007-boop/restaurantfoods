@@ -64,3 +64,4 @@ body:has(.rf-otp-host:not([hidden])) .rf-otp-proxied,.rf-otp-form:has(.rf-otp-ho
 @media(max-width:420px){.rf-otp{--w:40px;--h:50px;--g:6px;padding:24px 14px 18px}.rf-otp-box{font-size:21px}}
 @media(max-width:340px){.rf-otp{--w:36px;--h:46px;--g:5px}}
 @media(prefers-reduced-motion:reduce){.rf-otp-streak,.rf-otp.is-orbit .rf-otp-ring,.rf-otp.is-orbit .rf-otp-box{animation:none}.rf-otp-box,.rf-otp-stage,.rf-otp-core{transition:none}}
+.booking-otp{display:grid;gap:10px;margin:12px 0}.booking-otp>#bookingOtpSend{justify-self:start}

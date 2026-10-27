@@ -29,6 +29,11 @@ const book=extra=>bookings.POST(request('/api/bookings',{...base,...extra}));
 assert.equal((await book({})).status,400,'no OTP');
 let r=await otpRoute.POST(request('/api/bookings/phone-otp',{phone:'+998901234567'}));assert.equal(r.status,200);const otp=await r.json();assert.equal(calls.pop().sms,'998901234567');assert.match(smsCode,/^\d{6}$/);
 assert.ok(!JSON.stringify(db.prepare('SELECT * FROM booking_phone_otps').all()).includes(smsCode),'code stored hashed');
+// The form's instant check: wrong code 400, right code verified but not used up (the booking below still needs it).
+const check=code=>otpRoute.POST(request('/api/bookings/phone-otp',{action:'check',phone:'+998901234567',id:otp.id,code}));
+assert.equal((await check(smsCode==='000000'?'111111':'000000')).status,400,'check: wrong code');
+r=await check(smsCode);assert.equal(r.status,200);assert.equal((await r.json()).verified,true);
+assert.equal(db.prepare('SELECT consumed FROM booking_phone_otps WHERE id=?').get(otp.id).consumed,0,'check does not consume the code');
 assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode==='000000'?'111111':'000000'})).status,400,'wrong code');
 assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode,phone:'+998901111111'})).status,400,'code bound to phone');
 db.prepare("INSERT OR IGNORE INTO accounts(id,email,name,created_at) VALUES ('client','c@x','C','now')").run();

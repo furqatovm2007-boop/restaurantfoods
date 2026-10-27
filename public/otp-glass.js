@@ -11,12 +11,16 @@
  *                              the panel's countdown clicks it. Without it there is no countdown row.
  *   data-rf-otp-until="ms"     when resending becomes possible (default: 60 s from now)
  *   data-rf-otp-nobutton       no own button (the form has other fields and its own submit button)
+ *   data-rf-otp-event          the code sits inside a bigger form (booking): six digits or the button do not
+ *                              submit it, they fire 'rf-otp-complete' on the input and the page checks the
+ *                              code with RF_OTP.run(input, fn); the verified state then stays on screen.
  *
  * RF_OTP.run(form, fn) plays the 1.6 s check: the six boxes form a circle (0–0.4 s), orbit 360° (0.4–1.1 s,
  * longer while the server answers), merge into one centre cell (1.1–1.5 s) and turn emerald with a drawn
  * check; after 0.8 s more fn's result is returned and the caller signs in / redraws. A rejected fn shakes
  * the boxes red, puts them back in a row, clears them and rethrows for the caller's message.
- * RF_OTP.start(el) restarts the countdown and focuses the first box (after a code was just sent).
+ * RF_OTP.start(el) restarts the countdown, clears a previous result and focuses the first box (after a
+ * code was just sent).
  */
 (() => {
   const COPY = {
@@ -42,12 +46,12 @@
       if (old.id) host.id = old.id;
       host.hidden = old.hidden;
     }
-    const resendSel = input.dataset.rfOtpResend, button = !('rfOtpNobutton' in input.dataset);
+    const resendSel = input.dataset.rfOtpResend, button = !('rfOtpNobutton' in input.dataset), event = 'rfOtpEvent' in input.dataset;
     host.innerHTML = `<div class="rf-otp" role="group" aria-label="${esc(input.dataset.rfOtpTitle || c.title)}"><i class="rf-otp-streak" aria-hidden="true"></i><i class="rf-otp-streak b" aria-hidden="true"></i><i class="rf-otp-corner tl" aria-hidden="true"></i><i class="rf-otp-corner tr" aria-hidden="true"></i><i class="rf-otp-corner bl" aria-hidden="true"></i><i class="rf-otp-corner br" aria-hidden="true"></i>
 <div class="rf-otp-badge"><span class="rf-otp-key">${KEY}</span><span class="rf-otp-shield">${SHIELD}</span></div>
 <h3 class="rf-otp-title">${esc(input.dataset.rfOtpTitle || c.title)}</h3><p class="rf-otp-sub">${esc(input.dataset.rfOtpSub || c.sub)}</p>
 <div class="rf-otp-stage"><div class="rf-otp-ring">${Array.from({ length: 6 }, (_, i) => `<input class="rf-otp-box" data-otp-box="${i}" aria-label="${esc(c.digit)} ${i + 1}" inputmode="numeric" pattern="[0-9]*" autocomplete="${i ? 'off' : 'one-time-code'}" maxlength="${i ? 1 : 6}">`).join('')}</div><div class="rf-otp-core" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M11 21.5 17.5 28 30 14"/></svg></div></div>
-${resendSel ? '<p class="rf-otp-timer" aria-live="polite"></p>' : ''}${button ? `<button type="submit" class="rf-otp-go"><span class="rf-otp-spin" aria-hidden="true"></span><span class="rf-otp-label">${esc(c.go)}</span></button>` : ''}<p class="rf-otp-status" role="status"></p></div>`;
+${resendSel ? '<p class="rf-otp-timer" aria-live="polite"></p>' : ''}${button ? `<button type="${event ? 'button' : 'submit'}" class="rf-otp-go"><span class="rf-otp-spin" aria-hidden="true"></span><span class="rf-otp-label">${esc(c.go)}</span></button>` : ''}<p class="rf-otp-status" role="status"></p></div>`;
     old.replaceWith(host);
     input.type = 'hidden';
     input.removeAttribute('required');
@@ -57,10 +61,13 @@ ${resendSel ? '<p class="rf-otp-timer" aria-live="polite"></p>' : ''}${button ? 
     const p = { host, panel, boxes, input, form, busy: false, until: Number(input.dataset.rfOtpUntil) || 0, timer: 0 };
     panels.set(panel, p);
     input.focus = () => boxes[0].focus();
+    const complete = () => input.dispatchEvent(new CustomEvent('rf-otp-complete', { bubbles: true, detail: { code: input.value } }));
+    if (event) host.querySelector('.rf-otp-go')?.addEventListener('click', () => input.value.length === 6 && !p.busy && complete());
     const sync = () => {
       input.value = boxes.map((b) => b.value).join('');
       panel.classList.remove('is-error');
-      if (input.value.length === 6 && !p.busy && form && form.checkValidity()) {
+      if (input.value.length === 6 && !p.busy && event) complete();
+      else if (input.value.length === 6 && !p.busy && form && form.checkValidity()) {
         const go = host.querySelector('.rf-otp-go');
         form.requestSubmit ? form.requestSubmit(go || undefined) : form.dispatchEvent(new Event('submit', { cancelable: true }));
       }
@@ -127,7 +134,7 @@ ${resendSel ? '<p class="rf-otp-timer" aria-live="polite"></p>' : ''}${button ? 
   }
 
   const panelOf = (el) => {
-    const panel = el?.classList?.contains('rf-otp') ? el : el?.querySelector?.('.rf-otp');
+    const panel = el?.classList?.contains('rf-otp') ? el : el?.querySelector?.('.rf-otp') || el?.closest?.('.rf-otp-host')?.querySelector('.rf-otp');
     return panel ? panels.get(panel) : null;
   };
 
@@ -212,6 +219,20 @@ ${resendSel ? '<p class="rf-otp-timer" aria-live="polite"></p>' : ''}${button ? 
   function start(el) {
     const p = panelOf(el);
     if (!p) return;
+    if (p.panel.classList.contains('is-ok')) {
+      const c = copy();
+      p.panel.classList.remove('is-ok', 'is-merge', 'is-forming', 'is-error');
+      p.panel.querySelector('.rf-otp-title').textContent = p.input.dataset.rfOtpTitle || c.title;
+      p.panel.querySelector('.rf-otp-sub').textContent = p.input.dataset.rfOtpSub || c.sub;
+      const timer = p.panel.querySelector('.rf-otp-timer');
+      if (timer) timer.hidden = false;
+      if (p.tick) p.timer = setInterval(p.tick, 1000);
+      p.boxes.forEach((b) => ((b.value = ''), (b.readOnly = false)));
+      p.input.value = '';
+      place(p, 'row');
+      setButton(p, 'idle');
+      p.busy = false;
+    }
     p.until = Date.now() + 60000;
     p.tick?.();
     p.boxes[0].focus();
