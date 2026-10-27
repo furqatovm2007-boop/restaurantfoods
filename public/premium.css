@@ -1157,3 +1157,36 @@ body[data-theme=light] .fulfil-choice label:has(input:checked){border-color:#00a
 .ai-engine small{opacity:.75;font-size:.8rem}
 body[data-theme=light] .ai-engine label{border-color:#c4d8d5;background:#fff}
 body[data-theme=light] .ai-engine label:has(input:checked){border-color:#00a58a;background:#e3f4f0}
+
+/* ===== Day theme for the sign-in page and the profile set-up card (they were dark in every theme) ===== */
+body[data-theme=light] .profile-setup.setup-card{background:#fff;border-color:#c4d8d5;box-shadow:0 18px 40px rgba(21,50,66,.1);color:#123540}
+body[data-theme=light] .profile-setup.setup-card p,body[data-theme=light] .profile-setup.setup-card small{color:#4b6b74}
+body[data-theme=light] .profile-setup.setup-card h3,body[data-theme=light] .profile-setup.setup-card h4,body[data-theme=light] .profile-setup.setup-card b,body[data-theme=light] .profile-setup.setup-card label{color:#123540}
+body[data-theme=light] .profile-setup.setup-card .quiet{background:#f1f7f6;color:#123540;border-color:#c4d8d5}
+body[data-theme=light] #auth .premium-auth{background:radial-gradient(ellipse at 15% 0%,rgba(16,185,129,.12) 0,transparent 50%),radial-gradient(ellipse at 90% 100%,rgba(13,148,136,.1) 0,transparent 45%),#f1f7f6;color:#123540}
+body[data-theme=light] #auth .premium-auth h1,body[data-theme=light] #auth .premium-auth h2{color:#123540}
+body[data-theme=light] #auth .premium-auth .eyebrow{color:#00826c}
+body[data-theme=light] #auth .auth-intro p{color:#4b6b74}
+body[data-theme=light] #auth .premium-card{background:#fff;border-color:#c4d8d5;box-shadow:0 20px 50px rgba(21,50,66,.12);color:#123540}
+body[data-theme=light] #auth .premium-card .auth-tabs{border-color:#e1ece9}
+body[data-theme=light] #auth .premium-card .auth-tabs a{color:#4b6b74}
+body[data-theme=light] #auth .premium-card .auth-tabs a.active{color:#00705d;border-color:#00a58a}
+body[data-theme=light] #auth .premium-card label{color:#4b6b74}
+body[data-theme=light] #auth .premium-card input{background:#f7fbfa;color:#123540;border-color:#c4d8d5}
+body[data-theme=light] #auth .premium-card input::placeholder{color:#8aa3a8}
+body[data-theme=light] #auth .premium-card .link,body[data-theme=light] #auth .premium-card a{color:#00705d}
+body[data-theme=light] #auth .premium-card .password-toggle{color:#4b6b74}
+body[data-theme=light] #auth .auth-method{background:#f1f7f6;border-color:#c4d8d5}
+body[data-theme=light] #auth .auth-method button{color:#4b6b74}
+body[data-theme=light] #auth .auth-method button.selected{background:#fff;color:#00705d;box-shadow:inset 0 0 0 1px #00a58a}
+body[data-theme=light] #auth .premium-card .notice{background:#fff8e6;color:#7c4a03;border-color:#f5c451}
+body[data-theme=light] #auth .social-divider{color:#6b8790}
+body[data-theme=light] #auth .social-divider:before,body[data-theme=light] #auth .social-divider:after{background:#d6e7e3}
+body[data-theme=light] #auth .social-button{background:#fff;color:#123540;border-color:#c4d8d5}
+body[data-theme=light] #auth .social-button small{color:#6b8790}
+body[data-theme=light] #auth .social-button.telegram-login{background:linear-gradient(135deg,#229ed9,#1b7fb3);color:#fff;border-color:#229ed9}
+body[data-theme=light] #auth .auth-footer a{color:#4b6b74}
+body[data-theme=light] #auth .premium-auth .lang-trigger{background:#fff;color:#123540;border-color:#c4d8d5}
+body[data-theme=light] #auth .premium-auth .lang-trigger .language-globe,body[data-theme=light] #auth .premium-auth .lang-chevron{color:#00826c}
+body[data-theme=light] .verify-choice-btn{background:#fff;border-color:#c4d8d5;color:#123540}
+body[data-theme=light] .verify-choice-btn.telegram{background:linear-gradient(135deg,#e6f4fb,#d3ecf9);border-color:#7cc3e8;color:#0b4f72}
