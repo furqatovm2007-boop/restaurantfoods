@@ -6068,5 +6068,60 @@
     "uz": "gacha — oldindan buyurtma qilgan taomlaringiz summasiga qarab",
     "ru": "— в зависимости от суммы заказанных заранее блюд",
     "en": "depending on the total of the dishes you preorder"
+  },
+  "Bron uchun onlayn zaklad (Payme / Click) shart. Onlayn to‘lov hali ulanmagan — bron vaqtincha qabul qilinmaydi.": {
+    "uz": "Bron uchun onlayn zaklad (Payme / Click) shart. Onlayn to‘lov hali ulanmagan — bron vaqtincha qabul qilinmaydi.",
+    "ru": "Для брони обязателен онлайн-залог (Payme / Click). Онлайн-оплата ещё не подключена — брони временно не принимаются.",
+    "en": "An online deposit (Payme / Click) is required to book. Online payment is not connected yet — bookings are paused."
+  },
+  "Dekoratsiya (ixtiyoriy)": {
+    "uz": "Dekoratsiya (ixtiyoriy)",
+    "ru": "Декорация (по желанию)",
+    "en": "Decoration (optional)"
+  },
+  "Dekoratsiyasiz": {
+    "uz": "Dekoratsiyasiz",
+    "ru": "Без декорации",
+    "en": "No decoration"
+  },
+  "Dekoratsiyalar": {
+    "uz": "Dekoratsiyalar",
+    "ru": "Декорации",
+    "en": "Decorations"
+  },
+  "Stolni bezatish xizmatlari: “Marry me”, tug‘ilgan kun, sharlar… Mijoz bron paytida tanlaydi, narxi zakladga qo‘shiladi.": {
+    "uz": "Stolni bezatish xizmatlari: “Marry me”, tug‘ilgan kun, sharlar… Mijoz bron paytida tanlaydi, narxi zakladga qo‘shiladi.",
+    "ru": "Оформление стола: «Marry me», день рождения, шары… Гость выбирает при брони, цена входит в залог.",
+    "en": "Table decoration: “Marry me”, birthday, balloons… The guest picks it when booking; the price is added to the deposit."
+  },
+  "Nomi": {
+    "uz": "Nomi",
+    "ru": "Название",
+    "en": "Name"
+  },
+  "Narxi (so‘m)": {
+    "uz": "Narxi (so‘m)",
+    "ru": "Цена (сум)",
+    "en": "Price (so‘m)"
+  },
+  "Tavsif (ixtiyoriy)": {
+    "uz": "Tavsif (ixtiyoriy)",
+    "ru": "Описание (по желанию)",
+    "en": "Description (optional)"
+  },
+  "Dekoratsiya qo‘shish": {
+    "uz": "Dekoratsiya qo‘shish",
+    "ru": "Добавить декорацию",
+    "en": "Add decoration"
+  },
+  "Hali dekoratsiya yo‘q.": {
+    "uz": "Hali dekoratsiya yo‘q.",
+    "ru": "Декораций пока нет.",
+    "en": "No decorations yet."
+  },
+  "Gullar, shamlar, yurak shakli…": {
+    "uz": "Gullar, shamlar, yurak shakli…",
+    "ru": "Цветы, свечи, сердце…",
+    "en": "Flowers, candles, a heart…"
   }
 }

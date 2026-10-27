@@ -13,6 +13,7 @@ export const DEPOSIT_MIN = 100000,
   DEPOSIT_MAX = 600000;
 export const bookingDeposit = (preorderTotal: number, base = 0) => Math.min(DEPOSIT_MAX, Math.max(DEPOSIT_MIN, Number(preorderTotal) || 0, Number(base) || 0));
 export type Provider = 'click' | 'payme';
+export const ONLINE_PAYMENT_MISSING = 'Bron uchun onlayn zaklad (Payme / Click) shart. Onlayn to‘lov hali ulanmagan — bron vaqtincha qabul qilinmaydi.';
 
 export function depositProviders(): Provider[] {
   const list: Provider[] = [];

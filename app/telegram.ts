@@ -61,6 +61,7 @@ export interface BookingMessage {
   deposit_status: string;
   deposit_provider?: string | null;
   status: string;
+  preorder_items?: string | null;
 }
 
 export function bookingText(b: BookingMessage) {
@@ -74,6 +75,12 @@ export function bookingText(b: BookingMessage) {
     `🕒 <b>Vaqt:</b> ${html(b.slot)}${b.end_slot ? '–' + html(b.end_slot.slice(0, 5)) : ''}`,
     `💵 <b>Depozit:</b> ${DEPOSIT_TEXT[b.deposit_status] ?? html(b.deposit_status)}${provider}`,
   ];
+  // A paid decoration ("Marry me"…) must be prepared before the guests arrive.
+  let items: { id?: string; name?: string; price?: number }[] = [];
+  try {
+    items = JSON.parse(b.preorder_items || '[]');
+  } catch {}
+  for (const d of Array.isArray(items) ? items.filter((i) => String(i?.id).startsWith('decor:')) : []) lines.push(`🎀 <b>Dekoratsiya:</b> ${html(String(d.name || '').replace(/^🎀\s*/, ''))} · ${Number(d.price || 0).toLocaleString('ru-RU').replace(/[\s,]/g, ' ')} so‘m`);
   if (STATUS_TEXT[b.status]) lines.push('', `<b>${STATUS_TEXT[b.status]}</b>`);
   return lines.join('\n');
 }
@@ -84,7 +91,7 @@ export const bookingKeyboard = (id: string) => ({
 
 async function loadBooking(id: string) {
   return env.DB!.prepare(
-    'SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id WHERE b.id=?',
+    'SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id WHERE b.id=?',
   )
     .bind(id)
     .first<BookingMessage & { restaurant_id: string; telegram_chat_id: string | null }>();

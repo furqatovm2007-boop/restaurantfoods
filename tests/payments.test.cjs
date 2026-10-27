@@ -119,11 +119,10 @@ assert.equal(await deep['../../../deposits'].sweepDeposits(),1);
 assert.deepEqual({...db.prepare('SELECT status,deposit_status FROM bookings WHERE id=?').get(third.id)},{status:'cancelled',deposit_status:'cancelled'});
 assert.equal((await book({tableNumber:3})).status,201,'table is free again');
 
-// Without a configured provider the booking goes straight to Telegram, deposit not required.
-for(const k of ['CLICK_SECRET_KEY','PAYME_KEY'])delete env[k];calls.length=0;
-r=await book({tableNumber:1,slot:'16:00',endSlot:'18:00'});const plain=await r.json();assert.equal(plain.deposit,null);
-assert.equal(db.prepare('SELECT deposit_status FROM bookings WHERE id=?').get(plain.id).deposit_status,'not_required');
-assert.ok(calls.find(c=>c.telegram==='sendMessage').body.text.includes('Talab qilinmaydi'));
+// The online deposit is mandatory: without Payme or Click (and no bound card) bookings are refused and nothing is saved.
+for(const k of ['CLICK_SECRET_KEY','PAYME_KEY'])delete env[k];calls.length=0;const before=db.prepare('SELECT COUNT(*) n FROM bookings').get().n;
+r=await book({tableNumber:1,slot:'16:00',endSlot:'18:00'});assert.equal(r.status,503);assert.match((await r.json()).error,/Payme \/ Click/);
+assert.equal(db.prepare('SELECT COUNT(*) n FROM bookings').get().n,before,'no booking without online payment');assert.equal(calls.filter(c=>c.telegram==='sendMessage').length,0,'restaurant not told');
 assert.equal(db.prepare('PRAGMA foreign_key_check').all().length,0);
 // Profile completion: the contact phone is confirmed with an SMS code, then an address is saved.
 const profile=load('app/api/profile/route.ts',{...cf,'../../access':{identity:async()=>user},'../../http':http,'../../account-admin':{hashInvite:async()=>'',audit:()=>null},'../../geo':load('app/geo.ts',{'./http':http}),...integrations},extras);
