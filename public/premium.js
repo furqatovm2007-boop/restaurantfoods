@@ -33,7 +33,7 @@
  document.addEventListener('click',e=>{const card=e.target.closest('.restaurant-card');if(card&&!e.target.closest('a,button,input,select')&&!getSelection()?.toString()){const a=card.querySelector('a.primary');if(a)location.hash=a.hash}});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)clear()});window.addEventListener('pagehide',clear);window.addEventListener('hashchange',()=>{presses.clear();contacts.clear();unlight()});reduced.addEventListener('change',clear);
  // Scroll reveal lives in motion.js.
- const nav=document.getElementById('nav');let sidebar;
- function syncSidebar(){const management=/^#\/(manage|admin|courier|blog-admin)(\/|$)/.test(location.hash);document.body.classList.toggle('management-view',management);if(!sidebar){sidebar=document.createElement('aside');sidebar.className='management-sidebar';document.body.append(sidebar)}sidebar.hidden=!management;if(management){const collapsed=document.body.classList.contains('sidebar-collapsed');sidebar.innerHTML='<button class="quiet sidebar-toggle" aria-expanded="'+!collapsed+'">'+(collapsed?'›':'‹')+'</button><nav>'+nav.innerHTML+'</nav>';sidebar.querySelector('button').setAttribute('aria-label',({uz:'Yon menyuni yig‘ish yoki ochish',ru:'Свернуть или развернуть меню',en:'Collapse or expand sidebar'})[window.RF_I18N?.lang||'ru']);sidebar.querySelector('button').onclick=e=>{const collapsed=document.body.classList.toggle('sidebar-collapsed');e.currentTarget.setAttribute('aria-expanded',String(!collapsed));e.currentTarget.textContent=collapsed?'›':'‹'}}}
- if(nav){new MutationObserver(syncSidebar).observe(nav,{childList:true});window.addEventListener('hashchange',syncSidebar);syncSidebar()}
+ // The menu opens only from the ☰ button (the drawer), on phones and computers alike; there is no
+ // separate always-open side panel any more. A side panel left in the page by an older version is removed.
+ document.querySelectorAll('.management-sidebar').forEach(el=>el.remove());document.body.classList.remove('management-view','sidebar-collapsed');
 })();
