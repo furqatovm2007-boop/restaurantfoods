@@ -35,5 +35,5 @@
  // Scroll reveal lives in motion.js.
  // The menu opens only from the ☰ button (the drawer), on phones and computers alike; there is no
  // separate always-open side panel any more. A side panel left in the page by an older version is removed.
- document.querySelectorAll('.management-sidebar').forEach(el=>el.remove());document.body.classList.remove('management-view','sidebar-collapsed');
+ document.querySelectorAll?.('.management-sidebar').forEach(el=>el.remove());document.body?.classList?.remove('management-view','sidebar-collapsed');
 })();
