@@ -37,7 +37,7 @@
   let deferred = null;
   let app = 'client';
 
-  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => {}));
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferred = e;
