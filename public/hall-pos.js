@@ -50,12 +50,20 @@
     return `<div class="hr-receipt"><h1>${esc(r.name)}</h1>${r.address ? `<p class="c">${esc(r.address)}</p>` : ''}${r.phone ? `<p class="c">${esc(r.phone)}</p>` : ''}<div class="dash"></div><p><b>Chek №:</b> ${esc(o.receiptNo || '')}</p><p><b>Stol raqami:</b> ${o.table}</p><p><b>Ofitsiant:</b> ${esc(o.waiter || '—')}</p>${o.customer?.name ? `<p><b>Mijoz ismi:</b> ${esc(o.customer.name)}</p>` : ''}<p><b>Sana va vaqt:</b> ${esc(when(o.closedAt || o.openedAt))}</p><div class="dash"></div><table><thead><tr><th>Taom nomi</th><th class="n">Soni</th><th class="n">Narxi</th><th class="n">Jami</th></tr></thead><tbody>${rows}</tbody></table><div class="dash"></div><p class="row"><span>Taomlar summasi:</span><span>${esc(money(o.subtotal))}</span></p><p class="row"><span>Xizmat haqi (${o.servicePercent}%):</span><span>${esc(money(o.service))}</span></p><p class="row big"><span>Umumiy summa:</span><span>${esc(money(o.total))}</span></p><p class="row"><span>To‘lov turi:</span><span>${esc(PAY[o.payment] || o.payment || '')}</span></p><div class="dash"></div><div class="qr">${qr}</div><p class="c"><small>Chekni tekshirish uchun QR-kodni skanerlang</small></p><p class="c"><small>Fiskal chek emas — elektron chek</small></p><p class="c thanks">Xaridingiz uchun rahmat!</p></div>`;
   }
   const RECEIPT_CSS = `.hr-receipt{width:76mm;margin:0 auto;padding:2mm;font:12px/1.35 "Courier New",ui-monospace,monospace;color:#000;background:#fff}.hr-receipt h1{font-size:16px;margin:0 0 2px;text-align:center}.hr-receipt p{margin:1px 0}.hr-receipt .c{text-align:center}.hr-receipt .dash{border-top:1px dashed #000;margin:5px 0}.hr-receipt table{width:100%;border-collapse:collapse}.hr-receipt th,.hr-receipt td{text-align:left;padding:1px 0;vertical-align:top;font-size:11px}.hr-receipt .n{text-align:right;white-space:nowrap;padding-left:4px}.hr-receipt .row{display:flex;justify-content:space-between;gap:6px}.hr-receipt .big{font-size:15px;font-weight:700}.hr-receipt .qr svg{display:block;width:40mm;height:auto;margin:4px auto}.hr-receipt .thanks{margin-top:4px;font-weight:700}`;
-  const receiptDoc = (inner) => `<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>Chek</title><style>@page{size:80mm auto;margin:0}body{margin:0;background:#fff}${RECEIPT_CSS}</style></head><body>${inner}</body></html>`;
+  const receiptDoc = (inner) => `<!doctype html><html lang="uz"><head><meta charset="utf-8"><title>Chek</title><style>body{margin:0;background:#fff}${RECEIPT_CSS}</style></head><body>${inner}</body></html>`;
   function printFrame(inner) {
     const f = document.createElement('iframe');
     f.setAttribute('aria-hidden', 'true');
     f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
     f.onload = () => {
+      // Receipt paper: 80 mm wide and exactly as long as the receipt (no A4 / Letter sheet).
+      try {
+        const doc = f.contentDocument, style = doc.createElement('style');
+        style.textContent = 'html,body{width:80mm}';
+        doc.head.append(style);
+        const height = Math.ceil((doc.documentElement.scrollHeight * 25.4) / 96) + 4;
+        style.textContent += '@page{size:80mm ' + height + 'mm;margin:0}';
+      } catch {}
       try {
         f.contentWindow.focus();
         f.contentWindow.print();

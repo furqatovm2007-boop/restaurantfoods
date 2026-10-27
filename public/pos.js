@@ -6,18 +6,17 @@
  *   - To‘lov: cash (with change), card terminal, or Payme / Click: a QR code with the amount for the
  *     customer's phone; the sale is paid by the provider's callback and the page sees it by polling.
  *   - Sotuvlar: today's totals, the last sales, receipts and refunds.
- * Without a camera (HTTP on a local IP, no permission, old browser) the reason is shown, and a photo of the
- * barcode (capture="environment") or typing the code still works. Prices always come from the server.
+ * Without a camera (HTTP on a local IP, no permission, old browser) the reason is shown, and typing the
+ * code still works. Prices always come from the server.
  */
 (() => {
   'use strict';
   const COPY = {
     uz: {
       hid: '⌨️ USB / Bluetooth skaner tayyor', hidHit: '⌨️ Skaner o‘qidi', paper: 'Chek qog‘ozi', autoPrint: 'To‘lovdan keyin avtomatik chop etish', notFiscal: 'Fiskal chek emas — elektron chek', thanks: 'Xaridingiz uchun rahmat!', cashier: 'Kassir', tabs: { till: '🧾 Kassa', stock: '📦 Ombor', sales: '📊 Sotuvlar' }, restaurant: 'Restoran', scanOn: '📷 Skanerni yoqish', scanOff: '⏹ Skanerni o‘chirish', scanHint: 'Shtrix-kodni ramka ichiga tuting — bitta o‘qishda chekka qo‘shiladi.',
-      manual: 'Shtrix-kod yoki nom', add: 'Qo‘shish', photo: '🖼 Rasmdan o‘qish', empty: 'Chek bo‘sh. Mahsulotni skanerlang yoki ro‘yxatdan tanlang.', total: 'Jami', pay: '💳 To‘lov qilish', clear: 'Tozalash', notFound: 'Bu shtrix-kod bazada yo‘q', addToBase: 'Bazaga qo‘shish', stockLeft: 'qoldiq', noStock: 'Omborda qolmagan',
-      httpsTitle: 'Kamera bu manzilda ochilmaydi', https: (o) => `Brauzer kamerani faqat xavfsiz (HTTPS) manzilda ochadi. Siz ${o} orqali kirdingiz. https://restaurantfoods.online orqali oching yoki hozircha rasmdan o‘qing / kodni qo‘lda kiriting.`,
-      denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida (manzil yonidagi 🔒 belgisi) kameraga ruxsat bering yoki rasmdan o‘qing.', noCamera: 'Kamera topilmadi yoki band. Rasmdan o‘qing yoki kodni qo‘lda kiriting.', unsupported: 'Bu brauzer kamerani qo‘llamaydi. Rasmdan o‘qing yoki kodni qo‘lda kiriting.',
-      photoFail: 'Rasmda shtrix-kod topilmadi. Yaqinroq va yorug‘roq suratga oling.',
+      manual: 'Shtrix-kod yoki nom', add: 'Qo‘shish', empty: 'Chek bo‘sh. Mahsulotni skanerlang yoki ro‘yxatdan tanlang.', total: 'Jami', pay: '💳 To‘lov qilish', clear: 'Tozalash', notFound: 'Bu shtrix-kod bazada yo‘q', addToBase: 'Bazaga qo‘shish', stockLeft: 'qoldiq', noStock: 'Omborda qolmagan',
+      httpsTitle: 'Kamera bu manzilda ochilmaydi', https: (o) => `Brauzer kamerani faqat xavfsiz (HTTPS) manzilda ochadi. Siz ${o} orqali kirdingiz. https://restaurantfoods.online orqali oching yoki hozircha kodni qo‘lda kiriting.`,
+      denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida (manzil yonidagi 🔒 belgisi) kameraga ruxsat bering yoki kodni qo‘lda kiriting.', noCamera: 'Kamera topilmadi yoki band. Kodni qo‘lda kiriting yoki USB skanerdan foydalaning.', unsupported: 'Bu brauzer kamerani qo‘llamaydi. Kodni qo‘lda kiriting yoki USB skanerdan foydalaning.',
       form: { title: 'Mahsulot / taom', edit: 'Tahrirlash', barcode: 'SHTRIX-KOD', gen: '🔄 Yaratish', scan: '📷', name: 'NOMI', price: 'BITTA DONA NARXI (SO‘M)', stock: 'OMBORDA (DONA)', save: 'Saqlash', cancel: 'Bekor qilish', new: '+ Yangi mahsulot', search: 'Qidirish…', none: 'Hali mahsulot kiritilmagan.', del: 'O‘chirish', confirmDel: 'Mahsulot o‘chirilsinmi?', readOnly: 'Bazani faqat menejer yoki restoran egasi o‘zgartiradi.', saved: 'Saqlandi', low: 'kam qoldi' },
       payTitle: 'To‘lov', cash: '💵 Naqd', card: '💳 Karta (terminal)', payme: 'Payme QR', click: 'Click QR', uzum: 'Uzum QR', off: 'ulanmagan', received: 'MIJOZ BERGAN SUMMA', change: 'Qaytim', confirm: 'Tasdiqlash', scanToPay: 'Mijoz telefon kamerasi bilan skanerlab to‘laydi', waiting: 'To‘lov kutilmoqda…', paidCash: 'Naqd bilan to‘landi', cancelSale: 'Bekor qilish',
       done: 'To‘lov qabul qilindi', receiptNo: 'Chek №', eReceipt: 'Elektron chek — mijoz telefoni bilan skanerlaydi', print: '🖨 Chop etish', next: 'Yangi chek', close: 'Yopish',
@@ -26,10 +25,9 @@
     },
     ru: {
       hid: '⌨️ USB / Bluetooth сканер готов', hidHit: '⌨️ Сканер считал', paper: 'Бумага чека', autoPrint: 'Печатать чек сразу после оплаты', notFiscal: 'Не фискальный чек — электронный чек', thanks: 'Спасибо за покупку!', cashier: 'Кассир', tabs: { till: '🧾 Касса', stock: '📦 Склад', sales: '📊 Продажи' }, restaurant: 'Ресторан', scanOn: '📷 Включить сканер', scanOff: '⏹ Выключить сканер', scanHint: 'Наведите штрих-код в рамку — одно считывание добавляет товар в чек.',
-      manual: 'Штрих-код или название', add: 'Добавить', photo: '🖼 Считать с фото', empty: 'Чек пуст. Отсканируйте товар или выберите из списка.', total: 'Итого', pay: '💳 Оплата', clear: 'Очистить', notFound: 'Этого штрих-кода нет в базе', addToBase: 'Добавить в базу', stockLeft: 'остаток', noStock: 'Нет на складе',
-      httpsTitle: 'Камера не открывается по этому адресу', https: (o) => `Браузер открывает камеру только на защищённом (HTTPS) адресе. Вы зашли через ${o}. Откройте https://restaurantfoods.online или пока считайте с фото / введите код вручную.`,
-      denied: 'Доступ к камере не разрешён. Разрешите камеру в настройках браузера (значок 🔒 у адреса) или считайте с фото.', noCamera: 'Камера не найдена или занята. Считайте с фото или введите код.', unsupported: 'Этот браузер не поддерживает камеру. Считайте с фото или введите код.',
-      photoFail: 'На фото не найден штрих-код. Снимите ближе и при хорошем свете.',
+      manual: 'Штрих-код или название', add: 'Добавить', empty: 'Чек пуст. Отсканируйте товар или выберите из списка.', total: 'Итого', pay: '💳 Оплата', clear: 'Очистить', notFound: 'Этого штрих-кода нет в базе', addToBase: 'Добавить в базу', stockLeft: 'остаток', noStock: 'Нет на складе',
+      httpsTitle: 'Камера не открывается по этому адресу', https: (o) => `Браузер открывает камеру только на защищённом (HTTPS) адресе. Вы зашли через ${o}. Откройте https://restaurantfoods.online или пока введите код вручную.`,
+      denied: 'Доступ к камере не разрешён. Разрешите камеру в настройках браузера (значок 🔒 у адреса) или введите код вручную.', noCamera: 'Камера не найдена или занята. Введите код вручную или используйте USB-сканер.', unsupported: 'Этот браузер не поддерживает камеру. Введите код вручную или используйте USB-сканер.',
       form: { title: 'Товар / блюдо', edit: 'Изменить', barcode: 'ШТРИХ-КОД', gen: '🔄 Создать', scan: '📷', name: 'НАЗВАНИЕ', price: 'ЦЕНА ЗА ШТУКУ (СУМ)', stock: 'НА СКЛАДЕ (ШТ)', save: 'Сохранить', cancel: 'Отмена', new: '+ Новый товар', search: 'Поиск…', none: 'Товаров пока нет.', del: 'Удалить', confirmDel: 'Удалить товар?', readOnly: 'Базу меняет только менеджер или владелец.', saved: 'Сохранено', low: 'мало' },
       payTitle: 'Оплата', cash: '💵 Наличные', card: '💳 Карта (терминал)', payme: 'Payme QR', click: 'Click QR', uzum: 'Uzum QR', off: 'не подключено', received: 'ПОЛУЧЕНО ОТ КЛИЕНТА', change: 'Сдача', confirm: 'Подтвердить', scanToPay: 'Клиент сканирует камерой телефона и оплачивает', waiting: 'Ожидаем оплату…', paidCash: 'Оплачено наличными', cancelSale: 'Отменить',
       done: 'Оплата принята', receiptNo: 'Чек №', eReceipt: 'Электронный чек — клиент сканирует телефоном', print: '🖨 Печать', next: 'Новый чек', close: 'Закрыть',
@@ -38,10 +36,9 @@
     },
     en: {
       hid: '⌨️ USB / Bluetooth scanner ready', hidHit: '⌨️ Scanner read', paper: 'Receipt paper', autoPrint: 'Print the receipt right after payment', notFiscal: 'Not a fiscal receipt — electronic receipt', thanks: 'Thank you for your purchase!', cashier: 'Cashier', tabs: { till: '🧾 Till', stock: '📦 Stock', sales: '📊 Sales' }, restaurant: 'Restaurant', scanOn: '📷 Start scanner', scanOff: '⏹ Stop scanner', scanHint: 'Hold the barcode inside the frame — one read adds it to the receipt.',
-      manual: 'Barcode or name', add: 'Add', photo: '🖼 Read from photo', empty: 'The receipt is empty. Scan a product or pick it from the list.', total: 'Total', pay: '💳 Take payment', clear: 'Clear', notFound: 'This barcode is not in the base', addToBase: 'Add to base', stockLeft: 'left', noStock: 'Out of stock',
-      httpsTitle: 'The camera cannot open on this address', https: (o) => `Browsers open the camera only on a secure (HTTPS) address. You opened ${o}. Use https://restaurantfoods.online, or read from a photo / type the code for now.`,
-      denied: 'Camera permission was denied. Allow the camera in the browser settings (🔒 next to the address) or read from a photo.', noCamera: 'No camera found or it is busy. Read from a photo or type the code.', unsupported: 'This browser has no camera support. Read from a photo or type the code.',
-      photoFail: 'No barcode found in the photo. Take it closer and in good light.',
+      manual: 'Barcode or name', add: 'Add', empty: 'The receipt is empty. Scan a product or pick it from the list.', total: 'Total', pay: '💳 Take payment', clear: 'Clear', notFound: 'This barcode is not in the base', addToBase: 'Add to base', stockLeft: 'left', noStock: 'Out of stock',
+      httpsTitle: 'The camera cannot open on this address', https: (o) => `Browsers open the camera only on a secure (HTTPS) address. You opened ${o}. Use https://restaurantfoods.online, or type the code for now.`,
+      denied: 'Camera permission was denied. Allow the camera in the browser settings (🔒 next to the address) or type the code.', noCamera: 'No camera found or it is busy. Type the code or use a USB scanner.', unsupported: 'This browser has no camera support. Type the code or use a USB scanner.',
       form: { title: 'Product / dish', edit: 'Edit', barcode: 'BARCODE', gen: '🔄 Generate', scan: '📷', name: 'NAME', price: 'UNIT PRICE (UZS)', stock: 'IN STOCK (PCS)', save: 'Save', cancel: 'Cancel', new: '+ New product', search: 'Search…', none: 'No products yet.', del: 'Delete', confirmDel: 'Delete this product?', readOnly: 'Only a manager or the owner can change the base.', saved: 'Saved', low: 'low' },
       payTitle: 'Payment', cash: '💵 Cash', card: '💳 Card (terminal)', payme: 'Payme QR', click: 'Click QR', uzum: 'Uzum QR', off: 'not connected', received: 'CASH RECEIVED', change: 'Change', confirm: 'Confirm', scanToPay: 'The customer scans with the phone camera and pays', waiting: 'Waiting for payment…', paidCash: 'Paid in cash', cancelSale: 'Cancel',
       done: 'Payment received', receiptNo: 'Receipt #', eReceipt: 'Electronic receipt — the customer scans it with a phone', print: '🖨 Print', next: 'New receipt', close: 'Close',
@@ -156,18 +153,6 @@
     }
     return { stop: () => scanner.stop().then(() => scanner.clear()).catch(() => {}) };
   }
-  async function scanPhoto(file) {
-    const lib = await scannerLib();
-    const host = document.createElement('div');
-    host.id = 'posPhotoScan' + Date.now();
-    host.hidden = true;
-    document.body.append(host);
-    try {
-      return String(await new lib.Html5Qrcode(host.id, { verbose: false }).scanFile(file, false)).trim();
-    } finally {
-      host.remove();
-    }
-  }
   const cameraMessage = (e) => {
     const c = w(), p = cameraProblem();
     if (p?.kind === 'https') return `<b>${esc(c.httpsTitle)}</b><br>${esc(c.https(location.origin))}`;
@@ -226,15 +211,26 @@
     } catch {}
   };
   const paper = () => (pref('rf-pos-paper', '80') === '58' ? 58 : 80);
+  /** Receipt paper: the page is exactly the roll width and as long as the receipt (no A4 / Letter sheet). */
+  function fitPaper(frame, mm) {
+    try {
+      const doc = frame.contentDocument, style = doc.createElement('style');
+      style.textContent = 'html,body{width:' + mm + 'mm}';
+      doc.head.append(style);
+      const height = Math.ceil((doc.documentElement.scrollHeight * 25.4) / 96) + 4;
+      style.textContent += '@page{size:' + mm + 'mm ' + height + 'mm;margin:0}';
+    } catch {}
+  }
   async function printThermal(r) {
     const c = w(), mm = paper(), qr = await qrSvg(r.url, mm === 58 ? 140 : 180);
     const row = (a, b, cls = '') => `<div class="row ${cls}"><span>${a}</span><span>${b}</span></div>`;
     const date = new Date(r.date).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' });
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(r.no)}</title><style>@page{size:${mm}mm auto;margin:0}*{box-sizing:border-box}body{margin:0;padding:3mm 2.5mm;width:${mm}mm;font:${mm === 58 ? 11 : 12}px/1.35 "Courier New",ui-monospace,monospace;color:#000;background:#fff}h1{font-size:${mm === 58 ? 14 : 16}px;margin:0;text-align:center}.c{text-align:center}.row{display:flex;justify-content:space-between;gap:6px}.row span:last-child{white-space:nowrap;text-align:right}.name{font-weight:700;margin-top:3px;word-break:break-word}.hr{border-top:1px dashed #000;margin:5px 0}.t{font-size:${mm === 58 ? 15 : 17}px;font-weight:700}svg{display:block;margin:6px auto 2px;width:${mm === 58 ? 32 : 40}mm;height:auto}small{font-size:10px}</style></head><body><h1>${esc(r.restaurant)}</h1>${r.address ? `<div class="c"><small>${esc(r.address)}</small></div>` : ''}${r.phone ? `<div class="c"><small>${esc(r.phone)}</small></div>` : ''}<div class="hr"></div>${row(esc(c.receiptNo) + ' ' + esc(r.no), '')}${row(esc(date), '')}${r.cashier ? row(esc(c.cashier) + ': ' + esc(r.cashier), '') : ''}<div class="hr"></div>${r.items.map((i) => `<div class="name">${esc(i.name)}</div>${row(i.qty + ' × ' + esc(money(i.price)), esc(money(i.sum)))}`).join('')}<div class="hr"></div>${row(esc(c.total), esc(money(r.total)), 't')}${row(esc(c.methods[r.method] || r.method || ''), '')}${r.change ? row(esc(c.change), esc(money(r.change))) : ''}<div class="hr"></div>${qr}<div class="c"><small>${esc(c.notFiscal)}</small></div><div class="c" style="margin-top:4px">${esc(c.thanks)}</div></body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(r.no)}</title><style>*{box-sizing:border-box}body{margin:0;padding:3mm 2.5mm;width:${mm}mm;font:${mm === 58 ? 11 : 12}px/1.35 "Courier New",ui-monospace,monospace;color:#000;background:#fff}h1{font-size:${mm === 58 ? 14 : 16}px;margin:0;text-align:center}.c{text-align:center}.row{display:flex;justify-content:space-between;gap:6px}.row span:last-child{white-space:nowrap;text-align:right}.name{font-weight:700;margin-top:3px;word-break:break-word}.hr{border-top:1px dashed #000;margin:5px 0}.t{font-size:${mm === 58 ? 15 : 17}px;font-weight:700}svg{display:block;margin:6px auto 2px;width:${mm === 58 ? 32 : 40}mm;height:auto}small{font-size:10px}</style></head><body><h1>${esc(r.restaurant)}</h1>${r.address ? `<div class="c"><small>${esc(r.address)}</small></div>` : ''}${r.phone ? `<div class="c"><small>${esc(r.phone)}</small></div>` : ''}<div class="hr"></div>${row(esc(c.receiptNo) + ' ' + esc(r.no), '')}${row(esc(date), '')}${r.cashier ? row(esc(c.cashier) + ': ' + esc(r.cashier), '') : ''}<div class="hr"></div>${r.items.map((i) => `<div class="name">${esc(i.name)}</div>${row(i.qty + ' × ' + esc(money(i.price)), esc(money(i.sum)))}`).join('')}<div class="hr"></div>${row(esc(c.total), esc(money(r.total)), 't')}${row(esc(c.methods[r.method] || r.method || ''), '')}${r.change ? row(esc(c.change), esc(money(r.change))) : ''}<div class="hr"></div>${qr}<div class="c"><small>${esc(c.notFiscal)}</small></div><div class="c" style="margin-top:4px">${esc(c.thanks)}</div></body></html>`;
     const f = document.createElement('iframe');
     f.setAttribute('aria-hidden', 'true');
     f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
     f.onload = () => {
+      fitPaper(f, mm);
       try {
         f.contentWindow.focus();
         f.contentWindow.print();
@@ -357,7 +353,7 @@
 
     const scannerBlock = (hint) => {
       const problem = cameraProblem();
-      return `<section class="pos-scanner">${problem ? `<p class="notice pos-camera-note">${cameraMessage()}</p>` : `<button type="button" class="primary pos-scan-toggle" data-scan>${esc(active ? c.scanOff : c.scanOn)}</button>`}<div class="pos-camera" id="posCamera" data-scan-box ${active ? '' : 'hidden'}></div><p class="muted pos-scan-hint">${esc(hint)}</p><p class="pos-hid" data-hid>${esc(c.hid)}</p><p class="pos-scan-note" data-scan-note role="status"></p><div class="pos-manual"><input type="search" inputmode="search" enterkeyhint="go" data-manual placeholder="${esc(c.manual)}" autocomplete="off" list="posProducts"><button type="button" class="quiet" data-manual-add>${esc(c.add)}</button><label class="quiet pos-photo">${esc(c.photo)}<input type="file" accept="image/*" capture="environment" data-photo data-native hidden></label></div><datalist id="posProducts">${data.products.map((p) => `<option value="${esc(p.barcode)}">${esc(p.name)} — ${esc(money(p.price))}</option>`).join('')}</datalist></section>`;
+      return `<section class="pos-scanner">${problem ? `<p class="notice pos-camera-note">${cameraMessage()}</p>` : `<button type="button" class="primary pos-scan-toggle" data-scan>${esc(active ? c.scanOff : c.scanOn)}</button>`}<div class="pos-camera" id="posCamera" data-scan-box ${active ? '' : 'hidden'}></div><p class="muted pos-scan-hint">${esc(hint)}</p><p class="pos-hid" data-hid>${esc(c.hid)}</p><p class="pos-scan-note" data-scan-note role="status"></p><div class="pos-manual"><input type="search" inputmode="search" enterkeyhint="go" data-manual placeholder="${esc(c.manual)}" autocomplete="off" list="posProducts"><button type="button" class="quiet" data-manual-add>${esc(c.add)}</button></div><datalist id="posProducts">${data.products.map((p) => `<option value="${esc(p.barcode)}">${esc(p.name)} — ${esc(money(p.price))}</option>`).join('')}</datalist></section>`;
     };
     function bindScanner() {
       const toggle = root.querySelector('[data-scan]');
@@ -392,17 +388,6 @@
       };
       root.querySelector('[data-manual-add]').onclick = submit;
       manual.onkeydown = (e) => e.key === 'Enter' && (e.preventDefault(), submit());
-      root.querySelector('[data-photo]').onchange = async (e) => {
-        const file = e.target.files?.[0];
-        e.target.value = '';
-        if (!file) return;
-        try {
-          onCode(await scanPhoto(file));
-        } catch {
-          beep(false);
-          root.querySelector('[data-scan-note]').textContent = c.photoFail;
-        }
-      };
     }
 
     // ---- Till ----
