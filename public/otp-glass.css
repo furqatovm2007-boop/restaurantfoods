@@ -1,0 +1,66 @@
+/* Glassy OTP window (public/otp-glass.js): dark glass, gold accents, emerald when verified. */
+.rf-otp-host{margin:14px 0}
+.rf-otp{--acc:#eab308;--acc-soft:rgba(234,179,8,.25);--w:48px;--h:56px;--g:8px;position:relative;overflow:hidden;isolation:isolate;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:28px 20px 22px;background:rgba(18,20,18,.78);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid var(--acc-soft);border-radius:28px;color:#f6f1df;box-shadow:0 24px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);transition:border-color .5s ease,box-shadow .5s ease}
+.rf-otp:before,.rf-otp:after{content:'';position:absolute;inset:-30% -10% auto;height:70%;z-index:-1;pointer-events:none;transition:opacity .6s ease}
+.rf-otp:before{background:radial-gradient(ellipse at 50% 60%,rgba(234,179,8,.18),transparent 65%)}
+.rf-otp:after{background:radial-gradient(ellipse at 50% 60%,rgba(16,185,129,.24),transparent 65%);opacity:0}
+.rf-otp-streak{position:absolute;z-index:-1;top:-40%;left:-30%;width:38%;height:180%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);transform:rotate(24deg);pointer-events:none;animation:rfOtpStreak 7s ease-in-out infinite}
+.rf-otp-streak.b{left:10%;width:16%;animation-delay:-3.5s;opacity:.7}
+.rf-otp-corner{position:absolute;width:22px;height:22px;border:2px solid var(--acc);opacity:.75;pointer-events:none;transition:border-color .5s ease}
+.rf-otp-corner.tl{top:10px;left:10px;border-right:0;border-bottom:0;border-top-left-radius:16px}
+.rf-otp-corner.tr{top:10px;right:10px;border-left:0;border-bottom:0;border-top-right-radius:16px}
+.rf-otp-corner.bl{bottom:10px;left:10px;border-right:0;border-top:0;border-bottom-left-radius:16px}
+.rf-otp-corner.br{bottom:10px;right:10px;border-left:0;border-top:0;border-bottom-right-radius:16px}
+.rf-otp-badge{position:relative;display:grid;place-items:center;width:62px;height:62px;border-radius:50%;margin-bottom:6px;color:var(--acc);background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.16),rgba(255,255,255,.03));border:1px solid var(--acc-soft);box-shadow:0 0 26px rgba(234,179,8,.22),inset 0 1px 0 rgba(255,255,255,.12);transition:color .5s ease,border-color .5s ease,box-shadow .5s ease}
+.rf-otp-badge>span{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .4s ease,transform .5s cubic-bezier(.2,.8,.2,1)}
+.rf-otp-badge svg{width:30px;height:30px}
+.rf-otp-shield{opacity:0;transform:scale(.4) rotate(-30deg)}
+.rf-otp-title{margin:0;font-size:21px;letter-spacing:-.01em;color:#fff7dd}
+.rf-otp-sub{margin:0 0 6px;font-size:14px;color:rgba(246,241,223,.72);max-width:340px}
+.rf-otp-stage{position:relative;width:100%;height:calc(var(--h) + 16px);display:grid;place-items:center;transition:height .4s cubic-bezier(.4,0,.2,1)}
+.rf-otp-ring{display:flex;gap:var(--g);justify-content:center}
+.rf-otp-box{width:var(--w);height:var(--h);padding:0;margin:0;border-radius:12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(234,179,8,.4);color:#fff;font:700 24px/1 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;caret-color:var(--acc);outline:none;transform:translate(var(--tx,0),var(--ty,0)) scale(var(--s,1));transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .35s ease,border-color .25s ease,box-shadow .25s ease,background .25s ease}
+.rf-otp-box:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(234,179,8,.2),0 0 18px rgba(234,179,8,.25);background:rgba(255,255,255,.08)}
+.rf-otp-core{position:absolute;left:50%;top:50%;width:calc(var(--w) + 10px);height:calc(var(--h) + 10px);margin:calc((var(--h) + 10px)/-2) 0 0 calc((var(--w) + 10px)/-2);border-radius:14px;background:rgba(255,255,255,.07);border:1.5px solid var(--acc);box-shadow:0 0 30px rgba(234,179,8,.3);opacity:0;transform:scale(.85);pointer-events:none;display:grid;place-items:center;transition:opacity .3s ease,transform .4s cubic-bezier(.2,.8,.2,1),border-color .5s ease,box-shadow .5s ease}
+.rf-otp-core svg{width:34px;height:34px;fill:none;stroke:#34d399;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:32;stroke-dashoffset:32;filter:drop-shadow(0 0 6px rgba(16,185,129,.8))}
+.rf-otp-timer{margin:4px 0 0;font-size:13px;color:rgba(246,241,223,.65);font-variant-numeric:tabular-nums}
+.rf-otp-resend{background:none;border:0;padding:0;color:var(--acc);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.rf-otp-go{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:340px;min-height:52px;margin-top:12px;border:0;border-radius:14px;background:linear-gradient(135deg,#facc15,#eab308 55%,#ca8a04);color:#1c1503;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 10px 26px rgba(234,179,8,.3);transition:background .5s ease,box-shadow .5s ease,color .5s ease,transform .15s ease}
+.rf-otp-go:hover:not(:disabled){transform:translateY(-1px)}
+.rf-otp-go:disabled{cursor:default;opacity:1}
+.rf-otp-spin{display:none;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(28,21,3,.25);border-top-color:#1c1503;animation:rfOtpRot .7s linear infinite}
+.rf-otp-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* While the panel is shown, the resend button it proxies and the form's own submit button step aside. */
+body:has(.rf-otp-host:not([hidden])) .rf-otp-proxied,.rf-otp-form:has(.rf-otp-host:not([hidden]) .rf-otp-go) [data-rf-otp-hide]{display:none!important}
+/* 1. Formation: the row becomes a circle */
+.rf-otp.is-forming .rf-otp-stage{height:calc(var(--h) + 200px)}
+.rf-otp.is-forming .rf-otp-go .rf-otp-spin{display:inline-block}
+/* 2. Orbit */
+.rf-otp.is-orbit .rf-otp-ring{animation:rfOtpRot .7s linear infinite}
+.rf-otp.is-orbit .rf-otp-box{animation:rfOtpCounter .7s linear infinite}
+/* 3. Merge into the centre cell */
+.rf-otp.is-merge .rf-otp-box{--s:.85;opacity:0}
+.rf-otp.is-merge .rf-otp-core{opacity:1;transform:scale(1)}
+.rf-otp.is-merge.is-forming .rf-otp-stage{height:calc(var(--h) + 40px)}
+/* 4. Verified: emerald */
+.rf-otp.is-ok{--acc:#10b981;--acc-soft:rgba(16,185,129,.45);box-shadow:0 24px 60px rgba(0,0,0,.35),0 0 40px rgba(16,185,129,.18),inset 0 1px 0 rgba(255,255,255,.06)}
+.rf-otp.is-ok:before{opacity:0}.rf-otp.is-ok:after{opacity:1}
+.rf-otp.is-ok .rf-otp-badge{box-shadow:0 0 30px rgba(16,185,129,.4),inset 0 1px 0 rgba(255,255,255,.12)}
+.rf-otp.is-ok .rf-otp-key{opacity:0;transform:scale(.4) rotate(30deg)}
+.rf-otp.is-ok .rf-otp-shield{opacity:1;transform:none}
+.rf-otp.is-ok .rf-otp-core{opacity:1;transform:scale(1);border-color:#10b981;box-shadow:0 0 34px rgba(16,185,129,.55)}
+.rf-otp.is-ok .rf-otp-core svg{animation:rfOtpDraw .45s .05s ease-out forwards}
+.rf-otp.is-ok .rf-otp-title{color:#d1fae5}
+.rf-otp.is-ok .rf-otp-go{background:linear-gradient(135deg,#34d399,#10b981 55%,#059669);color:#022c1f;box-shadow:0 10px 26px rgba(16,185,129,.35)}
+.rf-otp.is-ok .rf-otp-go .rf-otp-spin{display:none}
+/* Wrong code: red shake, back to the row */
+.rf-otp.is-error .rf-otp-ring{animation:rfOtpShake .45s cubic-bezier(.36,.07,.19,.97)}
+.rf-otp.is-error .rf-otp-box{border-color:#ef4444;background:rgba(239,68,68,.1);box-shadow:0 0 14px rgba(239,68,68,.3)}
+@keyframes rfOtpRot{to{transform:rotate(360deg)}}
+@keyframes rfOtpCounter{from{transform:translate(var(--tx,0),var(--ty,0)) rotate(0)}to{transform:translate(var(--tx,0),var(--ty,0)) rotate(-360deg)}}
+@keyframes rfOtpDraw{to{stroke-dashoffset:0}}
+@keyframes rfOtpShake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
+@keyframes rfOtpStreak{0%,100%{transform:translateX(0) rotate(24deg)}50%{transform:translateX(160%) rotate(24deg)}}
+@media(max-width:420px){.rf-otp{--w:40px;--h:50px;--g:6px;padding:24px 14px 18px}.rf-otp-box{font-size:21px}}
+@media(max-width:340px){.rf-otp{--w:36px;--h:46px;--g:5px}}
+@media(prefers-reduced-motion:reduce){.rf-otp-streak,.rf-otp.is-orbit .rf-otp-ring,.rf-otp.is-orbit .rf-otp-box{animation:none}.rf-otp-box,.rf-otp-stage,.rf-otp-core{transition:none}}
