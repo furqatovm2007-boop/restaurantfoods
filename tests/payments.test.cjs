@@ -39,8 +39,10 @@ assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode,phone:'+9989011111
 db.prepare("INSERT OR IGNORE INTO accounts(id,email,name,created_at) VALUES ('client','c@x','C','now')").run();
 r=await book({phoneOtpId:otp.id,phoneCode:smsCode});assert.equal(r.status,201);const created=await r.json();
 assert.deepEqual({...db.prepare("SELECT contact_phone,contact_phone_verified FROM accounts WHERE id='client'").get()},{contact_phone:'+998901234567',contact_phone_verified:1},'a booking code also verifies the account phone');db.prepare("UPDATE accounts SET contact_phone_verified=0 WHERE id='client'").run();
-assert.equal(created.deposit.amount,50000);assert.ok(created.deposit.links.click.includes('transaction_param='+created.deposit.id));
-assert.ok(atob(created.deposit.links.payme.split('/').pop()).includes('ac.deposit_id='+created.deposit.id+';a=5000000;'));
+assert.equal(created.deposit.amount,100000,'restaurant asked 50 000: the online minimum is 100 000');
+{const {bookingDeposit}=load('app/deposits.ts',{'cloudflare:workers':{env:{}},'./telegram':{},'./pos':{}});
+assert.equal(bookingDeposit(0),100000,'no preorder: 100 000');assert.equal(bookingDeposit(350000),350000,'preorder total');assert.equal(bookingDeposit(2000000),600000,'capped at 600 000');assert.equal(bookingDeposit(0,150000),150000,'a higher restaurant or peak deposit');assert.equal(bookingDeposit(0,900000),600000,'cap applies to it too');}assert.ok(created.deposit.links.click.includes('transaction_param='+created.deposit.id));
+assert.ok(atob(created.deposit.links.payme.split('/').pop()).includes('ac.deposit_id='+created.deposit.id+';a=10000000;'));
 assert.equal(calls.length,0,'restaurant is not notified before the deposit is paid');
 assert.equal(db.prepare('SELECT phone_verified,deposit_status FROM bookings WHERE id=?').get(created.id).deposit_status,'pending');
 assert.equal((await book({phoneOtpId:otp.id,phoneCode:smsCode,tableNumber:2})).status,400,'code is single use');
@@ -50,7 +52,7 @@ user={...user,phoneVerified:true,phone:'998901234567'};
 
 // Click: Prepare + Complete with MD5 signatures.
 const depositId=created.deposit.id;
-const clickReq=f=>{const fields={click_trans_id:'9001',service_id:'11',click_paydoc_id:'1',merchant_trans_id:depositId,amount:'50000.00',error:'0',error_note:'Success',sign_time:'2026-10-21 10:00:00',...f};fields.sign_string??=md5(fields.click_trans_id+fields.service_id+'click-key'+fields.merchant_trans_id+(fields.action==='1'?fields.merchant_prepare_id:'')+fields.amount+fields.action+fields.sign_time);return click.POST(new Request('https://test/api/payments/click',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields).toString()}))};
+const clickReq=f=>{const fields={click_trans_id:'9001',service_id:'11',click_paydoc_id:'1',merchant_trans_id:depositId,amount:'100000.00',error:'0',error_note:'Success',sign_time:'2026-10-21 10:00:00',...f};fields.sign_string??=md5(fields.click_trans_id+fields.service_id+'click-key'+fields.merchant_trans_id+(fields.action==='1'?fields.merchant_prepare_id:'')+fields.amount+fields.action+fields.sign_time);return click.POST(new Request('https://test/api/payments/click',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields).toString()}))};
 assert.equal((await (await clickReq({action:'0',sign_string:'bad'})).json()).error,-1);
 assert.equal((await (await clickReq({action:'0',amount:'100.00'})).json()).error,-2);
 assert.equal((await (await clickReq({action:'0',merchant_trans_id:'missing'})).json()).error,-5);
@@ -85,14 +87,14 @@ assert.equal(db.prepare('SELECT COUNT(*) n FROM telegram_links').get().n,0,'code
 calls.length=0;
 r=await book({tableNumber:2});assert.equal(r.status,201);const second=await r.json(),pd=second.deposit.id;
 const rpc=(method,params,key='payme-key')=>payme.POST(new Request('https://test/api/payments/payme',{method:'POST',headers:{Authorization:'Basic '+btoa('Paycom:'+key),'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:7,method,params})})).then(x=>x.json());
-assert.equal((await rpc('CheckPerformTransaction',{amount:5000000,account:{deposit_id:pd}},'wrong')).error.code,-32504);
+assert.equal((await rpc('CheckPerformTransaction',{amount:10000000,account:{deposit_id:pd}},'wrong')).error.code,-32504);
 assert.equal((await rpc('toString',{})).error.code,-32601);
 assert.equal((await rpc('CheckPerformTransaction',{amount:100,account:{deposit_id:pd}})).error.code,-31001);
-assert.equal((await rpc('CheckPerformTransaction',{amount:5000000,account:{deposit_id:'nope'}})).error.code,-31050);
-assert.equal((await rpc('CheckPerformTransaction',{amount:5000000,account:{deposit_id:pd}})).result.allow,true);
-const t=Date.now(),createdTx=(await rpc('CreateTransaction',{id:'pm-1',time:t,amount:5000000,account:{deposit_id:pd}})).result;assert.equal(createdTx.state,1);
-assert.equal((await rpc('CreateTransaction',{id:'pm-1',time:t,amount:5000000,account:{deposit_id:pd}})).result.create_time,createdTx.create_time,'idempotent');
-assert.equal((await rpc('CreateTransaction',{id:'pm-2',time:t,amount:5000000,account:{deposit_id:pd}})).error.code,-31099,'one transaction per deposit');
+assert.equal((await rpc('CheckPerformTransaction',{amount:10000000,account:{deposit_id:'nope'}})).error.code,-31050);
+assert.equal((await rpc('CheckPerformTransaction',{amount:10000000,account:{deposit_id:pd}})).result.allow,true);
+const t=Date.now(),createdTx=(await rpc('CreateTransaction',{id:'pm-1',time:t,amount:10000000,account:{deposit_id:pd}})).result;assert.equal(createdTx.state,1);
+assert.equal((await rpc('CreateTransaction',{id:'pm-1',time:t,amount:10000000,account:{deposit_id:pd}})).result.create_time,createdTx.create_time,'idempotent');
+assert.equal((await rpc('CreateTransaction',{id:'pm-2',time:t,amount:10000000,account:{deposit_id:pd}})).error.code,-31099,'one transaction per deposit');
 assert.equal((await rpc('PerformTransaction',{id:'nope'})).error.code,-31003);
 const performed=(await rpc('PerformTransaction',{id:'pm-1'})).result;assert.equal(performed.state,2);
 assert.equal((await rpc('PerformTransaction',{id:'pm-1'})).result.perform_time,performed.perform_time,'idempotent perform');
@@ -104,7 +106,7 @@ assert.deepEqual({...db.prepare('SELECT status,deposit_status FROM bookings WHER
 
 // Paid by Click while a Payme transaction was open: Payme must be refused, not charged twice.
 r=await book({tableNumber:4,slot:'18:00',endSlot:'20:00'});const both=(await r.json()).deposit.id;
-assert.equal((await rpc('CreateTransaction',{id:'pm-race',time:Date.now(),amount:5000000,account:{deposit_id:both}})).result.state,1);
+assert.equal((await rpc('CreateTransaction',{id:'pm-race',time:Date.now(),amount:10000000,account:{deposit_id:both}})).result.state,1);
 assert.equal(await deep['../../../deposits'].markPaid(both,'click'),true);
 assert.equal((await rpc('PerformTransaction',{id:'pm-race'})).error.code,-31008,'second provider refused');
 assert.equal((await rpc('CheckTransaction',{id:'pm-race'})).result.state,-1);
@@ -112,7 +114,7 @@ assert.equal(db.prepare('SELECT provider FROM deposits WHERE id=?').get(both).pr
 // Unpaid deposits release the table after the hold; a Payme create on an expired deposit is refused.
 r=await book({tableNumber:3});const third=await r.json();
 db.prepare("UPDATE deposits SET created_at=? WHERE id=?").run(new Date(Date.now()-31*60000).toISOString(),third.deposit.id);
-assert.equal((await rpc('CheckPerformTransaction',{amount:5000000,account:{deposit_id:third.deposit.id}})).error.code,-31051);
+assert.equal((await rpc('CheckPerformTransaction',{amount:10000000,account:{deposit_id:third.deposit.id}})).error.code,-31051);
 assert.equal(await deep['../../../deposits'].sweepDeposits(),1);
 assert.deepEqual({...db.prepare('SELECT status,deposit_status FROM bookings WHERE id=?').get(third.id)},{status:'cancelled',deposit_status:'cancelled'});
 assert.equal((await book({tableNumber:3})).status,201,'table is free again');

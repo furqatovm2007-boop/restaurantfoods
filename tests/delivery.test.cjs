@@ -26,6 +26,10 @@ user={userId:'client',role:'customer'};{const o=(await (await delivery.GET(new R
 const eta=geo.etaMinutes,base={fulfillment:'delivery',status:'confirmed',created_at:new Date(Date.now()-10*60000).toISOString(),delivery_minutes:45,delivery_lat:39.66,delivery_lng:66.97};
 assert.equal(eta({...base,delivery_status:'assigned'}),35,'before pickup: promised time minus elapsed');assert.equal(eta({...base,delivery_status:'assigned',created_at:'2020-01-01T00:00:00Z'}),10,'never under 10 min before pickup');
 const onWay=eta({...base,delivery_status:'picked_up',courier_lat:39.65,courier_lng:66.96});assert.ok(onWay>=4&&onWay<=8,'about 1.4 km at street speed: '+onWay);assert.equal(eta({...base,delivery_status:'picked_up'}),null,'no GPS, no guess');
+// Promised time from the map: preparation 15–20 min + road (restaurant → customer); replaces the manual minutes.
+const win=geo.deliveryWindow(39.654,66.975,39.66,66.97);assert.ok(win&&win[1]-win[0]===5&&win[0]>=16&&win[0]<=19,'about 0.8 km: '+win);assert.equal(geo.deliveryWindow(null,66.9,39.6,66.9),null,'no map point, no window');
+assert.equal(eta({...base,delivery_minutes:null,restaurant_lat:39.654,restaurant_lng:66.975,delivery_status:'assigned'}),win[1]-10,'before pickup: map window end minus elapsed (manual minutes ignored)');
+assert.equal(eta({...base,delivery_minutes:null,delivery_status:'assigned'}),null,'no restaurant point and no manual minutes: no guess');
 assert.equal(eta({...base,status:'completed',delivery_status:'delivered'}),null);assert.equal(eta({...base,fulfillment:'pickup',delivery_status:'unassigned'}),null);
 console.log('PASS real SQLite: migration upgrade, owner isolation/approval, menu + delivery pricing, private assignment/GPS, stale location hidden, pickup/complete transitions, completed GPS rejected');
 })().catch(e=>{console.error(e);process.exitCode=1});

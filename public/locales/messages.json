@@ -6038,5 +6038,35 @@
     "uz": "AI rejimi: OpenAI asosiy, Cloudflare zaxira.",
     "ru": "Режим AI: OpenAI основной, Cloudflare — резерв.",
     "en": "AI mode: OpenAI first, Cloudflare as reserve."
+  },
+  "Telefondagi xarita ilovasi": {
+    "uz": "Telefondagi xarita ilovasi",
+    "ru": "Карты на телефоне",
+    "en": "Phone map app"
+  },
+  "Yetkazish vaqti xaritadan avtomatik hisoblanadi: tayyorlash 15–20 daqiqa + restorandan mijozgacha yo‘l.": {
+    "uz": "Yetkazish vaqti xaritadan avtomatik hisoblanadi: tayyorlash 15–20 daqiqa + restorandan mijozgacha yo‘l.",
+    "ru": "Время доставки считается автоматически по карте: приготовление 15–20 минут + дорога от ресторана до клиента.",
+    "en": "Delivery time is calculated from the map: 15–20 minutes of preparation + the road from the restaurant to the customer."
+  },
+  "tayyorlash 15–20 daqiqa + yo‘l": {
+    "uz": "tayyorlash 15–20 daqiqa + yo‘l",
+    "ru": "приготовление 15–20 мин + дорога",
+    "en": "15–20 min preparation + travel"
+  },
+  "Bron uchun onlayn zaklad:": {
+    "uz": "Bron uchun onlayn zaklad:",
+    "ru": "Онлайн-залог за бронь:",
+    "en": "Online booking deposit:"
+  },
+  "dan": {
+    "uz": "dan",
+    "ru": "—",
+    "en": "to"
+  },
+  "gacha — oldindan buyurtma qilgan taomlaringiz summasiga qarab": {
+    "uz": "gacha — oldindan buyurtma qilgan taomlaringiz summasiga qarab",
+    "ru": "— в зависимости от суммы заказанных заранее блюд",
+    "en": "depending on the total of the dishes you preorder"
   }
 }

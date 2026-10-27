@@ -53,7 +53,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const book=(who,r,table,date,slot,endSlot,extra={})=>{user={userId:who,role:'customer'};return bookings.POST(request('/api/bookings',{restaurantId:r,date,slot,endSlot,tableNumber:table,guests:2,phone:'+998901234567',acceptPenalty:true,...extra}))};
  pay.length=0;let r=await book('c1','biz',1,fri,'19:00','20:00');assert.equal(r.status,201);let res=await r.json();assert.equal(res.deposit.amount,150000);assert.equal(res.deposit.paid,true);assert.equal(pay.find(p=>p.method==='receipts.create').params.amount,15000000);
  const peakBooking=res.id;r=await receipt.GET(new Request('https://test/api/bookings/receipt?id='+peakBooking));let rc=await r.json();assert.equal(rc.deposit.amount,150000);assert.equal(rc.deposit.status,'paid');
- r=await book('c1','biz',2,fri,'13:00','14:00');assert.equal((await r.json()).deposit,null,'outside peak: no deposit');
+ r=await book('c1','biz',2,fri,'13:00','14:00');res=await r.json();assert.equal(res.deposit.amount,100000,'outside peak: the online minimum 100 000');assert.equal(res.deposit.peak,false);
 
  // 2. Table merging: 1+2 (neighbours) for 8 guests; the merged table is busy for others; far tables refused; Start refused.
  const tomorrow=new Date(NOW+5*3600000+86400000).toISOString().slice(0,10);
@@ -83,7 +83,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  tg.length=0;await birthday.runBirthdays(NOW+3*86400000,true);m2=tg.filter(x=>x.body.chat_id==='502');assert.equal(m2.length,1,'reminder on the day');assert.ok(m2[0].body.text.includes('muborak')&&m2[0].body.text.includes(code2));
  tg.length=0;await birthday.runBirthdays(NOW+3*86400000,true);assert.equal(tg.filter(x=>x.body.chat_id==='502').length,0,'reminded once');
  user={userId:'c2',role:'customer'};r=await book('c2','pre',3,tomorrow,'13:00','14:00',{promoCode:code2});assert.equal(r.status,201);res=await r.json();assert.equal(JSON.stringify(res.discount),JSON.stringify({percent:0,reason:'birthday',amount:100000,minOrder:300000}));
- let rc2=await (await receipt.GET(new Request('https://test/api/bookings/receipt?id='+res.id))).json();assert.equal(rc2.discount.applied,false,'no dishes: below the minimum');assert.equal(rc2.discount.bonus,100000);assert.equal(rc2.discount.code,code2);db.exec("DELETE FROM bookings WHERE user_id='c2' AND restaurant_id='pre'");
+ let rc2=await (await receipt.GET(new Request('https://test/api/bookings/receipt?id='+res.id))).json();assert.equal(rc2.discount.applied,false,'no dishes: below the minimum');assert.equal(rc2.discount.bonus,100000);assert.equal(rc2.discount.code,code2);db.exec("DELETE FROM deposits WHERE booking_id IN (SELECT id FROM bookings WHERE user_id='c2' AND restaurant_id='pre')");db.exec("DELETE FROM bookings WHERE user_id='c2' AND restaurant_id='pre'");
  const P=load('app/booking-pass.ts',cf);let tt=P.receiptTotals([{name:'Osh',price:200000,quantity:2}],10,{amount:100000,minOrder:300000});assert.equal(tt.discount,100000);assert.equal(tt.serviceFee,30000);assert.equal(tt.total,330000);
  assert.equal(P.receiptTotals([{name:'Osh',price:200000,quantity:2}],0,{amount:100000,minOrder:500000}).discount,0);assert.equal(P.receiptTotals([{name:'Choy',price:20000,quantity:1}],0,{amount:100000}).total,0,'never below zero');
  tt=P.receiptTotals([{name:'Osh',price:100000,quantity:1}],0,{gift:'Bepul bayram torti'});assert.equal(tt.gift,'Bepul bayram torti');assert.equal(tt.total,100000);assert.equal(P.receiptTotals([{name:'Osh',price:100000,quantity:1}],0,15).discount,15000,'old numeric form');
@@ -133,7 +133,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  user={userId:'h1',role:'customer'};al=await (await growthRoute.GET(new Request('https://test/api/manage/growth?view=alerts&restaurantId=pre'))).json();
  assert.deepEqual(al.bookings.map(b=>b.id),['feed1'],'only the last 6 hours');assert.equal(al.canResolve,false,'hostess: view only');
  user={userId:'m1',role:'customer'};assert.equal((await (await growthRoute.GET(new Request('https://test/api/manage/growth?view=alerts&restaurantId=pre'))).json()).canResolve,true);
- db.exec("DELETE FROM bookings WHERE id IN ('feed0','feed1')");
+ db.exec("DELETE FROM deposits WHERE booking_id IN (SELECT id FROM bookings WHERE id IN ('feed0','feed1'))");db.exec("DELETE FROM bookings WHERE id IN ('feed0','feed1')");
 
  // 7. VIP dossier (Premium): 4 visits -> VIP with favourite dishes and table; shown at QR check-in.
  for(let i=0;i<4;i++)db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at,preorder_items,preorder_total) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)").run('v'+i,'pre','c2','2026-0'+(i+1)+'-10','19:00','',4,2,'+998901234567','completed','now',JSON.stringify([{name:'Osh',quantity:2},{name:i%2?'Somsa':'Choy',quantity:1}]),100000);

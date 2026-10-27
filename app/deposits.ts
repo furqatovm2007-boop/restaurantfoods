@@ -8,6 +8,10 @@ import { isPosId, saleById, completeSale, cancelSale, type PosSaleRow } from './
  * provider callbacks (app/api/payments/*), never from the browser.
  */
 export const HOLD_MS = 30 * 60000;
+/** Online booking deposit: the preordered dishes' total, never under 100 000 and never over 600 000 so'm. */
+export const DEPOSIT_MIN = 100000,
+  DEPOSIT_MAX = 600000;
+export const bookingDeposit = (preorderTotal: number, base = 0) => Math.min(DEPOSIT_MAX, Math.max(DEPOSIT_MIN, Number(preorderTotal) || 0, Number(base) || 0));
 export type Provider = 'click' | 'payme';
 
 export function depositProviders(): Provider[] {
