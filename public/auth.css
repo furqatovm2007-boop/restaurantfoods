@@ -6,37 +6,47 @@
 .auth-diagonal{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:18px;padding:18px 12px 28px;background:radial-gradient(120% 70% at 50% 0,#0f2a23,#050a08)!important;color:#e8f5ef}
 .auth-diagonal .auth-brand{width:min(780px,95vw);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .auth-diagonal .auth-brand img{height:42px;width:auto}
-.auth-container{--ease:cubic-bezier(.68,-.15,.265,1.15);position:relative;width:780px;max-width:95vw;min-height:480px;overflow:hidden;border-radius:24px;background:#0a0f0d;border:2px solid rgba(16,185,129,.55);box-shadow:0 0 35px rgba(16,185,129,.35),inset 0 0 20px rgba(234,179,8,.08);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);isolation:isolate}
-/* The diagonal curtain: right-hand side for login, swept across to the left for signup. clip-path polygons keep
-   the diagonal correct for any card height; the gold line moves with it. */
-.curved-shape,.curved-shape2{position:absolute;inset:0;pointer-events:none;z-index:0;transition:clip-path 1.2s var(--ease)}
-.curved-shape{background:linear-gradient(135deg,#064e3b 0%,#10b981 55%,#eab308 100%);clip-path:polygon(50% 0%,100% 0%,100% 100%,62% 100%)}
-.curved-shape2{background:linear-gradient(180deg,rgba(253,224,71,.95),rgba(234,179,8,.6));clip-path:polygon(49.6% 0%,50.3% 0%,62.3% 100%,61.6% 100%);filter:drop-shadow(0 0 6px rgba(253,224,71,.6))}
-.auth-container.active .curved-shape{clip-path:polygon(0% 0%,50% 0%,38% 100%,0% 100%)}
-.auth-container.active .curved-shape2{clip-path:polygon(49.7% 0%,50.4% 0%,38.4% 100%,37.7% 100%)}
-.auth-panel{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:.7rem;padding:30px 34px;min-width:0}
-.auth-form-side{grid-column:1;grid-row:1}
-.auth-info-side{grid-column:2;grid-row:1;text-align:right;align-items:flex-end;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35)}
-.auth-container.active .auth-form-side{grid-column:2}
-.auth-container.active .auth-info-side{grid-column:1;text-align:left;align-items:flex-start}
-.auth-info-side h2{margin:0;font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.15;letter-spacing:.02em;color:#fff}
-.auth-info-side p{margin:0;max-width:300px;line-height:1.45;color:rgba(255,255,255,.92)}
-.auth-info-side .eyebrow{color:#fef3c7;font-weight:800;letter-spacing:.14em;font-size:.75rem}
+.auth-container{--ease:cubic-bezier(.68,-.15,.265,1.15);position:relative;width:780px;max-width:95vw;min-height:620px;overflow:hidden;border-radius:24px;background:#0a0f0d;border:2px solid rgba(16,185,129,.55);box-shadow:0 0 35px rgba(16,185,129,.35),inset 0 0 20px rgba(234,179,8,.08);display:grid;grid-template-columns:50% 50%;grid-template-rows:minmax(616px,auto);isolation:isolate}
+/* The diagonal curtain (z-index 1) stays inside the half that holds the welcome text: right half for login,
+   swept across to the left half for signup. It never crosses the inputs or the CAPTCHA. */
+.curved-shape,.curved-shape2{position:absolute;inset:0;pointer-events:none;z-index:1;transition:clip-path 1.2s var(--ease)}
+.curved-shape{background:linear-gradient(135deg,#064e3b 0%,#10b981 55%,#eab308 100%);clip-path:polygon(58% 0%,100% 0%,100% 100%,50% 100%)}
+.curved-shape2{background:linear-gradient(180deg,rgba(253,224,71,.95),rgba(234,179,8,.6));clip-path:polygon(57.6% 0%,58.3% 0%,50.3% 100%,50% 100%);filter:drop-shadow(0 0 6px rgba(253,224,71,.6))}
+.auth-container.active .curved-shape{clip-path:polygon(0% 0%,50% 0%,42% 100%,0% 100%)}
+.auth-container.active .curved-shape2{clip-path:polygon(49.7% 0%,50% 0%,42.3% 100%,41.6% 100%)}
+/* Four blocks, always in the DOM, each on its own half (same grid row, so the card grows with the tallest). */
+.form-box,.info-content{position:relative;z-index:2;grid-row:1;width:100%;min-width:0;box-sizing:border-box;padding:32px 40px;display:flex;flex-direction:column;justify-content:center;gap:.7rem}
+.form-box.login{grid-column:1}
+.form-box.register{grid-column:2}
+.info-content.login{grid-column:2}
+.info-content.register{grid-column:1}
+.info-content{align-items:center;text-align:center;padding:0 36px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35);word-break:break-word}
+.info-content h2{margin:0;font-size:clamp(1.5rem,3.2vw,2.2rem);line-height:1.15;letter-spacing:.02em}
+.info-content p{margin:0;max-width:300px;line-height:1.45}
+.info-content .eyebrow{font-weight:800;letter-spacing:.14em;font-size:.75rem}
 .auth-switch-hint{margin-top:.8rem!important;font-size:.9rem}
 .auth-switch{min-height:44px;padding:.5rem 1.4rem;border-radius:999px;border:1.5px solid rgba(255,255,255,.85);background:rgba(10,15,13,.35);color:#fff;font:800 .95rem/1.2 inherit;cursor:pointer;backdrop-filter:blur(6px);transition:background .25s,color .25s}
 .auth-switch:hover,.auth-switch:focus-visible{background:#fff;color:#064e3b}
-.auth-form-side h1{margin:0;font-size:1.45rem;line-height:1.25;color:#fef3c7}
-/* Staggered slide + blur: hidden while entering / leaving, released one by one. */
-.auth-container .anim{transition:transform .7s ease,opacity .7s ease,filter .7s ease;transition-delay:calc(.1s * var(--i,0))}
-.auth-container.entering .auth-form-side .anim,.auth-container.leaving .auth-form-side .anim{transform:translateX(-120%);opacity:0;filter:blur(10px)}
-.auth-container.active.entering .auth-form-side .anim,.auth-container.active.leaving .auth-form-side .anim{transform:translateX(120%)}
-.auth-container.entering .auth-info-side .anim,.auth-container.leaving .auth-info-side .anim{transform:translateX(120%);opacity:0;filter:blur(10px)}
-.auth-container.active.entering .auth-info-side .anim,.auth-container.active.leaving .auth-info-side .anim{transform:translateX(-120%)}
-.auth-container.leaving .anim{transition-delay:calc(.04s * var(--i,0))}
+.form-box h1{margin:0;font-size:1.45rem;line-height:1.25;color:#fef3c7}
+/* Staggered slide + blur. A hidden block's items leave at once (0.05 s × --i); the items of the block coming in
+   wait for the curtain (0.35 s + 0.07 s × --i). Initial states are explicit, so nothing jumps or flickers. */
+.auth-container .anim{transition:transform .7s ease,opacity .7s ease,filter .7s ease;transform:translateX(0);opacity:1;filter:blur(0);transition-delay:calc(.35s + .07s * var(--i,0))}
+.form-box,.info-content{transition:visibility 0s linear 0s}
+/* Login (default): login form + welcome visible; register blocks out of view and not clickable. */
+.form-box.register,.info-content.register{pointer-events:none;visibility:hidden;transition:visibility 0s linear .9s}
+.form-box.register .anim,.info-content.register .anim{opacity:0;filter:blur(10px);transition-delay:calc(.05s * var(--i,0))}
+.form-box.register .anim{transform:translateX(120%)}
+.info-content.register .anim{transform:translateX(-120%)}
+/* Signup (.active): the mirror image. */
+.auth-container.active .form-box.login,.auth-container.active .info-content.login{pointer-events:none;visibility:hidden;transition:visibility 0s linear .9s}
+.auth-container.active .form-box.register,.auth-container.active .info-content.register{pointer-events:auto;visibility:visible;transition:visibility 0s linear 0s}
+.auth-container.active .form-box.login .anim{transform:translateX(-120%);opacity:0;filter:blur(10px);transition-delay:calc(.05s * var(--i,0))}
+.auth-container.active .info-content.login .anim{transform:translateX(120%);opacity:0;filter:blur(10px);transition-delay:calc(.05s * var(--i,0))}
+.auth-container.active .form-box.register .anim,.auth-container.active .info-content.register .anim{transform:translateX(0);opacity:1;filter:blur(0)!important;transition-delay:calc(.35s + .07s * var(--i,0))}
+/* New fields written into a box start hidden (.pre) and slide in from their side. */
+.form-box.login.pre .anim{transform:translateX(-120%);opacity:0;filter:blur(10px);transition:none}
+.form-box.register.pre .anim{transform:translateX(120%);opacity:0;filter:blur(10px);transition:none}
 /* Tabs and method switch */
-.auth-diagonal .auth-tabs{display:flex;gap:.4rem;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(16,185,129,.3)}
-.auth-diagonal .auth-tabs a{flex:1;text-align:center;padding:.45rem .6rem;border-radius:999px;color:#cfe7df;text-decoration:none;font-weight:700;font-size:.9rem}
-.auth-diagonal .auth-tabs a.active{background:linear-gradient(90deg,#10b981,#eab308);color:#04140e}
 .auth-diagonal .auth-method{display:flex;gap:.4rem;flex-wrap:wrap}
 .auth-diagonal .auth-method button{flex:1;min-height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#cfe7df;font-size:.8rem;cursor:pointer}
 .auth-diagonal .auth-method button.selected{border-color:#eab308;color:#facc15;background:rgba(234,179,8,.08)}
@@ -72,30 +82,36 @@
 .auth-diagonal .auth-footer a{color:#a7f3d0;text-decoration:none;font-size:.9rem}
 /* Phones: the diagonal turns into a band above the form and the card swaps with a vertical / 3D move. */
 @media (max-width:768px){
- .auth-container{grid-template-columns:minmax(0,1fr);min-height:0;perspective:1200px}
- .auth-info-side,.auth-container.active .auth-info-side{grid-column:1;grid-row:1;min-height:150px;padding:22px 22px 30px;text-align:left;align-items:flex-start;justify-content:flex-end}
- .auth-form-side,.auth-container.active .auth-form-side{grid-column:1;grid-row:2;padding:18px 20px 24px}
- .curved-shape{bottom:auto;height:175px;clip-path:polygon(0% 0%,100% 0%,100% 72%,0% 100%)}
- .curved-shape2{bottom:auto;height:175px;clip-path:polygon(0% 99%,100% 71%,100% 73%,0% 100%)}
- .auth-container.active .curved-shape{clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 72%)}
- .auth-container.active .curved-shape2{clip-path:polygon(0% 71%,100% 99%,100% 100%,0% 73%)}
- .auth-info-side h2{font-size:1.5rem}
- .auth-switch-hint,.auth-info-side .auth-switch{display:none}
- .auth-info-side,.auth-container.active .auth-info-side{min-height:0;padding:20px 22px 44px}
- .auth-container.entering .auth-form-side .anim,.auth-container.leaving .auth-form-side .anim,.auth-container.active.entering .auth-form-side .anim,.auth-container.active.leaving .auth-form-side .anim{transform:translateY(24px) rotateX(-35deg);transform-origin:top center}
- .auth-container.entering .auth-info-side .anim,.auth-container.leaving .auth-info-side .anim,.auth-container.active.entering .auth-info-side .anim,.auth-container.active.leaving .auth-info-side .anim{transform:translateY(-18px)}
+ .auth-container{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;min-height:0}
+ .info-content.login,.info-content.register{grid-column:1;grid-row:1;height:228px;padding:14px 22px 40px;justify-content:center;gap:.45rem}
+ .form-box.login,.form-box.register{grid-column:1;grid-row:2;padding:18px 20px 24px}
+ .curved-shape{bottom:auto;height:246px;clip-path:polygon(0% 0%,100% 0%,100% 88%,0% 100%)}
+ .curved-shape2{bottom:auto;height:246px;clip-path:polygon(0% 99%,100% 87%,100% 88.5%,0% 100%)}
+ .auth-container.active .curved-shape{clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 88%)}
+ .auth-container.active .curved-shape2{clip-path:polygon(0% 87%,100% 99%,100% 100%,0% 88.5%)}
+ .info-content h2{font-size:1.45rem}
+ .auth-switch-hint{display:none}
+ .auth-switch{min-height:40px;padding:.4rem 1.1rem;font-size:.85rem}
+ /* Vertical move instead of sideways on phones. */
+ .form-box.register .anim,.auth-container.active .form-box.login .anim,.form-box.login.pre .anim,.form-box.register.pre .anim{transform:translateY(26px)}
+ .info-content.register .anim,.auth-container.active .info-content.login .anim{transform:translateY(-18px)}
+ .auth-container.active .form-box.register .anim,.auth-container.active .info-content.register .anim{transform:none}
 }
 /* Old auth-card styles must not leak into the new card. */
 .auth-diagonal .auth-container .auth-method{background:rgba(255,255,255,.04)!important;border:1px solid rgba(16,185,129,.25)!important;border-radius:999px!important;padding:3px!important;box-shadow:none!important}
 .auth-diagonal .auth-container .auth-method button{background:transparent!important;color:#cfe7df!important;border:0!important;box-shadow:none!important;min-height:36px}
 .auth-diagonal .auth-container .auth-method button.selected{background:rgba(234,179,8,.14)!important;color:#facc15!important;box-shadow:inset 0 0 0 1px rgba(234,179,8,.6)!important}
-.auth-diagonal .auth-form-side h1{color:#fef3c7!important;letter-spacing:0}
-.auth-diagonal .auth-info-side h2,.auth-diagonal .auth-info-side p{color:#fff!important}
-.auth-diagonal .auth-info-side .eyebrow{color:#fef3c7!important}
-.auth-diagonal .auth-tabs a:not(.active){color:#cfe7df!important}
+.auth-diagonal .form-box h1{color:#fef3c7!important;letter-spacing:0}
+.auth-diagonal .info-content h2,.auth-diagonal .info-content p{color:#fff!important}
+.auth-diagonal .info-content .eyebrow{color:#fef3c7!important}
 @media (prefers-reduced-motion:reduce){.curved-shape,.curved-shape2,.auth-container .anim{transition:none!important}}
 /* The 6-digit glass OTP fits the form column (boxes shrink on narrow columns). */
 .auth-diagonal .rf-otp{max-width:100%;--w:min(44px,calc((100cqw - 5 * var(--g)) / 6))}
-.auth-diagonal .auth-form-side{container-type:inline-size}
-.auth-diagonal .auth-form-side>*,.auth-diagonal .form,.auth-diagonal .form>*{min-width:0;max-width:100%}
+.auth-diagonal .form-box{container-type:inline-size}
+.auth-diagonal .form-box>*,.auth-diagonal .form,.auth-diagonal .form>*{min-width:0;max-width:100%}
 .auth-diagonal .rf-otp{box-sizing:border-box;width:100%;padding-inline:14px}
+/* Compact Telegram / Google buttons (older social-button styles must not make them tall). */
+.auth-diagonal .social-providers .social-button{min-height:42px!important;height:auto!important;padding:.35rem .7rem!important;border-radius:999px!important;font-size:.82rem!important;flex-direction:row!important;gap:.4rem!important;box-shadow:none!important;color:#fff!important;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.2)!important}
+.auth-diagonal .social-providers .social-button.telegram-login{background:rgba(56,189,248,.14)!important;border-color:rgba(56,189,248,.55)!important}
+.auth-diagonal .social-providers .social-button[disabled]{opacity:.55}
+.auth-diagonal .social-providers .social-button small{font-size:.65rem;opacity:.75}
