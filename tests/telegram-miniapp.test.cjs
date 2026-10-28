@@ -10,7 +10,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  const TOKEN='123456:ABCdef',env={DB,TELEGRAM_BOT_TOKEN:TOKEN,TELEGRAM_WEBHOOK_SECRET:'s',TELEGRAM_BOT_USERNAME:'rf_bot',SITE_URL:'https://restaurantfoods.online'};
  let jar=new Map();const cookies=async()=>({get:n=>jar.has(n)?{value:jar.get(n)}:undefined,set:(n,v)=>{if(v)jar.set(n,v);else jar.delete(n)}});
  const sent=[];const fetch=async(url,init)=>{const method=String(url).split('/').pop();if(init.body instanceof FormData){const photo=init.body.get('photo');sent.push({method,form:true,chat:init.body.get('chat_id'),caption:init.body.get('caption'),png:Buffer.from(await photo.arrayBuffer())});return Response.json({ok:true,result:{}})}const body=JSON.parse(init.body);sent.push({method,body});if(method==='sendPhoto'&&String(body.photo).includes('broken'))return Response.json({ok:false,description:'bad photo'});return Response.json({ok:true,result:method.startsWith('set')?true:{}})};
- const extras={fetch,FormData,Blob,CompressionStream,Response};
+ const extras={fetch,FormData,Blob,CompressionStream,Response,setTimeout};
  const cf={'cloudflare:workers':{env}},http=load('app/http.ts',cf);
  const login=load('app/telegram-login.ts',{...cf,'next/headers':{cookies},'./http':http});
  const telegram=load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf),'./telegram-login':login},extras);
@@ -67,7 +67,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
 
  // Bot menu.
  sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'/start'})),'menu');
- const main=sent[0].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
+ const kbd=sent[0].body.reply_markup;assert.equal(kbd.is_persistent,true);assert.equal(kbd.resize_keyboard,true);assert.equal(kbd.keyboard[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp');assert.deepEqual(kbd.keyboard.slice(1).map(r=>r.map(k=>k.text)),[['🏢 Restoranlar ro‘yxati','📖 Menyu'],['💐 Gullar','📅 Bronlarim va QR'],['🤖 AI Yordamchi','👤 Profilim']]);const main=sent[1].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
  assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'/start'}}),null,'groups keep the restaurant bot');
  assert.equal(await menu.handleMenu(msg(42,{text:'/start l_abc'})),null,'deep links go to the regular bot');
  const until=new Date(Date.now()+30*86400000).toISOString();
@@ -103,6 +103,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  const raw=zlib.inflateSync(Buffer.concat(idat)),rgba=new Uint8ClampedArray(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const g=raw[y*(w+1)+1+x];rgba.set([g,g,g,255],(y*w+x)*4)}
  const pass=db.prepare("SELECT pass_code FROM bookings WHERE id='bk1'").get().pass_code;assert.ok(pass);assert.equal(jsQR(rgba,w,h).data,'RFB1:'+pass);
  // Admin setup of the menu button.
- sent.length=0;const setup=await menu.setupMiniApp();assert.equal(setup.menuButton,true);const mb=sent.find(s=>s.method==='setChatMenuButton').body.menu_button;assert.deepEqual({...mb,web_app:{...mb.web_app}},{type:'web_app',text:'🍽️ Stol Bron & Menyu',web_app:{url:'https://restaurantfoods.online/?source=tg_miniapp'}});
- console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), menu-button setup.');
+ sent.length=0;const setup=await menu.setupMiniApp();assert.equal(setup.menuButton,true);assert.deepEqual({...sent.find(s=>s.method==='setChatMenuButton').body.menu_button},{type:'commands'});const cmds=sent.find(s=>s.method==='setMyCommands').body;assert.equal(cmds.scope.type,'default');assert.deepEqual(cmds.commands.map(c=>c.command),['start','restaurants','menu','flowers','mybookings','ai','profile']);
+ // Commands and the keyboard's plain-text labels open the same sections; other text brings the keyboard back.
+ for(const [input,expect] of [['/restaurants','menu_restaurants'],['🏢 Restoranlar ro‘yxati','menu_restaurants'],['/menu','menu_picker'],['📖 Menyu','menu_picker'],['/flowers','menu_flowers'],['💐 Gullar','menu_flowers'],['/mybookings','menu_bookings'],['📅 Bronlarim va QR','menu_bookings'],['/ai','menu_ai'],['🤖 AI Yordamchi','menu_ai'],['/profile','menu_profile'],['👤 Profilim','menu_profile'],['/restaurants@rf_bot','menu_restaurants'],['salom','menu_hint']]){sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:input})),expect,input)}
+ sent.length=0;await menu.handleMenu(msg(42,{text:'/menu'}));assert.deepEqual(sent[0].body.reply_markup.inline_keyboard.find(r=>r[0].callback_data==='m:m:r1')[0].text,'📖 Osh Markazi');
+ sent.length=0;await menu.handleMenu(msg(42,{text:'/profile'}));let prof=sent[0].body.text;assert.match(prof,/\+998 90 \*\*\* \*\* 67 ✅/);assert.ok(!prof.includes('901234567'),'phone masked');assert.match(prof,/15% chegirma/);
+ assert.equal(await menu.handleMenu(msg(999,{text:'/profile'})),'menu_signin');
+ for(const t of ['/stop','/start c_abcdefghijklmnopqrstuvwx','/start l_abc'])assert.equal(await menu.handleMenu(msg(42,{text:t})),null,t+' stays with the regular bot');
+ assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'salom'}}),null,'groups are never answered by the menu');
+ // Contact flows bring the menu keyboard back instead of removing it.
+ sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.is_persistent,true);
+ // One-time announcement to every linked chat, in batches, never twice; suspended and unlinked are skipped.
+ db.exec("UPDATE accounts SET status='suspended' WHERE id='sb:off'");const linked=db.prepare("SELECT COUNT(*) n FROM accounts WHERE telegram_chat_id IS NOT NULL AND COALESCE(status,'active')<>'suspended'").get().n;assert.ok(linked>=4);
+ sent.length=0;let st=await menu.syncOldUsers(2);assert.equal(st.sent,2);assert.equal(st.finished,false);
+ while(!st.finished)st=await menu.syncOldUsers(2);assert.equal(st.sent,linked);assert.equal(st.failed,0);
+ const msgs=sent.filter(s=>s.method==='sendMessage'&&s.body.text===menu.SYNC_TEXT);assert.equal(msgs.length,linked);assert.equal(new Set(msgs.map(m=>String(m.body.chat_id))).size,linked,'nobody twice');assert.ok(!msgs.some(m=>m.body.chat_id==='8'),'suspended skipped');assert.ok(msgs.every(m=>m.body.reply_markup.is_persistent));
+ sent.length=0;st=await menu.syncOldUsers(2);assert.equal(sent.length,0,'finished: no more messages');
+ sent.length=0;await menu.ensureBotSetup();assert.ok(sent.some(s=>s.method==='setMyCommands'));sent.length=0;assert.equal((await menu.ensureBotSetup()).already,true);assert.equal(sent.length,0,'setup once per release');
+ sent.length=0;await menu.runBotSync();assert.equal(sent.length,0);
+ console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats.');
 })().catch(e=>{console.error(e);process.exitCode=1});

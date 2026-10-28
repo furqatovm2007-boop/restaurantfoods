@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import qrcode from 'qrcode-generator';
-import { telegram, html, site } from './telegram';
+import { telegram, html, site, mainKeyboard, KEYS } from './telegram';
 import { ensurePassCode, PASS_PREFIX, receiptNumber } from './booking-pass';
 import { liveTables, freeNow } from './live-tables';
 import { countedReview } from './review-rules';
@@ -10,6 +10,8 @@ import { countedReview } from './review-rules';
  *  /start (or /menu) shows the Mini App button (the whole site inside Telegram) and quick views answered in
  *  the chat itself: restaurants (photo, rating, tables free right now), a restaurant's free tables and
  *  menu, the flower catalogue, and the customer's active bookings with their QR pass as a picture.
+ * Commands (/restaurants, /menu, /flowers, /mybookings, /ai, /profile) and the same sections from the persistent
+ * keyboard next to 📎 (plain text labels, app/telegram.ts) open the section at once.
  * Booking, ordering and paying always happen in the Mini App (online deposit, the phone, the rules), never
  * from a chat button. Demo restaurants are not listed. Only private chats get the menu.
  */
@@ -121,10 +123,7 @@ async function flowers(chatId: string, offset: number) {
 
 async function bookings(chatId: string) {
   const acc = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
-  if (!acc) {
-    await telegram('sendMessage', { chat_id: chatId, text: 'Bronlaringizni ko‘rish uchun Mini App’ni oching — Telegram orqali avtomatik kirasiz.', reply_markup: { inline_keyboard: [[openButton('🍽️ Mini App’ni ochish', '/bookings')]] } });
-    return 'menu_bookings_signin';
-  }
+  if (!acc) return (await signIn(chatId, '/bookings', 'Bronlaringizni ko‘rish uchun Mini App’ni oching — Telegram orqali avtomatik kirasiz.')) && 'menu_bookings_signin';
   const today = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
   const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,r.name AS restaurant_name FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE b.user_id=? AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc.id, today).all<any>()).results;
   if (!rows.length) {
@@ -140,6 +139,51 @@ async function bookings(chatId: string) {
   return 'menu_bookings';
 }
 
+async function menuPicker(chatId: string) {
+  const rows = (await env.DB!.prepare("SELECT id,name FROM restaurants WHERE status='active' AND COALESCE(is_demo,0)=0 ORDER BY name LIMIT 20").all<{ id: string; name: string }>()).results;
+  await telegram('sendMessage', {
+    chat_id: chatId,
+    text: rows.length ? '📖 Qaysi restoran menyusini ko‘rasiz?' : 'Hozircha faol restoran yo‘q.',
+    reply_markup: { inline_keyboard: [...rows.map((r) => [{ text: '📖 ' + r.name.slice(0, 50), callback_data: 'm:m:' + r.id }]), [openButton('🍽️ 3D menyu (Mini App)')]] },
+  });
+  return 'menu_picker';
+}
+
+async function assistant(chatId: string) {
+  await telegram('sendMessage', {
+    chat_id: chatId,
+    text: '🤖 AI yordamchi Mini App ichida ishlaydi: oching va pastki burchakdagi 🤖 tugmasini bosing.\nU restoran, taom va bo‘sh vaqt tanlashda maslahat beradi. Buyurtma, bron va to‘lovni o‘zi qilmaydi — ularni siz tasdiqlaysiz.',
+    reply_markup: { inline_keyboard: [[openButton('🤖 AI yordamchini ochish', '/discover')]] },
+  });
+  return 'menu_ai';
+}
+
+const maskPhone = (p: string) => (/^\+998\d{9}$/.test(p) ? `+998 ${p.slice(4, 6)} *** ** ${p.slice(11)}` : '');
+async function profile(chatId: string) {
+  const a = await env.DB!.prepare('SELECT id,name,contact_phone,contact_phone_verified,birth_date FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string; name: string; contact_phone: string; contact_phone_verified: number; birth_date: string | null }>();
+  if (!a) return signIn(chatId, '/account', 'Profilingizni ko‘rish uchun Mini App’ni oching — Telegram orqali avtomatik kirasiz.');
+  const birth = a.birth_date && /^\d{4}-\d{2}-\d{2}$/.test(a.birth_date) ? `🎂 Tug‘ilgan kun: ${a.birth_date.slice(8, 10)}.${a.birth_date.slice(5, 7)} — o‘sha kuni aksiyadagi restoranlarda 15% chegirma.` : '🎂 Tug‘ilgan kuningizni kiriting — o‘sha kuni aksiyadagi restoranlarda 15% chegirma olasiz.';
+  const phone = a.contact_phone_verified && maskPhone(a.contact_phone) ? '📱 ' + maskPhone(a.contact_phone) + ' ✅' : '📱 Raqam tasdiqlanmagan — Mini App’da 1 bosishda tasdiqlang.';
+  await telegram('sendMessage', { chat_id: chatId, text: `👤 <b>${html(a.name || 'Mijoz')}</b>\n${phone}\n${birth}`, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[openButton('👤 Profilni ochish', '/account')]] } });
+  return 'menu_profile';
+}
+
+async function signIn(chatId: string, go: string, text: string) {
+  await telegram('sendMessage', { chat_id: chatId, text, reply_markup: { inline_keyboard: [[openButton('🍽️ Mini App’ni ochish', go)]] } });
+  return 'menu_signin';
+}
+
+async function welcome(chatId: string | number) {
+  // The persistent keyboard comes with the greeting; the inline buttons below sign in with one tap.
+  await telegram('sendMessage', { chat_id: chatId, text: '👋 RestaurantFoods’ga xush kelibsiz! Pastdagi tugmalar doim shu yerda turadi 👇', reply_markup: mainKeyboard() });
+  await telegram('sendMessage', {
+    chat_id: chatId,
+    text: 'Restoranlar, 3D stol va menyuni Telegram’dan chiqmasdan oching — kirish avtomatik, kod so‘ralmaydi. Yoki shu chatning o‘zida ko‘ring:',
+    reply_markup: mainMenu(),
+  });
+  return 'menu';
+}
+
 async function gone(chatId: string) {
   await telegram('sendMessage', { chat_id: chatId, text: 'Bu restoran hozir mavjud emas.', reply_markup: mainMenu() });
   return 'menu_gone';
@@ -148,13 +192,22 @@ async function gone(chatId: string) {
 /** Menu messages and buttons of a private chat; null for every other update (handled by app/telegram.ts). */
 export async function handleMenu(update: any): Promise<string | null> {
   const msg = update?.message;
-  if (msg?.chat?.type === 'private' && typeof msg.text === 'string' && /^\/(start|menu)(@\w+)?( miniapp)?$/.test(msg.text.trim())) {
-    await telegram('sendMessage', {
-      chat_id: msg.chat.id,
-      text: '👋 RestaurantFoods’ga xush kelibsiz!\n\nRestoranlar, 3D stol va menyuni Telegram’dan chiqmasdan oching — kirish avtomatik, kod so‘ralmaydi. Yoki shu chatning o‘zida ko‘ring:',
-      reply_markup: mainMenu(),
-    });
-    return 'menu';
+  if (msg?.chat?.type === 'private' && typeof msg.text === 'string') {
+    const chatId = String(msg.chat.id),
+      text = msg.text.trim();
+    const command = /^\/([a-z]+)(@\w+)?(\s+miniapp)?$/i.exec(text)?.[1]?.toLowerCase();
+    if (command === 'start') return welcome(chatId);
+    if (command === 'restaurants' || text === KEYS.restaurants) return restaurants(chatId, 0);
+    if (command === 'menu' || text === KEYS.menu) return menuPicker(chatId);
+    if (command === 'flowers' || text === KEYS.flowers) return flowers(chatId, 0);
+    if (command === 'mybookings' || text === KEYS.bookings) return bookings(chatId);
+    if (command === 'ai' || text === KEYS.ai) return assistant(chatId);
+    if (command === 'profile' || text === KEYS.profile) return profile(chatId);
+    // Anything else typed (not a command with a code, not /stop): the menu comes back with a short hint.
+    if (!text.startsWith('/')) {
+      await telegram('sendMessage', { chat_id: chatId, text: 'Pastdagi tugmalardan birini tanlang 👇 yoki /start ni bosing.', reply_markup: mainKeyboard() });
+      return 'menu_hint';
+    }
   }
   const cb = update?.callback_query;
   if (typeof cb?.data !== 'string' || !cb.data.startsWith('m:') || !cb.message) return null;
@@ -238,11 +291,78 @@ async function sendPng(chatId: string, png: Uint8Array, caption: string, reply_m
   }
 }
 
-/** Admin: the chat's menu button opens the Mini App, and the bot lists its commands. */
+export const COMMANDS = [
+  { command: 'start', description: '🚀 Botni yangilash va Asosiy menyu' },
+  { command: 'restaurants', description: '🍽️ Restoranlar va 3D Stol Bron qilish' },
+  { command: 'menu', description: '📖 Taomlar menyusi va 3D ko‘rinish' },
+  { command: 'flowers', description: '💐 Stolga va manzilga Gullar buyurtma qilish' },
+  { command: 'mybookings', description: '📅 Mening bronlarim va QR-Chek' },
+  { command: 'ai', description: '🤖 AI Yordamchi bilan suhbat' },
+  { command: 'profile', description: '👤 Profilim va 15% Tug‘ilgan kun chegirmasi' },
+];
+/**
+ * The bot's commands for everyone (default scope) and the menu button left of the input field as the
+ * commands list, so old and new users alike see /start, /restaurants… (the Mini App is the first key of the
+ * keyboard and the inline buttons). setChatMenuButton without chat_id changes the default for all chats.
+ */
 export async function setupMiniApp() {
-  const [button, commands] = await Promise.all([
-    telegram('setChatMenuButton', { menu_button: { type: 'web_app', text: '🍽️ Stol Bron & Menyu', web_app: { url: miniAppUrl() } } }),
-    telegram('setMyCommands', { commands: [{ command: 'start', description: 'Bosh menyu' }, { command: 'menu', description: 'Restoranlar, gullar va bronlarim' }] }),
-  ]);
+  const [button, commands] = await Promise.all([telegram('setChatMenuButton', { menu_button: { type: 'commands' } }), telegram('setMyCommands', { commands: COMMANDS, scope: { type: 'default' } })]);
   return { menuButton: button === true, commands: commands === true, url: miniAppUrl() };
+}
+
+/*
+ * Once per release of the bot menu (cron, every 5 minutes, see build/sites-worker.ts):
+ *  1. the commands and the menu button are set (again only when SETUP_VERSION changes);
+ *  2. every account with a linked Telegram chat gets one message with the new persistent keyboard, a
+ *     batch per run (Telegram allows ~30 messages a second; the batch stays far below that and below
+ *     the Worker's subrequest limit). Progress is kept in app_settings so nobody gets it twice; chats that
+ *     unlinked themselves (/stop) are not linked any more and are skipped, as are suspended accounts.
+ */
+const SETUP_VERSION = '2';
+export const SYNC_KEY = 'tg:sync-old-users:v1';
+export const SYNC_TEXT = '✨ Yangilanish! Endi restoranlarni ko‘rish, 3D stol bron qilish va menyu bevosita Telegram ichida ishlaydi! Pastdagi tugmalardan foydalaning 👇';
+const setting = async (key: string) => (await env.DB!.prepare('SELECT value FROM app_settings WHERE key=?').bind(key).first<{ value: string }>())?.value ?? null;
+const saveSetting = (key: string, value: string) =>
+  env.DB!.prepare('INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at,updated_by=excluded.updated_by').bind(key, value, new Date().toISOString(), 'bot').run();
+
+export async function ensureBotSetup() {
+  if ((await setting('tg:setup')) === SETUP_VERSION) return { already: true };
+  const r = await setupMiniApp();
+  if (r.menuButton && r.commands) await saveSetting('tg:setup', SETUP_VERSION);
+  return r;
+}
+
+interface SyncState {
+  after: string;
+  sent: number;
+  failed: number;
+  finished: boolean;
+}
+export async function syncOldUsers(limit = 40): Promise<SyncState> {
+  let state: SyncState = { after: '', sent: 0, failed: 0, finished: false };
+  try {
+    state = { ...state, ...JSON.parse((await setting(SYNC_KEY)) || '{}') };
+  } catch {}
+  if (state.finished) return state;
+  const rows = (await env.DB!.prepare("SELECT id,telegram_chat_id AS chat FROM accounts WHERE telegram_chat_id IS NOT NULL AND telegram_chat_id<>'' AND COALESCE(status,'active')<>'suspended' AND id>? ORDER BY id LIMIT ?").bind(state.after, limit).all<{ id: string; chat: string }>()).results;
+  // The batch is claimed before sending, so an overlapping run never messages the same people.
+  const claimed: SyncState = { ...state, after: rows.length ? rows[rows.length - 1].id : state.after, finished: rows.length < limit };
+  await saveSetting(SYNC_KEY, JSON.stringify(claimed));
+  let sent = 0,
+    failed = 0;
+  for (const r of rows) {
+    if (!/^\d{1,15}$/.test(r.chat)) continue; // private chats only
+    (await telegram('sendMessage', { chat_id: r.chat, text: SYNC_TEXT, reply_markup: mainKeyboard() })) ? sent++ : failed++;
+    await new Promise((ok) => setTimeout(ok, 60));
+  }
+  const done: SyncState = { ...claimed, sent: state.sent + sent, failed: state.failed + failed };
+  await saveSetting(SYNC_KEY, JSON.stringify(done));
+  return done;
+}
+
+/** Cron: the bot setup and the one-time announcement, each only until it is done. */
+export async function runBotSync() {
+  if (!env.TELEGRAM_BOT_TOKEN?.trim()) return null;
+  await ensureBotSetup();
+  return syncOldUsers();
 }

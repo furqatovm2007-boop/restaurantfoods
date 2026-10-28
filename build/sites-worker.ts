@@ -5,6 +5,7 @@ import { runCallAi } from "../app/call-ai";
 import { runBirthdays } from "../app/birthday";
 import { securityTxt } from "../app/security-txt";
 import { recordServerError, runHealthCheck } from "../app/health";
+import { runBotSync } from "../app/telegram-menu";
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
@@ -41,5 +42,7 @@ export default {
     ctx.waitUntil(runBirthdays().catch(() => console.error(JSON.stringify({ event: "birthday_failed" }))));
     // Health watch: Telegram webhook and API error bursts → a Telegram message to the administrator.
     ctx.waitUntil(runHealthCheck().catch(() => console.error(JSON.stringify({ event: "health_check_failed" }))));
+    // Bot menu: commands + menu button once per release, and the one-time announcement with the new keyboard.
+    ctx.waitUntil(runBotSync().catch(() => console.error(JSON.stringify({ event: "bot_sync_failed" }))));
   },
 };

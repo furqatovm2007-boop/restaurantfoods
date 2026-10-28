@@ -20,7 +20,7 @@
   try {
     saved = !!sessionStorage.getItem('__telegram__initParams');
   } catch {}
-  if (!/tgWebAppData=/.test(location.hash) && !/[?&]source=tg_miniapp\b/.test(location.search) && !saved) return;
+  if (!/tgWebApp/.test(location.hash) && !/[?&]source=tg_miniapp\b/.test(location.search) && !saved) return;
 
   const post = async (path, data) => {
     const res = await fetch(path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {}) });
@@ -32,8 +32,10 @@
 
   function setup() {
     const tg = window.Telegram?.WebApp;
-    if (!tg?.initData) return false;
-    api.active = true;
+    // A Mini App opened from the keyboard button next to 📎 gets no signed launch data from Telegram: it is
+    // still dressed as a Telegram app, but signs in the usual way (remembered device / Telegram login).
+    if (!tg || (!tg.initData && (!tg.platform || tg.platform === 'unknown'))) return false;
+    api.active = !!tg.initData;
     api.webApp = tg;
     try {
       tg.ready();
@@ -48,12 +50,12 @@
       if (!localStorage.getItem('rf-theme')) localStorage.setItem('rf-theme', 'dark');
     } catch {}
     // Telegram puts its launch params in the hash; the app routes by hash, so open the wanted page instead.
-    if (!location.hash || location.hash === '#' || /tgWebAppData=/.test(location.hash)) {
+    if (!location.hash || location.hash === '#' || /tgWebApp/.test(location.hash)) {
       const go = new URLSearchParams(location.search).get('go') || '';
       const target = /^\/[\w\-/%.]{1,200}$/.test(go) ? go : '/discover';
       history.replaceState(null, '', location.pathname + location.search + '#' + target);
     }
-    return true;
+    return api.active;
   }
 
   api.ready = new Promise((done) => {

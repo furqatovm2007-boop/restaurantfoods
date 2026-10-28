@@ -6188,5 +6188,20 @@
     "uz": "buyruqlar ro‘yxati o‘rnatilmadi",
     "ru": "список команд не установлен",
     "en": "command list was not set"
+  },
+  "Eski foydalanuvchilarga yangi menyuni yuborish": {
+    "uz": "Eski foydalanuvchilarga yangi menyuni yuborish",
+    "ru": "Отправить новое меню старым пользователям",
+    "en": "Send the new menu to existing users"
+  },
+  "Yuborildi": {
+    "uz": "Yuborildi",
+    "ru": "Отправлено",
+    "en": "Sent"
+  },
+  "yetmadi": {
+    "uz": "yetmadi",
+    "ru": "не доставлено",
+    "en": "not delivered"
   }
 }

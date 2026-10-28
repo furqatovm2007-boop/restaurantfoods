@@ -144,7 +144,29 @@ export function telegramPhone(raw: string) {
 }
 
 const CONTACT_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true };
-const REMOVE_KEYBOARD = { remove_keyboard: true };
+/*
+ * The customer's persistent keyboard (the square icon next to 📎): the Mini App on top, then the bot's
+ * sections. It also takes the place of the one-off "share contact" keyboard once a number is received, so
+ * the menu never disappears. The labels are matched in app/telegram-menu.ts.
+ */
+export const KEYS = {
+  restaurants: '🏢 Restoranlar ro‘yxati',
+  menu: '📖 Menyu',
+  flowers: '💐 Gullar',
+  bookings: '📅 Bronlarim va QR',
+  ai: '🤖 AI Yordamchi',
+  profile: '👤 Profilim',
+} as const;
+export const mainKeyboard = () => ({
+  keyboard: [
+    [{ text: '🍽️ Restoranlar va 3D Bron (Mini App)', web_app: { url: site() + '/?source=tg_miniapp' } }],
+    [{ text: KEYS.restaurants }, { text: KEYS.menu }],
+    [{ text: KEYS.flowers }, { text: KEYS.bookings }],
+    [{ text: KEYS.ai }, { text: KEYS.profile }],
+  ],
+  is_persistent: true,
+  resize_keyboard: true,
+});
 export const site = () => (env.SITE_URL?.trim() || 'https://restaurantfoods.online').replace(/\/$/, '');
 
 /** Sends a one-time code to a customer's linked chat. */
@@ -196,7 +218,7 @@ async function telegramBirthday(chatId: string) {
 async function approveLogin(code: string, chatId: string, from: { id: number; first_name?: string; last_name?: string } | undefined, phone: string | null, viaContact = true) {
   const deny = async (reason: string, text: string) => {
     await env.DB!.prepare("UPDATE telegram_logins SET status='denied' WHERE code=?").bind(code).run();
-    await telegram('sendMessage', { chat_id: chatId, text, reply_markup: REMOVE_KEYBOARD });
+    await telegram('sendMessage', { chat_id: chatId, text, reply_markup: mainKeyboard() });
     return reason;
   };
   if (!phone || !from) return deny('login_not_uz', 'Hozircha faqat O‘zbekiston raqamlari (+998) bilan kirish mumkin.');
@@ -216,7 +238,7 @@ async function approveLogin(code: string, chatId: string, from: { id: number; fi
   await env.DB!.prepare("UPDATE telegram_logins SET status='approved',user_id=? WHERE code=?").bind(userId, code).run();
   // The shared-contact keyboard goes away first; then one button back to the site (the browser that asked is
   // signed in by its own polling, the button is for coming back to it).
-  if (viaContact) await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi.`, reply_markup: REMOVE_KEYBOARD });
+  if (viaContact) await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi.`, reply_markup: mainKeyboard() });
   // The button signs in whichever browser opens it (Telegram's own included) with a one-time link.
   const magic = await createMagicLink(userId);
   await telegram('sendMessage', { chat_id: chatId, text: viaContact ? 'Kirish tayyor — “🚀 Saytga kirish” tugmasini bosing.' : `✅ Siz tanildingiz (${prettyPhone(phone)}). Raqam qayta so‘ralmaydi — “🚀 Saytga kirish” tugmasini bosing.`, reply_markup: { inline_keyboard: [[{ text: '🚀 Saytga kirish', url: site() + '/#/tg/' + magic }]] } });
@@ -242,25 +264,25 @@ async function webAppContact(chatId: string, phone: string | null) {
   if (!account) return null;
   if (!phone) {
     await save('not_uz');
-    await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: REMOVE_KEYBOARD });
+    await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: mainKeyboard() });
     return 'webapp_contact_not_uz';
   }
   const other = await env.DB!.prepare('SELECT id,role,status FROM accounts WHERE id<>? AND ((contact_phone=? AND contact_phone_verified=1) OR (phone=? AND phone_verified=1)) LIMIT 1').bind(account.id, phone, phone.slice(1)).first<{ id: string; role: string; status: string }>();
   if (other && (other.id === ADMIN_ID || other.role === 'admin' || other.status === 'suspended')) {
     await save('taken');
-    await telegram('sendMessage', { chat_id: chatId, text: 'Bu raqam boshqa akkauntga tegishli. Supportga murojaat qiling.', reply_markup: REMOVE_KEYBOARD });
+    await telegram('sendMessage', { chat_id: chatId, text: 'Bu raqam boshqa akkauntga tegishli. Supportga murojaat qiling.', reply_markup: mainKeyboard() });
     return 'webapp_contact_taken';
   }
   if (other) {
     await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=?').bind(chatId).run();
     await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=?,telegram_phone=? WHERE id=?').bind(chatId, phone, other.id).run();
     await save('switched', { target: other.id });
-    await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi. Bu raqamdagi akkauntingizga ulandingiz — Mini App’ga qayting.`, reply_markup: REMOVE_KEYBOARD });
+    await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi. Bu raqamdagi akkauntingizga ulandingiz — Mini App’ga qayting.`, reply_markup: mainKeyboard() });
     return 'webapp_contact_switched';
   }
   await env.DB!.prepare('UPDATE accounts SET contact_phone=?,contact_phone_verified=1,telegram_phone=? WHERE id=?').bind(phone, phone, account.id).run();
   await save('saved');
-  await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} saqlandi. Mini App’ga qayting — bron davom etadi.`, reply_markup: REMOVE_KEYBOARD });
+  await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} saqlandi. Mini App’ga qayting — bron davom etadi.`, reply_markup: mainKeyboard() });
   return 'webapp_contact_saved';
 }
 
@@ -282,27 +304,27 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
     if (shared) return shared;
     const account = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
     if (!account) {
-      await telegram('sendMessage', { chat_id: chatId, text: 'Avval saytdagi profilingizdan “Telegram orqali tasdiqlash” tugmasini bosing.', reply_markup: REMOVE_KEYBOARD });
+      await telegram('sendMessage', { chat_id: chatId, text: 'Avval saytdagi profilingizdan “Telegram orqali tasdiqlash” tugmasini bosing.', reply_markup: mainKeyboard() });
       return 'contact_unlinked';
     }
     if (!phone) {
-      await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: REMOVE_KEYBOARD });
+      await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: mainKeyboard() });
       return 'contact_not_uz';
     }
     // Not verified yet: the number is verified only when the code below is typed on the site.
     await env.DB!.prepare('UPDATE accounts SET telegram_phone=? WHERE id=?').bind(phone, account.id).run();
     if ((await recentOtps(account.id)) >= 5) {
-      await telegram('sendMessage', { chat_id: chatId, text: 'Juda ko‘p urinish. 10 daqiqadan keyin qayta urinib ko‘ring.', reply_markup: REMOVE_KEYBOARD });
+      await telegram('sendMessage', { chat_id: chatId, text: 'Juda ko‘p urinish. 10 daqiqadan keyin qayta urinib ko‘ring.', reply_markup: mainKeyboard() });
       return 'otp_throttled';
     }
     const { code } = await issueOtp(account.id, phone);
-    await telegram('sendMessage', { chat_id: chatId, text: `📱 ${prettyPhone(phone)}\n🔐 Tasdiqlash kodi: <b>${code}</b>\n\nKodni saytdagi maydonga kiriting — raqam shundan keyin tasdiqlanadi. Kod 5 daqiqa amal qiladi, uni hech kimga bermang.`, parse_mode: 'HTML', reply_markup: REMOVE_KEYBOARD });
+    await telegram('sendMessage', { chat_id: chatId, text: `📱 ${prettyPhone(phone)}\n🔐 Tasdiqlash kodi: <b>${code}</b>\n\nKodni saytdagi maydonga kiriting — raqam shundan keyin tasdiqlanadi. Kod 5 daqiqa amal qiladi, uni hech kimga bermang.`, parse_mode: 'HTML', reply_markup: mainKeyboard() });
     return 'code_sent';
   }
   const text = msg.text?.trim() || '';
   if (text === '/stop') {
     const res = await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=?').bind(chatId).run();
-    await telegram('sendMessage', { chat_id: chatId, text: res.meta.changes ? 'Telegram akkauntingizdan uzildi. Qayta ulash uchun saytdagi profilingizga kiring.' : 'Bu chat hech qaysi akkauntga ulanmagan.', reply_markup: REMOVE_KEYBOARD });
+    await telegram('sendMessage', { chat_id: chatId, text: res.meta.changes ? 'Telegram akkauntingizdan uzildi. Qayta ulash uchun saytdagi profilingizga kiring.' : 'Bu chat hech qaysi akkauntga ulanmagan.', reply_markup: mainKeyboard() });
     return 'unlinked';
   }
   const code = text.startsWith('/start') ? text.split(/\s+/)[1]?.trim() : '';
