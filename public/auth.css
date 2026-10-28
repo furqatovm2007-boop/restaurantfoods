@@ -1,0 +1,101 @@
+/*
+ * Sign in / sign up — "diagonal sliding" card in the site's dark emerald (#0a0f0d, #10b981) and gold (#eab308).
+ * The shell stays while the user moves between login, signup and the code step (ui/auth-ui.js): the
+ * emerald-gold diagonal sweeps across in 1.2 s, the fields leave and arrive one after another (--i) with blur.
+ */
+.auth-diagonal{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:18px;padding:18px 12px 28px;background:radial-gradient(120% 70% at 50% 0,#0f2a23,#050a08)!important;color:#e8f5ef}
+.auth-diagonal .auth-brand{width:min(780px,95vw);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.auth-diagonal .auth-brand img{height:42px;width:auto}
+.auth-container{--ease:cubic-bezier(.68,-.15,.265,1.15);position:relative;width:780px;max-width:95vw;min-height:480px;overflow:hidden;border-radius:24px;background:#0a0f0d;border:2px solid rgba(16,185,129,.55);box-shadow:0 0 35px rgba(16,185,129,.35),inset 0 0 20px rgba(234,179,8,.08);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);isolation:isolate}
+/* The diagonal curtain: right-hand side for login, swept across to the left for signup. clip-path polygons keep
+   the diagonal correct for any card height; the gold line moves with it. */
+.curved-shape,.curved-shape2{position:absolute;inset:0;pointer-events:none;z-index:0;transition:clip-path 1.2s var(--ease)}
+.curved-shape{background:linear-gradient(135deg,#064e3b 0%,#10b981 55%,#eab308 100%);clip-path:polygon(50% 0%,100% 0%,100% 100%,62% 100%)}
+.curved-shape2{background:linear-gradient(180deg,rgba(253,224,71,.95),rgba(234,179,8,.6));clip-path:polygon(49.6% 0%,50.3% 0%,62.3% 100%,61.6% 100%);filter:drop-shadow(0 0 6px rgba(253,224,71,.6))}
+.auth-container.active .curved-shape{clip-path:polygon(0% 0%,50% 0%,38% 100%,0% 100%)}
+.auth-container.active .curved-shape2{clip-path:polygon(49.7% 0%,50.4% 0%,38.4% 100%,37.7% 100%)}
+.auth-panel{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:.7rem;padding:30px 34px;min-width:0}
+.auth-form-side{grid-column:1;grid-row:1}
+.auth-info-side{grid-column:2;grid-row:1;text-align:right;align-items:flex-end;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.auth-container.active .auth-form-side{grid-column:2}
+.auth-container.active .auth-info-side{grid-column:1;text-align:left;align-items:flex-start}
+.auth-info-side h2{margin:0;font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.15;letter-spacing:.02em;color:#fff}
+.auth-info-side p{margin:0;max-width:300px;line-height:1.45;color:rgba(255,255,255,.92)}
+.auth-info-side .eyebrow{color:#fef3c7;font-weight:800;letter-spacing:.14em;font-size:.75rem}
+.auth-switch-hint{margin-top:.8rem!important;font-size:.9rem}
+.auth-switch{min-height:44px;padding:.5rem 1.4rem;border-radius:999px;border:1.5px solid rgba(255,255,255,.85);background:rgba(10,15,13,.35);color:#fff;font:800 .95rem/1.2 inherit;cursor:pointer;backdrop-filter:blur(6px);transition:background .25s,color .25s}
+.auth-switch:hover,.auth-switch:focus-visible{background:#fff;color:#064e3b}
+.auth-form-side h1{margin:0;font-size:1.45rem;line-height:1.25;color:#fef3c7}
+/* Staggered slide + blur: hidden while entering / leaving, released one by one. */
+.auth-container .anim{transition:transform .7s ease,opacity .7s ease,filter .7s ease;transition-delay:calc(.1s * var(--i,0))}
+.auth-container.entering .auth-form-side .anim,.auth-container.leaving .auth-form-side .anim{transform:translateX(-120%);opacity:0;filter:blur(10px)}
+.auth-container.active.entering .auth-form-side .anim,.auth-container.active.leaving .auth-form-side .anim{transform:translateX(120%)}
+.auth-container.entering .auth-info-side .anim,.auth-container.leaving .auth-info-side .anim{transform:translateX(120%);opacity:0;filter:blur(10px)}
+.auth-container.active.entering .auth-info-side .anim,.auth-container.active.leaving .auth-info-side .anim{transform:translateX(-120%)}
+.auth-container.leaving .anim{transition-delay:calc(.04s * var(--i,0))}
+/* Tabs and method switch */
+.auth-diagonal .auth-tabs{display:flex;gap:.4rem;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(16,185,129,.3)}
+.auth-diagonal .auth-tabs a{flex:1;text-align:center;padding:.45rem .6rem;border-radius:999px;color:#cfe7df;text-decoration:none;font-weight:700;font-size:.9rem}
+.auth-diagonal .auth-tabs a.active{background:linear-gradient(90deg,#10b981,#eab308);color:#04140e}
+.auth-diagonal .auth-method{display:flex;gap:.4rem;flex-wrap:wrap}
+.auth-diagonal .auth-method button{flex:1;min-height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#cfe7df;font-size:.8rem;cursor:pointer}
+.auth-diagonal .auth-method button.selected{border-color:#eab308;color:#facc15;background:rgba(234,179,8,.08)}
+/* Floating label inputs */
+.auth-diagonal .form{display:grid;gap:.85rem}
+.float-field{position:relative;display:block;margin:0;padding-top:14px}
+.float-field input{width:100%;min-height:42px;padding:8px 58px 6px 0!important;background:transparent!important;border:0!important;border-bottom:2px solid rgba(255,255,255,.3)!important;border-radius:0!important;color:#fff!important;font:600 1rem/1.3 inherit;outline:none;box-shadow:none!important;transition:border-color .3s}
+.float-field input::placeholder{color:transparent}
+.float-field input:focus::placeholder{color:rgba(255,255,255,.35)}
+.float-label{position:absolute;left:0;top:24px;color:rgba(255,255,255,.7);font-size:.9rem;font-weight:600;pointer-events:none;transition:transform .3s ease,color .3s ease;transform-origin:left top}
+.float-field input:focus~.float-label,.float-field input:not(:placeholder-shown)~.float-label{transform:translateY(-22px) scale(.82);color:#eab308}
+.float-icon{position:absolute;right:2px;top:24px;font-size:1rem;opacity:.75;transition:filter .3s,opacity .3s;pointer-events:none}
+.float-field input:focus{border-bottom-color:#10b981!important}
+.float-field input:focus~.float-icon,.float-field input:not(:placeholder-shown)~.float-icon{opacity:1;filter:drop-shadow(0 0 6px #eab308) drop-shadow(0 0 2px #10b981)}
+.float-field .password-toggle{position:absolute;right:26px;top:18px;width:32px;height:32px;padding:0;border:0;background:transparent;color:rgba(255,255,255,.7);cursor:pointer}
+.float-field input:focus~.password-toggle{color:#10b981}
+.float-field input:-webkit-autofill{-webkit-text-fill-color:#fff;transition:background-color 9999s}
+/* Main button: glass emerald-gold pill */
+.auth-diagonal .auth-submit{width:100%;min-height:48px;border-radius:999px;border:1.5px solid #10b981;background:linear-gradient(90deg,rgba(16,185,129,.25),rgba(234,179,8,.25));color:#fff;font:800 1rem/1.2 inherit;cursor:pointer;transition:box-shadow .3s,background .3s,transform .2s}
+.auth-diagonal .auth-submit:hover:not(:disabled),.auth-diagonal .auth-submit:focus-visible{background:linear-gradient(90deg,#10b981,#eab308);color:#04140e;box-shadow:0 0 22px rgba(16,185,129,.55),0 0 34px rgba(234,179,8,.35)}
+.auth-diagonal .auth-submit:disabled{opacity:.55;cursor:not-allowed}
+.auth-diagonal .form-message{min-height:1.2em;margin:0;color:#fca5a5;font-size:.85rem}
+.auth-diagonal .auth-policy,.auth-diagonal .forgot-link{font-size:.8rem;color:rgba(255,255,255,.65)}
+.auth-diagonal .auth-policy a,.auth-diagonal .forgot-link,.auth-diagonal .link{color:#facc15}
+/* Compact Telegram / Google */
+.auth-diagonal .social-divider{font-size:.75rem;color:rgba(255,255,255,.55);text-align:center}
+.auth-diagonal .social-providers{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.auth-diagonal .social-button{min-height:42px;padding:.35rem .6rem;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#fff;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:.4rem;text-decoration:none;cursor:pointer}
+.auth-diagonal .social-button.telegram-login{border-color:rgba(56,189,248,.55);background:rgba(56,189,248,.12)}
+.auth-diagonal .social-button small{font-size:.65rem;opacity:.7}
+.auth-diagonal .notice{font-size:.85rem}
+.auth-diagonal .auth-footer{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.auth-diagonal .auth-footer a{color:#a7f3d0;text-decoration:none;font-size:.9rem}
+/* Phones: the diagonal turns into a band above the form and the card swaps with a vertical / 3D move. */
+@media (max-width:768px){
+ .auth-container{grid-template-columns:minmax(0,1fr);min-height:0;perspective:1200px}
+ .auth-info-side,.auth-container.active .auth-info-side{grid-column:1;grid-row:1;min-height:150px;padding:22px 22px 30px;text-align:left;align-items:flex-start;justify-content:flex-end}
+ .auth-form-side,.auth-container.active .auth-form-side{grid-column:1;grid-row:2;padding:18px 20px 24px}
+ .curved-shape{bottom:auto;height:175px;clip-path:polygon(0% 0%,100% 0%,100% 72%,0% 100%)}
+ .curved-shape2{bottom:auto;height:175px;clip-path:polygon(0% 99%,100% 71%,100% 73%,0% 100%)}
+ .auth-container.active .curved-shape{clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 72%)}
+ .auth-container.active .curved-shape2{clip-path:polygon(0% 71%,100% 99%,100% 100%,0% 73%)}
+ .auth-info-side h2{font-size:1.5rem}
+ .auth-switch-hint,.auth-info-side .auth-switch{display:none}
+ .auth-info-side,.auth-container.active .auth-info-side{min-height:0;padding:20px 22px 44px}
+ .auth-container.entering .auth-form-side .anim,.auth-container.leaving .auth-form-side .anim,.auth-container.active.entering .auth-form-side .anim,.auth-container.active.leaving .auth-form-side .anim{transform:translateY(24px) rotateX(-35deg);transform-origin:top center}
+ .auth-container.entering .auth-info-side .anim,.auth-container.leaving .auth-info-side .anim,.auth-container.active.entering .auth-info-side .anim,.auth-container.active.leaving .auth-info-side .anim{transform:translateY(-18px)}
+}
+/* Old auth-card styles must not leak into the new card. */
+.auth-diagonal .auth-container .auth-method{background:rgba(255,255,255,.04)!important;border:1px solid rgba(16,185,129,.25)!important;border-radius:999px!important;padding:3px!important;box-shadow:none!important}
+.auth-diagonal .auth-container .auth-method button{background:transparent!important;color:#cfe7df!important;border:0!important;box-shadow:none!important;min-height:36px}
+.auth-diagonal .auth-container .auth-method button.selected{background:rgba(234,179,8,.14)!important;color:#facc15!important;box-shadow:inset 0 0 0 1px rgba(234,179,8,.6)!important}
+.auth-diagonal .auth-form-side h1{color:#fef3c7!important;letter-spacing:0}
+.auth-diagonal .auth-info-side h2,.auth-diagonal .auth-info-side p{color:#fff!important}
+.auth-diagonal .auth-info-side .eyebrow{color:#fef3c7!important}
+.auth-diagonal .auth-tabs a:not(.active){color:#cfe7df!important}
+@media (prefers-reduced-motion:reduce){.curved-shape,.curved-shape2,.auth-container .anim{transition:none!important}}
+/* The 6-digit glass OTP fits the form column (boxes shrink on narrow columns). */
+.auth-diagonal .rf-otp{max-width:100%;--w:min(44px,calc((100cqw - 5 * var(--g)) / 6))}
+.auth-diagonal .auth-form-side{container-type:inline-size}
+.auth-diagonal .auth-form-side>*,.auth-diagonal .form,.auth-diagonal .form>*{min-width:0;max-width:100%}
+.auth-diagonal .rf-otp{box-sizing:border-box;width:100%;padding-inline:14px}

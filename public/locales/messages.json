@@ -6603,5 +6603,60 @@
     "uz": "Bu stol tanlangan restoranga tegishli emas.",
     "ru": "Этот стол не относится к выбранному ресторану.",
     "en": "This table does not belong to the chosen restaurant."
+  },
+  "XUSH KELIBSIZ!": {
+    "uz": "XUSH KELIBSIZ!",
+    "ru": "ДОБРО ПОЖАЛОВАТЬ!",
+    "en": "WELCOME!"
+  },
+  "Sevimli restoraningiz — bir necha bosish masofasida. Stol bron qiling va taomni oldindan buyurtma bering.": {
+    "uz": "Sevimli restoraningiz — bir necha bosish masofasida. Stol bron qiling va taomni oldindan buyurtma bering.",
+    "ru": "Любимый ресторан — в нескольких касаниях. Бронируйте стол и заказывайте блюда заранее.",
+    "en": "Your favourite restaurant is a few taps away. Book a table and order dishes in advance."
+  },
+  "Akkauntingiz yo‘qmi?": {
+    "uz": "Akkauntingiz yo‘qmi?",
+    "ru": "Нет аккаунта?",
+    "en": "No account yet?"
+  },
+  "BIZGA QO‘SHILING!": {
+    "uz": "BIZGA QO‘SHILING!",
+    "ru": "ПРИСОЕДИНЯЙТЕСЬ!",
+    "en": "JOIN US!"
+  },
+  "Bir daqiqada ro‘yxatdan o‘ting — raqamingizni 6 xonali kod bilan tasdiqlaysiz.": {
+    "uz": "Bir daqiqada ro‘yxatdan o‘ting — raqamingizni 6 xonali kod bilan tasdiqlaysiz.",
+    "ru": "Регистрация за минуту — номер подтверждается 6-значным кодом.",
+    "en": "Sign up in a minute — you confirm your number with a 6-digit code."
+  },
+  "Akkauntingiz bormi?": {
+    "uz": "Akkauntingiz bormi?",
+    "ru": "Уже есть аккаунт?",
+    "en": "Already have an account?"
+  },
+  "DEYARLI TAYYOR!": {
+    "uz": "DEYARLI TAYYOR!",
+    "ru": "ПОЧТИ ГОТОВО!",
+    "en": "ALMOST THERE!"
+  },
+  "Yuborilgan 6 xonali kodni kiriting — akkauntingiz shu zahoti ochiladi.": {
+    "uz": "Yuborilgan 6 xonali kodni kiriting — akkauntingiz shu zahoti ochiladi.",
+    "ru": "Введите присланный 6-значный код — аккаунт откроется сразу.",
+    "en": "Enter the 6-digit code we sent — your account opens right away."
+  },
+  "PAROLNI TIKLASH": {
+    "uz": "PAROLNI TIKLASH",
+    "ru": "ВОССТАНОВЛЕНИЕ ПАРОЛЯ",
+    "en": "RESET PASSWORD"
+  },
+  "Emailingizga tasdiqlash kodi yuboramiz.": {
+    "uz": "Emailingizga tasdiqlash kodi yuboramiz.",
+    "ru": "Отправим код подтверждения на email.",
+    "en": "We will email you a confirmation code."
+  },
+  "Kodni va yangi parolni kiriting.": {
+    "uz": "Kodni va yangi parolni kiriting.",
+    "ru": "Введите код и новый пароль.",
+    "en": "Enter the code and a new password."
   }
 }
