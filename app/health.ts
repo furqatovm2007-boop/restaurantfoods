@@ -54,7 +54,7 @@ export async function checkHealth(now = Date.now()): Promise<Problem[]> {
   return problems;
 }
 
-async function adminChats() {
+export async function adminChats() {
   const rows = (await env.DB!.prepare("SELECT telegram_chat_id FROM accounts WHERE role='admin' AND telegram_chat_id IS NOT NULL AND telegram_chat_id<>''").all<{ telegram_chat_id: string }>()).results.map((r) => r.telegram_chat_id);
   const extra = env.ADMIN_TELEGRAM_CHAT_ID?.trim();
   return [...new Set([...rows, ...(extra ? [extra] : [])])];

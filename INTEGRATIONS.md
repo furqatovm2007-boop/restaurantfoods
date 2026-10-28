@@ -66,3 +66,10 @@ The owner explicitly requested retaining only the pinned admin and deleting the 
 - Sign-in: `public/tg-miniapp.js` loads `telegram-web-app.js` only inside Telegram and sends the signed `initData` to `POST /api/auth/telegram-webapp`. The server checks the HMAC signature (key `HMAC("WebAppData", TELEGRAM_BOT_TOKEN)`), a 24-hour age and a real user; `initDataUnsafe` is never trusted. Admin and suspended accounts are refused.
 - Phone: `telegram-contact-start` → Telegram `requestContact` → the bot receives the user's own contact and saves it as verified (or moves the chat to the account that already owns that number) → `telegram-contact-status`.
 - Works in the Telegram mobile and desktop apps. web.telegram.org embeds Mini Apps in a frame; the site keeps `frame-ancestors 'none'` and SameSite=Lax session cookies, so the Mini App is not supported there (use the Telegram app or the website).
+
+## Hall: 2D standard plan and 3D VIP hall
+
+- Every restaurant gets the 2D architectural plan (`public/hall-plan.js`): tables drawn by kind and capacity (2-seat with armchairs, round, rectangular, VIP U-sofa booth), zone filters (main hall, terrace, VIP, window), zoom/pan, neon states (free, selected, 5-minute hold, busy with its time) and a preview card with the table photo, capacity and amenities.
+- The 3D hall is a one-time VIP service: owners request it (packages 1 900 000 / 3 500 000 / 5 900 000 so‘m) from Zal xaritasi or Tariflar; the request appears in Admin panel → 3D zal arizalari and in the administrator's Telegram. The administrator switches `has_3d_hall` on per restaurant (Restoranlarni boshqarish → restoran → 3D Zal) and attaches the model link or notes. Until then the "3D ko‘rinish" button says the 3D hall is coming soon.
+- The owner's 2D constructor (Zal xaritasi → 🧭 2D Zal konstruktori) drags tables and ambience (entrance, stage, bar, plants, windows) and sets seats, shape, zone and amenities. Ambience is drawn only where the owner placed it.
+- Storage without a migration: app_settings `hall3d:<restaurant>`, `tablemeta:<restaurant>`, `hallscene:<restaurant>`, `hall3d-leads`.

@@ -6203,5 +6203,365 @@
     "uz": "yetmadi",
     "ru": "не доставлено",
     "en": "not delivered"
+  },
+  "2D Standart Sxema": {
+    "uz": "2D Standart Sxema",
+    "ru": "2D стандартная схема",
+    "en": "2D standard plan"
+  },
+  "2D Zal konstruktori": {
+    "uz": "2D Zal konstruktori",
+    "ru": "Конструктор 2D-зала",
+    "en": "2D hall builder"
+  },
+  "3D MODEL / KONFIGURATSIYA (https havola yoki izoh)": {
+    "uz": "3D MODEL / KONFIGURATSIYA (https havola yoki izoh)",
+    "ru": "3D-МОДЕЛЬ / КОНФИГУРАЦИЯ (https-ссылка или заметка)",
+    "en": "3D MODEL / CONFIGURATION (https link or note)"
+  },
+  "3D Zal (VIP xizmat)": {
+    "uz": "3D Zal (VIP xizmat)",
+    "ru": "3D-зал (VIP-услуга)",
+    "en": "3D hall (VIP service)"
+  },
+  "3D Zal Yoqilgan": {
+    "uz": "3D Zal Yoqilgan",
+    "ru": "3D-зал включён",
+    "en": "3D hall on"
+  },
+  "3D Zal uchun ariza qoldirish": {
+    "uz": "3D Zal uchun ariza qoldirish",
+    "ru": "Оставить заявку на 3D-зал",
+    "en": "Request a 3D hall"
+  },
+  "3D zal arizalari": {
+    "uz": "3D zal arizalari",
+    "ru": "Заявки на 3D-зал",
+    "en": "3D hall requests"
+  },
+  "3D zal ulangan — mijozlar zalingizni 3D ko‘rinishda ko‘rib stol tanlamoqda.": {
+    "uz": "3D zal ulangan — mijozlar zalingizni 3D ko‘rinishda ko‘rib stol tanlamoqda.",
+    "ru": "3D-зал подключён — гости выбирают столы, осматривая ваш зал в 3D.",
+    "en": "The 3D hall is live — guests choose tables while exploring your hall in 3D."
+  },
+  "3D zalni yoqish: Restoranlarni boshqarish → restoran → “3D Zal (VIP xizmat)”.": {
+    "uz": "3D zalni yoqish: Restoranlarni boshqarish → restoran → “3D Zal (VIP xizmat)”.",
+    "ru": "Включение 3D-зала: Управление ресторанами → ресторан → «3D-зал (VIP-услуга)».",
+    "en": "To switch the 3D hall on: Manage restaurants → restaurant → “3D hall (VIP service)”."
+  },
+  "Arizangiz qabul qilindi — mutaxassisimiz siz bilan bog‘lanadi.": {
+    "uz": "Arizangiz qabul qilindi — mutaxassisimiz siz bilan bog‘lanadi.",
+    "ru": "Заявка принята — наш специалист свяжется с вами.",
+    "en": "Request received — our specialist will contact you."
+  },
+  "Asosiy kirish": {
+    "uz": "Asosiy kirish",
+    "ru": "Главный вход",
+    "en": "Main entrance"
+  },
+  "Asosiy zal": {
+    "uz": "Asosiy zal",
+    "ru": "Основной зал",
+    "en": "Main hall"
+  },
+  "Avtomatik (sig‘imga qarab)": {
+    "uz": "Avtomatik (sig‘imga qarab)",
+    "ru": "Автоматически (по вместимости)",
+    "en": "Automatic (by capacity)"
+  },
+  "Bajarildi": {
+    "uz": "Bajarildi",
+    "ru": "Выполнено",
+    "en": "Done"
+  },
+  "Band": {
+    "uz": "Band",
+    "ru": "Занят",
+    "en": "Busy"
+  },
+  "Band qilinmoqda": {
+    "uz": "Band qilinmoqda",
+    "ru": "Бронируется",
+    "en": "Being booked"
+  },
+  "Bar": {
+    "uz": "Bar",
+    "ru": "Бар",
+    "en": "Bar"
+  },
+  "Barcha stollar": {
+    "uz": "Barcha stollar",
+    "ru": "Все столы",
+    "en": "All tables"
+  },
+  "Boshqa mijoz 5 daqiqaga ushlab turibdi": {
+    "uz": "Boshqa mijoz 5 daqiqaga ushlab turibdi",
+    "ru": "Другой гость держит стол 5 минут",
+    "en": "Another guest is holding it for 5 minutes"
+  },
+  "Butun zal": {
+    "uz": "Butun zal",
+    "ru": "Весь зал",
+    "en": "Whole hall"
+  },
+  "Deraza oldi": {
+    "uz": "Deraza oldi",
+    "ru": "У окна",
+    "en": "By the window"
+  },
+  "Deraza tomon": {
+    "uz": "Deraza tomon",
+    "ru": "Окна",
+    "en": "Windows"
+  },
+  "Hozircha ariza yo‘q.": {
+    "uz": "Hozircha ariza yo‘q.",
+    "ru": "Заявок пока нет.",
+    "en": "No requests yet."
+  },
+  "IZOH (IXTIYORIY)": {
+    "uz": "IZOH (IXTIYORIY)",
+    "ru": "КОММЕНТАРИЙ (НЕОБЯЗАТЕЛЬНО)",
+    "en": "NOTE (OPTIONAL)"
+  },
+  "JOYLASHUV": {
+    "uz": "JOYLASHUV",
+    "ru": "РАСПОЛОЖЕНИЕ",
+    "en": "LOCATION"
+  },
+  "Jonli musiqa / Sahna": {
+    "uz": "Jonli musiqa / Sahna",
+    "ru": "Живая музыка / Сцена",
+    "en": "Live music / Stage"
+  },
+  "Mijozlar restoraningiz ichini 3D ko‘rinishda aylanib stol tanlasa, bronlar soni 45% ga oshadi. Mutaxassislarimiz zalingizni o‘lchab, maxsus 3D modelini yaratib tizimga ulab berishadi.": {
+    "uz": "Mijozlar restoraningiz ichini 3D ko‘rinishda aylanib stol tanlasa, bronlar soni 45% ga oshadi. Mutaxassislarimiz zalingizni o‘lchab, maxsus 3D modelini yaratib tizimga ulab berishadi.",
+    "ru": "Когда гости выбирают стол, осматривая ваш ресторан в 3D, броней становится на 45% больше. Наши специалисты измерят зал, создадут его 3D-модель и подключат к системе.",
+    "en": "When guests choose a table while exploring your restaurant in 3D, bookings grow by 45%. Our specialists measure your hall, build its 3D model and connect it to the system."
+  },
+  "Ochiq ariza": {
+    "uz": "Ochiq ariza",
+    "ru": "Открытая заявка",
+    "en": "Open request"
+  },
+  "Orqaga": {
+    "uz": "Orqaga",
+    "ru": "Назад",
+    "en": "Back"
+  },
+  "O‘simlik": {
+    "uz": "O‘simlik",
+    "ru": "Растение",
+    "en": "Plant"
+  },
+  "Qayta ochish": {
+    "uz": "Qayta ochish",
+    "ru": "Открыть снова",
+    "en": "Reopen"
+  },
+  "Qulayliklar": {
+    "uz": "Qulayliklar",
+    "ru": "Удобства",
+    "en": "Amenities"
+  },
+  "Rasm va tavsifni “Rasm va tavsif” bo‘limida qo‘shasiz.": {
+    "uz": "Rasm va tavsifni “Rasm va tavsif” bo‘limida qo‘shasiz.",
+    "ru": "Фото и описание добавляются в разделе «Фото и описание».",
+    "en": "Add the photo and description in “Photo and description”."
+  },
+  "Rejada surib joylashtiring.": {
+    "uz": "Rejada surib joylashtiring.",
+    "ru": "Перетащите на плане.",
+    "en": "Drag it on the plan."
+  },
+  "Restoraningiz uchun Maxsus 3D Zal Xaritasini Yaratib Beramiz!": {
+    "uz": "Restoraningiz uchun Maxsus 3D Zal Xaritasini Yaratib Beramiz!",
+    "ru": "Создадим для вашего ресторана особую 3D-карту зала!",
+    "en": "We will build a custom 3D hall map for your restaurant!"
+  },
+  "Saqlanmagan o‘zgarishlar bekor qilinadi. Davom etasizmi?": {
+    "uz": "Saqlanmagan o‘zgarishlar bekor qilinadi. Davom etasizmi?",
+    "ru": "Несохранённые изменения будут отменены. Продолжить?",
+    "en": "Unsaved changes will be lost. Continue?"
+  },
+  "Shu stolni tanlash": {
+    "uz": "Shu stolni tanlash",
+    "ru": "Выбрать этот стол",
+    "en": "Choose this table"
+  },
+  "Stol rasmi hali qo‘shilmagan": {
+    "uz": "Stol rasmi hali qo‘shilmagan",
+    "ru": "Фото стола ещё не добавлено",
+    "en": "No photo of this table yet"
+  },
+  "Stol yoki elementni tanlang.": {
+    "uz": "Stol yoki elementni tanlang.",
+    "ru": "Выберите стол или элемент.",
+    "en": "Select a table or an element."
+  },
+  "Stollarni va zal elementlarini barmoq yoki sichqoncha bilan suring. Stolni bosib shakli, sig‘imi, zonasi va qulayliklarini belgilang.": {
+    "uz": "Stollarni va zal elementlarini barmoq yoki sichqoncha bilan suring. Stolni bosib shakli, sig‘imi, zonasi va qulayliklarini belgilang.",
+    "ru": "Перетаскивайте столы и элементы зала пальцем или мышью. Нажмите на стол, чтобы задать форму, вместимость, зону и удобства.",
+    "en": "Drag tables and hall elements with a finger or the mouse. Tap a table to set its shape, capacity, zone and amenities."
+  },
+  "TELEFON (IXTIYORIY)": {
+    "uz": "TELEFON (IXTIYORIY)",
+    "ru": "ТЕЛЕФОН (НЕОБЯЗАТЕЛЬНО)",
+    "en": "PHONE (OPTIONAL)"
+  },
+  "Tanlandi": {
+    "uz": "Tanlandi",
+    "ru": "Выбран",
+    "en": "Selected"
+  },
+  "Tanlangan vaqtda bo‘sh": {
+    "uz": "Tanlangan vaqtda bo‘sh",
+    "ru": "Свободен в выбранное время",
+    "en": "Free at the chosen time"
+  },
+  "Terassa": {
+    "uz": "Terassa",
+    "ru": "Терраса",
+    "en": "Terrace"
+  },
+  "Uzoqlashtirish": {
+    "uz": "Uzoqlashtirish",
+    "ru": "Отдалить",
+    "en": "Zoom out"
+  },
+  "VIP Divan": {
+    "uz": "VIP Divan",
+    "ru": "VIP-диван",
+    "en": "VIP sofa"
+  },
+  "VIP Kabinalar": {
+    "uz": "VIP Kabinalar",
+    "ru": "VIP-кабины",
+    "en": "VIP booths"
+  },
+  "VIP kabina": {
+    "uz": "VIP kabina",
+    "ru": "VIP-кабина",
+    "en": "VIP booth"
+  },
+  "Yaqinlashtirish": {
+    "uz": "Yaqinlashtirish",
+    "ru": "Приблизить",
+    "en": "Zoom in"
+  },
+  "Yumaloq": {
+    "uz": "Yumaloq",
+    "ru": "Круглый",
+    "en": "Round"
+  },
+  "Zal elementlari 40 tadan oshmasin.": {
+    "uz": "Zal elementlari 40 tadan oshmasin.",
+    "ru": "Не больше 40 элементов зала.",
+    "en": "No more than 40 hall elements."
+  },
+  "Zal maydoni, qavatlar soni, qulay vaqt…": {
+    "uz": "Zal maydoni, qavatlar soni, qulay vaqt…",
+    "ru": "Площадь зала, этажи, удобное время…",
+    "en": "Hall size, floors, a convenient time…"
+  },
+  "Zal xaritasi saqlandi.": {
+    "uz": "Zal xaritasi saqlandi.",
+    "ru": "Карта зала сохранена.",
+    "en": "Hall map saved."
+  },
+  "Zonalar": {
+    "uz": "Zonalar",
+    "ru": "Зоны",
+    "en": "Zones"
+  },
+  "band": {
+    "uz": "band",
+    "ru": "занят",
+    "en": "busy"
+  },
+  "band qilinmoqda": {
+    "uz": "band qilinmoqda",
+    "ru": "бронируется",
+    "en": "being booked"
+  },
+  "bir martalik": {
+    "uz": "bir martalik",
+    "ru": "единоразово",
+    "en": "one-time"
+  },
+  "boshqa vaqtda bron": {
+    "uz": "boshqa vaqtda bron",
+    "ru": "брони в другое время",
+    "en": "booked at other times"
+  },
+  "qavat": {
+    "uz": "qavat",
+    "ru": "этаж",
+    "en": "floor"
+  },
+  "qavat zal sxemasi": {
+    "uz": "qavat zal sxemasi",
+    "ru": "этаж — схема зала",
+    "en": "floor — hall plan"
+  },
+  "stol": {
+    "uz": "stol",
+    "ru": "стол",
+    "en": "table"
+  },
+  "ta element": {
+    "uz": "ta element",
+    "ru": "элементов",
+    "en": "elements"
+  },
+  "ta stol": {
+    "uz": "ta stol",
+    "ru": "столов",
+    "en": "tables"
+  },
+  "🔌 Quvvatlagich bor": {
+    "uz": "🔌 Quvvatlagich bor",
+    "ru": "🔌 Есть зарядка",
+    "en": "🔌 Charger"
+  },
+  "🛋️ Yumshoq divan": {
+    "uz": "🛋️ Yumshoq divan",
+    "ru": "🛋️ Мягкий диван",
+    "en": "🛋️ Soft sofa"
+  },
+  "🤫 Tinch burchak": {
+    "uz": "🤫 Tinch burchak",
+    "ru": "🤫 Тихий уголок",
+    "en": "🤫 Quiet corner"
+  },
+  "🪟 Deraza oldi": {
+    "uz": "🪟 Deraza oldi",
+    "ru": "🪟 У окна",
+    "en": "🪟 By the window"
+  },
+  "✨ 3D Zal tez kunda ishga tushadi — hozir 2D sxema orqali stol tanlashingiz mumkin": {
+    "uz": "✨ 3D Zal tez kunda ishga tushadi — hozir 2D sxema orqali stol tanlashingiz mumkin",
+    "ru": "✨ 3D-зал скоро заработает — сейчас стол можно выбрать по 2D-схеме",
+    "en": "✨ The 3D hall is coming soon — choose a table on the 2D plan for now"
+  },
+  "3D Panorama / 3D Zal": {
+    "uz": "3D Panorama / 3D Zal",
+    "ru": "3D-панорама / 3D-зал",
+    "en": "3D panorama / 3D hall"
+  },
+  "Kichik zal (15 tagacha stol)": {
+    "uz": "Kichik zal (15 tagacha stol)",
+    "ru": "Небольшой зал (до 15 столов)",
+    "en": "Small hall (up to 15 tables)"
+  },
+  "Standart restoran (35 tagacha stol)": {
+    "uz": "Standart restoran (35 tagacha stol)",
+    "ru": "Стандартный ресторан (до 35 столов)",
+    "en": "Standard restaurant (up to 35 tables)"
+  },
+  "Premium / Ko‘p qavatli majmua": {
+    "uz": "Premium / Ko‘p qavatli majmua",
+    "ru": "Премиум / многоэтажный комплекс",
+    "en": "Premium / multi-floor venue"
   }
 }
