@@ -223,6 +223,29 @@
     return { zoom, fit: () => ((v = { x: 0, y: 0, w: W, h: H }), apply()), toSvg, get view() { return v; }, restore(prev) { if (prev) { v = { ...prev }; clamp(); apply(); } } };
   }
 
+  // ---------- full screen ----------
+  let fullHost = null;
+  const lock = (on) => document.documentElement.classList.toggle('hp-lock', !!on);
+  /** Leaves the full-screen plan (✕, Escape, Telegram's back button). True when it was open. */
+  function exitFull() {
+    if (!fullHost) return false;
+    const { host, o } = fullHost;
+    fullHost = null;
+    lock(false);
+    if (host.isConnected && host._hp) {
+      host._hp.full = false;
+      host._hp.view = null;
+      render(host, o);
+    }
+    return true;
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && fullHost && !e.defaultPrevented) {
+      e.preventDefault();
+      exitFull();
+    }
+  });
+
   // ---------- guest view ----------
   function render(host, o) {
     const d = o.d,
@@ -234,8 +257,10 @@
     const chips = ZONES.filter(([z]) => z === 'all' || zonesHere.has(z) || (z === 'window' && anyWindow));
     if (!chips.some(([z]) => z === keep.zone)) keep.zone = 'all';
     const scene = (d.scene || []).filter((s) => s.floor === o.floor);
-    host.innerHTML = `<div class="hp2d">${chips.length > 1 ? `<div class="hp2d-filters" role="group" aria-label="${E(tr('Zonalar'))}">${chips.map(([z, i, n]) => `<button type="button" data-zone="${z}" aria-pressed="${keep.zone === z}">${i} ${E(tr(n))}</button>`).join('')}</div>` : ''}
-      <div class="hp2d-stage"><div class="hp2d-tools"><button type="button" data-zoom="in" aria-label="${E(tr('Yaqinlashtirish'))}">+</button><button type="button" data-zoom="out" aria-label="${E(tr('Uzoqlashtirish'))}">−</button><button type="button" data-zoom="fit" aria-label="${E(tr('Butun zal'))}">⤢</button></div>
+    lock(keep.full);
+    const fullbar = keep.full ? `<div class="hp2d-fullbar">${o.logo ? `<img src="${E(o.logo)}" alt="" referrerpolicy="no-referrer">` : '<span aria-hidden="true">🏛️</span>'}<b>${E(o.title || tr('Restoran'))} — ${E(tr('Zal xaritasi'))}</b><button type="button" class="hp2d-exit" data-full>✕ ${E(tr('Kichraytirish'))}</button></div>` : '';
+    host.innerHTML = `<div class="hp2d${keep.full ? ' hp-full' : ''}" ${keep.full ? `role="dialog" aria-modal="true" aria-label="${E((o.title || '') + ' — ' + tr('Zal xaritasi'))}"` : ''}>${fullbar}${chips.length > 1 ? `<div class="hp2d-filters" role="group" aria-label="${E(tr('Zonalar'))}">${chips.map(([z, i, n]) => `<button type="button" data-zone="${z}" aria-pressed="${keep.zone === z}">${i} ${E(tr(n))}</button>`).join('')}</div>` : ''}
+      <div class="hp2d-stage">${keep.full ? '' : `<button type="button" class="hp2d-fullbtn" data-full>⛶ ${E(tr('To‘liq ekran'))}</button>`}<div class="hp2d-tools"><button type="button" data-zoom="in" aria-label="${E(tr('Yaqinlashtirish'))}">+</button><button type="button" data-zoom="out" aria-label="${E(tr('Uzoqlashtirish'))}">−</button><button type="button" data-zoom="fit" aria-label="${E(tr('Butun zal'))}">⤢</button></div>
       <svg class="hp2d-svg" viewBox="0 0 ${W} ${H}" role="group" aria-label="${E(o.floor + '-' + tr('qavat zal sxemasi'))}">${defs}${floorRect(H)}${drawScene(scene, H)}${drawTables(d, tables, H, { ...o, zone: keep.zone })}</svg>
       <p class="hp2d-legend"><span class="lg free"></span>${E(tr('Bo‘sh'))}<span class="lg selected"></span>${E(tr('Tanlangan'))}<span class="lg held"></span>${E(tr('Band qilinmoqda'))}<span class="lg busy"></span>${E(tr('Band'))}</p></div>
       <div class="hp2d-preview" data-preview hidden></div></div>`;
@@ -243,6 +268,20 @@
       z = zoomable(svg, H);
     z.restore(keep.view);
     const remember = () => (keep.view = { ...z.view });
+    // Full screen: the plan covers the whole screen (fixed, above everything) with the restaurant's name,
+    // zones, zoom and ✕; a chosen table's card opens at the bottom without leaving it.
+    host.querySelectorAll('[data-full]').forEach(
+      (b) =>
+        (b.onclick = () => {
+          keep.full = !keep.full;
+          keep.view = null;
+          render(host, o);
+        }),
+    );
+    if (keep.full) {
+      fullHost = { host, o };
+      host.querySelector('.hp2d-exit')?.focus({ preventScroll: true });
+    } else if (fullHost?.host === host) fullHost = null;
     host.querySelectorAll('[data-zoom]').forEach((b) => (b.onclick = () => (b.dataset.zoom === 'fit' ? z.fit() : z.zoom(b.dataset.zoom === 'in' ? 1.4 : 1 / 1.4), remember())));
     svg.addEventListener('pointerup', remember);
     svg.addEventListener('wheel', remember);
@@ -281,14 +320,22 @@
     const status = st.state === 'busy' ? `<p class="hp2d-status busy">🔒 ${E(tr('Tanlangan vaqtda band'))}${st.until ? ': ' + E(st.until) : ''}</p>` : st.state === 'held' ? `<p class="hp2d-status held">⏳ ${E(tr('Boshqa mijoz 5 daqiqaga ushlab turibdi'))}</p>` : `<p class="hp2d-status free">● ${E(tr('Tanlangan vaqtda bo‘sh'))}${st.later ? ' · ' + E(tr('boshqa vaqtda bron')) + ': ' + E(st.later) : ''}</p>`;
     const blocked = st.state === 'busy' || st.state === 'held';
     box.hidden = false;
-    box.innerHTML = `<article class="hp2d-card"><div class="hp2d-photo">${tb.image_url ? `<img src="${E(tb.image_url)}" alt="${E(tb.number + '-stol')}" loading="lazy" referrerpolicy="no-referrer">` : `<span>📷 ${E(tr('Stol rasmi hali qo‘shilmagan'))}</span>`}</div><div class="hp2d-card-body"><button type="button" class="hp2d-x" data-close aria-label="${E(tr('Yopish'))}">✕</button><h4>${E(tr('Stol'))} #${E(tb.number)} • ${capacity(Number(tb.seats) || 2)} ${E(tr('kishilik'))}</h4><p class="hp2d-zone">${zone[1]} ${E(tr(ZONE_NAME[m.zone] || 'Asosiy zal'))} · ${E(tb.floor)}-${E(tr('qavat'))}</p>${(m.tags || []).length ? `<div class="hp2d-tags">${m.tags.map((x) => `<span>${E(tr(TAGS[x]))}</span>`).join('')}</div>` : ''}${status}${tb.atmosphere ? `<p class="hp2d-note">${E(tb.atmosphere)}</p>` : ''}<button type="button" class="hp2d-choose" data-choose ${blocked ? 'disabled' : ''}>✅ ${E(tr('Shu stolni tanlash'))}</button></div></article>`;
+    box.innerHTML = `<article class="hp2d-card"><div class="hp2d-photo">${tb.image_url ? `<img src="${E(tb.image_url)}" alt="${E(tb.number + '-stol')}" loading="lazy" referrerpolicy="no-referrer">` : `<span>📷 ${E(tr('Stol rasmi hali qo‘shilmagan'))}</span>`}</div><div class="hp2d-card-body"><button type="button" class="hp2d-x" data-close aria-label="${E(tr('Yopish'))}">✕</button><h4>${E(tr('Stol'))} #${E(tb.number)} • ${capacity(Number(tb.seats) || 2)} ${E(tr('kishilik'))}</h4><p class="hp2d-zone">${zone[1]} ${E(tr(ZONE_NAME[m.zone] || 'Asosiy zal'))} · ${E(tb.floor)}-${E(tr('qavat'))}</p>${(m.tags || []).length ? `<div class="hp2d-tags">${m.tags.map((x) => `<span>${E(tr(TAGS[x]))}</span>`).join('')}</div>` : ''}${status}${tb.atmosphere ? `<p class="hp2d-note">${E(tb.atmosphere)}</p>` : ''}<button type="button" class="hp2d-choose" data-choose ${blocked ? 'disabled' : ''}>✅ ${E(tr(o.full || box.closest('.hp-full') ? 'Shu stolni bron qilish' : 'Shu stolni tanlash'))}</button></div></article>`;
     box.querySelector('[data-close]').onclick = () => {
       box.hidden = true;
       box.innerHTML = '';
       const keep = box.closest('.hp2d')?.parentElement?._hp;
       if (keep) keep.preview = null;
     };
-    box.querySelector('[data-choose]').onclick = () => o.onChoose?.(tb);
+    box.querySelector('[data-choose]').onclick = () => {
+      const keep = box.closest('.hp2d')?.parentElement?._hp;
+      if (keep?.full) {
+        keep.full = false;
+        lock(false);
+        fullHost = null;
+      }
+      o.onChoose?.(tb);
+    };
     if (!quiet) box.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
   }
 
@@ -303,6 +350,7 @@
       dragging = null,
       dirty = false,
       busy = false,
+      full = false,
       z = null,
       view = null;
     const meta = () => Object.fromEntries(tables.map((tb) => [String(tb.number), { zone: tb.zone, kind: tb.kind, tags: tb.tags || [] }]));
@@ -313,7 +361,8 @@
         items = scene.filter((s) => s.floor === floor);
       const st = tables.find((x) => sel?.t === 'table' && x.id === sel.id),
         si = scene.find((x) => sel?.t === 'item' && x.id === sel.id);
-      host.innerHTML = `<div class="hp-editor"><div class="hp-ed-head"><button type="button" class="quiet" data-back>← ${E(tr('Orqaga'))}</button><h2>🧭 ${E(tr('2D Zal konstruktori'))}</h2><button type="button" class="primary" data-save ${busy ? 'disabled' : ''}>${busy ? E(tr('Saqlanmoqda…')) : '💾 ' + E(tr('Saqlash'))}${dirty ? ' •' : ''}</button></div>
+      lock(full);
+      host.innerHTML = `<div class="hp-editor${full ? ' hp-full' : ''}"><div class="hp-ed-head"><button type="button" class="quiet" data-back>← ${E(tr('Orqaga'))}</button><h2>🧭 ${E(tr('2D Zal konstruktori'))}</h2><button type="button" class="quiet" data-ed-full>${full ? '✕ ' + E(tr('Kichraytirish')) : '⛶ ' + E(tr('To‘liq ekran'))}</button><button type="button" class="primary" data-save ${busy ? 'disabled' : ''}>${busy ? E(tr('Saqlanmoqda…')) : '💾 ' + E(tr('Saqlash'))}${dirty ? ' •' : ''}</button></div>
         <p class="muted">${E(tr('Stollarni va zal elementlarini barmoq yoki sichqoncha bilan suring. Stolni bosib shakli, sig‘imi, zonasi va qulayliklarini belgilang.'))}</p>
         ${d.floors > 1 ? `<div class="floor-tabs">${Array.from({ length: d.floors }, (_, i) => `<button type="button" data-ed-floor="${i + 1}" aria-pressed="${floor === i + 1}">${i + 1}-${E(tr('qavat'))}</button>`).join('')}</div>` : ''}
         <div class="hp-palette">${Object.entries(SCENE).map(([k, [i, n]]) => `<button type="button" data-add="${k}">${i} ${E(tr(n))}</button>`).join('')}</div>
@@ -325,9 +374,15 @@
       host.querySelectorAll('[data-zoom]').forEach((b) => (b.onclick = () => (b.dataset.zoom === 'fit' ? z.fit() : z.zoom(b.dataset.zoom === 'in' ? 1.4 : 1 / 1.4), (view = { ...z.view }))));
       host.querySelector('[data-back]').onclick = () => {
         if (dirty && !confirm(tr('Saqlanmagan o‘zgarishlar bekor qilinadi. Davom etasizmi?'))) return;
+        lock(false);
         o.onBack?.();
       };
       host.querySelector('[data-save]').onclick = save;
+      host.querySelector('[data-ed-full]').onclick = () => {
+        full = !full;
+        view = null;
+        draw();
+      };
       host.querySelectorAll('[data-ed-floor]').forEach((b) => (b.onclick = () => ((floor = Number(b.dataset.edFloor)), (sel = null), draw())));
       host.querySelectorAll('[data-add]').forEach(
         (b) =>
@@ -512,5 +567,5 @@
     draw();
   }
 
-  window.RFHallPlan = { render, editor, hall3dPanel, upsell, leads, capacity, kindOf, metaOf };
+  window.RFHallPlan = { render, editor, hall3dPanel, upsell, leads, capacity, kindOf, metaOf, exitFull, card: preview, isFull: () => !!fullHost || !!document.querySelector('.hp-full') };
 })();

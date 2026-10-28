@@ -41,28 +41,64 @@ async function card(chatId: string, image: string, text: string, reply_markup: u
   await telegram('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', reply_markup, link_preview_options: { is_disabled: true } });
 }
 
+/*
+ * Restaurants step by step, so a booking never lands at the wrong place:
+ *  1. the list (name, district / address, rating, tables free now), one button per restaurant;
+ *  2. the chosen restaurant's card: "🪑 Shu restoran stollarini ko‘rish va Bron qilish" opens the Mini App with
+ *     ?restaurant_id=ID&action=book (that restaurant's booking room only), "📖 Menyu", "⬅️ Orqaga";
+ *  3. the booking room shows "📍 Siz tanlagan restoran: …" and accepts only that restaurant's tables (the
+ *     server checks the table id and number against the restaurant too).
+ */
+const LIST_PAGE = 8;
+export const bookUrl = (id: string) => site() + '/?source=tg_miniapp&restaurant_id=' + encodeURIComponent(id) + '&action=book';
+const bookButton = (id: string, text = '🪑 Shu restoran stollarini ko‘rish va Bron qilish') => ({ text, web_app: { url: bookUrl(id) } });
+const backToList = { text: '⬅️ Orqaga (Barcha restoranlar)', callback_data: 'm:r:0' };
+const RESTAURANT_SQL =
+  "SELECT r.id,r.name,r.address,r.city,r.cuisine,r.image_url,r.booking_open,r.booking_close,(SELECT AVG(stars) FROM reviews WHERE restaurant_id=r.id AND " +
+  countedReview('reviews', 'r') +
+  ') AS rating,(SELECT COUNT(*) FROM reviews WHERE restaurant_id=r.id AND ' +
+  countedReview('reviews', 'r') +
+  ") AS review_count FROM restaurants r WHERE r.status='active' AND COALESCE(r.is_demo,0)=0";
+const place = (r: any) => [r.city, r.address].filter(Boolean).join(', ');
+
 async function restaurants(chatId: string, offset: number) {
-  const rows = (
-    await env.DB!.prepare("SELECT r.id,r.name,r.address,r.cuisine,r.image_url,r.booking_open,r.booking_close,(SELECT AVG(stars) FROM reviews WHERE restaurant_id=r.id AND " + countedReview('reviews', 'r') + ') AS rating,(SELECT COUNT(*) FROM reviews WHERE restaurant_id=r.id AND ' + countedReview('reviews', 'r') + ") AS review_count FROM restaurants r WHERE r.status='active' AND COALESCE(r.is_demo,0)=0 ORDER BY r.name LIMIT ? OFFSET ?")
-      .bind(PAGE + 1, offset)
-      .all<any>()
-  ).results;
+  const rows = (await env.DB!.prepare(RESTAURANT_SQL + ' ORDER BY r.name LIMIT ? OFFSET ?').bind(LIST_PAGE + 1, offset).all<any>()).results;
   if (!rows.length) {
     await telegram('sendMessage', { chat_id: chatId, text: offset ? 'Boshqa restoran yo‘q.' : 'Hozircha faol restoran yo‘q.', reply_markup: mainMenu() });
     return 'menu_restaurants_empty';
   }
-  const live = await liveTables();
-  for (const r of rows.slice(0, PAGE)) {
+  const live = await liveTables(),
+    shown = rows.slice(0, LIST_PAGE);
+  const lines = shown.map((r: any, i: number) => {
     const t = freeNow(live, r.id, r.booking_open, r.booking_close);
-    const rating = r.review_count ? `⭐ ${Number(r.rating).toFixed(1)} (${r.review_count} ta baho)` : '⭐ Hali baho yo‘q';
-    const tables = !t.total ? '🪑 Stollar hali kiritilmagan' : t.free == null ? '🪑 Hozir yopiq' : `🪑 Hozir bo‘sh stollar: <b>${t.free}</b> / ${t.total}`;
-    const text = [`🏢 <b>${html(r.name)}</b>`, rating, tables, r.cuisine ? '🍴 ' + html(r.cuisine) : '', r.address ? '📍 ' + html(r.address) : ''].filter(Boolean).join('\n');
-    await card(chatId, photoUrl(r.image_url), text, {
-      inline_keyboard: [[{ text: '🪑 Bo‘sh stollarni ko‘rish', callback_data: 'm:t:' + r.id }], [{ text: '📖 Menyuni ko‘rish', callback_data: 'm:m:' + r.id }], [openButton('⚡ 1 bosishda Stol Bron qilish', '/restaurant/' + r.id)]],
-    });
-  }
-  if (rows.length > PAGE) await telegram('sendMessage', { chat_id: chatId, text: 'Yana restoranlar bor:', reply_markup: { inline_keyboard: [[{ text: '➡️ Keyingi', callback_data: 'm:r:' + (offset + PAGE) }]] } });
+    const free = !t.total ? '' : t.free == null ? ' · 🌙 yopiq' : ` · 🪑 ${t.free} bo‘sh`;
+    return `${offset + i + 1}. <b>${html(r.name)}</b>${place(r) ? ' — 📍 ' + html(place(r)) : ''}\n    ${r.review_count ? '⭐ ' + Number(r.rating).toFixed(1) : '⭐ —'}${free}`;
+  });
+  const buttons = shown.map((r: any) => {
+    const t = freeNow(live, r.id, r.booking_open, r.booking_close);
+    const label = `🏢 ${r.name}${r.review_count ? ' · ⭐' + Number(r.rating).toFixed(1) : ''}${t.free != null && t.total ? ' · 🪑' + t.free : ''}`;
+    return [{ text: label.length > 60 ? label.slice(0, 59) + '…' : label, callback_data: 'm:c:' + r.id }];
+  });
+  const nav = [...(offset ? [{ text: '⬅️ Oldingi', callback_data: 'm:r:' + Math.max(0, offset - LIST_PAGE) }] : []), ...(rows.length > LIST_PAGE ? [{ text: '➡️ Keyingi', callback_data: 'm:r:' + (offset + LIST_PAGE) }] : [])];
+  await telegram('sendMessage', {
+    chat_id: chatId,
+    text: `🍽️ <b>Restoranni tanlang</b> — bron faqat siz tanlagan restoranga qilinadi:\n\n${lines.join('\n')}`,
+    parse_mode: 'HTML',
+    reply_markup: { inline_keyboard: [...buttons, ...(nav.length ? [nav] : [])] },
+  });
   return 'menu_restaurants';
+}
+
+/** Step 2: one restaurant's card with its own booking button and the way back to the list. */
+async function restaurantCard(chatId: string, id: string) {
+  const r = await env.DB!.prepare(RESTAURANT_SQL + ' AND r.id=?').bind(id).first<any>();
+  if (!r) return gone(chatId);
+  const t = freeNow(await liveTables(), r.id, r.booking_open, r.booking_close);
+  const rating = r.review_count ? `⭐ ${Number(r.rating).toFixed(1)} (${r.review_count} ta baho)` : '⭐ Hali baho yo‘q';
+  const tables = !t.total ? '🪑 Stollar hali kiritilmagan' : t.free == null ? '🪑 Hozir yopiq' : `🪑 Hozir bo‘sh stollar: <b>${t.free}</b> / ${t.total}`;
+  const text = [`🏢 <b>${html(r.name)}</b>`, place(r) ? '📍 ' + html(place(r)) : '', rating, tables, r.cuisine ? '🍴 ' + html(r.cuisine) : ''].filter(Boolean).join('\n');
+  await card(chatId, photoUrl(r.image_url), text, { inline_keyboard: [[bookButton(r.id)], [{ text: '📖 Menyu', callback_data: 'm:m:' + r.id }, { text: '🪑 Bo‘sh stollar', callback_data: 'm:t:' + r.id }], [backToList]] });
+  return 'menu_restaurant';
 }
 
 async function activeRestaurant(id: string) {
@@ -81,7 +117,7 @@ async function freeTables(chatId: string, id: string) {
     chat_id: chatId,
     text: `🪑 <b>${html(r.name)}</b> — hozir bo‘sh stollar (${live.hhmm}):\n${lines.join('\n')}${free.length > 30 ? `\n… yana ${free.length - 30} ta` : ''}\n\nOnlayn bron kamida 1 soat oldin qilinadi.`,
     parse_mode: 'HTML',
-    reply_markup: { inline_keyboard: [[openButton('⚡ Stol bron qilish (3D zal)', '/restaurant/' + id)]] },
+    reply_markup: { inline_keyboard: [[bookButton(id, '🪑 Shu restoranda stol bron qilish')], [{ text: '⬅️ Restoranga qaytish', callback_data: 'm:c:' + id }, backToList]] },
   });
   return 'menu_tables';
 }
@@ -103,7 +139,7 @@ async function menu(chatId: string, id: string) {
   }
   if (!items.length) text += '\nMenyu hali kiritilmagan.';
   else if (shown < items.length) text += '\n… to‘liq menyu Mini App’da.';
-  await telegram('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[openButton('📖 3D menyuni ochish va buyurtma', '/restaurant/' + id)]] } });
+  await telegram('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[openButton('📖 3D menyuni ochish va buyurtma', '/restaurant/' + id)], [bookButton(id, '🪑 Shu restoranda stol bron qilish')], [{ text: '⬅️ Restoranga qaytish', callback_data: 'm:c:' + id }, backToList]] } });
   return 'menu_dishes';
 }
 
@@ -197,7 +233,7 @@ export async function handleMenu(update: any): Promise<string | null> {
       text = msg.text.trim();
     const command = /^\/([a-z]+)(@\w+)?(\s+miniapp)?$/i.exec(text)?.[1]?.toLowerCase();
     if (command === 'start') return welcome(chatId);
-    if (command === 'restaurants' || text === KEYS.restaurants) return restaurants(chatId, 0);
+    if (command === 'restaurants' || command === 'book' || text === KEYS.restaurants || text === '🍽️ Stol Bron qilish') return restaurants(chatId, 0);
     if (command === 'menu' || text === KEYS.menu) return menuPicker(chatId);
     if (command === 'flowers' || text === KEYS.flowers) return flowers(chatId, 0);
     if (command === 'mybookings' || text === KEYS.bookings) return bookings(chatId);
@@ -218,6 +254,7 @@ export async function handleMenu(update: any): Promise<string | null> {
     arg = rest.join(':');
   const offset = Math.max(0, Math.min(1000, Number(arg) || 0));
   if (op === 'r') return restaurants(chatId, offset);
+  if (op === 'c') return restaurantCard(chatId, arg);
   if (op === 't') return freeTables(chatId, arg);
   if (op === 'm') return menu(chatId, arg);
   if (op === 'f') return flowers(chatId, offset);

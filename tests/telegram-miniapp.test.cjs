@@ -81,9 +81,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  sent.length=0;assert.equal(await menu.handleMenu(cb('m:r:0')),'menu_restaurants');
  const cards=sent.filter(s=>s.method==='sendPhoto'||s.method==='sendMessage');const text=cards.map(s=>s.body.caption||s.body.text).join('\n');
  assert.ok(text.includes('Osh Markazi')&&text.includes('Broken Photo'));assert.ok(!text.includes('Demo')&&!text.includes('Closed'),'demo and inactive restaurants are not listed');
- const osh=cards.find(s=>(s.body.caption||'').includes('Osh Markazi'));assert.equal(osh.body.photo,'https://restaurantfoods.online/api/media?key=photos/x.jpg');assert.match(osh.body.caption,/bo‘sh stollar: <b>2<\/b> \/ 3/);assert.match(osh.body.caption,/⭐/);
- const kb=osh.body.reply_markup.inline_keyboard;assert.deepEqual([kb[0][0].callback_data,kb[1][0].callback_data],['m:t:r1','m:m:r1']);assert.equal(kb[2][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&go=%2Frestaurant%2Fr1');
- assert.ok(sent.some(s=>s.method==='sendMessage'&&(s.body.text||'').includes('Broken Photo')),'a photo Telegram refuses falls back to text');
+ // Step 1: one list message, a button per restaurant (no demo / inactive ones).
+ const list=sent.find(s=>s.method==='sendMessage'&&/Restoranni tanlang/.test(s.body.text));assert.ok(list);assert.match(list.body.text,/Osh Markazi/);assert.match(list.body.text,/🪑 2 bo‘sh/);
+ assert.deepEqual(list.body.reply_markup.inline_keyboard.map(r=>r[0].callback_data),['m:c:r2','m:c:r1'],'one button per restaurant, by name');assert.equal(sent.filter(s=>s.method==='sendPhoto').length,0,'no photo flood in the list');
+ // Step 2: the chosen restaurant's card — its own booking deep link, menu, free tables and the way back.
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:c:r1')),'menu_restaurant');
+ const osh=sent.find(s=>s.method==='sendPhoto');assert.equal(osh.body.photo,'https://restaurantfoods.online/api/media?key=photos/x.jpg');assert.match(osh.body.caption,/bo‘sh stollar: <b>2<\/b> \/ 3/);assert.match(osh.body.caption,/⭐/);
+ const kb=osh.body.reply_markup.inline_keyboard;assert.equal(kb[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&restaurant_id=r1&action=book');assert.match(kb[0][0].text,/Shu restoran stollarini ko‘rish va Bron qilish/);assert.deepEqual([kb[1][0].callback_data,kb[1][1].callback_data,kb[2][0].callback_data],['m:m:r1','m:t:r1','m:r:0']);assert.match(kb[2][0].text,/Orqaga \(Barcha restoranlar\)/);
+ assert.equal(await menu.handleMenu(cb('m:c:rf-demo-1')),'menu_gone','demo restaurants have no card');assert.equal(await menu.handleMenu(cb('m:c:r3')),'menu_gone','inactive restaurants have no card');
+ sent.length=0;await menu.handleMenu(cb('m:c:r2'));assert.ok(sent.some(s=>s.method==='sendMessage'&&(s.body.text||'').includes('Broken Photo')),'a photo Telegram refuses falls back to text');
  sent.length=0;assert.equal(await menu.handleMenu(cb('m:t:r1')),'menu_tables');let out=sent.find(s=>s.method==='sendMessage').body.text;assert.ok(out.includes('1-stol')&&out.includes('3-stol')&&!out.includes('2-stol'),'busy table hidden');
  sent.length=0;assert.equal(await menu.handleMenu(cb('m:m:r1')),'menu_dishes');out=sent.find(s=>s.method==='sendMessage').body.text;assert.ok(out.includes('Samarqand oshi — 45 000 so‘m')&&out.includes('<b>Ichimliklar</b>')&&!out.includes('Tugagan'));
  assert.equal(await menu.handleMenu(cb('m:m:rf-demo-1')),'menu_gone');assert.equal(await menu.handleMenu(cb('m:t:<b>x</b>')),'menu_gone');

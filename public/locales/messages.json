@@ -6563,5 +6563,45 @@
     "uz": "Premium / Ko‘p qavatli majmua",
     "ru": "Премиум / многоэтажный комплекс",
     "en": "Premium / multi-floor venue"
+  },
+  "Investorlar va Biznes-reja": {
+    "uz": "Investorlar va Biznes-reja",
+    "ru": "Инвесторам и бизнес-план",
+    "en": "Investors and business plan"
+  },
+  "To‘liq ekran": {
+    "uz": "To‘liq ekran",
+    "ru": "Во весь экран",
+    "en": "Full screen"
+  },
+  "Kichraytirish": {
+    "uz": "Kichraytirish",
+    "ru": "Свернуть",
+    "en": "Exit full screen"
+  },
+  "Zal xaritasi": {
+    "uz": "Zal xaritasi",
+    "ru": "Карта зала",
+    "en": "Hall map"
+  },
+  "Shu stolni bron qilish": {
+    "uz": "Shu stolni bron qilish",
+    "ru": "Забронировать этот стол",
+    "en": "Book this table"
+  },
+  "Siz tanlagan restoran": {
+    "uz": "Siz tanlagan restoran",
+    "ru": "Выбранный вами ресторан",
+    "en": "Your chosen restaurant"
+  },
+  "Boshqa restoranga qaytish": {
+    "uz": "Boshqa restoranga qaytish",
+    "ru": "Вернуться к другим ресторанам",
+    "en": "Back to other restaurants"
+  },
+  "Bu stol tanlangan restoranga tegishli emas.": {
+    "uz": "Bu stol tanlangan restoranga tegishli emas.",
+    "ru": "Этот стол не относится к выбранному ресторану.",
+    "en": "This table does not belong to the chosen restaurant."
   }
 }

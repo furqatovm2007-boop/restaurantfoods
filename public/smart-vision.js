@@ -27,9 +27,9 @@
   const SCAN_FRAMES = 10, SCAN_GAP_MS = 220;
   const RANK = { free: 0, cleaning: 1, occupied: 2 };
   const COPY = {
-    uz: { start: 'Kameralarni ulash', stop: 'To‘xtatish', addCam: 'Kamera qo‘shish', addZone: 'Zona', table: 'Stol', free: 'Bo‘sh', occupied: 'Band', cleaning: 'Tozalanmoqda', loading: 'AI model yuklanmoqda (bir marta, ~20 MB)…', ready: 'AI ishlayapti', denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering.', nocam: 'Kamera topilmadi yoki brauzer qo‘llamaydi.', seated: 'O‘tirgan', standing: 'Turgan', test: 'Sinov rejimi: holat bazaga yuborilmaydi, kameralar faqat shu brauzerda saqlanadi.', sent: 'saqlandi', fail: 'Yuborib bo‘lmadi', hint: 'Zonani suring, o‘ng pastki burchagidan kattalashtiring. Qizil — mijoz o‘tiribdi, sariq — ofitsiant/tozalash, yashil — bo‘sh.', remove: 'O‘chirish', since: 'dan beri', off: 'Kameralar o‘chiq', name: 'Nomi', namePh: '1-Kamera: Asosiy zal', type: 'Turi', device: 'Shu qurilma kamerasi', stream: 'IP-kamera oqimi (https)', pick: 'Kamera', url: 'Oqim manzili', urlPh: 'https://…/stream.mjpg yoki .m3u8 / .mp4', save: 'Saqlash', cancel: 'Bekor', allow: 'Kameralar ro‘yxati uchun ruxsat berish', reconnect: 'Saqlangan kameralar avtomatik ulandi', askOnce: '«Kameralarni ulash» ni bosing — brauzer bir marta ruxsat so‘raydi, keyin avtomatik ulanadi.', empty: 'Hali kamera yo‘q. «Kamera qo‘shish» ni bosing.', cors: 'Oqimga ulanib bo‘ldi, lekin u CORS ruxsatisiz — AI tasvirni o‘qiy olmaydi.', streamFail: 'Oqimni ochib bo‘lmadi. MJPEG, MP4 yoki HLS (https) manzil bering; RTSP uchun shlyuz kerak.', other: 'Saqlangan kamera topilmadi — boshqa kamera ishlatildi.', confirmRemove: 'Kamera o‘chirilsinmi?', running: 'ishlayapti', paused: 'to‘xtagan', ai: '🤖 AI: stollarni topish', scanning: 'AI stollarni qidirmoqda…', found: 'AI {n} ta stol topdi va ramka qo‘ydi', noTables: 'AI stol topmadi — kamerani zalga qarating yoki zonani qo‘lda qo‘shing.', needStart: 'Avval kamerani ulang.', tableNo: 'Stol #', bookedBy: 'Bron qilgan', guests: 'Mehmonlar', startsIn: 'Bron boshlanishiga', endsIn: 'Bron tugashiga', left: 'qoldi', minutes: 'daq', hours: 'soat', noBooking: 'Bugun bu stolga bron yo‘q', bill: 'Ochiq hisob', camera: 'Kamera', close: 'Yopish', arrived: 'Mijoz keldi', pending: 'tasdiq kutilmoqda' },
-    ru: { start: 'Подключить камеры', stop: 'Остановить', addCam: 'Добавить камеру', addZone: 'Зона', table: 'Стол', free: 'Свободен', occupied: 'Занят', cleaning: 'Уборка', loading: 'Загружается AI-модель (один раз, ~20 МБ)…', ready: 'AI работает', denied: 'Нет доступа к камере. Разрешите его в настройках браузера.', nocam: 'Камера не найдена или браузер её не поддерживает.', seated: 'Сидит', standing: 'Стоит', test: 'Тестовый режим: статусы не отправляются, камеры хранятся только в этом браузере.', sent: 'сохранено', fail: 'Не удалось отправить', hint: 'Перетаскивайте зону, размер — за правый нижний угол. Красный — гость сидит, жёлтый — официант/уборка, зелёный — свободен.', remove: 'Удалить', since: 'с', off: 'Камеры выключены', name: 'Название', namePh: 'Камера 1: Основной зал', type: 'Тип', device: 'Камера этого устройства', stream: 'Поток IP-камеры (https)', pick: 'Камера', url: 'Адрес потока', urlPh: 'https://…/stream.mjpg или .m3u8 / .mp4', save: 'Сохранить', cancel: 'Отмена', allow: 'Разрешить доступ к списку камер', reconnect: 'Сохранённые камеры подключены автоматически', askOnce: 'Нажмите «Подключить камеры» — браузер спросит разрешение один раз, дальше подключение автоматическое.', empty: 'Камер пока нет. Нажмите «Добавить камеру».', cors: 'Поток открыт, но без CORS — AI не может читать изображение.', streamFail: 'Не удалось открыть поток. Укажите MJPEG, MP4 или HLS (https); для RTSP нужен шлюз.', other: 'Сохранённая камера не найдена — использована другая.', confirmRemove: 'Удалить камеру?', running: 'работает', paused: 'остановлена', ai: '🤖 AI: найти столы', scanning: 'AI ищет столы…', found: 'AI нашёл столов: {n} и поставил рамки', noTables: 'AI не нашёл столов — направьте камеру на зал или добавьте зону вручную.', needStart: 'Сначала подключите камеру.', tableNo: 'Стол #', bookedBy: 'Бронь', guests: 'Гостей', startsIn: 'До начала брони', endsIn: 'До конца брони', left: '', minutes: 'мин', hours: 'ч', noBooking: 'На сегодня броней на этот стол нет', bill: 'Открытый счёт', camera: 'Камера', close: 'Закрыть', arrived: 'Гость пришёл', pending: 'ждёт подтверждения' },
-    en: { start: 'Connect cameras', stop: 'Stop', addCam: 'Add camera', addZone: 'Zone', table: 'Table', free: 'Free', occupied: 'Occupied', cleaning: 'Cleaning', loading: 'Loading the AI model (once, ~20 MB)…', ready: 'AI running', denied: 'Camera access was denied. Allow it in the browser settings.', nocam: 'No camera found or the browser does not support it.', seated: 'Seated', standing: 'Standing', test: 'Test mode: statuses are not saved; cameras are kept in this browser only.', sent: 'saved', fail: 'Could not save', hint: 'Drag a zone; resize from its bottom-right corner. Red — guest seated, yellow — staff/cleaning, green — free.', remove: 'Remove', since: 'since', off: 'Cameras off', name: 'Name', namePh: 'Camera 1: Main hall', type: 'Type', device: 'Camera on this device', stream: 'IP camera stream (https)', pick: 'Camera', url: 'Stream URL', urlPh: 'https://…/stream.mjpg or .m3u8 / .mp4', save: 'Save', cancel: 'Cancel', allow: 'Allow access to the camera list', reconnect: 'Saved cameras reconnected automatically', askOnce: 'Press “Connect cameras” — the browser asks once, then it reconnects by itself.', empty: 'No cameras yet. Press “Add camera”.', cors: 'The stream opened but has no CORS — the AI cannot read the picture.', streamFail: 'Could not open the stream. Use MJPEG, MP4 or HLS (https); RTSP needs a gateway.', other: 'The saved camera was not found — another one is used.', confirmRemove: 'Remove this camera?', running: 'running', paused: 'stopped', ai: '🤖 AI: find tables', scanning: 'AI is looking for tables…', found: 'AI found {n} tables and boxed them', noTables: 'AI found no tables — point the camera at the hall or add a zone by hand.', needStart: 'Connect the camera first.', tableNo: 'Table #', bookedBy: 'Booked by', guests: 'Guests', startsIn: 'Starts in', endsIn: 'Ends in', left: '', minutes: 'min', hours: 'h', noBooking: 'No booking for this table today', bill: 'Open bill', camera: 'Camera', close: 'Close', arrived: 'Guest arrived', pending: 'awaiting confirmation' },
+    uz: { start: 'Kameralarni ulash', stop: 'To‘xtatish', addCam: 'Kamera qo‘shish', addZone: 'Zona', table: 'Stol', free: 'Bo‘sh', occupied: 'Band', cleaning: 'Tozalanmoqda', loading: 'AI model yuklanmoqda (bir marta, ~20 MB)…', ready: 'AI ishlayapti', denied: 'Kameraga ruxsat berilmadi. Brauzer sozlamalarida ruxsat bering.', nocam: 'Kamera topilmadi yoki brauzer qo‘llamaydi.', seated: 'O‘tirgan', standing: 'Turgan', test: 'Sinov rejimi: holat bazaga yuborilmaydi, kameralar faqat shu brauzerda saqlanadi.', sent: 'saqlandi', fail: 'Yuborib bo‘lmadi', hint: 'Zonani suring, o‘ng pastki burchagidan kattalashtiring. Qizil — mijoz o‘tiribdi, sariq — ofitsiant/tozalash, yashil — bo‘sh.', remove: 'O‘chirish', since: 'dan beri', off: 'Kameralar o‘chiq', name: 'Nomi', namePh: '1-Kamera: Asosiy zal', type: 'Turi', device: 'Shu qurilma kamerasi', stream: 'IP-kamera oqimi (https)', pick: 'Kamera', url: 'Oqim manzili', urlPh: 'https://…/stream.mjpg yoki .m3u8 / .mp4', save: 'Saqlash', cancel: 'Bekor', allow: 'Kameralar ro‘yxati uchun ruxsat berish', reconnect: 'Saqlangan kameralar avtomatik ulandi', askOnce: '«Kameralarni ulash» ni bosing — brauzer bir marta ruxsat so‘raydi, keyin avtomatik ulanadi.', empty: 'Hali kamera yo‘q. «Kamera qo‘shish» ni bosing.', cors: 'Oqimga ulanib bo‘ldi, lekin u CORS ruxsatisiz — AI tasvirni o‘qiy olmaydi.', streamFail: 'Oqimni ochib bo‘lmadi. MJPEG, MP4 yoki HLS (https) manzil bering; RTSP uchun shlyuz kerak.', other: 'Saqlangan kamera topilmadi — boshqa kamera ishlatildi.', confirmRemove: 'Kamera o‘chirilsinmi?', running: 'ishlayapti', paused: 'to‘xtagan', ai: '🤖 AI: stollarni topish', scanning: 'AI stollarni qidirmoqda…', found: 'AI {n} ta stol topdi va ramka qo‘ydi', noTables: 'AI stol topmadi — kamerani zalga qarating yoki zonani qo‘lda qo‘shing.', needStart: 'Avval kamerani ulang.', tableNo: 'Stol #', bookedBy: 'Bron qilgan', guests: 'Mehmonlar', startsIn: 'Bron boshlanishiga', endsIn: 'Bron tugashiga', left: 'qoldi', minutes: 'daq', hours: 'soat', noBooking: 'Bugun bu stolga bron yo‘q', bill: 'Ochiq hisob', camera: 'Kamera', close: 'Yopish', arrived: 'Mijoz keldi', pending: 'tasdiq kutilmoqda', grid1: '▣ 1x1 (Bitta katta ekran)', grid2: '⊞ 2x2 (4 ta kamera)', grid3: '∷ 3x3 (9 ta kamera)', maximize: 'Katta qilish', back: '⬅️ Barcha kameralarga qaytish (Grid)', prev: 'Oldingi kamera', next: 'Keyingi kamera', layout: 'Ekran rejimi' },
+    ru: { start: 'Подключить камеры', stop: 'Остановить', addCam: 'Добавить камеру', addZone: 'Зона', table: 'Стол', free: 'Свободен', occupied: 'Занят', cleaning: 'Уборка', loading: 'Загружается AI-модель (один раз, ~20 МБ)…', ready: 'AI работает', denied: 'Нет доступа к камере. Разрешите его в настройках браузера.', nocam: 'Камера не найдена или браузер её не поддерживает.', seated: 'Сидит', standing: 'Стоит', test: 'Тестовый режим: статусы не отправляются, камеры хранятся только в этом браузере.', sent: 'сохранено', fail: 'Не удалось отправить', hint: 'Перетаскивайте зону, размер — за правый нижний угол. Красный — гость сидит, жёлтый — официант/уборка, зелёный — свободен.', remove: 'Удалить', since: 'с', off: 'Камеры выключены', name: 'Название', namePh: 'Камера 1: Основной зал', type: 'Тип', device: 'Камера этого устройства', stream: 'Поток IP-камеры (https)', pick: 'Камера', url: 'Адрес потока', urlPh: 'https://…/stream.mjpg или .m3u8 / .mp4', save: 'Сохранить', cancel: 'Отмена', allow: 'Разрешить доступ к списку камер', reconnect: 'Сохранённые камеры подключены автоматически', askOnce: 'Нажмите «Подключить камеры» — браузер спросит разрешение один раз, дальше подключение автоматическое.', empty: 'Камер пока нет. Нажмите «Добавить камеру».', cors: 'Поток открыт, но без CORS — AI не может читать изображение.', streamFail: 'Не удалось открыть поток. Укажите MJPEG, MP4 или HLS (https); для RTSP нужен шлюз.', other: 'Сохранённая камера не найдена — использована другая.', confirmRemove: 'Удалить камеру?', running: 'работает', paused: 'остановлена', ai: '🤖 AI: найти столы', scanning: 'AI ищет столы…', found: 'AI нашёл столов: {n} и поставил рамки', noTables: 'AI не нашёл столов — направьте камеру на зал или добавьте зону вручную.', needStart: 'Сначала подключите камеру.', tableNo: 'Стол #', bookedBy: 'Бронь', guests: 'Гостей', startsIn: 'До начала брони', endsIn: 'До конца брони', left: '', minutes: 'мин', hours: 'ч', noBooking: 'На сегодня броней на этот стол нет', bill: 'Открытый счёт', camera: 'Камера', close: 'Закрыть', arrived: 'Гость пришёл', pending: 'ждёт подтверждения', grid1: '▣ 1x1 (один большой экран)', grid2: '⊞ 2x2 (4 камеры)', grid3: '∷ 3x3 (9 камер)', maximize: 'Развернуть', back: '⬅️ Ко всем камерам (сетка)', prev: 'Предыдущая камера', next: 'Следующая камера', layout: 'Режим экрана' },
+    en: { start: 'Connect cameras', stop: 'Stop', addCam: 'Add camera', addZone: 'Zone', table: 'Table', free: 'Free', occupied: 'Occupied', cleaning: 'Cleaning', loading: 'Loading the AI model (once, ~20 MB)…', ready: 'AI running', denied: 'Camera access was denied. Allow it in the browser settings.', nocam: 'No camera found or the browser does not support it.', seated: 'Seated', standing: 'Standing', test: 'Test mode: statuses are not saved; cameras are kept in this browser only.', sent: 'saved', fail: 'Could not save', hint: 'Drag a zone; resize from its bottom-right corner. Red — guest seated, yellow — staff/cleaning, green — free.', remove: 'Remove', since: 'since', off: 'Cameras off', name: 'Name', namePh: 'Camera 1: Main hall', type: 'Type', device: 'Camera on this device', stream: 'IP camera stream (https)', pick: 'Camera', url: 'Stream URL', urlPh: 'https://…/stream.mjpg or .m3u8 / .mp4', save: 'Save', cancel: 'Cancel', allow: 'Allow access to the camera list', reconnect: 'Saved cameras reconnected automatically', askOnce: 'Press “Connect cameras” — the browser asks once, then it reconnects by itself.', empty: 'No cameras yet. Press “Add camera”.', cors: 'The stream opened but has no CORS — the AI cannot read the picture.', streamFail: 'Could not open the stream. Use MJPEG, MP4 or HLS (https); RTSP needs a gateway.', other: 'The saved camera was not found — another one is used.', confirmRemove: 'Remove this camera?', running: 'running', paused: 'stopped', ai: '🤖 AI: find tables', scanning: 'AI is looking for tables…', found: 'AI found {n} tables and boxed them', noTables: 'AI found no tables — point the camera at the hall or add a zone by hand.', needStart: 'Connect the camera first.', tableNo: 'Table #', bookedBy: 'Booked by', guests: 'Guests', startsIn: 'Starts in', endsIn: 'Ends in', left: '', minutes: 'min', hours: 'h', noBooking: 'No booking for this table today', bill: 'Open bill', camera: 'Camera', close: 'Close', arrived: 'Guest arrived', pending: 'awaiting confirmation', grid1: '▣ 1x1 (one big screen)', grid2: '⊞ 2x2 (4 cameras)', grid3: '∷ 3x3 (9 cameras)', maximize: 'Maximize', back: '⬅️ Back to all cameras (grid)', prev: 'Previous camera', next: 'Next camera', layout: 'Screen layout' },
   };
 
   const local = {
@@ -130,7 +130,7 @@ const defaults = (tables, taken = []) => {
 
     host.innerHTML =
       '<div class="sv-bar"><button type="button" class="primary sv-start" data-sv="start"></button><button type="button" class="quiet" data-sv="add"></button><span class="sv-status" role="status"><i></i><span></span></span></div>' +
-      '<p class="muted sv-hint"></p><form class="sv-add form" hidden></form><div class="sv-cams"></div><h3 class="sv-tables-title"></h3><div class="sv-tables"></div>';
+      '<p class="muted sv-hint"></p><form class="sv-add form" hidden></form><div class="sv-grid-bar" role="group"><button type="button" data-grid="1"></button><button type="button" data-grid="2"></button><button type="button" data-grid="3"></button><span class="sv-pager" hidden><button type="button" data-page="-1">‹</button><b></b><button type="button" data-page="1">›</button></span></div><div class="sv-cams"></div><h3 class="sv-tables-title"></h3><div class="sv-tables"></div>';
     const $ = (s) => host.querySelector(s);
     const status = $('.sv-status');
     const label = (btn, icon, text) => (btn.innerHTML = '<span aria-hidden="true">' + icon + '</span> ' + esc(text));
@@ -172,8 +172,8 @@ const defaults = (tables, taken = []) => {
       const card = document.createElement('section');
       card.className = 'sv-cam';
       card.innerHTML =
-        '<header><b></b><small class="sv-cam-state"></small><button type="button" class="quiet sv-ai"></button><button type="button" class="quiet sv-zone-add"></button><button type="button" class="sv-remove" aria-label="' + esc(w.remove) + '" title="' + esc(w.remove) + '">✕</button></header>' +
-        '<div class="sv-stage"><div class="sv-media"></div><canvas width="1280" height="720"></canvas><div class="sv-pop" role="dialog" hidden></div></div><p class="sv-cam-error" hidden></p><div class="sv-zones"></div>';
+        '<header><b></b><small class="sv-cam-state"></small><button type="button" class="quiet sv-ai"></button><button type="button" class="quiet sv-zone-add"></button><button type="button" class="sv-max" aria-label="' + esc(w.maximize) + '" title="' + esc(w.maximize) + '">⛶</button><button type="button" class="sv-remove" aria-label="' + esc(w.remove) + '" title="' + esc(w.remove) + '">✕</button></header>' +
+        '<div class="sv-stage"><div class="sv-media"></div><canvas width="1280" height="720"></canvas><div class="sv-max-bar"><button type="button" class="sv-back">' + esc(w.back) + '</button><span class="sv-max-stats" aria-live="polite"></span></div><div class="sv-pop" role="dialog" hidden></div></div><p class="sv-cam-error" hidden></p><div class="sv-zones"></div>';
       card.querySelector('b').textContent = cam.name;
       label(card.querySelector('.sv-zone-add'), '＋', w.addZone);
       card.querySelector('.sv-ai').textContent = w.ai;
@@ -200,6 +200,13 @@ const defaults = (tables, taken = []) => {
         renderTables();
       };
       bindDrag(cam);
+      card.querySelector('.sv-max').onclick = () => maximize(cam);
+      card.querySelector('.sv-back').onclick = restore;
+      // A double tap / double click on the picture opens this camera alone, full screen.
+      card.querySelector('.sv-stage').addEventListener('dblclick', (e) => {
+        if (e.target.closest('.sv-pop,.sv-max-bar')) return;
+        cam.card.classList.contains('is-max') ? restore() : maximize(cam);
+      });
       $('.sv-cams').append(card);
       renderZones(cam);
       camLabel(cam);
@@ -657,6 +664,63 @@ const defaults = (tables, taken = []) => {
       };
     }
 
+    // ---- CCTV wall: 1x1 (one camera at a time, ‹ › to switch), 2x2, 3x3; any camera can go full screen ----
+    let grid = Number(local.get('rf-vision-grid')) || 2,
+      page = 0,
+      maxCam = null,
+      statsTimer = 0;
+    const wall = $('.sv-cams');
+    [1, 2, 3].forEach((n) => (host.querySelector('[data-grid="' + n + '"]').textContent = w['grid' + n]));
+    host.querySelector('.sv-grid-bar').setAttribute('aria-label', w.layout);
+    function layout() {
+      wall.dataset.grid = String(grid);
+      host.querySelectorAll('[data-grid]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.grid) === grid)));
+      const pager = host.querySelector('.sv-pager');
+      pager.hidden = grid !== 1 || cams.length < 2;
+      page = Math.max(0, Math.min(cams.length - 1, page));
+      cams.forEach((c, i) => c.card && (c.card.hidden = grid === 1 && i !== page && !c.card.classList.contains('is-max')));
+      pager.querySelector('b').textContent = cams.length ? page + 1 + ' / ' + cams.length : '';
+    }
+    host.querySelectorAll('[data-grid]').forEach(
+      (b) =>
+        (b.onclick = () => {
+          grid = Number(b.dataset.grid);
+          local.set('rf-vision-grid', grid);
+          layout();
+        }),
+    );
+    host.querySelectorAll('[data-page]').forEach((b) => (b.onclick = () => ((page = (page + Number(b.dataset.page) + cams.length) % Math.max(1, cams.length)), layout())));
+    function stats(cam) {
+      const tables = [...new Set(cam.zones.map((z) => z.table))],
+        count = (st) => tables.filter((n) => stateOf(n).status === st).length;
+      return '🟢 ' + w.free + ': ' + count('free') + ' | 🔴 ' + w.occupied + ': ' + count('occupied') + (count('cleaning') ? ' | 🟡 ' + w.cleaning + ': ' + count('cleaning') : '');
+    }
+    function maximize(cam) {
+      if (maxCam) restore();
+      maxCam = cam;
+      wall.classList.add('has-max');
+      cam.card.hidden = false;
+      cam.card.classList.add('is-max');
+      document.documentElement.classList.add('sv-lock');
+      const tick = () => (cam.card.querySelector('.sv-max-stats').textContent = stats(cam));
+      tick();
+      statsTimer = setInterval(tick, 1000);
+      cam.card.querySelector('.sv-back').focus({ preventScroll: true });
+    }
+    function restore() {
+      if (!maxCam) return;
+      maxCam.card.classList.remove('is-max');
+      wall.classList.remove('has-max');
+      document.documentElement.classList.remove('sv-lock');
+      clearInterval(statsTimer);
+      maxCam = null;
+      layout();
+    }
+    const onKey = (e) => e.key === 'Escape' && restore();
+    document.addEventListener('keydown', onKey);
+    const observer = new MutationObserver(layout);
+    observer.observe(wall, { childList: true });
+
     $('[data-sv=start]').onclick = () => (running ? stopAll() : startAll(false));
     $('[data-sv=add]').onclick = openAddForm;
 
@@ -674,6 +738,8 @@ const defaults = (tables, taken = []) => {
       cams = saved.map((c) => ({ ...c, zones: (c.zones || []).filter((z) => opts.tables.includes(z.table)) }));
       cacheAll();
       cams.forEach(addCard);
+      if (cams.length < 2) grid = Math.min(grid, 1) || 1;
+      layout();
       renderTables();
       frame = requestAnimationFrame(loop);
       if (!cams.length) return say(w.empty);
@@ -692,6 +758,9 @@ const defaults = (tables, taken = []) => {
 
     function destroy() {
       alive = false;
+      restore();
+      observer.disconnect();
+      document.removeEventListener('keydown', onKey);
       clearInterval(infoTimer);
       cancelAnimationFrame(frame);
       cams.forEach((c) => (clearTimeout(c.saveTimer), stopCam(c)));

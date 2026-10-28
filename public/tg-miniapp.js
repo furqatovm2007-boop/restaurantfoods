@@ -16,6 +16,27 @@
   const BG = '#0a0f0d';
   const api = { active: false, webApp: null, ready: Promise.resolve(false), haptic() {}, async signIn() { return false; }, async sharePhone() { return { status: 'unavailable' }; } };
   window.RFTelegram = api;
+  // Deep link from the bot (or any link): ?restaurant_id=ID&action=book opens exactly that restaurant's
+  // booking room — the restaurant is fixed by its id, never guessed from a name.
+  (() => {
+    const q = new URLSearchParams(location.search),
+      rid = q.get('restaurant_id') || '';
+    if (!/^[\w-]{1,64}$/.test(rid)) return;
+    if (q.get('action') === 'book') {
+      try {
+        sessionStorage.setItem('rf-open-booking', rid);
+      } catch {}
+    }
+    if (!/^#\//.test(location.hash) || /tgWebApp/.test(location.hash)) {
+      const url = new URL(location.href);
+      url.searchParams.delete('restaurant_id');
+      url.searchParams.delete('action');
+      url.searchParams.delete('go');
+      // Inside Telegram the hash holds its launch params: keep them; setup() opens the page after reading them.
+      history.replaceState(null, '', url.pathname + url.search + (/tgWebApp/.test(location.hash) ? location.hash : '#/restaurant/' + encodeURIComponent(rid)));
+      api.goTo = '/restaurant/' + rid;
+    }
+  })();
   let saved = false;
   try {
     saved = !!sessionStorage.getItem('__telegram__initParams');
@@ -51,11 +72,44 @@
     } catch {}
     // Telegram puts its launch params in the hash; the app routes by hash, so open the wanted page instead.
     if (!location.hash || location.hash === '#' || /tgWebApp/.test(location.hash)) {
-      const go = new URLSearchParams(location.search).get('go') || '';
+      const go = api.goTo || new URLSearchParams(location.search).get('go') || '';
       const target = /^\/[\w\-/%.]{1,200}$/.test(go) ? go : '/discover';
       history.replaceState(null, '', location.pathname + location.search + '#' + target);
     }
+    backButton(tg);
     return api.active;
+  }
+
+  /*
+   * Telegram's own back button follows the steps: full-screen hall → booking room → restaurant → list.
+   * It is shown everywhere except the restaurant list.
+   */
+  function backButton(tg) {
+    const bb = tg.BackButton;
+    if (!bb) return;
+    let queued = 0;
+    const sync = () => {
+      queued = 0;
+      const deep = !!document.querySelector('dialog[open]') || !!document.querySelector('.hp-full,.hall3d-full') || !/^#\/(discover)?$/.test(location.hash || '#/discover');
+      try {
+        deep ? bb.show() : bb.hide();
+      } catch {}
+    };
+    const soon = () => queued || (queued = requestAnimationFrame(sync));
+    bb.onClick(() => {
+      if (window.RFHallPlan?.exitFull?.()) return soon();
+      const exit3d = document.getElementById('exit3d');
+      if (exit3d) return exit3d.click(), soon();
+      if (document.querySelector('dialog#bookingRoom[open]')) return document.getElementById('exitBookingRoom')?.click(), soon();
+      const open = document.querySelector('dialog[open]');
+      if (open) return open.close(), soon();
+      if (history.length > 1) history.back();
+      else location.hash = '#/discover';
+      soon();
+    });
+    window.addEventListener('hashchange', soon);
+    new MutationObserver(soon).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] });
+    sync();
   }
 
   api.ready = new Promise((done) => {

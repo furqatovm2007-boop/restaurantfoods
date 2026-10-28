@@ -40,7 +40,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(st('start').peakDeposit,false);for(const f of ['peakDeposit','tableMerge','birthdayCrm','staffAccounts','aiReports'])assert.equal(st('business')[f],true,f);for(const f of ['serviceTimer','vipGuests','happyHours','tableView'])assert.equal(st('business')[f],false,f),assert.equal(st('premium')[f],true,f);
  // Pure helpers.
  const rule={days:'5,6',date:'',start:'18:00',end:'23:00',amount:150000};
- const fri=(()=>{let d=new Date(NOW);while(d.getUTCDay()!==5)d=new Date(d.getTime()+86400000);return new Date(d.getTime()+5*3600000).toISOString().slice(0,10)})();
+ // At least 3 days ahead, so this Friday is never the same day as "tomorrow" (Tashkent time).
+const fri=(()=>{let d=new Date(NOW+3*86400000);while(d.getUTCDay()!==5)d=new Date(d.getTime()+86400000);return new Date(d.getTime()+5*3600000).toISOString().slice(0,10)})();
  assert.equal(growth.peakDepositFor([rule],fri,'19:00').amount,150000);assert.equal(growth.peakDepositFor([rule],fri,'17:30'),null);assert.equal(growth.peakDepositFor([{...rule,days:'',date:'2026-12-31',amount:300000}],'2026-12-31','20:00').amount,300000);
  const plan=[{number:1,floor:1,seats:4,x:20,y:30},{number:2,floor:1,seats:4,x:35,y:30},{number:3,floor:1,seats:2,x:80,y:80},{number:4,floor:1,seats:6,x:80,y:20}];
  assert.equal(JSON.stringify(growth.mergeSuggestions(plan,new Set(),8).map(p=>p.tables)),'[[1,2]]','only neighbours');assert.equal(growth.mergeSuggestions(plan,new Set([2]),8).length,0);

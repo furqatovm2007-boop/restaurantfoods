@@ -73,3 +73,10 @@ The owner explicitly requested retaining only the pinned admin and deleting the 
 - The 3D hall is a one-time VIP service: owners request it (packages 1 900 000 / 3 500 000 / 5 900 000 so‘m) from Zal xaritasi or Tariflar; the request appears in Admin panel → 3D zal arizalari and in the administrator's Telegram. The administrator switches `has_3d_hall` on per restaurant (Restoranlarni boshqarish → restoran → 3D Zal) and attaches the model link or notes. Until then the "3D ko‘rinish" button says the 3D hall is coming soon.
 - The owner's 2D constructor (Zal xaritasi → 🧭 2D Zal konstruktori) drags tables and ambience (entrance, stage, bar, plants, windows) and sets seats, shape, zone and amenities. Ambience is drawn only where the owner placed it.
 - Storage without a migration: app_settings `hall3d:<restaurant>`, `tablemeta:<restaurant>`, `hallscene:<restaurant>`, `hall3d-leads`.
+
+## Full-screen hall, restaurant lock, CCTV wall, investors page
+
+- Hall plan full screen: "⛶ To‘liq ekran" on the 2D plan (and the owner's constructor, and the 3D hall) covers the whole screen with the restaurant's name, zones, zoom and "✕ Kichraytirish"; a chosen table opens its card at the bottom with "✅ Shu stolni bron qilish". Escape and Telegram's back button leave it.
+- Restaurant lock: the bot lists restaurants first (one button each), then the chosen restaurant's card with "🪑 Shu restoran stollarini ko‘rish va Bron qilish" → `?restaurant_id=ID&action=book`, which opens exactly that booking room. The room shows "📍 Siz tanlagan restoran: …" with "🔄 Boshqa restoranga qaytish"; the page accepts only that restaurant's tables and the server checks the table id and number against the restaurant. Telegram's back button walks back: full screen → booking room → restaurant → list.
+- Smart Vision: 1x1 (one camera, ‹ › to switch), 2x2, 3x3; double tap or ⛶ opens one camera full screen with its table boxes, "Bo‘sh / Band" counts and "⬅️ Barcha kameralarga qaytish (Grid)".
+- `/investors`: public pitch & FAQ (revenue model, unit economics, 12-month plan marked as a forecast, 10 answers) with "📥 PDF / Chop etish"; linked from the footer and the admin panel.

@@ -1304,3 +1304,54 @@ body[data-theme=light] .hall3d-offer{background:radial-gradient(120% 100% at 0 0
 body[data-theme=light] .hall3d-offer h3{color:#a16207}body[data-theme=light] .hall3d-pkg span{background:#fff;color:#3b2f07}
 @media (prefers-reduced-motion:reduce){.hp-ring{animation:none}.hp-body{transition:none}.hp2d-card{animation:none}}
 .hall3d-admin .switch-row{display:flex!important;flex-direction:row;align-items:center;gap:.6rem;font-size:1rem}
+/* ===== Smart Vision: CCTV wall 1x1 / 2x2 / 3x3 and one camera full screen ===== */
+.sv-grid-bar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.5rem 0}
+.sv-grid-bar>button,.sv-pager button{min-height:40px;padding:.4rem .85rem;border-radius:12px;border:1px solid rgba(47,227,181,.3);background:rgba(10,30,40,.55);color:inherit;font-weight:700;cursor:pointer}
+.sv-grid-bar>button[aria-pressed=true]{background:#2fe3b5;color:#04221b;border-color:#2fe3b5}
+.sv-pager{display:inline-flex;align-items:center;gap:.4rem;margin-left:auto}.sv-pager[hidden]{display:none}
+.sv-cams[data-grid="1"]{grid-template-columns:minmax(0,1fr)}
+.sv-cams[data-grid="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sv-cams[data-grid="3"]{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.sv-cams[data-grid="3"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sv-cams[data-grid="2"] .sv-zones,.sv-cams[data-grid="3"] .sv-zones,.sv-cams[data-grid="3"] .sv-ai,.sv-cams[data-grid="3"] .sv-zone-add{display:none}
+.sv-cams[data-grid="3"] .sv-cam header{font-size:.78rem}
+.sv-cam[hidden]{display:none!important}
+.sv-max{min-width:36px;min-height:36px;border-radius:10px;border:1px solid rgba(47,227,181,.35);background:transparent;color:inherit;cursor:pointer}
+.sv-max-bar{display:none}
+.sv-cams.has-max .sv-cam:not(.is-max){display:none}
+.sv-cam.is-max{position:fixed;inset:0;z-index:9999;margin:0;border-radius:0;display:flex;flex-direction:column;background:#000;padding:0}
+.sv-cam.is-max header{padding:.5rem .75rem;background:rgba(0,0,0,.75);color:#fff}
+.sv-cam.is-max .sv-stage{flex:none;width:min(100vw,calc((100vh - 60px) * 16 / 9));margin:auto;border-radius:0;border:0}
+.sv-cam.is-max .sv-zones,.sv-cam.is-max .sv-cam-error{display:none}
+.sv-cam.is-max .sv-max-bar{display:flex;position:absolute;left:.75rem;right:.75rem;top:.75rem;z-index:3;flex-wrap:wrap;gap:.625rem;align-items:center;justify-content:space-between;pointer-events:none}
+.sv-max-bar>*{pointer-events:auto}
+.sv-back{min-height:44px;padding:.5rem 1rem;border-radius:12px;border:0;background:#2fe3b5;color:#04221b;font-weight:800;cursor:pointer}
+.sv-max-stats{padding:.5rem .85rem;border-radius:12px;background:rgba(0,0,0,.65);color:#fff;font-weight:700;backdrop-filter:blur(6px)}
+html.sv-lock,html.sv-lock body{overflow:hidden}
+/* ===== Hall plan full screen ===== */
+html.hp-lock,html.hp-lock body{overflow:hidden}
+.hp2d-stage .hp2d-fullbtn{position:absolute;top:14px;left:14px;z-index:2;min-height:40px;padding:.4rem .85rem;border-radius:12px;border:1px solid rgba(234,179,8,.55);background:rgba(7,19,15,.85);color:#facc15;font:800 .85rem/1.2 inherit;cursor:pointer;backdrop-filter:blur(6px)}
+.hp2d.hp-full,.hp-editor.hp-full{position:fixed;inset:0;z-index:9999;width:100vw;height:100vh;height:100dvh;margin:0;padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));background:#06110d;display:flex;flex-direction:column;gap:.5rem;overflow:hidden}
+.hp-editor.hp-full{overflow:auto}
+.hp2d-fullbar{display:flex;align-items:center;gap:.625rem;min-width:0;color:#fef3c7}
+.hp2d-fullbar img{width:36px;height:36px;border-radius:10px;object-fit:cover;border:1px solid rgba(234,179,8,.5)}
+.hp2d-fullbar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.3}
+.hp2d-exit{min-height:44px;padding:.45rem .9rem;border-radius:12px;border:1px solid rgba(234,179,8,.55);background:rgba(234,179,8,.12);color:#facc15;font-weight:800;cursor:pointer;flex:0 0 auto}
+.hp-full .hp2d-stage{flex:1;min-height:0;display:flex;flex-direction:column}
+.hp-full .hp2d-svg{flex:1;min-height:0;height:100%;max-height:none}
+.hp-full .hp2d-legend{margin:.35rem .5rem 0}
+.hp-full .hp2d-preview{position:absolute;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:3;max-width:720px;margin:0 auto}
+.hp-full .hp2d-photo,.hp-full .hp2d-photo img{min-height:110px;max-height:150px}
+@media (max-width:639px){.hp-full .hp2d-card{grid-template-columns:110px minmax(0,1fr)}.hp-full .hp2d-photo,.hp-full .hp2d-photo img{min-height:100%;max-height:none}}
+.hall3d-full{position:fixed!important;inset:0;z-index:9999;width:100vw!important;height:100dvh!important;margin:0!important;background:#06110d}
+.hall3d-fullbar{position:fixed;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));z-index:10000}
+.hall3d-card{position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:10000;max-width:720px;margin:0 auto}
+/* Booking room: the chosen restaurant, always visible (zero mix-up) */
+.chosen-restaurant{display:flex;flex-wrap:wrap;gap:.625rem;align-items:center;justify-content:space-between;margin:0 0 .75rem;padding:.75rem 1rem;border-radius:16px;border:1px solid rgba(234,179,8,.55);background:linear-gradient(135deg,rgba(234,179,8,.16),rgba(16,185,129,.14));min-width:0}
+.chosen-restaurant>span{min-width:0;line-height:1.35}.chosen-restaurant b{color:#ca8a04}
+body:not([data-theme=light]) .chosen-restaurant b{color:#facc15}
+.chosen-restaurant button{min-height:44px;flex:0 0 auto}
+.hall-full-btn{margin-right:.5rem}
+/* Full screen must cover the viewport: glass panels (backdrop-filter / transforms) would otherwise become the
+   containing block of position:fixed. While a plan or a camera is full screen, its ancestors drop them. */
+html.hp-lock *:has(.hp-full,.hall3d-full),html.sv-lock *:has(.sv-cam.is-max){backdrop-filter:none!important;-webkit-backdrop-filter:none!important;transform:none!important;filter:none!important;contain:none!important;will-change:auto!important;animation:none!important}
