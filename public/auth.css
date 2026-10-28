@@ -115,3 +115,14 @@
 .auth-diagonal .social-providers .social-button.telegram-login{background:rgba(56,189,248,.14)!important;border-color:rgba(56,189,248,.55)!important}
 .auth-diagonal .social-providers .social-button[disabled]{opacity:.55}
 .auth-diagonal .social-providers .social-button small{font-size:.65rem;opacity:.75}
+/* No focus box around the inputs: focus shows as the emerald line and the gold label. */
+.auth-diagonal .float-field input:focus,.auth-diagonal .float-field input:focus-visible,.auth-diagonal .float-field:focus-within{outline:none!important;box-shadow:none!important}
+.auth-diagonal .float-field input{outline:none!important}
+/* The lock is the show / hide button: 🔒 hidden, 🔓 shown. */
+.auth-diagonal .lock-toggle{position:absolute;right:0;top:16px;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:transparent!important;box-shadow:none!important;font-size:1rem;line-height:1;cursor:pointer;opacity:.8;transition:filter .3s,opacity .3s,transform .2s}
+.auth-diagonal .lock-toggle:hover{opacity:1;transform:scale(1.08)}
+.auth-diagonal .lock-toggle:focus-visible{outline:2px solid #eab308;outline-offset:2px}
+.auth-diagonal .lock-toggle .lock-open,.auth-diagonal .lock-toggle[aria-pressed=true] .lock-closed{display:none}
+.auth-diagonal .lock-toggle[aria-pressed=true] .lock-open{display:inline}
+.auth-diagonal .float-field input:focus~.lock-toggle,.auth-diagonal .float-field input:not(:placeholder-shown)~.lock-toggle,.auth-diagonal .lock-toggle[aria-pressed=true]{opacity:1;filter:drop-shadow(0 0 6px #eab308) drop-shadow(0 0 2px #10b981)}
+.auth-diagonal .float-field:has(.lock-toggle) input{padding-right:40px!important}
