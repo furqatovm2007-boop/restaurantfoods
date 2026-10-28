@@ -57,3 +57,11 @@ The official widget uses automatic `execution: render`, `appearance: interaction
 
 ## Owner-authorized test cleanup — 2026-10-16
 The owner explicitly requested retaining only the pinned admin and deleting the four existing test accounts and test restaurant/menu. `cleanupTestAccounts` runs only on the pinned authenticated admin's next `/api/me` call, atomically deletes the exact observed D1 IDs and their test records, writes a one-time audit marker, and preserves all future registrations. Supabase Auth records/session revocation are performed separately via authorized administrative SQL. No public cleanup endpoint or auth bypass. R2 orphan images are not deleted by this account cleanup.
+
+## Telegram Mini App and bot menu
+
+- The site runs inside Telegram from the bot: `/start` (or `/menu`) shows the "🍽️ Restoranlar, 3D Stol va Menyu (Ochish)" Mini App button and in-chat views: restaurants (photo, rating, tables free now), free tables, menu, flowers, and "📅 Mening bronlarim va QR-Chek" (QR pass sent as a PNG drawn on the server). Demo restaurants are not listed. Booking and payment happen only in the Mini App.
+- Menu button: admin panel → Telegram bot → "🍽️ Menyu tugmasini o‘rnatish" (`POST /api/telegram/setup-miniapp`, admin only) calls `setChatMenuButton` (web_app) and `setMyCommands`.
+- Sign-in: `public/tg-miniapp.js` loads `telegram-web-app.js` only inside Telegram and sends the signed `initData` to `POST /api/auth/telegram-webapp`. The server checks the HMAC signature (key `HMAC("WebAppData", TELEGRAM_BOT_TOKEN)`), a 24-hour age and a real user; `initDataUnsafe` is never trusted. Admin and suspended accounts are refused.
+- Phone: `telegram-contact-start` → Telegram `requestContact` → the bot receives the user's own contact and saves it as verified (or moves the chat to the account that already owns that number) → `telegram-contact-status`.
+- Works in the Telegram mobile and desktop apps. web.telegram.org embeds Mini Apps in a frame; the site keeps `frame-ancestors 'none'` and SameSite=Lax session cookies, so the Mini App is not supported there (use the Telegram app or the website).

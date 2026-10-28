@@ -12,7 +12,7 @@
  function showFeedback(){clearTimeout(feedbackTimer);const target=document.querySelectorAll('[data-cart-feedback]')[0];if(target){feedbackTarget=target;target.hidden=false}return target}
  function hideFeedback(){clearTimeout(feedbackTimer);if(feedbackTarget){feedbackTarget.hidden=true;feedbackTarget=null}}
  function scheduleHide(){clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>{if(!active.size)hideFeedback()},2600)}
- function add(button){const feedback=showFeedback(),target=[...(feedback?[feedback]:[]),...document.querySelectorAll('[data-cart-target]')].find(visible);if(!target){hideFeedback();return}
+ function add(button){window.RFTelegram?.haptic?.();const feedback=showFeedback(),target=[...(feedback?[feedback]:[]),...document.querySelectorAll('[data-cart-target]')].find(visible);if(!target){hideFeedback();return}
   if(motion.matches){landing(target);scheduleHide();return}const image=button.closest('.food-card')?.querySelector('.food-image img'),photo=image&&!image.hidden&&(image.currentSrc||image.src);
   const from=(visible(image)?image:button).getBoundingClientRect(),to=target.getBoundingClientRect();while(active.size>=4)[...active][0].cancel();
   const ghost=document.createElement(photo?'img':'span');if(photo)ghost.src=photo;else ghost.textContent='🍽️';ghost.alt='';ghost.setAttribute('aria-hidden','true');ghost.className='cart-food-flight';const sx=Math.max(40,Math.min(innerWidth-40,from.left+from.width/2)),sy=Math.max(48,Math.min(innerHeight-48,from.top+from.height/2)),tx=to.left+to.width/2,ty=to.top+to.height/2,cx=(sx+tx)/2,cy=Math.max(90,Math.min(sy,ty)-110);Object.assign(ghost.style,{left:sx-44+'px',top:sy-44+'px'});document.body.append(ghost);
@@ -22,7 +22,7 @@
  }
  // From a screen point (a tap in the 3D book) to the cart, or back from the cart to the point when a dish
  // leaves it. The ghost lives in the full-screen element so it shows above the book overlay.
- function point(at,photo,back=false){const target=[...document.querySelectorAll('[data-rf-book-cart]'),...document.querySelectorAll('[data-cart-target]')].find(visible);if(!target||!at)return;
+ function point(at,photo,back=false){window.RFTelegram?.haptic?.();const target=[...document.querySelectorAll('[data-rf-book-cart]'),...document.querySelectorAll('[data-cart-target]')].find(visible);if(!target||!at)return;
   if(motion.matches){landing(target);return}while(active.size>=4)[...active][0].cancel();const to=target.getBoundingClientRect(),cartX=to.left+to.width/2,cartY=to.top+to.height/2,[sx,sy,tx,ty]=back?[cartX,cartY,at.x,at.y]:[at.x,at.y,cartX,cartY],cx=(sx+tx)/2,cy=Math.max(90,Math.min(sy,ty)-110);
   const host=document.fullscreenElement||target.closest('[role=dialog]')||document.body,ghost=document.createElement(photo?'img':'span');if(photo)ghost.src=photo;else ghost.textContent='🍽️';ghost.alt='';ghost.setAttribute('aria-hidden','true');ghost.className='cart-food-flight';Object.assign(ghost.style,{left:sx-44+'px',top:sy-44+'px',zIndex:'2147483600'});host.append(ghost);
   let flight=null,done=false,timer;const cleanup=(land=false)=>{if(done)return;done=true;clearTimeout(timer);flight?.cancel();ghost.remove();active.delete(entry);if(land&&!back)landing(target)};const entry={cancel:()=>cleanup(false)};active.add(entry);if(back)landing(target);

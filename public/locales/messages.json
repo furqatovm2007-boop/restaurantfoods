@@ -6133,5 +6133,60 @@
     "uz": "Sotuvda",
     "ru": "В продаже",
     "en": "On sale"
+  },
+  "Telegram raqamimni yuborish (1 bosish)": {
+    "uz": "Telegram raqamimni yuborish (1 bosish)",
+    "ru": "Отправить мой номер из Telegram (1 касание)",
+    "en": "Send my Telegram number (1 tap)"
+  },
+  "Telegram raqamingizni o‘zi tasdiqlaydi — kod kerak emas.": {
+    "uz": "Telegram raqamingizni o‘zi tasdiqlaydi — kod kerak emas.",
+    "ru": "Telegram сам подтверждает ваш номер — код не нужен.",
+    "en": "Telegram confirms your number itself — no code needed."
+  },
+  "Bu raqamdagi akkauntingizga kirdingiz.": {
+    "uz": "Bu raqamdagi akkauntingizga kirdingiz.",
+    "ru": "Вы вошли в аккаунт с этим номером.",
+    "en": "You are now signed in to the account with this number."
+  },
+  "Raqam yuborilmadi.": {
+    "uz": "Raqam yuborilmadi.",
+    "ru": "Номер не отправлен.",
+    "en": "The number was not shared."
+  },
+  "Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.": {
+    "uz": "Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.",
+    "ru": "Пока принимаются только номера Узбекистана (+998).",
+    "en": "Only Uzbekistan numbers (+998) are accepted for now."
+  },
+  "Bu raqam boshqa akkauntga tegishli. Supportga murojaat qiling.": {
+    "uz": "Bu raqam boshqa akkauntga tegishli. Supportga murojaat qiling.",
+    "ru": "Этот номер принадлежит другому аккаунту. Обратитесь в поддержку.",
+    "en": "This number belongs to another account. Please contact support."
+  },
+  "Telegram javob bermadi. Qayta urinib ko‘ring.": {
+    "uz": "Telegram javob bermadi. Qayta urinib ko‘ring.",
+    "ru": "Telegram не ответил. Попробуйте ещё раз.",
+    "en": "Telegram did not respond. Please try again."
+  },
+  "Bot menyusidagi tugma saytni Telegram ichida ochadi: mijoz kodsiz avtomatik kiradi.": {
+    "uz": "Bot menyusidagi tugma saytni Telegram ichida ochadi: mijoz kodsiz avtomatik kiradi.",
+    "ru": "Кнопка в меню бота открывает сайт внутри Telegram: клиент входит автоматически, без кода.",
+    "en": "The bot menu button opens the site inside Telegram: customers sign in automatically, no code."
+  },
+  "Menyu tugmasini o‘rnatish": {
+    "uz": "Menyu tugmasini o‘rnatish",
+    "ru": "Установить кнопку меню",
+    "en": "Set the menu button"
+  },
+  "Menyu tugmasi o‘rnatildi": {
+    "uz": "Menyu tugmasi o‘rnatildi",
+    "ru": "Кнопка меню установлена",
+    "en": "Menu button set"
+  },
+  "buyruqlar ro‘yxati o‘rnatilmadi": {
+    "uz": "buyruqlar ro‘yxati o‘rnatilmadi",
+    "ru": "список команд не установлен",
+    "en": "command list was not set"
   }
 }

@@ -1,0 +1,108 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto'),zlib=require('node:zlib'),jsQR=require('jsqr'),{DatabaseSync}=require('node:sqlite'),{load}=require('./harness.cjs');
+// Telegram Mini App: launch data checked on the server (signature, age, real user), zero-click sign-in
+// (new account, existing linked account, admin and suspended refused), the phone through Telegram's
+// "share contact" (saved verified, or the chat moves to the account that owns the number), and the bot's
+// own menu (restaurants without demo ones, free tables, menu, flowers, bookings with a QR picture) plus
+// the admin menu-button setup.
+(async()=>{
+ const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
+ const DB={prepare(sql){let args=[];return{bind(...v){args=v;return this},first:async()=>db.prepare(sql).get(...args)||null,all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...args).changes)}})}}};
+ const TOKEN='123456:ABCdef',env={DB,TELEGRAM_BOT_TOKEN:TOKEN,TELEGRAM_WEBHOOK_SECRET:'s',TELEGRAM_BOT_USERNAME:'rf_bot',SITE_URL:'https://restaurantfoods.online'};
+ let jar=new Map();const cookies=async()=>({get:n=>jar.has(n)?{value:jar.get(n)}:undefined,set:(n,v)=>{if(v)jar.set(n,v);else jar.delete(n)}});
+ const sent=[];const fetch=async(url,init)=>{const method=String(url).split('/').pop();if(init.body instanceof FormData){const photo=init.body.get('photo');sent.push({method,form:true,chat:init.body.get('chat_id'),caption:init.body.get('caption'),png:Buffer.from(await photo.arrayBuffer())});return Response.json({ok:true,result:{}})}const body=JSON.parse(init.body);sent.push({method,body});if(method==='sendPhoto'&&String(body.photo).includes('broken'))return Response.json({ok:false,description:'bad photo'});return Response.json({ok:true,result:method.startsWith('set')?true:{}})};
+ const extras={fetch,FormData,Blob,CompressionStream,Response};
+ const cf={'cloudflare:workers':{env}},http=load('app/http.ts',cf);
+ const login=load('app/telegram-login.ts',{...cf,'next/headers':{cookies},'./http':http});
+ const telegram=load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf),'./telegram-login':login},extras);
+ const menu=load('app/telegram-menu.ts',{...cf,'qrcode-generator':{default:require('qrcode-generator')},'./telegram':telegram,'./booking-pass':load('app/booking-pass.ts',cf)},extras);
+
+ // Signed launch data, made the way Telegram makes it.
+ const sign=(fields,token=TOKEN)=>{const p=new URLSearchParams(fields);const dcs=[...p.entries()].sort(([a],[b])=>a<b?-1:1).map(([k,v])=>k+'='+v).join('\n');const secret=crypto.createHmac('sha256','WebAppData').update(token).digest();p.set('hash',crypto.createHmac('sha256',secret).update(dcs).digest('hex'));return p.toString()};
+ const now=Math.floor(Date.now()/1000),launch=(id,extra={})=>sign({auth_date:String(now),query_id:'AAH',user:JSON.stringify({id,first_name:'Aziz',last_name:'Karimov',username:'aziz',...extra})});
+ let v=await login.verifyWebAppData(launch(42),TOKEN);assert.equal(v.user.id,42);assert.equal(v.user.first_name,'Aziz');
+ const tampered=launch(42).replace('Aziz','Admin');assert.equal(await login.verifyWebAppData(tampered,TOKEN),null,'changed data fails the signature');
+ assert.equal(await login.verifyWebAppData(launch(42),'999:other'),null,'another bot’s token');
+ assert.equal(await login.verifyWebAppData(sign({auth_date:String(now-2*86400),user:JSON.stringify({id:42,first_name:'A'})}),TOKEN),null,'older than 24 h');
+ assert.equal(await login.verifyWebAppData(sign({auth_date:String(now),user:JSON.stringify({id:42,first_name:'A',is_bot:true})}),TOKEN),null,'bots are refused');
+ assert.equal(await login.verifyWebAppData('user=%7B%22id%22%3A42%7D&auth_date='+now,TOKEN),null,'no hash');
+ assert.equal(await login.verifyWebAppData(123,TOKEN),null);
+
+ // Zero-click sign-in: a new customer account for the Telegram user, then the same account again.
+ let r=await login.webAppLogin(launch(42));assert.deepEqual({...r},{ok:true,created:true});
+ let acc=db.prepare("SELECT * FROM accounts WHERE id='tg:42'").get();assert.equal(acc.telegram_chat_id,'42');assert.equal(acc.role,'customer');assert.equal(acc.name,'Aziz Karimov');assert.equal(acc.preferred_language,'uz','default Uzbek');assert.equal(acc.contact_phone_verified,0);
+ assert.ok(jar.get('__Host-rf-tg'),'session cookie issued');assert.ok(jar.get('__Host-rf-device'));const first=jar.get('__Host-rf-tg');
+ assert.equal((await login.telegramIdentity()).userId,'tg:42');
+ r=await login.webAppLogin(launch(42));assert.equal(r.created,false);assert.notEqual(jar.get('__Host-rf-tg'),first,'session replaced');assert.equal(db.prepare("SELECT COUNT(*) n FROM telegram_sessions WHERE token_hash=?").get(await login.sha256(first)).n,0,'old session removed');
+ await assert.rejects(login.webAppLogin(tampered),e=>e.status===401);
+ // An existing site account linked to this chat signs in as itself; admin and suspended accounts never do.
+ db.exec("INSERT INTO accounts(id,email,name,created_at,role,telegram_chat_id) VALUES ('sb:linked','a@b.c','Linked','2026-01-01','customer','77'),('sb:boss','x@y.z','Boss','2026-01-01','admin','7'),('sb:off','o@y.z','Off','2026-01-01','customer','8')");db.exec("UPDATE accounts SET status='suspended' WHERE id='sb:off'");
+ jar=new Map();r=await login.webAppLogin(launch(77));assert.equal(r.created,false);assert.equal((await login.telegramIdentity()).userId,'sb:linked');
+ await assert.rejects(login.webAppLogin(launch(7)),e=>e.status===403);await assert.rejects(login.webAppLogin(launch(8)),e=>e.status===403);
+ env.TELEGRAM_BOT_TOKEN='';await assert.rejects(login.webAppLogin(launch(42)),e=>e.status===503);env.TELEGRAM_BOT_TOKEN=TOKEN;
+
+ // The phone through Telegram's requestContact: saved as verified at once.
+ const msg=(chat,extra)=>({message:{chat:{id:chat,type:'private'},from:{id:chat,first_name:'Aziz'},...extra}});
+ jar=new Map();await login.webAppLogin(launch(42));
+ assert.equal((await login.webAppContactStatus('tg:42')).status,'none');
+ await login.startWebAppContact('tg:42');assert.equal((await login.webAppContactStatus('tg:42')).status,'waiting');
+ assert.equal(await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:99}})),'contact_not_own','someone else’s number');
+ assert.equal(await telegram.handleUpdate(msg(42,{contact:{phone_number:'+998 90 123 45 67',user_id:42}})),'webapp_contact_saved');
+ acc=db.prepare("SELECT contact_phone,contact_phone_verified FROM accounts WHERE id='tg:42'").get();assert.equal(acc.contact_phone,'+998901234567');assert.equal(acc.contact_phone_verified,1);
+ assert.equal((await login.webAppContactStatus('tg:42')).status,'saved');assert.equal((await login.webAppContactStatus('tg:42')).status,'none','read once');
+ assert.ok(sent.some(s=>s.method==='sendMessage'&&/saqlandi/.test(s.body.text)));
+ // Foreign numbers are refused; an account without a Mini App request keeps the old code flow.
+ await login.startWebAppContact('tg:42');assert.equal(await telegram.handleUpdate(msg(42,{contact:{phone_number:'+77011234567',user_id:42}})),'webapp_contact_not_uz');assert.equal((await login.webAppContactStatus('tg:42')).status,'not_uz');
+ assert.equal(await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}})),'code_sent','no request: the usual code');
+ // The number already belongs to another account: the chat moves there and the page signs into it.
+ db.exec("INSERT INTO accounts(id,email,name,created_at,role,contact_phone,contact_phone_verified) VALUES ('sb:owner-of-number','n@b.c','Nodira','2026-01-01','customer','+998911112233',1)");
+ jar=new Map();await login.webAppLogin(launch(43));await login.startWebAppContact('tg:43');
+ assert.equal(await telegram.handleUpdate(msg(43,{contact:{phone_number:'998911112233',user_id:43}})),'webapp_contact_switched');
+ assert.equal(db.prepare("SELECT telegram_chat_id FROM accounts WHERE id='sb:owner-of-number'").get().telegram_chat_id,'43');assert.equal(db.prepare("SELECT telegram_chat_id FROM accounts WHERE id='tg:43'").get().telegram_chat_id,null);
+ assert.equal((await login.webAppContactStatus('tg:43')).status,'switched');assert.equal((await login.telegramIdentity()).userId,'sb:owner-of-number');
+ jar=new Map();assert.equal((await login.webAppLogin(launch(43))).created,false,'next launch opens that account');assert.equal((await login.telegramIdentity()).userId,'sb:owner-of-number');
+ // The admin's number is never taken over.
+ db.exec("UPDATE accounts SET contact_phone='+998935556677',contact_phone_verified=1 WHERE id='sb:boss'");jar=new Map();await login.webAppLogin(launch(44,{language_code:'en'}));assert.equal(db.prepare("SELECT preferred_language FROM accounts WHERE id='tg:44'").get().preferred_language,'en','Telegram app language');await login.startWebAppContact('tg:44');
+ assert.equal(await telegram.handleUpdate(msg(44,{contact:{phone_number:'998935556677',user_id:44}})),'webapp_contact_taken');assert.equal(db.prepare("SELECT telegram_chat_id FROM accounts WHERE id='sb:boss'").get().telegram_chat_id,'7');
+ await assert.rejects(login.startWebAppContact('tg:43'),e=>e.status===409,'no linked chat');
+
+ // Bot menu.
+ sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'/start'})),'menu');
+ const main=sent[0].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
+ assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'/start'}}),null,'groups keep the restaurant bot');
+ assert.equal(await menu.handleMenu(msg(42,{text:'/start l_abc'})),null,'deep links go to the regular bot');
+ const until=new Date(Date.now()+30*86400000).toISOString();
+ db.prepare("INSERT INTO restaurants(id,name,status,owner_id,plan,paid_until,image_url,booking_open,booking_close,cuisine,address) VALUES ('r1','Osh Markazi','active','o','business',?,'/api/media?key=photos/x.jpg','00:00','24:00','Milliy','Registon 1'),('r2','Broken Photo','active','o','business',?,'https://cdn.test/broken.jpg','00:00','24:00','',''),('rf-demo-1','Demo','active','o','business',?,'','00:00','24:00','',''),('r3','Closed','pending','o','business',?,'','00:00','24:00','','')").run(until,until,until,until);
+ db.exec("UPDATE restaurants SET is_demo=1 WHERE id='rf-demo-1'");
+ db.exec("INSERT INTO restaurant_tables(id,restaurant_id,number,seats,active) VALUES ('t1','r1',1,4,1),('t2','r1',2,6,1),('t3','r1',3,2,1)");
+ db.prepare("INSERT INTO table_live_status(restaurant_id,table_number,status,source,updated_at) VALUES ('r1',2,'occupied','camera',?)").run(new Date().toISOString());
+ db.exec("INSERT INTO menu(id,restaurant_id,name,price,available,category) VALUES ('d1','r1','Samarqand oshi',45000,1,'Taomlar'),('d2','r1','Ko‘k choy',8000,1,'Ichimliklar'),('d3','r1','Tugagan',1000,0,'Taomlar')");
+ db.exec("INSERT INTO reviews(id,restaurant_id,user_id,stars,comment,created_at,updated_at) VALUES ('rv1','r1','u1',5,'Zo‘r','2026-01-01','2026-01-01')");
+ const cb=(data,chat=42)=>({callback_query:{id:'q',data,message:{chat:{id:chat,type:'private'},message_id:1}}});
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:r:0')),'menu_restaurants');
+ const cards=sent.filter(s=>s.method==='sendPhoto'||s.method==='sendMessage');const text=cards.map(s=>s.body.caption||s.body.text).join('\n');
+ assert.ok(text.includes('Osh Markazi')&&text.includes('Broken Photo'));assert.ok(!text.includes('Demo')&&!text.includes('Closed'),'demo and inactive restaurants are not listed');
+ const osh=cards.find(s=>(s.body.caption||'').includes('Osh Markazi'));assert.equal(osh.body.photo,'https://restaurantfoods.online/api/media?key=photos/x.jpg');assert.match(osh.body.caption,/bo‘sh stollar: <b>2<\/b> \/ 3/);assert.match(osh.body.caption,/⭐/);
+ const kb=osh.body.reply_markup.inline_keyboard;assert.deepEqual([kb[0][0].callback_data,kb[1][0].callback_data],['m:t:r1','m:m:r1']);assert.equal(kb[2][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&go=%2Frestaurant%2Fr1');
+ assert.ok(sent.some(s=>s.method==='sendMessage'&&(s.body.text||'').includes('Broken Photo')),'a photo Telegram refuses falls back to text');
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:t:r1')),'menu_tables');let out=sent.find(s=>s.method==='sendMessage').body.text;assert.ok(out.includes('1-stol')&&out.includes('3-stol')&&!out.includes('2-stol'),'busy table hidden');
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:m:r1')),'menu_dishes');out=sent.find(s=>s.method==='sendMessage').body.text;assert.ok(out.includes('Samarqand oshi — 45 000 so‘m')&&out.includes('<b>Ichimliklar</b>')&&!out.includes('Tugagan'));
+ assert.equal(await menu.handleMenu(cb('m:m:rf-demo-1')),'menu_gone');assert.equal(await menu.handleMenu(cb('m:t:<b>x</b>')),'menu_gone');
+ db.exec("INSERT INTO accounts(id,email,name,created_at,role,status) VALUES ('fl','f@b.c','Gulchi Nilufar','2026-01-01','florist','active')");
+ db.exec("INSERT INTO flowers(id,florist_id,title,kind,size,price,image_url,created_at,status,is_approved,in_stock) VALUES ('f1','fl','Atirgul 25','Atirgul','O‘rta',250000,'','2026-01-02','active',1,1),('f2','fl','Tugagan gul','Lola','Kichik',90000,'','2026-01-01','active',1,0)");
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:f:0')),'menu_flowers');out=sent.map(s=>s.body?.text||'').join('\n');assert.ok(out.includes('Atirgul 25')&&out.includes('250 000 so‘m')&&out.includes('Gulchi Nilufar')&&!out.includes('Tugagan gul'));assert.match(sent.find(s=>s.body?.reply_markup).body.reply_markup.inline_keyboard[0][0].web_app.url,/go=%2Fflowers$/);
+ // My bookings: unknown chat is asked to open the Mini App; a booking comes with its QR pass as a PNG.
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:b',999)),'menu_bookings_signin');
+ assert.equal(await menu.handleMenu(cb('m:b',42)),'menu_bookings_empty');
+ const day=new Date(Date.now()+5*3600000+86400000).toISOString().slice(0,10);
+ db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('bk1','r1','tg:42',?,'19:00',1,2,'+998901234567','confirmed','2026-01-01'),('bk2','r1','tg:42',?,'20:00',3,2,'+998901234567','cancelled','2026-01-01')").run(day,day);
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:b',42)),'menu_bookings');
+ const photo=sent.find(s=>s.form);assert.equal(photo.chat,'42');assert.match(photo.caption,/Osh Markazi/);assert.match(photo.caption,/Tasdiqlangan/);assert.equal(sent.filter(s=>s.form).length,1,'cancelled bookings are not shown');
+ assert.deepEqual([...photo.png.subarray(0,8)],[137,80,78,71,13,10,26,10],'PNG signature');
+ // Decode the picture back: the QR holds the booking's pass.
+ const w=photo.png.readUInt32BE(16),h=photo.png.readUInt32BE(20);let pos=8,idat=[];while(pos<photo.png.length){const len=photo.png.readUInt32BE(pos),type=photo.png.toString('ascii',pos+4,pos+8);if(type==='IDAT')idat.push(photo.png.subarray(pos+8,pos+8+len));pos+=12+len}
+ const raw=zlib.inflateSync(Buffer.concat(idat)),rgba=new Uint8ClampedArray(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const g=raw[y*(w+1)+1+x];rgba.set([g,g,g,255],(y*w+x)*4)}
+ const pass=db.prepare("SELECT pass_code FROM bookings WHERE id='bk1'").get().pass_code;assert.ok(pass);assert.equal(jsQR(rgba,w,h).data,'RFB1:'+pass);
+ // Admin setup of the menu button.
+ sent.length=0;const setup=await menu.setupMiniApp();assert.equal(setup.menuButton,true);const mb=sent.find(s=>s.method==='setChatMenuButton').body.menu_button;assert.deepEqual({...mb,web_app:{...mb.web_app}},{type:'web_app',text:'🍽️ Stol Bron & Menyu',web_app:{url:'https://restaurantfoods.online/?source=tg_miniapp'}});
+ console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), menu-button setup.');
+})().catch(e=>{console.error(e);process.exitCode=1});

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { authConfig,authReady,refreshSession,provider,saveSession,clearSession,accessToken,revokeSession,revokeUserSessions } from '../../../auth-service';
 import { identity } from '../../../access';
 import { ApiError,json,failure,body,text,throttle,sameOrigin } from '../../../http';
-import { startTelegramLogin,pollTelegramLogin,endTelegramSession,telegramLoginAvailable,deviceLogin,forgetDevice,magicLogin } from '../../../telegram-login';
+import { startTelegramLogin,pollTelegramLogin,endTelegramSession,telegramLoginAvailable,deviceLogin,forgetDevice,magicLogin,webAppLogin,startWebAppContact,webAppContactStatus } from '../../../telegram-login';
 export const dynamic='force-dynamic';
 const getAction=(r:Request)=>new URL(r.url).pathname.split('/').pop();
 const emailOf=(v:unknown)=>{const e=text(v,3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))throw new ApiError(400,'Email noto‘g‘ri.');return e};
@@ -16,6 +16,9 @@ if(action==='telegram-start'){await throttle('tg-login:'+request.headers.get('cf
 // One tap on a remembered device (HttpOnly device key, see app/telegram-login.ts); forgetting it is explicit.
 // The bot's "🚀 Saytga kirish" button: a one-time link that signs in the browser that opens it.
 if(action==='telegram-magic'){sameOrigin(request);await throttle('tg-magic:'+request.headers.get('cf-connecting-ip'),30);return json(await magicLogin(b.code))}
+// Telegram Mini App: zero-click sign-in from Telegram's signed launch data, and the phone via Telegram's "share contact".
+if(action==='telegram-webapp'){sameOrigin(request);await throttle('tg-webapp:'+request.headers.get('cf-connecting-ip'),60);return json(await webAppLogin(b.initData))}
+if(action==='telegram-contact-start'||action==='telegram-contact-status'){sameOrigin(request);const u=await identity();if(!u)throw new ApiError(401,'Avval akkauntingizga kiring.');await throttle('tg-contact:'+u.userId,120);return json(action==='telegram-contact-start'?await startWebAppContact(u.userId):await webAppContactStatus(u.userId))}
 if(action==='device-login'){sameOrigin(request);await throttle('device-login:'+request.headers.get('cf-connecting-ip'),30);return json(await deviceLogin())}if(action==='device-forget'){sameOrigin(request);await forgetDevice();return json({ok:true})}if(action==='telegram-poll'){await throttle('tg-poll:'+request.headers.get('cf-connecting-ip'),400);return json(await pollTelegramLogin())}if(!authReady())throw new ApiError(503,'Email va xavfsizlik xizmati hali ulanmagan.');if(action==='refresh'){await throttle('refresh-ip:'+request.headers.get('cf-connecting-ip'),120);await refreshSession();return json({ok:true})}await throttle('auth-ip:'+request.headers.get('cf-connecting-ip'),40);if(['phone-signup','phone-login','phone-resend','phone-verify'].includes(action||''))return await phoneAuth(request,b,action!);const allowed=['signup','login','verify','forgot','reset','resend','change-start','change-finish'];if(!allowed.includes(action||''))throw new ApiError(404,'Topilmadi.');const changing=action?.startsWith('change-');const u=changing?await identity():null;if(changing&&(!u||u.source!=='supabase'))throw new ApiError(401,'Email akkauntingizga qayta kiring.');const email=changing?u!.email:emailOf(b.email);await throttle('auth-email:'+email,15);if(['verify','reset','change-finish'].includes(action||''))await throttle('email-code:'+email,5);// Supabase Auth performs Cloudflare Siteverify using its server-side CAPTCHA secret.
 // Forward each token once: pre-validating the same token here would consume it and break Auth.
 const security=()=>({captcha_token:text(b.captchaToken,1,2048)});

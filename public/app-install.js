@@ -121,6 +121,8 @@
   function signedIn(user) {
     setManifest(user?.role);
     if (!user?.id || standalone() || store.get('rf-app-installed')) return;
+    // Inside the Telegram Mini App the site is already an app: no install offer.
+    if (window.RFTelegram?.active) return;
     // An electronic receipt opened from its QR code is shown alone (the offer waits for another page).
     if (/^#\/chek\//.test(location.hash)) return;
     const key = 'rf-app-asked-' + user.id;

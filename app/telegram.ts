@@ -145,7 +145,7 @@ export function telegramPhone(raw: string) {
 
 const CONTACT_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true };
 const REMOVE_KEYBOARD = { remove_keyboard: true };
-const site = () => (env.SITE_URL?.trim() || 'https://restaurantfoods.online').replace(/\/$/, '');
+export const site = () => (env.SITE_URL?.trim() || 'https://restaurantfoods.online').replace(/\/$/, '');
 
 /** Sends a one-time code to a customer's linked chat. */
 export async function sendTelegramCode(chatId: string, code: string) {
@@ -223,6 +223,47 @@ async function approveLogin(code: string, chatId: string, from: { id: number; fi
   return 'login_approved';
 }
 
+/*
+ * The own contact shared from the Mini App (requestContact) for the signed-in account of this chat. Telegram
+ * proves the number belongs to the sender (contact.user_id === from.id, checked above), so it is saved as
+ * verified at once. A number that already belongs to another account moves the chat there instead (as
+ * sign-in with Telegram does); the page then signs into it. The administrator account is never taken over.
+ */
+async function webAppContact(chatId: string, phone: string | null) {
+  const key = 'tgcontact:' + chatId;
+  const row = await env.DB!.prepare('SELECT value FROM app_settings WHERE key=?').bind(key).first<{ value: string }>();
+  let flag: any = null;
+  try {
+    flag = row ? JSON.parse(row.value) : null;
+  } catch {}
+  if (!flag || flag.status !== 'waiting' || Date.now() > flag.until) return null;
+  const save = (status: string, extra: Record<string, unknown> = {}) => env.DB!.prepare('UPDATE app_settings SET value=?,updated_at=? WHERE key=?').bind(JSON.stringify({ ...flag, ...extra, status }), new Date().toISOString(), key).run();
+  const account = await env.DB!.prepare('SELECT id FROM accounts WHERE id=? AND telegram_chat_id=?').bind(flag.userId, chatId).first<{ id: string }>();
+  if (!account) return null;
+  if (!phone) {
+    await save('not_uz');
+    await telegram('sendMessage', { chat_id: chatId, text: 'Hozircha faqat O‘zbekiston raqamlari (+998) qabul qilinadi.', reply_markup: REMOVE_KEYBOARD });
+    return 'webapp_contact_not_uz';
+  }
+  const other = await env.DB!.prepare('SELECT id,role,status FROM accounts WHERE id<>? AND ((contact_phone=? AND contact_phone_verified=1) OR (phone=? AND phone_verified=1)) LIMIT 1').bind(account.id, phone, phone.slice(1)).first<{ id: string; role: string; status: string }>();
+  if (other && (other.id === ADMIN_ID || other.role === 'admin' || other.status === 'suspended')) {
+    await save('taken');
+    await telegram('sendMessage', { chat_id: chatId, text: 'Bu raqam boshqa akkauntga tegishli. Supportga murojaat qiling.', reply_markup: REMOVE_KEYBOARD });
+    return 'webapp_contact_taken';
+  }
+  if (other) {
+    await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=?').bind(chatId).run();
+    await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=?,telegram_phone=? WHERE id=?').bind(chatId, phone, other.id).run();
+    await save('switched', { target: other.id });
+    await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} tasdiqlandi. Bu raqamdagi akkauntingizga ulandingiz — Mini App’ga qayting.`, reply_markup: REMOVE_KEYBOARD });
+    return 'webapp_contact_switched';
+  }
+  await env.DB!.prepare('UPDATE accounts SET contact_phone=?,contact_phone_verified=1,telegram_phone=? WHERE id=?').bind(phone, phone, account.id).run();
+  await save('saved');
+  await telegram('sendMessage', { chat_id: chatId, text: `✅ ${prettyPhone(phone)} saqlandi. Mini App’ga qayting — bron davom etadi.`, reply_markup: REMOVE_KEYBOARD });
+  return 'webapp_contact_saved';
+}
+
 /** Customer side of the webhook: /start c_CODE, the shared contact, /stop. Null when not a customer message. */
 async function customerUpdate(msg: NonNullable<Update['message']>) {
   const chatId = String(msg.chat.id);
@@ -236,6 +277,9 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
     // Sign-in with Telegram: this chat opened a login request from the site (app/telegram-login.ts).
     const login = await env.DB!.prepare("SELECT code FROM telegram_logins WHERE chat_id=? AND status='awaiting_contact' AND expires_at>? ORDER BY created_at DESC LIMIT 1").bind(chatId, Date.now()).first<{ code: string }>();
     if (login) return approveLogin(login.code, chatId, msg.from, phone);
+    // Mini App: the page asked for the number with Telegram's requestContact (app/telegram-login.ts).
+    const shared = await webAppContact(chatId, phone);
+    if (shared) return shared;
     const account = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
     if (!account) {
       await telegram('sendMessage', { chat_id: chatId, text: 'Avval saytdagi profilingizdan “Telegram orqali tasdiqlash” tugmasini bosing.', reply_markup: REMOVE_KEYBOARD });
