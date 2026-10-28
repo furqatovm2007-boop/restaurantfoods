@@ -63,5 +63,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(rated('r').n,1,'orphan and demo reviews do not count for a real restaurant');assert.equal(rated('r').avg,5);
  assert.equal(rated('rf-demo-x').n,1,'a demo restaurant keeps its labelled demo reviews');
  db.exec("UPDATE accounts SET status='suspended' WHERE id='c1'");assert.equal(rated('r').n,0,'suspended accounts do not count');
- console.log('PASS booking integrity: birth date saved once and locked, birthday promo ±3 days once a year, 5-minute exclusive table hold (expiry, own hold, real active tables, booked overlap), ratings from real accounts only');
+ // 6. Online bookings close 1 hour before the start (no "book 5 minutes before"), so they never clash with the live queue.
+ const rules=load('app/booking-rules.ts',{'./http':http}),T=Date.parse('2026-10-28T09:00:00Z'),local=ms=>new Date(ms+5*3600000).toISOString(),at=min=>{const x=local(T+min*60000);return [x.slice(0,10),x.slice(11,16)]};
+ assert.throws(()=>rules.bookingSlot(...at(5),T),/kamida 1 soat/,'5 minutes ahead refused');assert.throws(()=>rules.bookingSlot(...at(30),T),/kamida 1 soat/,'30 minutes ahead refused');
+ assert.ok(rules.bookingSlot(...at(60),T),'exactly 1 hour ahead allowed');assert.ok(rules.bookingSlot(...at(90),T));
+ console.log('PASS booking integrity: birth date saved once and locked, birthday promo ±3 days once a year, 5-minute exclusive table hold (expiry, own hold, real active tables, booked overlap), ratings from real accounts only, online bookings ≥ 1 hour ahead');
 })().catch(e=>{console.error(e);process.exit(1)});

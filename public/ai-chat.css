@@ -8,3 +8,10 @@ body:has(#drawer[open]) .rf-ai-launch,body:has(#drawer[open]) .rf-robot,body:has
 @media(prefers-reduced-motion:reduce){.rf-robot,.rf-robot-privacy{transition:none!important}.rf-robot{will-change:auto}}
 
 .rf-bot-art model-viewer{--poster-color:transparent;--progress-bar-color:#00c9a7;--progress-bar-height:2px;background:transparent;outline:0}
+/* Text mode: shown when the microphone is not allowed (or unsupported), so the assistant keeps working by keyboard. */
+.rf-robot-typed{display:flex;gap:.5rem;margin:.5rem 0;min-width:0;animation:rfTypedIn .25s ease-out}
+.rf-robot-typed[hidden]{display:none}
+.rf-robot-typed input{flex:1;min-width:0;min-height:44px;padding:0 .75rem;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.9);color:#0b1c26;font:inherit}
+.rf-robot-typed button{min-width:44px;min-height:44px;border-radius:12px}
+@keyframes rfTypedIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rf-robot-typed{animation:none}}

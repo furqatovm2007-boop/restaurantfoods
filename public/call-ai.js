@@ -67,8 +67,8 @@
     }
   };
   let playing = null;
-  /** Plays the natural server voice (OGG/Opus, or MP3 where OGG is not supported). In Uzbek the browser's
-   *  robotic synthesis is never used: without the server voice the question is read from the screen. */
+  /** Plays the natural server voice (OGG/Opus, or MP3 where OGG is not supported). The browser's
+   *  robotic synthesis is never used (any language): without the server voice the text is read from the screen. */
   async function say(call, text, which, k) {
     if (muted()) return;
     let audio = null,
@@ -89,16 +89,7 @@
       playing = null;
       return;
     }
-    if (call.lang === 'uz' || !('speechSynthesis' in window) || muted()) return;
-    await new Promise((done) => {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = SPEECH_LANG[call.lang] || 'ru-RU';
-      const voice = speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith(call.lang));
-      if (voice) u.voice = voice;
-      u.onend = u.onerror = done;
-      speechSynthesis.speak(u);
-      setTimeout(done, 12000);
-    });
+    // No browser speechSynthesis fallback: its robotic voice sounds unnatural. The caption stays on screen.
   }
   function soundButton() {
     return `<button type="button" class="rf-call-sound" data-sound aria-pressed="${!muted()}" aria-label="${muted() ? 'Ovozni yoqish' : 'Ovozni o‘chirish'}">${muted() ? '🔇' : '🔊'}</button>`;
@@ -113,7 +104,6 @@
       } catch {}
       if (off) {
         playing?.pause();
-        window.speechSynthesis?.cancel?.();
       }
       b.textContent = off ? '🔇' : '🔊';
       b.setAttribute('aria-pressed', String(!off));
@@ -197,7 +187,6 @@
     };
     const bindAnswers = () =>
       root.querySelectorAll('[data-v]').forEach((b) => (b.onclick = async () => {
-        window.speechSynthesis?.cancel?.();
         const r = await send({ verdict: b.dataset.v }).catch((e) => ({ error: e.message }));
         if (r?.understood) finish(r.message, r.verdict);
       }));
@@ -210,7 +199,6 @@
       root.querySelector('[data-hang]').onclick = () => {
         active = false;
         playing?.pause();
-        window.speechSynthesis?.cancel?.();
         root.innerHTML = `<div class="rf-call-card"><h1>${esc(c.ended)}</h1><p>${esc(c.declined)}</p>${answerButtons}</div>`;
         bindAnswers();
       };

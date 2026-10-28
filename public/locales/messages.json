@@ -6123,5 +6123,15 @@
     "uz": "Gullar, shamlar, yurak shakli…",
     "ru": "Цветы, свечи, сердце…",
     "en": "Flowers, candles, a heart…"
+  },
+  "Onlayn bron kelishdan kamida 1 soat oldin yakunlanishi kerak (ko‘pi bilan 90 kun oldin). Zaldagi jonli navbat bilan to‘qnashmasligi uchun undan yaqin vaqtga bron yo‘q.": {
+    "uz": "Onlayn bron kelishdan kamida 1 soat oldin yakunlanishi kerak (ko‘pi bilan 90 kun oldin). Zaldagi jonli navbat bilan to‘qnashmasligi uchun undan yaqin vaqtga bron yo‘q.",
+    "ru": "Онлайн-бронь нужно оформить минимум за 1 час до прихода (и не раньше чем за 90 дней). Ближе по времени брони нет — чтобы не мешать живой очереди в зале.",
+    "en": "Online bookings must be made at least 1 hour before arrival (and at most 90 days ahead). Nothing closer is offered, so it never clashes with the live queue in the hall."
+  },
+  "Sotuvda": {
+    "uz": "Sotuvda",
+    "ru": "В продаже",
+    "en": "On sale"
   }
 }

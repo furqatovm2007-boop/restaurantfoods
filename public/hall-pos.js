@@ -101,9 +101,63 @@
     let data = null,
       ws = null; // the open workspace: { table, lines, percent, version, orderId, dirty, category, search, payment }
 
+    let queue = [];
     const load = async () => {
       data = await api('/api/table-orders?restaurantId=' + encodeURIComponent(restaurantId));
+      // Live queue: guests waiting in the hall (hostess and up). Without access the block just stays empty.
+      queue = await api('/api/manage/queue?restaurantId=' + encodeURIComponent(restaurantId))
+        .then((r) => r.queue || [])
+        .catch(() => []);
     };
+    const waited = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+    /** The smallest free table that seats the party, for the "fits" hint. */
+    const fitFor = (guests) => data.tables.filter((t) => t.status === 'free' && t.seats >= guests).sort((a, b) => a.seats - b.seats)[0] || null;
+    function queueBlock() {
+      const free = data.tables.filter((t) => t.status === 'free');
+      return `<section class="panel hp-queue"><h3>👥 Jonli navbat <span class="muted">${queue.length ? queue.length + ' ta guruh kutmoqda' : 'hozir hech kim kutmayapti'}</span></h3>${queue.length ? `<ol class="hp-queue-list">${queue.map((e, i) => { const fit = fitFor(e.guests); return `<li><span class="hp-q-main"><b>#${i + 1} ${esc(e.name)}</b> · ${e.guests} kishi${e.phone ? ` · <a href="tel:${esc(e.phone)}">${esc(e.phone)}</a>` : ''}<small>⏱ ${waited(e.createdAt)} daqiqa kutmoqda${fit ? ` · mos stol: <b>${esc(label(fit))}</b>` : ' · mos bo‘sh stol yo‘q'}</small></span><span class="hp-q-actions"><select data-seat-table="${esc(e.id)}" aria-label="Stol tanlash"><option value="">Stol…</option>${free.map((t) => `<option value="${t.number}" ${fit && fit.number === t.number ? 'selected' : ''}>${esc(label(t))} · ${t.seats} o‘rin</option>`).join('')}</select><button type="button" class="primary" data-seat="${esc(e.id)}" ${free.length ? '' : 'disabled'}>🪑 O‘tqazish</button><button type="button" class="quiet" data-unqueue="${esc(e.id)}" aria-label="Navbatdan chiqarish">✕</button></span></li>`; }).join('')}</ol>` : ''}<form class="hp-queue-form" data-queue-form><input name="name" required maxlength="40" placeholder="Ism yoki belgi"><input name="guests" type="number" min="1" max="30" value="2" required aria-label="Kishi soni"><input name="phone" type="tel" inputmode="tel" placeholder="+998… (ixtiyoriy)"><button class="quiet">＋ Navbatga qo‘shish</button></form></section>`;
+    }
+    function bindQueue() {
+      const post = async (payload) => {
+        queue = (await api('/api/manage/queue', 'POST', { restaurantId, ...payload })).queue || [];
+      };
+      const form = root.querySelector('[data-queue-form]');
+      if (form)
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const f = Object.fromEntries(new FormData(form));
+          try {
+            await post({ action: 'add', name: f.name, guests: Number(f.guests), phone: f.phone || '' });
+            drawGrid();
+          } catch (err) {
+            toast(err.message);
+          }
+        };
+      root.querySelectorAll('[data-unqueue]').forEach(
+        (b) =>
+          (b.onclick = async () => {
+            try {
+              await post({ action: 'remove', id: b.dataset.unqueue });
+              drawGrid();
+            } catch (err) {
+              toast(err.message);
+            }
+          }),
+      );
+      root.querySelectorAll('[data-seat]').forEach(
+        (b) =>
+          (b.onclick = async () => {
+            const n = Number(root.querySelector(`[data-seat-table="${CSS.escape(b.dataset.seat)}"]`)?.value);
+            if (!n) return toast('Avval bo‘sh stolni tanlang.');
+            try {
+              // The party leaves the queue and the table's bill opens for the waiter right away.
+              await post({ action: 'seat', id: b.dataset.seat });
+              openTable(n);
+            } catch (err) {
+              toast(err.message);
+            }
+          }),
+      );
+    }
     const table = (n) => data.tables.find((t) => t.number === n);
 
     // ---- Table grid ----
@@ -116,7 +170,7 @@
     function drawGrid() {
       const counts = { free: 0, busy: 0, reserved: 0 };
       data.tables.forEach((t) => counts[t.status]++);
-      root.innerHTML = `<div class="hp-head">${restaurants.length > 1 ? `<label class="hp-restaurant">Restoran<select data-restaurant>${restaurants.map((r) => `<option value="${esc(r.id)}" ${r.id === restaurantId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>` : `<p class="hp-name">${esc(data.restaurant.name)}</p>`}<div class="hp-legend"><span class="hp-dot free"></span>Bo‘sh <b>${counts.free}</b><span class="hp-dot busy"></span>Band <b>${counts.busy}</b><span class="hp-dot reserved"></span>Bron qilingan <b>${counts.reserved}</b></div></div>${
+      root.innerHTML = `<div class="hp-head">${restaurants.length > 1 ? `<label class="hp-restaurant">Restoran<select data-restaurant>${restaurants.map((r) => `<option value="${esc(r.id)}" ${r.id === restaurantId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>` : `<p class="hp-name">${esc(data.restaurant.name)}</p>`}<div class="hp-legend"><span class="hp-dot free"></span>Bo‘sh <b>${counts.free}</b><span class="hp-dot busy"></span>Band <b>${counts.busy}</b><span class="hp-dot reserved"></span>Bron qilingan <b>${counts.reserved}</b></div></div>${queueBlock()}${
         data.tables.length
           ? `<div class="hp-grid">${data.tables
               .map((t) => {
@@ -136,6 +190,7 @@
         await refresh();
       });
       root.querySelectorAll('[data-table]').forEach((b) => (b.onclick = () => openTable(Number(b.dataset.table))));
+      bindQueue();
     }
     async function refresh() {
       try {
