@@ -376,8 +376,10 @@ export async function setupMiniApp() {
  *     unlinked themselves (/stop) are not linked any more and are skipped, as are suspended accounts.
  */
 const SETUP_VERSION = '3';
-export const SYNC_KEY = 'tg:sync-old-users:v1';
-export const SYNC_TEXT = '✨ Yangilanish! Endi restoranlarni ko‘rish, 3D stol bron qilish va menyu bevosita Telegram ichida ishlaydi! Pastdagi tugmalardan foydalaning 👇';
+// v2: the three-language bot (the 🌐 key and the keyboard in the chat's language).
+export const SYNC_KEY = 'tg:sync-old-users:v2';
+export const SYNC_TEXT =
+  '✨ Yangilanish! Bot endi 3 tilda: O‘zbekcha, Русский, English. Tilni pastdagi “🌐 Til / Язык / Language” tugmasi bilan tanlang 👇\n\n✨ Бот теперь на 3 языках — выберите язык кнопкой «🌐 Til / Язык / Language» внизу.\n\n✨ The bot now speaks 3 languages — pick yours with the “🌐 Til / Язык / Language” button below.';
 const setting = async (key: string) => (await env.DB!.prepare('SELECT value FROM app_settings WHERE key=?').bind(key).first<{ value: string }>())?.value ?? null;
 const saveSetting = (key: string, value: string) =>
   env.DB!.prepare('INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at,updated_by=excluded.updated_by').bind(key, value, new Date().toISOString(), 'bot').run();
@@ -409,7 +411,7 @@ export async function syncOldUsers(limit = 40): Promise<SyncState> {
     failed = 0;
   for (const r of rows) {
     if (!/^\d{1,15}$/.test(r.chat)) continue; // private chats only
-    (await telegram('sendMessage', { chat_id: r.chat, text: SYNC_TEXT, reply_markup: mainKeyboard() })) ? sent++ : failed++;
+    (await telegram('sendMessage', { chat_id: r.chat, text: SYNC_TEXT, reply_markup: mainKeyboard(await chatLang(r.chat)) })) ? sent++ : failed++;
     await new Promise((ok) => setTimeout(ok, 60));
   }
   const done: SyncState = { ...claimed, sent: state.sent + sent, failed: state.failed + failed };
