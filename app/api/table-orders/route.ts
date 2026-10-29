@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { identity } from '../../access';
 import { ApiError, body, failure, integer, json, sameOrigin, text, throttle } from '../../http';
 import { restaurantAccess } from '../../staff';
+import { walkinTables, GRACE_MIN } from '../../hall-layout';
 import { cancelOrder, closeOrder, orderById, orderItems, paymentOf, saveOrder, SERVICE_RATES, todaysBookings, type TableOrderRow } from '../../hall';
 export const dynamic = 'force-dynamic';
 
@@ -42,16 +43,18 @@ export async function GET(request: Request) {
   try {
     const restaurantId = text(new URL(request.url).searchParams.get('restaurantId'));
     const { r, level } = await staff(restaurantId);
-    const [tables, open, menu, bookings] = await Promise.all([
+    const [tables, open, menu, bookings, walkins] = await Promise.all([
       env.DB!.prepare('SELECT number,seats,floor,atmosphere FROM restaurant_tables WHERE restaurant_id=? AND active=1 ORDER BY floor,number').bind(restaurantId).all<any>(),
       env.DB!.prepare("SELECT * FROM table_orders WHERE restaurant_id=? AND status='open'").bind(restaurantId).all<TableOrderRow>(),
       env.DB!.prepare('SELECT id,name,price,category,image_url FROM menu WHERE restaurant_id=? AND available=1 ORDER BY category,name').bind(restaurantId).all<any>(),
       todaysBookings(restaurantId),
+      walkinTables(restaurantId),
     ]);
     const orders = new Map(open.results.map((o) => [o.table_number, o]));
     return json({
       restaurant: { id: r.id, name: r.name, address: r.address || '', phone: r.phone || '', serviceFee: SERVICE_RATES.includes(Number(r.service_fee_percent)) ? Number(r.service_fee_percent) : 0 },
       canCancel: level === 'manager' || level === 'owner',
+      graceMinutes: GRACE_MIN,
       tables: tables.results.map((t) => {
         const o = orders.get(t.number),
           b = bookings.get(t.number);
@@ -62,9 +65,10 @@ export async function GET(request: Request) {
           seats: t.seats,
           floor: t.floor,
           vip: /vip/i.test(t.atmosphere || ''),
+          walkin: walkins.has(t.number),
           status: o ? 'busy' : reserved ? 'reserved' : 'free',
           order: o ? orderView(o) : null,
-          booking: b ? { id: b.id, name: b.name, phone: b.phone, slot: b.slot, endSlot: b.endSlot, guests: b.guests, telegram: b.telegram, status: b.status, soon: b.startsIn <= 180, checkedIn: b.checkedIn } : null,
+          booking: b ? { id: b.id, name: b.name, phone: b.phone, slot: b.slot, endSlot: b.endSlot, guests: b.guests, telegram: b.telegram, status: b.status, soon: b.startsIn <= 180, checkedIn: b.checkedIn, startsIn: b.startsIn, callStatus: b.callStatus } : null,
         };
       }),
       menu: menu.results,

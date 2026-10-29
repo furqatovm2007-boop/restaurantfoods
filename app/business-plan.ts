@@ -156,6 +156,8 @@ export function businessPlanHtml(today = new Date()) {
     ['Raqobatchilar (yetkazib berish ilovalari, Google Maps, kassa dasturlari) bunday qila oladimi?', 'Ular yoki buyurtma va xaritaga, yoki faqat kassaga ixtisoslashgan. Bizda bitta tizimda: onlayn bron va zaldagi real holat (kamera), jarima/kafolat, Call AI, zal kassasi va POS, 3D zal va o‘zbek tilida tabiiy ovozli AI. Bu restoranning butun ichki operatsiyasini qamraydigan B2B vosita.'],
     ['Nega aynan $20 000?', 'Mahsulotning asosiy qismi allaqachon ishlab turibdi (restaurantfoods.online): bron, 3D zal, AI, zal kassasi va POS. Mablag‘ yangi mahsulot yaratishga emas — do‘kon ilovalari, 1 yillik serverlar va AI xizmatlari, 10 ta pilot restoran uchun noutbuklar (har 5–6 restoranga bittadan), chek printeri va skanerlar hamda sotuvga sarflanadi. Har bir yo‘nalish smetada dollargacha ko‘rsatilgan.'],
     ['Investitsiya qachon qaytadi?', `Maqsadli ssenariyda ${pbTarget ?? '—'}-oyda, konservativ ssenariyda ${pbCons ?? '—'}-oyda. Oylik foyda maqsadli ssenariyda ${breakEven ?? '—'}-oydan ijobiy. Taxminlar hujjatda ochiq yozilgan va har oy haqiqiy ko‘rsatkichlar bilan solishtiriladi.`],
+    ['Onlayn bron va eshikdan kelgan (walk-in) mehmonlar to‘qnashmaydimi?', 'Uch qatlamli yechim. 1) 70/30 qoidasi: egasi stollarning ≈30% ini “Faqat jonli mehmonlar uchun” deb belgilaydi — ular onlayn bron qilinmaydi, eshikdan kelgan mehmon har doim joy topadi. 2) 10 daqiqa kutish vaqti: bron mijozi 10 daqiqada kelmasa va Call AI / qo‘ng‘iroqqa javob bermasa, hostess bir bosishda stolni jonli mehmonga beradi — stol bo‘sh turmaydi. 3) Virtual kutish zali: bron mijozi kelganda stol hali band bo‘lsa, Telegram’da “5 daqiqa kuting” xabari va bepul ichimlik kuponi boradi.'],
+    ['Bron mijozi kech qolsa, restoran pul yo‘qotmaydimi?', 'Yo‘q. 10 daqiqadan keyin stol jonli mehmonga beriladi (restoran tushumi saqlanadi), bron esa “kelmadi” deb belgilanadi: ulangan kartadan kelmaslik jarimasi restoran hisobiga o‘tadi, mijozning kelmaslik hisobi oshadi. Call AI orqali kelishini tasdiqlagan mijoz uchun hostessdan qayta tasdiq so‘raladi — adolatsiz bo‘shatish bo‘lmaydi.'],
     ['Asosiy xavf nima va uni qanday kamaytirasiz?', 'Sotuv tezligi. Shuning uchun byudjetning 29% marketing va B2B sotuvga, 11% pilot uskunalarga ajratilgan: birinchi 10 restoranga noutbuk (har 5–6 restoranga bittadan — kamera, kassa va hostess ekrani), chek printeri va skanerni bepul o‘rnatib, natijani keyingi mijozlarga ko‘rsatamiz. Texnik xavf past — infratuzilma Cloudflare’da, AI uchun ichki zaxira bor, xarajat foydalanishga qarab o‘sadi.'],
   ];
   return `<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RestaurantFoods — Biznes-reja</title><link rel="stylesheet" href="/business-plan.css?v=2"></head><body>
@@ -167,7 +169,7 @@ export function businessPlanHtml(today = new Date()) {
   <p class="subtitle">Restoranlar uchun sun’iy intellektli bron, zal kassasi, nazorat va mijoz xizmati platformasi</p>
   <div class="kpis"><div><small>Investitsiya</small><b>$20 000</b><span>256 000 000 so‘m</span></div><div><small>Investitsiya qaytishi</small><b>${pbTarget ?? '—'}-oy</b><span>maqsadli ssenariy</span></div><div><small>1-yil daromadi</small><b>${mln(y1)} mln</b><span>so‘m, prognoz</span></div><div><small>1-yil sof foydasi</small><b>${mln(y1net)} mln</b><span>so‘m, prognoz</span></div></div>
   <p class="meta">restaurantfoods.online · Samarqand, O‘zbekiston · ${esc(date)} · Kurs: $1 = ${sum(USD_RATE)} so‘m</p>
-  <ol class="toc"><li>Loyiha tavsifi va texnologiya</li><li>Moliya, qoidalar va to‘lov xavfsizligi</li><li>AI: Call AI, mijoz roboti, o‘zbekcha ovoz; Gullar va rollar</li><li>Restoran operatsiyasi: zal kassasi, POS va bron himoyasi</li><li>Tariflar taqqoslamasi</li><li>$20 000 xarajatlar smetasi</li><li>12 oylik moliyaviy prognoz</li><li>Pitch nutqi va 7 ta qiyin savol-javob</li></ol>
+  <ol class="toc"><li>Loyiha tavsifi va texnologiya</li><li>Moliya, qoidalar va to‘lov xavfsizligi</li><li>AI: Call AI, mijoz roboti, o‘zbekcha ovoz; Gullar va rollar</li><li>Restoran operatsiyasi: zal kassasi, POS va bron himoyasi</li><li>Tariflar taqqoslamasi</li><li>$20 000 xarajatlar smetasi</li><li>12 oylik moliyaviy prognoz</li><li>Pitch nutqi va ${qa.length} ta qiyin savol-javob</li></ol>
 </section>
 
 <section class="page">
@@ -236,6 +238,9 @@ export function businessPlanHtml(today = new Date()) {
   <h3>Bron himoyasi va mijoz tajribasi</h3>
   <table class="grid-table"><tbody>
     <tr><th>Ish vaqti</th><td>Bron faqat restoran ish vaqtida, 30 daqiqalik qadamlarda; o‘tgan vaqt va eng yaqin 30 daqiqa tanlanmaydi.</td></tr>
+    <tr><th>70/30 qoidasi (walk-in bufer)</th><td>Egasi istalgan stolni <b>“🚶 Faqat jonli mehmonlar (Walk-in) uchun”</b> deb belgilaydi (tavsiya: stollarning ≈30%). Bunday stol xaritada ko‘rinadi, lekin onlayn bron va ushlab turish qabul qilinmaydi — uni faqat hostess yoki ofitsiant eshikdan kelgan mehmonga ochadi.</td></tr>
+    <tr><th>10 daqiqa kutish vaqti</th><td>Onlayn bron boshlangach hostess panelida <b>⏱️ 10:00</b> taymer yuradi. Mijoz 10 daqiqa ichida kelmasa (QR yoki hisob ochilmagan), <b>“🔓 Stolni jonli mehmonga bo‘shatish”</b> tugmasi faollashadi: bron “kelmadi” deb belgilanadi, kutish ro‘yxatidagilarga xabar boradi. Call AI orqali kelishini tasdiqlagan mijoz uchun qayta tasdiqlash so‘raladi.</td></tr>
+    <tr><th>Virtual kutish zali</th><td>Bron mijozi kelganda stol hali tayyor bo‘lmasa, hostess <b>“☕ 5 daqiqa kutish + Kofe bonusi”</b> tugmasini bosadi: mijozga Telegram’da “stolingiz tayyorlanmoqda” xabari va bardan bepul ichimlik kuponi (bir bronga bir marta) boradi. Mijoz kutishdan norozi bo‘lmaydi, restoran esa jonli mehmonni ham yo‘qotmaydi.</td></tr>
     <tr><th>Stolni ushlab turish</th><td>Tanlangan stol <b>5 daqiqa</b> shu mijoz uchun saqlanadi (ekranda taymer), boshqalar uni band ko‘radi.</td></tr>
     <tr><th>Stop-list</th><td>Egasi taomni, gulchi gulni bir bosishda “Vaqtincha tugadi” qiladi — mijoz uni buyurtma qila olmaydi.</td></tr>
     <tr><th>Jonli kuzatuv</th><td>✅ Qabul qilindi → 👨‍🍳 Tayyorlanmoqda → 🛵 Yetkazilmoqda → 🍽️ Stolga tayyor — xodim bosganda mijoz ekranida darhol yangilanadi.</td></tr>
@@ -278,7 +283,7 @@ export function businessPlanHtml(today = new Date()) {
 </section>
 
 <section class="page">
-  <h2 class="qa-title">Investorlarning 7 ta qiyin savoli va javoblar</h2>
+  <h2 class="qa-title">Investorlarning ${qa.length} ta qiyin savoli va javoblar</h2>
   <ol class="qa">${qa.map(([q, a]) => `<li><b>${esc(q)}</b><p>${esc(a)}</p></li>`).join('')}</ol>
   <p class="meta end">RestaurantFoods · restaurantfoods.online · ${esc(date)}</p>
 </section>

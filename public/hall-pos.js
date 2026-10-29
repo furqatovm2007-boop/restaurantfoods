@@ -77,11 +77,13 @@
   }
 
   // ---- The page ----
-  let timer = 0;
-  window.addEventListener('hashchange', () => clearInterval(timer));
+  let timer = 0,
+    tick = 0;
+  window.addEventListener('hashchange', () => (clearInterval(timer), clearInterval(tick)));
 
   async function mount(root, restaurants) {
     clearInterval(timer);
+    clearInterval(tick);
     // This mount owns `root` until another one replaces it (switching to the shop till, another page).
     const token = {};
     root.__hall = token;
@@ -160,6 +162,89 @@
     }
     const table = (n) => data.tables.find((t) => t.number === n);
 
+    // ---- Online guests at the door: grace timer, release to walk-ins, coffee bonus ----
+    /** The booking's start in Tashkent time (UTC+5), as a timestamp. */
+    const startAt = (slot) => Date.parse(new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10) + 'T' + slot + ':00+05:00');
+    const CALL = { confirmed: '📞 Call AI: kelishini tasdiqladi', declined: '📞 Call AI: kelmaydi', no_answer: '📞 Call AI: javob bermadi', unreachable: '📞 Call AI: bog‘lanib bo‘lmadi', calling: '📞 Call AI qo‘ng‘iroq qilmoqda…' };
+    /** Today's online bookings that have started (or start within 15 minutes) and whose guest has not arrived yet. */
+    function arrivals() {
+      const seen = new Set();
+      return data.tables.filter((t) => {
+        const b = t.booking;
+        if (!b || b.checkedIn || t.status === 'busy' || b.startsIn > 15 || seen.has(b.id)) return false;
+        seen.add(b.id);
+        return true;
+      });
+    }
+    const left = (b) => startAt(b.slot) + (data.graceMinutes || 10) * 60000 - Date.now();
+    const mmss = (ms) => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    };
+    function graceBlock() {
+      const list = arrivals();
+      if (!list.length) return '';
+      return `<section class="panel hp-grace"><h3>⏱️ Onlayn bron mehmonlari <span class="muted">${data.graceMinutes || 10} daqiqa kutiladi, keyin stol jonli mehmonga beriladi</span></h3><ul class="hp-grace-list">${list
+        .map((t) => {
+          const b = t.booking,
+            ms = left(b),
+            started = startAt(b.slot) <= Date.now();
+          return `<li data-grace="${esc(b.id)}" data-slot="${esc(b.slot)}"><span class="hp-q-main"><b>${esc(label(t))} · ${esc(b.name || 'Mehmon')}</b> · ${b.guests} kishi · 🕒 ${esc(b.slot)}${b.phone ? ` · <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>` : ''}<small>${CALL[b.callStatus] ? `<span class="hp-call ${b.callStatus === 'confirmed' ? 'ok' : ''}">${CALL[b.callStatus]}</span> ` : ''}<span class="hp-grace-left ${ms <= 0 ? 'over' : ''}" data-left>${ms <= 0 ? '⌛ Kutish vaqti tugadi' : started ? `⏱️ ${mmss(ms)} kutish vaqti` : `⏱️ Bron ${esc(b.slot)} da boshlanadi`}</span></small></span><span class="hp-q-actions">${b.telegram ? `<button type="button" class="quiet" data-coffee="${esc(b.id)}">☕ 5 daqiqa kutish + Kofe bonusi yuborish</button>` : ''}<button type="button" class="primary" data-release="${esc(b.id)}" ${ms > 0 ? 'disabled' : ''}>🔓 Stolni jonli mehmonga bo‘shatish</button></span></li>`;
+        })
+        .join('')}</ul></section>`;
+    }
+    function bindGrace() {
+      const send = (payload) => api('/api/manage/grace', 'POST', { restaurantId, ...payload });
+      root.querySelectorAll('[data-release]').forEach(
+        (b) =>
+          (b.onclick = async () => {
+            b.disabled = true;
+            try {
+              await send({ action: 'release', bookingId: b.dataset.release }).catch(async (err) => {
+                // The guest confirmed through Call AI: release only on a second, explicit confirmation.
+                if (err.status !== 428 || !confirm(err.message)) throw err;
+                return send({ action: 'release', bookingId: b.dataset.release, force: true });
+              });
+              toast('Stol bo‘shatildi — jonli mehmonni o‘tqazishingiz mumkin.');
+              await refresh();
+            } catch (err) {
+              b.disabled = false;
+              toast(err.message);
+            }
+          }),
+      );
+      root.querySelectorAll('[data-coffee]').forEach(
+        (b) =>
+          (b.onclick = async () => {
+            b.disabled = true;
+            try {
+              const r = await send({ action: 'coffee', bookingId: b.dataset.coffee });
+              toast('☕ Mehmonga Telegram orqali yuborildi. Kupon: ' + r.code);
+            } catch (err) {
+              b.disabled = false;
+              toast(err.message);
+            }
+          }),
+      );
+      clearInterval(tick);
+      if (!root.querySelector('[data-grace]')) return;
+      // The countdown ticks every second; the release button turns on when the grace period is over.
+      tick = setInterval(() => {
+        if (!alive() || ws) return clearInterval(tick);
+        root.querySelectorAll('[data-grace]').forEach((li) => {
+          const b = arrivals().find((t) => t.booking.id === li.dataset.grace)?.booking;
+          if (!b) return;
+          const ms = left(b),
+            el = li.querySelector('[data-left]'),
+            btn = li.querySelector('[data-release]');
+          if (startAt(b.slot) > Date.now()) return;
+          el.textContent = ms <= 0 ? '⌛ Kutish vaqti tugadi' : `⏱️ ${mmss(ms)} kutish vaqti`;
+          el.classList.toggle('over', ms <= 0);
+          if (ms <= 0 && btn.disabled) btn.disabled = false;
+        });
+      }, 1000);
+    }
+
     // ---- Table grid ----
     function customerCard(c, b) {
       if (!c && !b) return '';
@@ -170,14 +255,14 @@
     function drawGrid() {
       const counts = { free: 0, busy: 0, reserved: 0 };
       data.tables.forEach((t) => counts[t.status]++);
-      root.innerHTML = `<div class="hp-head">${restaurants.length > 1 ? `<label class="hp-restaurant">Restoran<select data-restaurant>${restaurants.map((r) => `<option value="${esc(r.id)}" ${r.id === restaurantId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>` : `<p class="hp-name">${esc(data.restaurant.name)}</p>`}<div class="hp-legend"><span class="hp-dot free"></span>Bo‘sh <b>${counts.free}</b><span class="hp-dot busy"></span>Band <b>${counts.busy}</b><span class="hp-dot reserved"></span>Bron qilingan <b>${counts.reserved}</b></div></div>${queueBlock()}${
+      root.innerHTML = `<div class="hp-head">${restaurants.length > 1 ? `<label class="hp-restaurant">Restoran<select data-restaurant>${restaurants.map((r) => `<option value="${esc(r.id)}" ${r.id === restaurantId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>` : `<p class="hp-name">${esc(data.restaurant.name)}</p>`}<div class="hp-legend"><span class="hp-dot free"></span>Bo‘sh <b>${counts.free}</b><span class="hp-dot busy"></span>Band <b>${counts.busy}</b><span class="hp-dot reserved"></span>Bron qilingan <b>${counts.reserved}</b></div></div>${graceBlock()}${queueBlock()}${
         data.tables.length
           ? `<div class="hp-grid">${data.tables
               .map((t) => {
                 const o = t.order,
                   b = t.booking;
                 const status = t.status === 'busy' ? 'Band · aktiv zakaz' : t.status === 'reserved' ? 'Bron qilingan' : 'Bo‘sh';
-                return `<button type="button" class="hp-table ${t.status}" data-table="${t.number}"><span class="hp-table-top"><b>${esc(label(t))}</b><small>${t.seats} o‘rin</small></span><span class="hp-status">${status}</span>${o ? `<span class="hp-bill">🧾 ${o.items.reduce((n, i) => n + i.qty, 0)} ta taom · <b>${esc(money(o.total))}</b></span><span class="hp-since">⏱ ${esc(since(o.openedAt))} · ${esc(o.waiter || '')}</span>` : ''}${customerCard(o?.customer, t.status === 'free' && b && !b.soon ? null : b)}${t.status === 'free' && b && !b.soon ? `<span class="hp-next">Keyingi bron: ${esc(b.slot)}</span>` : ''}</button>`;
+                return `<button type="button" class="hp-table ${t.status}" data-table="${t.number}"><span class="hp-table-top"><b>${esc(label(t))}</b><small>${t.seats} o‘rin</small></span><span class="hp-status">${status}</span>${t.walkin ? '<span class="hp-walkin-tag">🚶 Faqat jonli</span>' : ''}${o ? `<span class="hp-bill">🧾 ${o.items.reduce((n, i) => n + i.qty, 0)} ta taom · <b>${esc(money(o.total))}</b></span><span class="hp-since">⏱ ${esc(since(o.openedAt))} · ${esc(o.waiter || '')}</span>` : ''}${customerCard(o?.customer, t.status === 'free' && b && !b.soon ? null : b)}${t.status === 'free' && b && !b.soon ? `<span class="hp-next">Keyingi bron: ${esc(b.slot)}</span>` : ''}</button>`;
               })
               .join('')}</div>`
           : '<div class="panel"><p>Restoranda hali stollar kiritilmagan. Kabinet → “Qavatlar va stollar” bo‘limida qo‘shing.</p></div>'
@@ -191,6 +276,7 @@
       });
       root.querySelectorAll('[data-table]').forEach((b) => (b.onclick = () => openTable(Number(b.dataset.table))));
       bindQueue();
+      bindGrace();
     }
     async function refresh() {
       try {
@@ -394,6 +480,7 @@
 
   const stop = (root) => {
     clearInterval(timer);
+    clearInterval(tick);
     if (root) root.__hall = null;
   };
   window.RFHall = { mount, stop, receiptHtml, RECEIPT_CSS };

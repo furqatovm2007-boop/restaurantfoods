@@ -117,7 +117,7 @@
         const m = metaOf(d, tb),
           kind = kindOf(tb, m),
           shape = drawTable(kind, tb.seats),
-          st = o.statusOf ? o.statusOf(tb) : { state: 'free' },
+          st = m.walkin ? { state: 'walkin' } : o.statusOf ? o.statusOf(tb) : { state: 'free' },
           selected = o.selectedId === tb.id,
           dim = !inZone(m, o.zone || 'all'),
           x = (Number(tb.x) / 100) * W,
@@ -129,8 +129,10 @@
             ? `<g class="hp-badge hp-badge-amber" transform="translate(0 ${-shape.r - 6})"><rect x="-70" y="-14" width="140" height="24" rx="12"/><text y="3" text-anchor="middle">⏳ ${E(tr('Band qilinmoqda'))}</text></g>`
             : st.state === 'busy'
               ? `<g class="hp-badge hp-badge-red" transform="translate(0 ${shape.r - 4})"><rect x="-62" y="-12" width="124" height="22" rx="11"/><text y="4" text-anchor="middle">🔒 ${E(st.until || tr('Band'))}</text></g>`
-              : '';
-        const label = `${tb.number}-stol, ${tb.seats} kishilik, ${tr(ZONE_NAME[m.zone] || 'Asosiy zal')}, ${st.state === 'busy' ? tr('band') + ' ' + (st.until || '') : st.state === 'held' ? tr('band qilinmoqda') : tr('bo‘sh')}`;
+              : st.state === 'walkin'
+                ? `<g class="hp-badge hp-badge-amber" transform="translate(0 ${shape.r - 4})"><rect x="-62" y="-12" width="124" height="22" rx="11"/><text y="4" text-anchor="middle">🚶 ${E(tr('Faqat jonli'))}</text></g>`
+                : '';
+        const label = `${tb.number}-stol, ${tb.seats} kishilik, ${tr(ZONE_NAME[m.zone] || 'Asosiy zal')}, ${st.state === 'busy' ? tr('band') + ' ' + (st.until || '') : st.state === 'walkin' ? tr('faqat jonli mehmonlar uchun') : st.state === 'held' ? tr('band qilinmoqda') : tr('bo‘sh')}`;
         return `<g class="${cls}" data-tid="${E(tb.id)}" transform="translate(${x} ${y})" tabindex="${dim ? -1 : 0}" role="button" aria-label="${E(label)}" aria-pressed="${selected}"><g class="hp-body">${selected ? `<circle r="${shape.r}" class="hp-ring"/>` : ''}<circle r="${shape.r - 8}" class="hp-halo"/>${shape.svg}<g class="hp-num"><circle r="15"/><text y="5" text-anchor="middle">${E(tb.number)}</text></g><text y="${kind === 'vip' ? 34 : 30}" text-anchor="middle" class="hp-cap">${E(tb.seats)} ${E(tr('kishi'))}</text></g>${badge}</g>`;
       })
       .join('');
@@ -315,10 +317,10 @@
   }
   function preview(box, d, tb, o, quiet) {
     const m = metaOf(d, tb),
-      st = o.statusOf ? o.statusOf(tb) : { state: 'free' },
+      st = m.walkin ? { state: 'walkin' } : o.statusOf ? o.statusOf(tb) : { state: 'free' },
       zone = ZONES.find(([z]) => z === m.zone) || ZONES[1];
-    const status = st.state === 'busy' ? `<p class="hp2d-status busy">🔒 ${E(tr('Tanlangan vaqtda band'))}${st.until ? ': ' + E(st.until) : ''}</p>` : st.state === 'held' ? `<p class="hp2d-status held">⏳ ${E(tr('Boshqa mijoz 5 daqiqaga ushlab turibdi'))}</p>` : `<p class="hp2d-status free">● ${E(tr('Tanlangan vaqtda bo‘sh'))}${st.later ? ' · ' + E(tr('boshqa vaqtda bron')) + ': ' + E(st.later) : ''}</p>`;
-    const blocked = st.state === 'busy' || st.state === 'held';
+    const status = st.state === 'walkin' ? `<p class="hp2d-status held">🚶 ${E(tr('Bu stol faqat restoranga kelgan (walk-in) mehmonlar uchun. Onlayn bron qilinmaydi.'))}</p>` : st.state === 'busy' ? `<p class="hp2d-status busy">🔒 ${E(tr('Tanlangan vaqtda band'))}${st.until ? ': ' + E(st.until) : ''}</p>` : st.state === 'held' ? `<p class="hp2d-status held">⏳ ${E(tr('Boshqa mijoz 5 daqiqaga ushlab turibdi'))}</p>` : `<p class="hp2d-status free">● ${E(tr('Tanlangan vaqtda bo‘sh'))}${st.later ? ' · ' + E(tr('boshqa vaqtda bron')) + ': ' + E(st.later) : ''}</p>`;
+    const blocked = st.state === 'busy' || st.state === 'held' || st.state === 'walkin';
     box.hidden = false;
     box.innerHTML = `<article class="hp2d-card"><div class="hp2d-photo">${tb.image_url ? `<img src="${E(tb.image_url)}" alt="${E(tb.number + '-stol')}" loading="lazy" referrerpolicy="no-referrer">` : `<span>📷 ${E(tr('Stol rasmi hali qo‘shilmagan'))}</span>`}</div><div class="hp2d-card-body"><button type="button" class="hp2d-x" data-close aria-label="${E(tr('Yopish'))}">✕</button><h4>${E(tr('Stol'))} #${E(tb.number)} • ${capacity(Number(tb.seats) || 2)} ${E(tr('kishilik'))}</h4><p class="hp2d-zone">${zone[1]} ${E(tr(ZONE_NAME[m.zone] || 'Asosiy zal'))} · ${E(tb.floor)}-${E(tr('qavat'))}</p>${(m.tags || []).length ? `<div class="hp2d-tags">${m.tags.map((x) => `<span>${E(tr(TAGS[x]))}</span>`).join('')}</div>` : ''}${status}${tb.atmosphere ? `<p class="hp2d-note">${E(tb.atmosphere)}</p>` : ''}<button type="button" class="hp2d-choose" data-choose ${blocked ? 'disabled' : ''}>✅ ${E(tr(o.full || box.closest('.hp-full') ? 'Shu stolni bron qilish' : 'Shu stolni tanlash'))}</button></div></article>`;
     box.querySelector('[data-close]').onclick = () => {
@@ -353,7 +355,7 @@
       full = false,
       z = null,
       view = null;
-    const meta = () => Object.fromEntries(tables.map((tb) => [String(tb.number), { zone: tb.zone, kind: tb.kind, tags: tb.tags || [] }]));
+    const meta = () => Object.fromEntries(tables.map((tb) => [String(tb.number), { zone: tb.zone, kind: tb.kind, tags: tb.tags || [], walkin: tb.walkin === true }]));
     const draw = () => {
       // The drawing reads kinds / zones from d.meta: keep it in step with the local edits.
       d.meta = meta();
@@ -367,7 +369,7 @@
         ${d.floors > 1 ? `<div class="floor-tabs">${Array.from({ length: d.floors }, (_, i) => `<button type="button" data-ed-floor="${i + 1}" aria-pressed="${floor === i + 1}">${i + 1}-${E(tr('qavat'))}</button>`).join('')}</div>` : ''}
         <div class="hp-palette">${Object.entries(SCENE).map(([k, [i, n]]) => `<button type="button" data-add="${k}">${i} ${E(tr(n))}</button>`).join('')}</div>
         <div class="hp-ed-grid"><div class="hp2d-stage"><div class="hp2d-tools"><button type="button" data-zoom="in">+</button><button type="button" data-zoom="out">−</button><button type="button" data-zoom="fit">⤢</button></div><svg class="hp2d-svg hp-edit" viewBox="0 0 ${W} ${H}">${defs}${floorRect(H)}${drawScene(items, H)}${drawTables(d, list.map((tb) => ({ ...tb })), H, { selectedId: st?.id, statusOf: () => ({ state: 'free' }) }).replace(/data-tid/g, 'data-edit-tid data-tid')}</svg></div>
-        <div class="hp-ed-side">${st ? tableForm(st) : si ? `<h3>${SCENE[si.type][0]} ${E(tr(SCENE[si.type][1]))}</h3><p class="muted">${E(tr('Rejada surib joylashtiring.'))}</p><button type="button" class="quiet danger" data-del-item>🗑 ${E(tr('Olib tashlash'))}</button>` : `<p class="muted">${E(tr('Stol yoki elementni tanlang.'))}</p><p class="muted">${list.length} ${E(tr('ta stol'))} · ${items.length} ${E(tr('ta element'))}</p>`}</div></div></div>`;
+        <div class="hp-ed-side">${st ? tableForm(st) : si ? `<h3>${SCENE[si.type][0]} ${E(tr(SCENE[si.type][1]))}</h3><p class="muted">${E(tr('Rejada surib joylashtiring.'))}</p><button type="button" class="quiet danger" data-del-item>🗑 ${E(tr('Olib tashlash'))}</button>` : `<p class="muted">${E(tr('Stol yoki elementni tanlang.'))}</p><p class="muted">${list.length} ${E(tr('ta stol'))} · ${items.length} ${E(tr('ta element'))}</p>${walkinSummary()}`}</div></div></div>`;
       const svg = host.querySelector('svg');
       z = zoomable(svg, H, () => !!dragging);
       z.restore(view);
@@ -437,7 +439,13 @@
       svg.addEventListener('pointerup', end);
       svg.addEventListener('pointercancel', end);
     };
-    const tableForm = (tb) => `<form class="form hp-ed-form" data-ed-form><h3>${E(tb.number)}-${E(tr('stol'))}</h3><label>${E(tr('SIG‘IMI (KISHI)'))}<input name="seats" type="number" min="1" max="30" value="${E(tb.seats)}"></label><label>${E(tr('STOL SHAKLI'))}<select name="kind">${Object.entries(KIND_NAME).map(([k, n]) => `<option value="${k}" ${tb.kind === k ? 'selected' : ''}>${E(tr(n))}</option>`).join('')}</select></label><label>${E(tr('JOYLASHUV'))}<select name="zone">${Object.entries(ZONE_NAME).map(([k, n]) => `<option value="${k}" ${tb.zone === k ? 'selected' : ''}>${E(tr(n))}</option>`).join('')}</select></label><fieldset class="hp-ed-tags"><legend>${E(tr('Qulayliklar'))}</legend>${Object.entries(TAGS).map(([k, n]) => `<label class="check"><input type="checkbox" name="tag" value="${k}" ${(tb.tags || []).includes(k) ? 'checked' : ''}> ${E(tr(n))}</label>`).join('')}</fieldset><p class="muted">${E(tr('Rasm va tavsifni “Rasm va tavsif” bo‘limida qo‘shasiz.'))}</p></form>`;
+    /** The 70/30 rule: about 30% of the tables kept for guests who walk in. */
+    const walkinSummary = () => {
+      const n = tables.filter((tb) => tb.walkin).length,
+        pct = tables.length ? Math.round((n / tables.length) * 100) : 0;
+      return `<p class="hp-ed-ratio">🚶 ${E(tr('Walk-in'))}: <b>${n} / ${tables.length}</b> ${E(tr('stol'))} (${pct}%) · ${E(tr('tavsiya ≈30%'))}</p>`;
+    };
+    const tableForm = (tb) => `<form class="form hp-ed-form" data-ed-form><h3>${E(tb.number)}-${E(tr('stol'))}</h3><label>${E(tr('SIG‘IMI (KISHI)'))}<input name="seats" type="number" min="1" max="30" value="${E(tb.seats)}"></label><label>${E(tr('STOL SHAKLI'))}<select name="kind">${Object.entries(KIND_NAME).map(([k, n]) => `<option value="${k}" ${tb.kind === k ? 'selected' : ''}>${E(tr(n))}</option>`).join('')}</select></label><label>${E(tr('JOYLASHUV'))}<select name="zone">${Object.entries(ZONE_NAME).map(([k, n]) => `<option value="${k}" ${tb.zone === k ? 'selected' : ''}>${E(tr(n))}</option>`).join('')}</select></label><fieldset class="hp-ed-tags"><legend>${E(tr('Qulayliklar'))}</legend>${Object.entries(TAGS).map(([k, n]) => `<label class="check"><input type="checkbox" name="tag" value="${k}" ${(tb.tags || []).includes(k) ? 'checked' : ''}> ${E(tr(n))}</label>`).join('')}</fieldset><label class="check hp-ed-walkin"><input type="checkbox" name="walkin" ${tb.walkin ? 'checked' : ''}> 🚶 ${E(tr('Faqat jonli mehmonlar (Walk-in) uchun'))}</label><p class="muted">${E(tr('Bunday stol xaritada ko‘rinadi, lekin onlayn bron qilinmaydi — uni faqat hostess yoki ofitsiant restoranga kelgan mehmonga ochadi.'))}</p>${walkinSummary()}<p class="muted">${E(tr('Rasm va tavsifni “Rasm va tavsif” bo‘limida qo‘shasiz.'))}</p></form>`;
     const bindForm = (tb) => {
       const f = host.querySelector('[data-ed-form]');
       f.onchange = () => {
@@ -445,6 +453,7 @@
         tb.kind = f.elements.kind.value;
         tb.zone = f.elements.zone.value;
         tb.tags = [...f.querySelectorAll('[name=tag]:checked')].map((c) => c.value);
+        tb.walkin = f.elements.walkin.checked;
         dirty = true;
         draw();
       };
@@ -455,7 +464,7 @@
       busy = true;
       draw();
       try {
-        await call('/api/tables', 'POST', { action: 'arrange', restaurantId: o.restaurantId, tables: tables.map((tb) => ({ id: tb.id, x: tb.x, y: tb.y, seats: Number(tb.seats), kind: tb.kind, zone: tb.zone, tags: tb.tags || [] })), scene });
+        await call('/api/tables', 'POST', { action: 'arrange', restaurantId: o.restaurantId, tables: tables.map((tb) => ({ id: tb.id, x: tb.x, y: tb.y, seats: Number(tb.seats), kind: tb.kind, zone: tb.zone, tags: tb.tags || [], walkin: tb.walkin === true })), scene });
         dirty = false;
         toast('✅ ' + tr('Zal xaritasi saqlandi.'));
         o.onSaved?.();

@@ -7,6 +7,7 @@ import { audit } from '../../account-admin';
 import { PLANS,isPlan,planState,trialEnd,extendPaid,requireFeature } from '../../plans';
 import { telegram,telegramConfigured,notifyCustomer } from '../../telegram';
 import { chargePenalty,cancellationPenalty,NO_SHOW_PENALTY } from '../../penalties';
+import { GRACE_MIN } from '../../hall-layout';
 import { cardBindingEnabled } from '../../payme-cards';
 import { callNow,runCallAi,phoneProvider } from '../../call-ai';
 import { restaurantAccess,type Level } from '../../staff';
@@ -18,7 +19,8 @@ import { countedReview } from '../../review-rules';
 // Last health watch result (app/health.ts) and whether an admin Telegram chat receives its alerts.
 const healthStatus=async()=>{const row=await env.DB!.prepare("SELECT value FROM app_settings WHERE key='health:last'").first<{value:string}>();const chats=await env.DB!.prepare("SELECT COUNT(*) AS n FROM accounts WHERE role='admin' AND telegram_chat_id IS NOT NULL AND telegram_chat_id<>''").first<{n:number}>();let last=null;try{last=row?JSON.parse(row.value):null}catch{}return{last,adminChat:Number(chats?.n)>0||!!env.ADMIN_TELEGRAM_CHAT_ID?.trim()}};
 export const dynamic='force-dynamic';
-const NO_SHOW_GRACE_MIN=15;
+// Same grace period as the hostess panel's "release to walk-in guests" (app/grace.ts).
+const NO_SHOW_GRACE_MIN=GRACE_MIN;
 async function manager(){const u=await identity();if(!u)throw new ApiError(401,'Avval kiring.');if(!['admin','restaurant_owner'].includes(u.role))throw new ApiError(403,'Ruxsat yo‘q.');return u}
 // Staff (hostess/waiter/manager) reach only the actions their level allows; everything else stays the owner's.
 async function staffUser(){const u=await identity();if(!u)throw new ApiError(401,'Avval kiring.');return u}

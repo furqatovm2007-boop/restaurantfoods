@@ -61,7 +61,7 @@ export async function todaysBookings(restaurantId: string, now = Date.now()) {
   const { date, minutes: m } = localNow(now);
   const rows = (
     await env.DB!.prepare(
-      "SELECT b.id,b.table_number,b.merged_table,b.slot,CASE WHEN b.end_slot<>'' THEN b.end_slot ELSE time(b.slot,'+2 hours') END AS end_slot,b.guests,b.phone,b.status,b.user_id,b.checked_in_at,a.name,a.telegram_chat_id FROM bookings b LEFT JOIN accounts a ON a.id=b.user_id WHERE b.restaurant_id=? AND b.date=? AND b.status IN ('pending','confirmed') ORDER BY b.slot",
+      "SELECT b.id,b.table_number,b.merged_table,b.slot,CASE WHEN b.end_slot<>'' THEN b.end_slot ELSE time(b.slot,'+2 hours') END AS end_slot,b.guests,b.phone,b.status,b.user_id,b.checked_in_at,b.call_status,a.name,a.telegram_chat_id FROM bookings b LEFT JOIN accounts a ON a.id=b.user_id WHERE b.restaurant_id=? AND b.date=? AND b.status IN ('pending','confirmed') ORDER BY b.slot",
     )
       .bind(restaurantId, date)
       .all<any>()
@@ -70,7 +70,7 @@ export async function todaysBookings(restaurantId: string, now = Date.now()) {
   for (const b of rows)
     for (const t of [b.table_number, b.merged_table].filter((x) => x != null))
       if (!byTable.has(t))
-        byTable.set(t, { id: b.id, name: b.name || '', phone: b.phone, slot: String(b.slot).slice(0, 5), endSlot: String(b.end_slot).slice(0, 5), guests: b.guests, status: b.status, userId: b.user_id, telegram: !!b.telegram_chat_id, startsIn: minutes(b.slot) - m, checkedIn: !!b.checked_in_at });
+        byTable.set(t, { id: b.id, name: b.name || '', phone: b.phone, slot: String(b.slot).slice(0, 5), endSlot: String(b.end_slot).slice(0, 5), guests: b.guests, status: b.status, userId: b.user_id, telegram: !!b.telegram_chat_id, startsIn: minutes(b.slot) - m, checkedIn: !!b.checked_in_at, callStatus: String(b.call_status || '') });
   return byTable;
 }
 

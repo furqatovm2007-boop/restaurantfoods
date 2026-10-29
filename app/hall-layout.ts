@@ -27,6 +27,8 @@ export interface TableMeta {
   zone: Zone;
   kind: (typeof KINDS)[number] | '';
   tags: string[];
+  /** 70/30 buffer: kept for walk-in guests only — shown on the plan, never bookable online. */
+  walkin: boolean;
 }
 export interface SceneItem {
   id: string;
@@ -87,7 +89,7 @@ export function cleanMeta(input: any): TableMeta {
   const zone = ZONES.includes(input?.zone) ? input.zone : 'main';
   const kind = KINDS.includes(input?.kind) ? input.kind : '';
   const tags = Array.isArray(input?.tags) ? [...new Set(input.tags.filter((t: unknown) => TAGS.includes(t as any)))] as string[] : [];
-  return { zone, kind, tags };
+  return { zone, kind, tags, walkin: input?.walkin === true };
 }
 export async function tableMetaOf(restaurantId: string): Promise<Record<string, TableMeta>> {
   const raw = await read<Record<string, unknown>>('tablemeta:' + restaurantId, {});
@@ -95,6 +97,13 @@ export async function tableMetaOf(restaurantId: string): Promise<Record<string, 
   for (const [k, v] of Object.entries(raw && typeof raw === 'object' ? raw : {})) if (/^\d{1,3}$/.test(k)) out[k] = cleanMeta(v);
   return out;
 }
+/** Table numbers kept for walk-in guests only (the owner's 70/30 buffer). */
+export async function walkinTables(restaurantId: string) {
+  return new Set(Object.entries(await tableMetaOf(restaurantId)).filter(([, m]) => m.walkin).map(([n]) => Number(n)));
+}
+/** Grace period: a booked table waits this many minutes after the start before it can go to a walk-in guest (app/grace.ts). */
+export const GRACE_MIN = 10;
+export const WALKIN_ONLY = 'Bu stol faqat jonli (walk-in) mehmonlar uchun saqlangan. Boshqa stol tanlang.';
 export async function saveTableMeta(restaurantId: string, meta: Record<string, TableMeta>, by: string) {
   await write('tablemeta:' + restaurantId, meta, by);
 }

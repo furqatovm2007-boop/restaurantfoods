@@ -31,7 +31,10 @@ const FAQ: [string, string][] = [
     'Kelmay qolish (No-Show) muammosi qanday hal qilinadi?',
     'Uch qatlamli himoya: onlayn bron kamida 1 soat oldin yopiladi; tanlangan stol 5 daqiqa ushlab turiladi va to‘lanmasa avtomatik bo‘shaydi; bron vaqtiga 2 soat qolganda Call AI mijozga qo‘ng‘iroq qilib, kelishini tasdiqlatadi. Onlayn zaklad (Payme / Click) bilan mehmon jiddiy bron qiladi.',
   ],
-  ['Jonli navbat va onlayn bron to‘qnashmaydimi?', 'Yo‘q. Onlayn bron 1 soat oldin yopiladi, zalga kelganlar esa administrator planshetidagi «Jonli navbat»da turadi: kutish vaqti va mos bo‘sh stol ko‘rinadi, QR-chipta bilan kelgan mehmon bir bosishda o‘tqaziladi.'],
+  [
+    'Jonli navbat va onlayn bron to‘qnashmaydimi?',
+    'Yo‘q. 70/30 qoidasi: egasi stollarning ≈30% ini «Faqat jonli mehmonlar (Walk-in) uchun» deb belgilaydi — ular onlayn bron qilinmaydi. Onlayn bron 1 soat oldin yopiladi; bron mijozi 10 daqiqa ichida kelmasa, hostess stolni bir bosishda jonli mehmonga beradi. Stol hali tayyor bo‘lmasa, mijozga Telegram’da «5 daqiqa kuting» xabari va bepul ichimlik kuponi boradi (virtual kutish zali).',
+  ],
   ['Smart Vision kameralari uchun qo‘shimcha xarajat bormi?', 'Restoranning mavjud kameralari 0 so‘m qo‘shimcha xarajat bilan ulanadi. AI to‘g‘ridan-to‘g‘ri qurilmada ishlaydi va stollarni «Bo‘sh / Band» deb belgilaydi; kamera tasviri serverga yuborilmaydi.'],
   ['Tug‘ilgan kun CRM qanday ishlaydi va suiiste’moldan qanday himoyalangan?', 'Mijoz tug‘ilgan kunida 15% chegirma oladi. Tug‘ilgan sana bir marta kiritiladi va keyin o‘zgartirilmaydi — har oy «tug‘ilgan kun» qilib chegirma olishning iloji yo‘q.'],
   ['3D Zal xizmati nima?', 'Mutaxassislar zalni o‘lchab, uning 3D modelini yaratib tizimga ulaydi: mijoz zal ichini 3D ko‘rinishda aylanib stol tanlaydi. Bu bir martalik VIP xizmat: 1,9 / 3,5 / 5,9 mln so‘m. Qolgan restoranlar premium 2D zal sxemasidan foydalanadi.'],

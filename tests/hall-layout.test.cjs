@@ -32,7 +32,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(r.status,200);
  const t1=db.prepare("SELECT x,y FROM restaurant_tables WHERE id='t1'").get(),t2=db.prepare("SELECT seats,shape,x,y FROM restaurant_tables WHERE id='t2'").get();
  assert.deepEqual({...t1},{x:96,y:4},'positions clamped');assert.deepEqual({...t2},{seats:6,shape:'rectangle',x:60,y:62});
- d=await get('/api/tables?restaurantId=r');assert.deepEqual({...d.meta['1'],tags:[...d.meta['1'].tags]},{zone:'window',kind:'',tags:['window','quiet']},'unknown tags dropped');assert.equal(d.meta['2'].kind,'vip');
+ d=await get('/api/tables?restaurantId=r');assert.deepEqual({...d.meta['1'],tags:[...d.meta['1'].tags]},{zone:'window',kind:'',tags:['window','quiet'],walkin:false},'unknown tags dropped');assert.equal(d.meta['2'].kind,'vip');
  assert.deepEqual(d.scene.map(s=>[s.type,s.floor,s.x]),[['entrance',1,50],['bar',2,30],['stage',2,98]],'floor and position clamped');
  assert.equal((await arrange({tables:[],scene:[{type:'pool',floor:1,x:1,y:1}]})).status,400,'unknown element');
  assert.equal((await arrange({tables:[],scene:Array.from({length:41},()=>({type:'plant',floor:1,x:5,y:5}))})).status,400,'at most 40 elements');

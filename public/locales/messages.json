@@ -6658,5 +6658,45 @@
     "uz": "Kodni va yangi parolni kiriting.",
     "ru": "Введите код и новый пароль.",
     "en": "Enter the code and a new password."
+  },
+  "Faqat jonli": {
+    "uz": "Faqat jonli",
+    "ru": "Только вживую",
+    "en": "Walk-in only"
+  },
+  "faqat jonli mehmonlar uchun": {
+    "uz": "faqat jonli mehmonlar uchun",
+    "ru": "только для гостей без брони",
+    "en": "walk-in guests only"
+  },
+  "Bu stol faqat restoranga kelgan (walk-in) mehmonlar uchun. Onlayn bron qilinmaydi.": {
+    "uz": "Bu stol faqat restoranga kelgan (walk-in) mehmonlar uchun. Onlayn bron qilinmaydi.",
+    "ru": "Этот стол только для гостей, пришедших без брони (walk-in). Онлайн-бронь недоступна.",
+    "en": "This table is kept for walk-in guests. It cannot be booked online."
+  },
+  "Walk-in": {
+    "uz": "Walk-in",
+    "ru": "Walk-in",
+    "en": "Walk-in"
+  },
+  "tavsiya ≈30%": {
+    "uz": "tavsiya ≈30%",
+    "ru": "рекомендуем ≈30%",
+    "en": "recommended ≈30%"
+  },
+  "Faqat jonli mehmonlar (Walk-in) uchun": {
+    "uz": "Faqat jonli mehmonlar (Walk-in) uchun",
+    "ru": "Только для гостей без брони (Walk-in)",
+    "en": "Walk-in guests only"
+  },
+  "Bunday stol xaritada ko‘rinadi, lekin onlayn bron qilinmaydi — uni faqat hostess yoki ofitsiant restoranga kelgan mehmonga ochadi.": {
+    "uz": "Bunday stol xaritada ko‘rinadi, lekin onlayn bron qilinmaydi — uni faqat hostess yoki ofitsiant restoranga kelgan mehmonga ochadi.",
+    "ru": "Такой стол виден на схеме, но не бронируется онлайн — его открывает хостес или официант для пришедшего гостя.",
+    "en": "The table shows on the plan but cannot be booked online — only the hostess or a waiter opens it for a guest at the door."
+  },
+  "🚶 Bu stol faqat jonli (walk-in) mehmonlar uchun saqlangan. Boshqa stol tanlang.": {
+    "uz": "🚶 Bu stol faqat jonli (walk-in) mehmonlar uchun saqlangan. Boshqa stol tanlang.",
+    "ru": "🚶 Этот стол оставлен для гостей без брони (walk-in). Выберите другой стол.",
+    "en": "🚶 This table is kept for walk-in guests. Please choose another table."
   }
 }
