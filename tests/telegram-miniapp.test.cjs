@@ -67,7 +67,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
 
  // Bot menu.
  sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'/start'})),'menu');
- const kbd=sent[0].body.reply_markup;assert.equal(kbd.is_persistent,true);assert.equal(kbd.resize_keyboard,true);assert.equal(kbd.keyboard[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp');assert.deepEqual(kbd.keyboard.slice(1).map(r=>r.map(k=>k.text)),[['🏢 Restoranlar ro‘yxati','📖 Menyu'],['💐 Gullar','📅 Bronlarim va QR'],['🤖 AI Yordamchi','👤 Profilim']]);const main=sent[1].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
+ const kbd=sent[0].body.reply_markup;assert.equal(kbd.is_persistent,true);assert.equal(kbd.resize_keyboard,true);assert.equal(kbd.keyboard[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=uz');assert.deepEqual(kbd.keyboard.slice(1).map(r=>r.map(k=>k.text)),[['🍽️ Restoranlar','📖 Menyu'],['💐 Gullar','📅 Bronlarim'],['🤖 AI Yordamchi','👤 Profilim'],['🌐 Til / Язык / Language']]);assert.deepEqual(sent[1].body.reply_markup.inline_keyboard[0].map(b=>b.callback_data),['m:l:uz','m:l:ru','m:l:en'],'/start offers the three languages');const main=sent[2].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=uz');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
  assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'/start'}}),null,'groups keep the restaurant bot');
  assert.equal(await menu.handleMenu(msg(42,{text:'/start l_abc'})),null,'deep links go to the regular bot');
  const until=new Date(Date.now()+30*86400000).toISOString();
@@ -87,7 +87,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  // Step 2: the chosen restaurant's card — its own booking deep link, menu, free tables and the way back.
  sent.length=0;assert.equal(await menu.handleMenu(cb('m:c:r1')),'menu_restaurant');
  const osh=sent.find(s=>s.method==='sendPhoto');assert.equal(osh.body.photo,'https://restaurantfoods.online/api/media?key=photos/x.jpg');assert.match(osh.body.caption,/bo‘sh stollar: <b>2<\/b> \/ 3/);assert.match(osh.body.caption,/⭐/);
- const kb=osh.body.reply_markup.inline_keyboard;assert.equal(kb[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&restaurant_id=r1&action=book');assert.match(kb[0][0].text,/Shu restoran stollarini ko‘rish va Bron qilish/);assert.deepEqual([kb[1][0].callback_data,kb[1][1].callback_data,kb[2][0].callback_data],['m:m:r1','m:t:r1','m:r:0']);assert.match(kb[2][0].text,/Orqaga \(Barcha restoranlar\)/);
+ const kb=osh.body.reply_markup.inline_keyboard;assert.equal(kb[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=uz&restaurant_id=r1&action=book');assert.match(kb[0][0].text,/Shu restoran stollarini ko‘rish va Bron qilish/);assert.deepEqual([kb[1][0].callback_data,kb[1][1].callback_data,kb[2][0].callback_data],['m:m:r1','m:t:r1','m:r:0']);assert.match(kb[2][0].text,/Orqaga \(Barcha restoranlar\)/);
  assert.equal(await menu.handleMenu(cb('m:c:rf-demo-1')),'menu_gone','demo restaurants have no card');assert.equal(await menu.handleMenu(cb('m:c:r3')),'menu_gone','inactive restaurants have no card');
  sent.length=0;await menu.handleMenu(cb('m:c:r2'));assert.ok(sent.some(s=>s.method==='sendMessage'&&(s.body.text||'').includes('Broken Photo')),'a photo Telegram refuses falls back to text');
  sent.length=0;assert.equal(await menu.handleMenu(cb('m:t:r1')),'menu_tables');let out=sent.find(s=>s.method==='sendMessage').body.text;assert.ok(out.includes('1-stol')&&out.includes('3-stol')&&!out.includes('2-stol'),'busy table hidden');
@@ -109,7 +109,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  const raw=zlib.inflateSync(Buffer.concat(idat)),rgba=new Uint8ClampedArray(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const g=raw[y*(w+1)+1+x];rgba.set([g,g,g,255],(y*w+x)*4)}
  const pass=db.prepare("SELECT pass_code FROM bookings WHERE id='bk1'").get().pass_code;assert.ok(pass);assert.equal(jsQR(rgba,w,h).data,'RFB1:'+pass);
  // Admin setup of the menu button.
- sent.length=0;const setup=await menu.setupMiniApp();assert.equal(setup.menuButton,true);assert.deepEqual({...sent.find(s=>s.method==='setChatMenuButton').body.menu_button},{type:'commands'});const cmds=sent.find(s=>s.method==='setMyCommands').body;assert.equal(cmds.scope.type,'default');assert.deepEqual(cmds.commands.map(c=>c.command),['start','restaurants','menu','flowers','mybookings','ai','profile']);
+ sent.length=0;const setup=await menu.setupMiniApp();assert.equal(setup.menuButton,true);assert.deepEqual({...sent.find(s=>s.method==='setChatMenuButton').body.menu_button},{type:'commands'});const cmds=sent.find(s=>s.method==='setMyCommands').body;assert.equal(cmds.scope.type,'default');assert.deepEqual(cmds.commands.map(c=>c.command),['start','restaurants','menu','flowers','mybookings','ai','profile','language']);assert.deepEqual(sent.filter(s=>s.method==='setMyCommands').map(s=>s.body.language_code||'default').sort(),['default','en','ru'],'commands in each language');
  // Commands and the keyboard's plain-text labels open the same sections; other text brings the keyboard back.
  for(const [input,expect] of [['/restaurants','menu_restaurants'],['🏢 Restoranlar ro‘yxati','menu_restaurants'],['/menu','menu_picker'],['📖 Menyu','menu_picker'],['/flowers','menu_flowers'],['💐 Gullar','menu_flowers'],['/mybookings','menu_bookings'],['📅 Bronlarim va QR','menu_bookings'],['/ai','menu_ai'],['🤖 AI Yordamchi','menu_ai'],['/profile','menu_profile'],['👤 Profilim','menu_profile'],['/restaurants@rf_bot','menu_restaurants'],['salom','menu_hint']]){sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:input})),expect,input)}
  sent.length=0;await menu.handleMenu(msg(42,{text:'/menu'}));assert.deepEqual(sent[0].body.reply_markup.inline_keyboard.find(r=>r[0].callback_data==='m:m:r1')[0].text,'📖 Osh Markazi');
@@ -119,6 +119,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'salom'}}),null,'groups are never answered by the menu');
  // Contact flows bring the menu keyboard back instead of removing it.
  sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.is_persistent,true);
+ // Language: /language and the 🌐 key show the picker; a choice is saved for the chat and the linked account,
+ // and the keyboard, the menus and the Mini App links follow it. Old keyboard labels keep working.
+ sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'/language'})),'menu_language');assert.equal(sent[0].body.reply_markup.inline_keyboard[0].length,3);
+ assert.equal(await menu.handleMenu(msg(42,{text:'🌐 Til / Язык / Language'})),'menu_language');
+ sent.length=0;assert.equal(await menu.handleMenu(cb('m:l:ru')),'menu_language_ru');
+ assert.equal(sent.find(s=>s.method==='editMessageText').body.text,'✅ Язык сохранён: Русский');
+ const ruKbd=sent.find(s=>s.body?.reply_markup?.keyboard).body.reply_markup;assert.equal(ruKbd.keyboard[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=ru');assert.deepEqual(ruKbd.keyboard.slice(1,4).map(r=>r.map(k=>k.text)),[['🍽️ Рестораны','📖 Меню'],['💐 Цветы','📅 Мои брони'],['🤖 ИИ Помощник','👤 Профиль']]);
+ assert.equal(db.prepare("SELECT preferred_language FROM accounts WHERE telegram_chat_id='42'").get().preferred_language,'ru','saved on the linked account');
+ sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'🍽️ Рестораны'})),'menu_restaurants');assert.match(sent[0].body.text,/Выберите ресторан/);
+ sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'🏢 Restoranlar ro‘yxati'})),'menu_restaurants','old keyboard label');
+ sent.length=0;await menu.handleMenu(cb('m:c:r1'));const ruCard=sent.find(s=>s.method==='sendPhoto');assert.match(ruCard.body.reply_markup.inline_keyboard[0][0].web_app.url,/lang=ru&restaurant_id=r1/);assert.match(ruCard.body.caption,/Свободных столов сейчас/);
+ sent.length=0;await menu.handleMenu(msg(42,{text:'salom'}));assert.match(sent[0].body.text,/Выберите кнопку/);assert.equal(sent[0].body.reply_markup.keyboard[1][0].text,'🍽️ Рестораны');
+ sent.length=0;await menu.handleMenu(cb('m:l:en'));await menu.handleMenu(msg(42,{text:'📅 My Bookings'}));assert.ok(sent.some(s=>s.form&&/Confirmed/.test(s.caption)),'bookings in English');
+ assert.equal(await menu.handleMenu(cb('m:l:xx')),'menu_unknown');
+ // The site's language switch moves the bot too; contact flows keep the chat's keyboard language.
+ const i18n=load('app/bot-i18n.ts',cf);await i18n.syncAccountLang('tg:42','ru');assert.equal(await i18n.chatLang('42'),'ru');
+ sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.keyboard[1][0].text,'🍽️ Рестораны');
+ assert.equal(await i18n.chatLang('999'),'uz','never chosen: Uzbek');
+ await menu.handleMenu(cb('m:l:uz'));
  // One-time announcement to every linked chat, in batches, never twice; suspended and unlinked are skipped.
  db.exec("UPDATE accounts SET status='suspended' WHERE id='sb:off'");const linked=db.prepare("SELECT COUNT(*) n FROM accounts WHERE telegram_chat_id IS NOT NULL AND COALESCE(status,'active')<>'suspended'").get().n;assert.ok(linked>=4);
  sent.length=0;let st=await menu.syncOldUsers(2);assert.equal(st.sent,2);assert.equal(st.finished,false);

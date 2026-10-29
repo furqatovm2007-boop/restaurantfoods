@@ -14,8 +14,8 @@ export const dynamic = 'force-dynamic';
 const view = (b: CallRow) => {
   const l = lang(b.customer_lang),
     t = CALL_TEXT[l],
-    name = (b.customer_name || '').split(/\s+/)[0] || 'mehmon';
-  return { id: b.id, lang: l, name, restaurant: b.restaurant_name, restaurantPhone: b.restaurant_phone || '', table: b.table_number, guests: b.guests, date: b.date, slot: String(b.slot).slice(0, 5), status: b.status, callStatus: b.call_status, question: t.ask(name, b.restaurant_name, b.table_number), thanks: t.thanks, sorry: t.sorry, active: ['pending', 'confirmed'].includes(b.status) };
+    name = (b.customer_name || '').split(/\s+/)[0] || t.guest;
+  return { id: b.id, lang: l, name, restaurant: b.restaurant_name, restaurantPhone: b.restaurant_phone || '', table: b.table_number, guests: b.guests, date: b.date, slot: String(b.slot).slice(0, 5), status: b.status, callStatus: b.call_status, question: t.ask(name, b.restaurant_name, String(b.slot).slice(0, 5)), thanks: t.thanks, sorry: t.sorry, active: ['pending', 'confirmed'].includes(b.status) };
 };
 async function load(id: unknown, k: unknown) {
   const u = await identity().catch(() => null);

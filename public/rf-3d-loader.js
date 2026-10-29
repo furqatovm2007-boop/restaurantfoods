@@ -3,7 +3,7 @@
  let pending=null;
  window.RF3DLoad=()=>{if(window.RF3D)return Promise.resolve(window.RF3D);pending??=new Promise((resolve,reject)=>{
   const css=document.createElement('link');css.rel='stylesheet';css.href='/rf-3d.css?v=16';document.head.append(css);
-  const script=document.createElement('script');script.src='/rf-3d.js?v=17';script.async=true;
+  const script=document.createElement('script');script.src='/rf-3d.js?v=18';script.async=true;
   script.onload=()=>window.RF3D?resolve(window.RF3D):reject(new Error('RF3D_UNAVAILABLE'));
   script.onerror=()=>{pending=null;css.remove();script.remove();reject(new Error('RF3D_UNAVAILABLE'))};
   document.head.append(script)});return pending};

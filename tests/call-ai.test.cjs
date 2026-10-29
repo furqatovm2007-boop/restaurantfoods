@@ -27,9 +27,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  let r=await call.runCallAi();assert.equal(r.called,2,'b1 + b2 only (Premium, active, within 2 h)');
  // b1: voice note via the Edge Function service mode, then the question with Yes/No buttons.
  assert.equal(edge[0].b.mode,'call_speech');assert.equal(edge[0].headers['X-RF-Proxy'],'proxy-secret');assert.equal(edge[0].headers['X-RF-Service'],'call');
- assert.equal(edge[0].b.text,'Assalomu alaykum Aziz! Real <Osh>dagi 1-stol broningizga 2 soat qoldi. Kelishingizni tasdiqlaysizmi?');
+ assert.match(edge[0].b.text,/^Assalomu alaykum, Aziz! Soat \d\d:\d\d da Real <Osh> restoranida stolingiz band qilingan\. Tashrifingizni tasdiqlaysizmi\?$/);
  const voice=tg.find(x=>x.method==='sendVoice');assert.equal(voice.chat,'500');assert.equal(voice.voice.type,'audio/ogg');
- const ask=tg.find(x=>x.method==='sendMessage'&&x.body.chat_id==='500');assert.ok(ask.body.text.includes('Real &lt;Osh&gt;'));const kb=ask.body.reply_markup.inline_keyboard;assert.equal(kb.length,3,'three buttons');assert.ok(kb[0][0].text.includes('AI Operatorga javob berish'));const token=db.prepare("SELECT call_token FROM bookings WHERE id='b1'").get().call_token;assert.equal(kb[0][0].url,'https://restaurantfoods.online/call-ai/b1?k='+token);assert.equal(token.length,24);assert.equal(kb[1][0].callback_data,'cc:y:b1');assert.ok(kb[1][0].text.includes('Ha, albatta boraman'));assert.equal(kb[2][0].callback_data,'cc:n:b1');assert.ok(kb[2][0].text.includes('Restoran bilan bog‘lanish'));
+ const ask=tg.find(x=>x.method==='sendMessage'&&x.body.chat_id==='500');assert.ok(ask.body.text.includes('Real &lt;Osh&gt;'));const kb=ask.body.reply_markup.inline_keyboard;assert.equal(kb.length,3,'three buttons');assert.equal(kb[2][0].text,'📞 Jonli AI suhbat');const token=db.prepare("SELECT call_token FROM bookings WHERE id='b1'").get().call_token;assert.equal(kb[2][0].url,'https://restaurantfoods.online/call-ai/b1?k='+token);assert.equal(token.length,24);assert.equal(kb[0][0].callback_data,'cc:y:b1');assert.equal(kb[0][0].text,'✅ Ha, boraman');assert.equal(kb[1][0].callback_data,'cc:n:b1');assert.equal(kb[1][0].text,'❌ Bora olmayman');
  assert.equal(status('b1').call_status,'calling');
  // b2: no Telegram -> restaurant told at once.
  assert.equal(status('b2').call_status,'calling','web call still open');assert.equal(db.prepare("SELECT call_channel FROM bookings WHERE id='b2'").get().call_channel,'web');assert.ok(tg.some(x=>x.body?.chat_id==='777'&&x.body.text.includes('ulanmagan')));
@@ -63,5 +63,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  add('bOwner','prem','c1',100);await call.runCallAi();tg.length=0;
  assert.equal(await call.handleCallReply({callback_query:{id:'q9',data:'cc:y:bOwner',message:{chat:{id:500},message_id:9}}}),'call_confirmed');
  assert.ok(tg.some(x=>x.body?.chat_id==='901'&&x.body.text.includes('tasdiqladi')),'confirmation reaches the owner');
+ // The guest's language: chosen in the bot first (tglang), else the account's; text, buttons and voice follow it.
+ db.exec("INSERT INTO accounts(id,email,name,created_at,role,telegram_chat_id,preferred_language) VALUES ('c4','c4@x','Ivan Petrov','now','customer','640','uz')");
+ db.exec("INSERT INTO app_settings(key,value,updated_at,updated_by) VALUES ('tglang:640','ru','now','bot')");
+ add('bRu','prem','c4',100);edge.length=0;tg.length=0;assert.equal(await call.callNow('bRu'),'calling');
+ const slotRu=db.prepare("SELECT slot FROM bookings WHERE id='bRu'").get().slot;
+ assert.equal(edge[0].b.lang,'ru');assert.equal(edge[0].b.text,'Здравствуйте, Ivan! Напоминаем, что сегодня в '+slotRu+' для вас забронирован столик в ресторане Real <Osh>. Вы подтверждаете свой визит?');
+ const ruAsk=tg.find(x=>x.method==='sendMessage'&&x.body.chat_id==='640');assert.deepEqual(ruAsk.body.reply_markup.inline_keyboard.map(r=>r[0].text),['✅ Да, приду','❌ Не смогу прийти','📞 Живой звонок с ИИ']);
+ assert.equal(call.CALL_TEXT.en.ask('Ann','Real','19:30'),'Hello Ann! This is a reminder for your table reservation at Real today at 19:30. Do you confirm your visit?');
+ assert.deepEqual([call.CALL_TEXT.en.yes,call.CALL_TEXT.en.no,call.CALL_TEXT.en.web],['✅ Yes, I’ll be there','❌ Cancel visit','📞 Live AI Call']);
  console.log('PASS call-ai: Premium-only T-2h calls (voice note + Yes/No), unreachable/no-answer/declined reported to the restaurant, Yes confirms, text/voice answers, own chat only, no double calls');
 })().catch(e=>{console.error(e);process.exitCode=1});

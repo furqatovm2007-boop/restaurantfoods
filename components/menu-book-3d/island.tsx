@@ -5,7 +5,6 @@
  *   RF3D.menuBook.mount(el, props) / reveal / unmount   inline 3D book
  *   RF3D.fullscreenMenu.open(props) → close()           full-screen 3D menu overlay
  *   RF3D.hall.mount(el, props) / unmount                3D hall table picker
- *   RF3D.avatar.mount(el, props) → controller           talking assistant with lip-sync
  *   RF3D.orb.mount(props) / unmount                     admin AI orb widget
  *   RF3D.tableMap.mount(el, props) / unmount            live table map for the dashboard
  */
@@ -13,7 +12,6 @@ import { createRef, StrictMode, type ReactNode, type RefObject } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AdminOrb, type AdminOrbProps } from '../admin-orb/AdminOrb';
 import { AdminTableMap, type AdminTableMapProps } from '../admin-table-map/AdminTableMap';
-import { analyserLevel, AssistantAvatar, type AssistantAvatarProps, type AvatarMode, type LevelSource } from '../assistant-avatar/AssistantAvatar';
 import { Hall3D, type Hall3DProps } from '../hall-3d/Hall3D';
 import { FullscreenMenu, type FullscreenMenuProps } from './FullscreenMenu';
 import { MenuBook3D, type MenuBook3DHandle, type MenuBook3DProps } from './MenuBook3D';
@@ -102,48 +100,6 @@ const hall = {
   unmount,
 };
 
-const avatar = {
-  /** Returns a controller; `speak(analyser)` starts lip-sync, `speak(null)` stops it. */
-  mount(el: Element, props: Omit<AssistantAvatarProps, 'level' | 'gesture' | 'paused' | 'mode'> = {}) {
-    if (!webglAvailable()) return null;
-    const level = createRef<LevelSource | null>() as { current: LevelSource | null };
-    let gesture = 0;
-    let paused = false;
-    let mode: AvatarMode = 'idle';
-    const draw = () => render(el, <AssistantAvatar {...props} level={level} gesture={gesture} paused={paused} mode={mode} />);
-    draw();
-    return {
-      speak(analyser: AnalyserNode | null) {
-        level.current = analyser ? analyserLevel(analyser) : null;
-        paused = false;
-        draw();
-      },
-      gesture() {
-        gesture++;
-        paused = false;
-        draw();
-      },
-      idle() {
-        paused = false;
-        draw();
-      },
-      /** Body language for what the assistant is doing: idle, listening, thinking or speaking. */
-      mode(next: AvatarMode) {
-        if (next === mode) return;
-        mode = next;
-        draw();
-      },
-      pause() {
-        paused = true;
-        draw();
-      },
-      destroy() {
-        unmount(el);
-      },
-    };
-  },
-};
-
 let orbHost: HTMLDivElement | null = null;
 const orb = {
   mount(props: AdminOrbProps = {}) {
@@ -173,7 +129,7 @@ const tableMap = {
   unmount,
 };
 
-const api = { supported: webglAvailable, menuBook, fullscreenMenu, hall, avatar, orb, tableMap };
+const api = { supported: webglAvailable, menuBook, fullscreenMenu, hall, orb, tableMap };
 
 declare global {
   interface Window {

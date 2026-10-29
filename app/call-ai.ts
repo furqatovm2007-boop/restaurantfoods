@@ -22,34 +22,40 @@ type Lang = 'uz' | 'ru' | 'en';
 
 const TEXT = {
   uz: {
-    ask: (name: string, restaurant = 'restoran', table: number | string = '') => `Assalomu alaykum ${name}! ${restaurant}dagi ${table}-stol broningizga 2 soat qoldi. Kelishingizni tasdiqlaysizmi?`,
-    web: '📞 AI Operatorga javob berish (Jonli qo‘ng‘iroq)',
-    yes: '✅ Ha, albatta boraman',
-    no: '❌ Bora olmayman (Restoran bilan bog‘lanish)',
+    ask: (name: string, restaurant = 'restoran', time = '') => `Assalomu alaykum, ${name}! Soat ${time} da ${restaurant} restoranida stolingiz band qilingan. Tashrifingizni tasdiqlaysizmi?`,
+    web: '📞 Jonli AI suhbat',
+    yes: '✅ Ha, boraman',
+    no: '❌ Bora olmayman',
     thanks: 'Rahmat, broningiz tasdiqlandi! Sizni kutamiz! 🙌',
     sorry: 'Tushundim, restoranga xabar berdim. Bron vaqtiga 2 soatdan kam qolganda uni ilova orqali bekor qilib bo‘lmaydi — restoranga telefon qiling; oldindan kelishilgan jarima kartangizdan yechiladi.',
     phone: 'Restoran telefoni',
     unclear: 'Kechirasiz, tushunmadim. “Ha” yoki “Yo‘q” deb javob bering yoki tugmani bosing.',
+    guest: 'mehmon',
+    table: (n: number, g: number) => `${n}-stol · ${g} kishi`,
   },
   ru: {
-    ask: (name: string, restaurant = 'ресторан', table: number | string = '') => `Здравствуйте, ${name}! До вашей брони стола ${table} в «${restaurant}» осталось 2 часа. Подтверждаете, что придёте?`,
-    web: '📞 Ответить AI-оператору (живой звонок)',
-    yes: '✅ Да, обязательно приду',
-    no: '❌ Не смогу (связаться с рестораном)',
+    ask: (name: string, restaurant = 'ресторан', time = '') => `Здравствуйте, ${name}! Напоминаем, что сегодня в ${time} для вас забронирован столик в ресторане ${restaurant}. Вы подтверждаете свой визит?`,
+    web: '📞 Живой звонок с ИИ',
+    yes: '✅ Да, приду',
+    no: '❌ Не смогу прийти',
     thanks: 'Спасибо, бронь подтверждена! Ждём вас! 🙌',
     sorry: 'Понял, сообщил ресторану. Менее чем за 2 часа бронь нельзя отменить в приложении — позвоните в ресторан; согласованный штраф спишется с вашей карты.',
     phone: 'Телефон ресторана',
     unclear: 'Извините, не понял. Ответьте «Да» или «Нет» или нажмите кнопку.',
+    guest: 'гость',
+    table: (n: number, g: number) => `стол ${n} · гостей: ${g}`,
   },
   en: {
-    ask: (name: string, restaurant = 'the restaurant', table: number | string = '') => `Hello ${name}! Your table ${table} booking at ${restaurant} starts in 2 hours. Can you confirm you are coming?`,
-    web: '📞 Answer the AI operator (live call)',
-    yes: '✅ Yes, I’m coming',
-    no: '❌ I can’t come (contact the restaurant)',
+    ask: (name: string, restaurant = 'the restaurant', time = '') => `Hello ${name}! This is a reminder for your table reservation at ${restaurant} today at ${time}. Do you confirm your visit?`,
+    web: '📞 Live AI Call',
+    yes: '✅ Yes, I’ll be there',
+    no: '❌ Cancel visit',
     thanks: 'Thank you, your booking is confirmed! See you soon! 🙌',
     sorry: 'Understood, I have told the restaurant. Less than 2 hours before, the booking cannot be cancelled in the app — phone the restaurant; the agreed penalty is charged to your card.',
     phone: 'Restaurant phone',
     unclear: 'Sorry, I didn’t catch that. Reply “Yes” or “No”, or tap a button.',
+    guest: 'guest',
+    table: (n: number, g: number) => `table ${n} · ${g} guests`,
   },
 } as const;
 
@@ -130,7 +136,7 @@ interface CallRow {
   user_id: string;
 }
 const SELECT =
-  'SELECT b.id,b.user_id,b.date,b.slot,b.table_number,b.guests,b.phone,b.status,b.call_status,b.call_token,b.restaurant_id,r.name AS restaurant_name,r.phone AS restaurant_phone,r.telegram_chat_id AS restaurant_chat,r.plan,r.trial_ends_at,r.paid_until,r.status AS restaurant_status,a.name AS customer_name,a.telegram_chat_id AS customer_chat,a.preferred_language AS customer_lang FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN accounts a ON a.id=b.user_id ';
+  'SELECT b.id,b.user_id,b.date,b.slot,b.table_number,b.guests,b.phone,b.status,b.call_status,b.call_token,b.restaurant_id,r.name AS restaurant_name,r.phone AS restaurant_phone,r.telegram_chat_id AS restaurant_chat,r.plan,r.trial_ends_at,r.paid_until,r.status AS restaurant_status,a.name AS customer_name,a.telegram_chat_id AS customer_chat,COALESCE(lg.value,a.preferred_language) AS customer_lang FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings lg ON lg.key=\'tglang:\'||a.telegram_chat_id ';
 
 export type { CallRow };
 export const SELECT_CALL = SELECT;
@@ -189,8 +195,8 @@ export async function callBooking(b: CallRow, force = false) {
   if (!claimed.meta.changes) return b.call_status;
   const l = lang(b.customer_lang),
     t = TEXT[l],
-    name = (b.customer_name || '').split(/\s+/)[0] || 'mehmon';
-  const question = t.ask(name, b.restaurant_name, b.table_number);
+    name = (b.customer_name || '').split(/\s+/)[0] || t.guest;
+  const question = t.ask(name, b.restaurant_name, String(b.slot).slice(0, 5));
   const channels: string[] = ['web'];
   if (b.customer_chat && telegramConfigured()) {
     const voice = await serviceVoice({ mode: 'call_speech', lang: l, text: question });
@@ -198,8 +204,8 @@ export async function callBooking(b: CallRow, force = false) {
     const sent = await telegram('sendMessage', {
       chat_id: b.customer_chat,
       parse_mode: 'HTML',
-      text: `📞 <b>${html(question)}</b>\n🏠 ${html(b.restaurant_name)} · ${b.table_number}-stol · ${b.guests} kishi\n🕒 ${html(b.date)} ${html(String(b.slot).slice(0, 5))}`,
-      reply_markup: { inline_keyboard: [[{ text: t.web, url: callUrl(b.id, token) }], [{ text: t.yes, callback_data: 'cc:y:' + b.id }], [{ text: t.no, callback_data: 'cc:n:' + b.id }]] },
+      text: `📞 <b>${html(question)}</b>\n🏠 ${html(b.restaurant_name)} · ${t.table(b.table_number, b.guests)}\n🕒 ${html(b.date)} ${html(String(b.slot).slice(0, 5))}`,
+      reply_markup: { inline_keyboard: [[{ text: t.yes, callback_data: 'cc:y:' + b.id }], [{ text: t.no, callback_data: 'cc:n:' + b.id }], [{ text: t.web, url: callUrl(b.id, token) }]] },
     });
     if (sent) channels.push('telegram');
   }

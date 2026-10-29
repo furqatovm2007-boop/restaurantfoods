@@ -34,7 +34,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // Access: token or own session only.
  const get=(id,k)=>api.GET(new Request('https://test/api/call-ai?id='+id+(k?'&k='+k:'')));
  assert.equal((await get('b1')).status,404,'no token, no session');assert.equal((await get('b1','x'.repeat(24))).status,404,'wrong token');assert.equal((await get('b1',tok('b2'))).status,404,'other booking token');
- let v=(await (await get('b1',tok('b1'))).json()).call;assert.equal(v.question,'Assalomu alaykum Aziz! Premdagi 1-stol broningizga 2 soat qoldi. Kelishingizni tasdiqlaysizmi?');assert.equal(v.restaurantPhone,'+998712000000');assert.ok(!('call_token' in v),'token not echoed');
+ let v=(await (await get('b1',tok('b1'))).json()).call;assert.equal(v.question,'Assalomu alaykum, Aziz! Soat '+v.slot+' da Prem restoranida stolingiz band qilingan. Tashrifingizni tasdiqlaysizmi?');assert.equal(v.restaurantPhone,'+998712000000');assert.ok(!('call_token' in v),'token not echoed');
  user={userId:'c2',role:'customer'};assert.equal((await get('b2')).status,200,'own session');assert.equal((await get('b1')).status,404,'not someone else’s');
  let open=await (await api.GET(new Request('https://test/api/call-ai?open=1'))).json();assert.deepEqual(open.calls.map(c=>c.id),['b2'],'site rings for own open call');assert.equal((await (await get('b2')).json()).call.lang,'ru');
  user=null;
@@ -52,7 +52,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 
  // Real phone call via Vapi when configured.
  env.VAPI_API_KEY='vk';env.VAPI_ASSISTANT_ID='asst';env.VAPI_PHONE_NUMBER_ID='pn';env.VAPI_WEBHOOK_SECRET='vs';
- add('b3','c2',3);await call.callNow('b3');const vc=vapi[0];assert.equal(vc.auth,'Bearer vk');assert.equal(vc.body.customer.number,'+998901234567');assert.equal(vc.body.metadata.bookingId,'b3');assert.ok(vc.body.assistantOverrides.firstMessage.includes('стола 3'));
+ add('b3','c2',3);await call.callNow('b3');const vc=vapi[0];assert.equal(vc.auth,'Bearer vk');assert.equal(vc.body.customer.number,'+998901234567');assert.equal(vc.body.metadata.bookingId,'b3');assert.ok(vc.body.assistantOverrides.firstMessage.includes('Напоминаем, что сегодня в'));
  assert.equal(db.prepare("SELECT call_channel FROM bookings WHERE id='b3'").get().call_channel,'web,phone');
  const vapiHook=(secret,msg)=>hook.POST(new Request('https://test/api/call-ai/hook',{method:'POST',headers:{'Content-Type':'application/json','x-vapi-secret':secret},body:JSON.stringify({message:msg})}));
  const report={type:'end-of-call-report',call:{metadata:{bookingId:'b3'}},artifact:{messages:[{role:'bot',message:'Kelishingizni tasdiqlaysizmi?'},{role:'user',message:'Ha, albatta boraman'}]}};

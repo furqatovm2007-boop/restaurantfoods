@@ -32,7 +32,9 @@
     drawHall();
 
     // Lip-sync check without TTS: a syllable-like modulated tone drives the analyser.
-    const avatar = api.avatar.mount(document.getElementById('avatar'));
+    // The AI concierge (public/concierge-avatar.js, SVG) with analyser lip-sync.
+    const avatar = window.RFConcierge?.mount(document.getElementById('avatar'));
+    avatar?.mode('speaking');
     document.getElementById('talk').onclick = () => {
       const ctx = new AudioContext();
       const osc = ctx.createOscillator(), gain = ctx.createGain(), lfo = ctx.createOscillator(), depth = ctx.createGain(), analyser = ctx.createAnalyser();
