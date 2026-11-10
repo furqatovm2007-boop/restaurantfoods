@@ -1,0 +1,26 @@
+/* Welcome guide (welcome-guide.js): the AI concierge in a dark-emerald and gold card, bottom left. */
+.rf-guide{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(20px + env(safe-area-inset-bottom));z-index:9997;display:grid;grid-template-columns:118px minmax(0,1fr);gap:4px;align-items:end;width:min(430px,calc(100vw - 32px));padding:14px 16px 14px 6px;border-radius:24px;color:#f4fffb;background:linear-gradient(150deg,rgba(6,41,31,.97),rgba(8,21,33,.97));border:1px solid rgba(217,169,44,.45);box-shadow:0 18px 50px rgba(2,12,10,.45),0 0 0 1px rgba(52,211,153,.12) inset;font:14px/1.5 system-ui,sans-serif;opacity:0;transform:translateY(28px) scale(.92);transform-origin:left bottom;transition:opacity .45s ease,transform .55s cubic-bezier(.2,.9,.25,1.25)}
+.rf-guide.in{opacity:1;transform:none}
+.rf-guide.leaving{opacity:0;transform:translateY(18px) scale(.95);transition-duration:.3s}
+.rf-guide-hero{width:118px;height:152px;margin:-46px 0 -6px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}
+.rf-guide-hero .rf-concierge{width:100%;height:100%;display:block;overflow:visible}
+.rf-guide-body{min-width:0}
+.rf-guide-name{margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#f6d27a}
+.rf-guide-text{margin:0;min-height:4.5em;color:#f4fffb}
+.rf-guide-note{margin:6px 0 0;font-size:12px;color:#fbe7a1}
+.rf-guide-note[hidden]{display:none}
+.rf-guide-dots{display:flex;gap:5px;margin:10px 0}
+.rf-guide-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:width .3s,background .3s}
+.rf-guide-dots i.seen{background:rgba(52,211,153,.55)}
+.rf-guide-dots i.on{width:20px;border-radius:4px;background:linear-gradient(90deg,#34d399,#d9a92c)}
+.rf-guide-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rf-guide-actions button{min-height:40px;padding:0 12px;border-radius:12px;font:600 13px system-ui,sans-serif;cursor:pointer}
+.rf-guide-skip{background:transparent;color:#a7c1ca;border:0;padding:0 6px!important}
+.rf-guide-voice{background:rgba(255,255,255,.08);color:#eafff9;border:1px solid rgba(255,255,255,.18)}
+.rf-guide-voice[aria-pressed=true]{background:rgba(52,211,153,.18);border-color:rgba(52,211,153,.5)}
+.rf-guide-next{margin-left:auto;color:#062b21;border:0;background:linear-gradient(135deg,#fbe7a1,#d9a92c);box-shadow:0 6px 16px rgba(217,169,44,.3)}
+.rf-guide-actions button:focus-visible,.rf-guide-x:focus-visible{outline:3px solid #34d399;outline-offset:2px}
+.rf-guide-x{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:0;background:transparent;color:#a7c1ca;font-size:15px;cursor:pointer}
+@media(max-width:650px){.rf-guide{left:12px;right:12px;width:auto;grid-template-columns:92px minmax(0,1fr);padding:12px 12px 12px 4px}.rf-guide-hero{width:92px;height:120px;margin-top:-38px}.rf-guide-text{font-size:13.5px}body:has(.mobile-nav:not([hidden])) .rf-guide{bottom:calc(146px + env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.rf-guide{transition:none}.rf-guide-dots i{transition:none}}
+body:has(#drawer[open]) .rf-guide{visibility:hidden}

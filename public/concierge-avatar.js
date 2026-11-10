@@ -1,7 +1,8 @@
 /*
  * The AI concierge: a vector character (SVG) in the site's dark-emerald and gold style, drawn and animated
  * here — no 3D model, no outside files. Same interface the voice assistant (ai-chat.js) used for the old
- * robot: RFRobotViewer.mount(host, {ready, error}) → {mode, speak, gesture, idle, pause, destroy}.
+ * robot: RFRobotViewer.mount(host, {ready, error}) → {mode, speak, gesture, idle, pause, destroy}, plus
+ * level(v, bright) for words shown without sound (the welcome guide, welcome-guide.js).
  *
  * Lip-sync: while the AI voice plays, ai-chat.js hands over the AnalyserNode connected to that very sound
  * (speak(analyser)); every animation frame reads getByteFrequencyData and turns it into a mouth shape:
@@ -84,6 +85,7 @@
       teeth = $('[data-teeth]'),
       tongue = $('[data-tongue]');
     let mode = 'idle',
+      manual = null,
       analyser = null,
       bins = null,
       raf = 0,
@@ -173,7 +175,7 @@
       const t = (now - t0) / 1000,
         still = reducedMotion();
       // Mouth.
-      const a = mode === 'speaking' || analyser ? measure() : null;
+      const a = analyser ? measure() : manual;
       const [to, tw, tr] = target(a);
       const level = a ? a.level : 0;
       const opening = to > m.open;
@@ -242,6 +244,13 @@
           m.round = 0;
           drawMouth();
         }
+        held = false;
+        run();
+      },
+      /** Text without sound (the welcome guide types its words): the caller drives the mouth syllable by syllable. */
+      level(v, bright = 0.5) {
+        manual = v == null ? null : { level: Math.max(0, Math.min(1, v)), bright };
+        if (manual == null) m.open = 0;
         held = false;
         run();
       },
