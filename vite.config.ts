@@ -33,6 +33,9 @@ const localBindingConfig = {
   observability: { enabled: true },
   // Call AI: every 5 minutes, confirmation calls for bookings starting within 2 hours.
   triggers: { crons: ["*/5 * * * *"] },
+  // Smart Placement: the Worker runs next to its database (D1 in Frankfurt) instead of next to each
+  // visitor, so the several queries behind one click no longer each cross the distance.
+  placement: { mode: "smart" as const },
   // Workers AI: the free internal reserve engine when OpenAI is unavailable (app/ai-fallback.ts).
   ai: { binding: "AI" },
   vars: {
