@@ -1361,3 +1361,5 @@ html.hp-lock *:has(.hp-full,.hall3d-full),html.sv-lock *:has(.sv-cam.is-max){bac
 #content label:not(.form label):not(.check):has(>select,>input:not([type=checkbox]):not([type=radio]),>textarea){display:grid;gap:8px;margin-bottom:18px}
 #content label:not(.form label):not(.check):has(>select,>input:not([type=checkbox]):not([type=radio]),>textarea):last-child{margin-bottom:0}
 .hp-queue-form{gap:10px}
+/* The footer waits for the page: shown over an empty content area it jumps down when the page renders (layout shift). */
+#content[hidden]~#siteFooter,#content:not(:has(.page-head,section,article,form,.panel))~#siteFooter{display:none!important}

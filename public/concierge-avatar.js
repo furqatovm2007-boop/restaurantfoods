@@ -96,7 +96,20 @@
       blinkAt = -1,
       gestureAt = -1e9,
       lastLevel = 0,
-      nod = 0;
+      nod = 0,
+      wake = 0;
+    // Only touch the DOM when a value really changes: every attribute write restyles and repaints the SVG.
+    const last = new Map();
+    const put = (el, k, v) => {
+      const key = el,
+        prev = last.get(key) || {};
+      if (prev[k] === v) return;
+      prev[k] = v;
+      last.set(key, prev);
+      el.setAttribute(k, v);
+    };
+    const f1 = (n) => (Math.round(n * 10) / 10).toString();
+    let drawn = 0;
     // The smoothed mouth: open / wide / round.
     const m = { open: 0, wide: 0, round: 0 };
 
@@ -117,20 +130,20 @@
       const d = `M${left} ${cy} C${lerp(left, cx - half * 0.6, k)} ${top - 3 - gap * 0.1} ${lerp(right, cx + half * 0.6, k)} ${top - 3 - gap * 0.1} ${right} ${cy} C${lerp(right, cx + half * 0.7, k)} ${bottom + 4 + smile} ${lerp(left, cx - half * 0.7, k)} ${bottom + 4 + smile} ${left} ${cy}Z`;
       if (o < 0.03) {
         const rest = `M${left} ${cy} Q${cx} ${cy + 6 + smile * 0.4} ${right} ${cy}`;
-        inner.setAttribute('d', rest + 'Z');
-        clip.setAttribute('d', rest + 'Z');
-        lips.setAttribute('d', rest);
-        inner.setAttribute('opacity', '0');
+        put(inner, 'd', rest + 'Z');
+        put(clip, 'd', rest + 'Z');
+        put(lips, 'd', rest);
+        put(inner, 'opacity', '0');
       } else {
-        inner.setAttribute('d', d);
-        clip.setAttribute('d', d);
-        lips.setAttribute('d', d);
-        inner.setAttribute('opacity', '1');
+        put(inner, 'd', d);
+        put(clip, 'd', d);
+        put(lips, 'd', d);
+        put(inner, 'opacity', '1');
       }
-      teeth.setAttribute('y', String(top - 4));
-      teeth.setAttribute('opacity', o > 0.12 ? String(Math.min(1, (o - 0.12) * 4) * (1 - m.round * 0.7)) : '0');
-      tongue.setAttribute('cy', String(bottom + 3 - o * 4));
-      tongue.setAttribute('opacity', o > 0.35 ? '1' : '0');
+      put(teeth, 'y', String(top - 4));
+      put(teeth, 'opacity', o > 0.12 ? String(Math.min(1, (o - 0.12) * 4) * (1 - m.round * 0.7)) : '0');
+      put(tongue, 'cy', String(bottom + 3 - o * 4));
+      put(tongue, 'opacity', o > 0.35 ? '1' : '0');
     }
 
     /** Speech band loudness (0–1) and brightness (0 low … 1 high) from the playing voice. */
@@ -172,6 +185,13 @@
     function frame(now) {
       raf = 0;
       if (closed || held) return;
+      // 30 frames a second while the mouth moves, about 12 when only blinking and breathing: the
+      // character stays lively while the page keeps its CPU for scrolling.
+      if (now - drawn < (analyser || manual ? 30 : 80)) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      drawn = now;
       const t = (now - t0) / 1000,
         still = reducedMotion();
       // Mouth.
@@ -198,30 +218,35 @@
       }
       const b = blinkAt < 0 ? 1 : Math.min(1, Math.abs(now - blinkAt - 70) / 70);
       const wideEyes = mode === 'listening' ? 1.12 : 1;
-      for (const lid of lids) lid.setAttribute('transform', `scale(1 ${Math.max(0.08, b) * wideEyes})`);
-      const look = mode === 'thinking' ? [2.2, -2] : mode === 'listening' ? [-1, 0] : [Math.sin(t * 0.7) * 1.2, Math.sin(t * 0.43) * 0.6];
-      for (const iris of irises) iris.setAttribute('transform', `translate(${look[0]} ${look[1]})`);
-      brows.setAttribute('transform', `translate(0 ${mode === 'listening' ? -3.5 : mode === 'thinking' ? -1.5 : -level * 1.6})`);
-      // Head and body.
-      if (still) {
-        head.setAttribute('transform', mode === 'listening' ? 'rotate(-5 100 176)' : '');
-        body.removeAttribute('transform');
-        hand.setAttribute('transform', 'translate(150 236)');
+      for (const lid of lids) put(lid, 'transform', `scale(1 ${f1(Math.max(0.08, b) * wideEyes)})`);
+      // Busy: the mouth, a nod or a gesture is moving. Otherwise the character holds its pose and the loop
+      // sleeps until the next blink — no work at all between blinks (the halo turns by CSS).
+      const busy = !!(analyser || manual) || m.open > 0.01 || nod > 0.03 || now - gestureAt < 1100 || (blinkAt > 0 && now - blinkAt < 180);
+      const look = mode === 'thinking' ? [2.2, -2] : mode === 'listening' ? [-1, 0] : busy && !still ? [Math.sin(t * 0.7) * 1.2, Math.sin(t * 0.43) * 0.6] : [0, 0];
+      for (const iris of irises) put(iris, 'transform', `translate(${f1(look[0])} ${f1(look[1])})`);
+      put(brows, 'transform', `translate(0 ${f1(mode === 'listening' ? -3.5 : mode === 'thinking' ? -1.5 : -level * 1.6)})`);
+      // Head and hand.
+      const tilt = mode === 'listening' ? -7 : mode === 'thinking' ? 4 : 0;
+      if (still || !busy) {
+        put(head, 'transform', tilt ? `rotate(${still ? Math.sign(tilt) * 5 : tilt} 100 176)` : '');
+        put(hand, 'transform', 'translate(150 236)');
       } else {
-        const breathe = Math.sin(t * 1.6) * 0.012;
-        const tilt = mode === 'listening' ? -7 : mode === 'thinking' ? 4 : Math.sin(t * 0.5) * 2;
         const sway = mode === 'speaking' ? Math.sin(t * 2.3) * 1.5 : 0;
-        head.setAttribute('transform', `translate(0 ${breathe * 60 + nod * 2.4}) rotate(${tilt + sway + nod * 2} 100 176)`);
-        body.setAttribute('transform', `translate(100 262) scale(1 ${1 + breathe}) translate(-100 -262)`);
+        put(head, 'transform', `translate(0 ${f1(nod * 2.4)}) rotate(${f1(tilt + sway + nod * 2)} 100 176)`);
         const g = Math.max(0, 1 - (now - gestureAt) / 1100),
           wave = Math.sin(Math.min(1, (now - gestureAt) / 1100) * Math.PI);
-        hand.setAttribute('transform', `translate(150 ${236 - wave * 6}) rotate(${-g * 18 * wave + (mode === 'speaking' ? Math.sin(t * 3.1) * 3 * level : 0)})`);
-        ring.setAttribute('transform', `rotate(${(t * (mode === 'thinking' ? 60 : 12)) % 360} 100 128)`);
+        put(hand, 'transform', `translate(150 ${f1(236 - wave * 6)}) rotate(${f1(-g * 18 * wave + (mode === 'speaking' ? Math.sin(t * 3.1) * 3 * level : 0))})`);
+        put(ring, 'transform', `rotate(${f1((t * 12) % 360)} 100 128)`);
       }
-      svg.dataset.mode = mode;
-      raf = requestAnimationFrame(frame);
+      if (svg.dataset.mode !== mode) svg.dataset.mode = mode;
+      if (busy) raf = requestAnimationFrame(frame);
+      else {
+        clearTimeout(wake);
+        wake = setTimeout(run, Math.max(50, nextBlink - performance.now()));
+      }
     }
     const run = () => {
+      clearTimeout(wake);
       if (!raf && !closed && !held) raf = requestAnimationFrame(frame);
     };
     drawMouth();
@@ -268,12 +293,14 @@
         held = true;
         analyser = null;
         cancelAnimationFrame(raf);
+        clearTimeout(wake);
         raf = 0;
         m.open = 0;
         drawMouth();
       },
       destroy() {
         closed = true;
+        clearTimeout(wake);
         cancelAnimationFrame(raf);
         raf = 0;
         analyser = null;

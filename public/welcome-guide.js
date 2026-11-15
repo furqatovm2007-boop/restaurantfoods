@@ -273,7 +273,8 @@
     open();
   }
   window.RFGuide = { open, close };
-  const start = () => setTimeout(maybeOpen, 1600);
+  // After the page has settled (it must not compete with the first paint or the first taps).
+  const start = () => setTimeout(() => (window.requestIdleCallback ? requestIdleCallback(maybeOpen, { timeout: 3000 }) : maybeOpen()), 2500);
   if (document.readyState === 'complete') start();
   else addEventListener('load', start, { once: true });
 })();
