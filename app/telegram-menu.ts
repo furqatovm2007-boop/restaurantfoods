@@ -4,7 +4,8 @@ import { telegram, html, site, mainKeyboard } from './telegram';
 import { ensurePassCode, PASS_PREFIX, receiptNumber } from './booking-pass';
 import { liveTables, freeNow } from './live-tables';
 import { countedReview } from './review-rules';
-import { BOT, COMMANDS_BY_LANG, LANG_PICKER, chatLang, isLang, keySection, setChatLang, type BotText, type Lang } from './bot-i18n';
+import { SIMPLE_MVP_MODE } from './mvp';
+import { BOT, COMMANDS_BY_LANG, MVP_COMMANDS_BY_LANG, LANG_PICKER, chatLang, isLang, keySection, setChatLang, type BotText, type Lang } from './bot-i18n';
 
 /*
  * The bot's own menu, for customers who prefer to stay in the chat:
@@ -31,6 +32,19 @@ const FLOWERS_PUBLIC = "f.active=1 AND f.status='active' AND f.is_approved=1 AND
 
 export const mainMenu = (l: Lang = 'uz') => {
   const t = BOT[l];
+  // SIMPLE_MVP_MODE: book in the Mini App, or see my bookings — plus the three languages in one small row.
+  if (SIMPLE_MVP_MODE)
+    return {
+      inline_keyboard: [
+        [openButton(t.mvpBook, l)],
+        [{ text: t.mvpBookings, callback_data: 'm:b' }],
+        [
+          { text: '🇺🇿 UZ', callback_data: 'm:l:uz' },
+          { text: '🇷🇺 RU', callback_data: 'm:l:ru' },
+          { text: '🇬🇧 EN', callback_data: 'm:l:en' },
+        ],
+      ],
+    };
   return {
     inline_keyboard: [[openButton(t.openApp, l)], [{ text: t.list, callback_data: 'm:r:0' }], [{ text: t.flowersCatalog, callback_data: 'm:f:0' }], [{ text: t.myBookings, callback_data: 'm:b' }]],
   };
@@ -215,7 +229,20 @@ async function signIn(chatId: string, go: string, text: string, l: Lang) {
   return 'menu_signin';
 }
 
+/*
+ * SIMPLE_MVP_MODE greeting: one short message with the inline buttons. It is sent with remove_keyboard (so an
+ * old 7-key keyboard goes away) and the inline buttons are attached right after; if Telegram does not take
+ * that edit, they come in a second message.
+ */
+async function mvpWelcome(chatId: string, l: Lang) {
+  const sent = (await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpWelcome, reply_markup: { remove_keyboard: true } })) as { message_id?: number } | null;
+  const attached = sent?.message_id ? await telegram('editMessageReplyMarkup', { chat_id: chatId, message_id: sent.message_id, reply_markup: mainMenu(l) }) : null;
+  if (!attached) await telegram('sendMessage', { chat_id: chatId, text: sent ? '👇' : BOT[l].mvpWelcome, reply_markup: mainMenu(l) });
+  return 'menu';
+}
+
 async function welcome(chatId: string, l: Lang) {
+  if (SIMPLE_MVP_MODE) return mvpWelcome(chatId, l);
   // The persistent keyboard comes with the greeting, then the language choice and the inline menu.
   await telegram('sendMessage', { chat_id: chatId, text: BOT[l].welcome, reply_markup: mainKeyboard(l) });
   await telegram('sendMessage', { chat_id: chatId, ...LANG_PICKER });
@@ -227,6 +254,10 @@ async function welcome(chatId: string, l: Lang) {
 async function chooseLanguage(chatId: string, l: Lang, messageId?: number) {
   await setChatLang(chatId, l);
   if (messageId) await telegram('editMessageText', { chat_id: chatId, message_id: messageId, text: BOT[l].langSaved });
+  if (SIMPLE_MVP_MODE) {
+    await mvpWelcome(chatId, l);
+    return 'menu_language_' + l;
+  }
   await telegram('sendMessage', { chat_id: chatId, text: BOT[l].welcome, reply_markup: mainKeyboard(l) });
   await telegram('sendMessage', { chat_id: chatId, text: BOT[l].welcomeMore, reply_markup: mainMenu(l) });
   return 'menu_language_' + l;
@@ -260,6 +291,7 @@ export async function handleMenu(update: any): Promise<string | null> {
     if (command === 'profile' || section === 'profile') return profile(chatId, l);
     // Anything else typed (not a command with a code, not /stop): the menu comes back with a short hint.
     if (!text.startsWith('/')) {
+      if (SIMPLE_MVP_MODE) return (await mvpWelcome(chatId, l), 'menu_hint');
       await telegram('sendMessage', { chat_id: chatId, text: BOT[l].hint, reply_markup: mainKeyboard(l) });
       return 'menu_hint';
     }
@@ -358,11 +390,13 @@ export const COMMANDS = COMMANDS_BY_LANG.uz;
  * setChatMenuButton without chat_id changes the default for all chats.
  */
 export async function setupMiniApp() {
+  // SIMPLE_MVP_MODE: the blue "Menu" button shows only /start and /mybookings.
+  const list = SIMPLE_MVP_MODE ? MVP_COMMANDS_BY_LANG : COMMANDS_BY_LANG;
   const [button, commands, ru, en] = await Promise.all([
     telegram('setChatMenuButton', { menu_button: { type: 'commands' } }),
-    telegram('setMyCommands', { commands: COMMANDS, scope: { type: 'default' } }),
-    telegram('setMyCommands', { commands: COMMANDS_BY_LANG.ru, scope: { type: 'default' }, language_code: 'ru' }),
-    telegram('setMyCommands', { commands: COMMANDS_BY_LANG.en, scope: { type: 'default' }, language_code: 'en' }),
+    telegram('setMyCommands', { commands: list.uz, scope: { type: 'default' } }),
+    telegram('setMyCommands', { commands: list.ru, scope: { type: 'default' }, language_code: 'ru' }),
+    telegram('setMyCommands', { commands: list.en, scope: { type: 'default' }, language_code: 'en' }),
   ]);
   return { menuButton: button === true, commands: commands === true && ru === true && en === true, url: miniAppUrl() };
 }
@@ -375,7 +409,8 @@ export async function setupMiniApp() {
  *     the Worker's subrequest limit). Progress is kept in app_settings so nobody gets it twice; chats that
  *     unlinked themselves (/stop) are not linked any more and are skipped, as are suspended accounts.
  */
-const SETUP_VERSION = '3';
+// v4: SIMPLE_MVP_MODE — two commands (/start, /mybookings); the full list comes back with the full mode.
+const SETUP_VERSION = SIMPLE_MVP_MODE ? '4-mvp' : '4';
 // v2: the three-language bot (the 🌐 key and the keyboard in the chat's language).
 export const SYNC_KEY = 'tg:sync-old-users:v2';
 export const SYNC_TEXT =

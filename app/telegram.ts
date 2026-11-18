@@ -3,6 +3,7 @@ import { issueOtp, recentOtps } from './otp-store';
 import { createMagicLink, saveTelegramUsername } from './telegram-login';
 import { planState } from './plans';
 import { chatLang, KEY_LABELS, LANG_KEY, type Lang } from './bot-i18n';
+import { SIMPLE_MVP_MODE } from './mvp';
 
 /*
  * Telegram bot.
@@ -158,7 +159,9 @@ const CONTACT_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_
  * labels are matched in app/telegram-menu.ts (app/bot-i18n.ts keySection).
  */
 export const miniAppBase = (l: Lang = 'uz') => site() + '/?source=tg_miniapp&lang=' + l;
-export const mainKeyboard = (l: Lang = 'uz') => {
+export const mainKeyboard = (l: Lang = 'uz'): Record<string, unknown> => {
+  // SIMPLE_MVP_MODE: no keyboard under the input field (old ones are taken away); /start's inline buttons do it all.
+  if (SIMPLE_MVP_MODE) return { remove_keyboard: true };
   const k = KEY_LABELS[l];
   return {
     keyboard: [[{ text: k.app, web_app: { url: miniAppBase(l) } }], [{ text: k.restaurants }, { text: k.menu }], [{ text: k.flowers }, { text: k.bookings }], [{ text: k.ai }, { text: k.profile }], [{ text: LANG_KEY }]],

@@ -9,12 +9,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  const DB={prepare(sql){let args=[];return{bind(...v){args=v;return this},first:async()=>db.prepare(sql).get(...args)||null,all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...args).changes)}})}}};
  const TOKEN='123456:ABCdef',env={DB,TELEGRAM_BOT_TOKEN:TOKEN,TELEGRAM_WEBHOOK_SECRET:'s',TELEGRAM_BOT_USERNAME:'rf_bot',SITE_URL:'https://restaurantfoods.online'};
  let jar=new Map();const cookies=async()=>({get:n=>jar.has(n)?{value:jar.get(n)}:undefined,set:(n,v)=>{if(v)jar.set(n,v);else jar.delete(n)}});
- const sent=[];const fetch=async(url,init)=>{const method=String(url).split('/').pop();if(init.body instanceof FormData){const photo=init.body.get('photo');sent.push({method,form:true,chat:init.body.get('chat_id'),caption:init.body.get('caption'),png:Buffer.from(await photo.arrayBuffer())});return Response.json({ok:true,result:{}})}const body=JSON.parse(init.body);sent.push({method,body});if(method==='sendPhoto'&&String(body.photo).includes('broken'))return Response.json({ok:false,description:'bad photo'});return Response.json({ok:true,result:method.startsWith('set')?true:{}})};
+ const sent=[];const fetch=async(url,init)=>{const method=String(url).split('/').pop();if(init.body instanceof FormData){const photo=init.body.get('photo');sent.push({method,form:true,chat:init.body.get('chat_id'),caption:init.body.get('caption'),png:Buffer.from(await photo.arrayBuffer())});return Response.json({ok:true,result:{}})}const body=JSON.parse(init.body);sent.push({method,body});if(method==='sendPhoto'&&String(body.photo).includes('broken'))return Response.json({ok:false,description:'bad photo'});return Response.json({ok:true,result:method.startsWith('set')?true:method==='sendMessage'?{message_id:sent.length}:{}})};
  const extras={fetch,FormData,Blob,CompressionStream,Response,setTimeout};
  const cf={'cloudflare:workers':{env}},http=load('app/http.ts',cf);
  const login=load('app/telegram-login.ts',{...cf,'next/headers':{cookies},'./http':http});
- const telegram=load('app/telegram.ts',{...cf,'./otp-store':load('app/otp-store.ts',cf),'./telegram-login':login},extras);
- const menu=load('app/telegram-menu.ts',{...cf,'qrcode-generator':{default:require('qrcode-generator')},'./telegram':telegram,'./booking-pass':load('app/booking-pass.ts',cf)},extras);
+ // The full bot (SIMPLE_MVP_MODE off) first; the simplified MVP bot is checked at the end.
+ const botFor=mvpMode=>{const mvp={'./mvp':{SIMPLE_MVP_MODE:mvpMode}},telegram=load('app/telegram.ts',{...cf,...mvp,'./otp-store':load('app/otp-store.ts',cf),'./telegram-login':login},extras);return {telegram,menu:load('app/telegram-menu.ts',{...cf,...mvp,'qrcode-generator':{default:require('qrcode-generator')},'./telegram':telegram,'./booking-pass':load('app/booking-pass.ts',cf)},extras)}};
+ const {telegram,menu}=botFor(false);
 
  // Signed launch data, made the way Telegram makes it.
  const sign=(fields,token=TOKEN)=>{const p=new URLSearchParams(fields);const dcs=[...p.entries()].sort(([a],[b])=>a<b?-1:1).map(([k,v])=>k+'='+v).join('\n');const secret=crypto.createHmac('sha256','WebAppData').update(token).digest();p.set('hash',crypto.createHmac('sha256',secret).update(dcs).digest('hex'));return p.toString()};
@@ -146,5 +147,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  sent.length=0;st=await menu.syncOldUsers(2);assert.equal(sent.length,0,'finished: no more messages');
  sent.length=0;await menu.ensureBotSetup();assert.ok(sent.some(s=>s.method==='setMyCommands'));sent.length=0;assert.equal((await menu.ensureBotSetup()).already,true);assert.equal(sent.length,0,'setup once per release');
  sent.length=0;await menu.runBotSync();assert.equal(sent.length,0);
- console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats.');
+ // SIMPLE_MVP_MODE: no reply keyboard (old ones removed), two commands, /start = one greeting with inline buttons.
+ {const m=botFor(true);
+  assert.deepEqual({...m.telegram.mainKeyboard('uz')},{remove_keyboard:true});
+  sent.length=0;await m.menu.setupMiniApp();const lists=sent.filter(s=>s.method==='setMyCommands');assert.equal(lists.length,3);
+  for(const l of lists)assert.deepEqual(l.body.commands.map(c=>c.command),['start','mybookings'],'only /start and /mybookings');
+  assert.equal(lists.find(l=>!l.body.language_code).body.commands[0].description,'🚀 Asosiy menyu');
+  await m.menu.handleMenu(cb('m:l:uz'));
+  sent.length=0;assert.equal(await m.menu.handleMenu(msg(42,{text:'/start'})),'menu');
+  const greet=sent.filter(s=>s.method==='sendMessage');assert.equal(greet.length,1,'one message');assert.deepEqual({...greet[0].body.reply_markup},{remove_keyboard:true});assert.match(greet[0].body.text,/Assalomu alaykum/);
+  const kb=sent.find(s=>s.method==='editMessageReplyMarkup').body;assert.equal(kb.message_id,greet[0].body&&sent.indexOf(greet[0])+1);
+  const rows=kb.reply_markup.inline_keyboard;assert.equal(rows[0][0].text,'🪑 Restoran tanlash va 3D bron qilish');assert.match(rows[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz/);
+  assert.deepEqual({...rows[1][0]},{text:'📅 Mening bronlarim',callback_data:'m:b'});assert.equal(rows.length,3);assert.ok(!JSON.stringify(rows).match(/Gul|AI|Profil|flowers/i),'no hidden sections');
+  sent.length=0;await m.menu.handleMenu(msg(42,{text:'salom'}));assert.ok(sent.some(s=>s.body?.reply_markup?.remove_keyboard),'any text: the greeting again, keyboard removed');
+  sent.length=0;await m.menu.handleMenu(cb('m:l:ru'));assert.match(sent.find(s=>s.method==='sendMessage').body.text,/Здравствуйте/);assert.equal(sent.find(s=>s.method==='editMessageReplyMarkup').body.reply_markup.inline_keyboard[1][0].text,'📅 Мои брони');
+  sent.length=0;assert.equal(await m.menu.handleMenu(cb('m:b')),'menu_bookings','My bookings button');
+  assert.equal(await m.menu.handleMenu(msg(42,{text:'/mybookings'})),'menu_bookings');
+  await m.menu.handleMenu(cb('m:l:uz'));}
+ console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: no reply keyboard, /start + /mybookings only, one greeting with inline Book / My bookings.');
 })().catch(e=>{console.error(e);process.exitCode=1});
