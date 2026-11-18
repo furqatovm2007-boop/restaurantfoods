@@ -88,3 +88,18 @@
 .mvp-lang button{min-width:36px;min-height:32px;padding:0 6px;border:0;border-radius:999px;background:transparent;color:inherit;font:800 12px/1 system-ui,sans-serif;cursor:pointer}
 .mvp-lang button[aria-pressed=true]{background:linear-gradient(135deg,#10b981,#0f766e);color:#fff}
 #topbar:has(.mvp-lang) .animated-brand{margin-right:8px}
+/* Phone: country flag + dial code on the left, local digits on the right (public/phone-input.js) */
+.rf-phone{position:relative;display:grid;gap:8px}
+.rf-phone-group{display:flex;align-items:stretch;min-height:50px;border-radius:8px;border:1px solid var(--line,#c4d8d5);background:var(--bg,#f1f7f6);color:var(--text,#123540);overflow:hidden}
+.rf-phone-group:focus-within{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.rf-phone-cc{flex:none;display:flex;align-items:center;gap:6px;padding:0 10px 0 12px;border:0;border-right:1px solid var(--line,#c4d8d5);background:rgba(16,185,129,.1);color:inherit;font:700 16px/1 inherit;cursor:pointer;min-height:50px}
+.rf-phone-cc:focus-visible{outline:2px solid #10b981;outline-offset:-2px}
+.rf-phone-flag{font-size:20px;line-height:1}
+.rf-phone-caret{font-size:11px;opacity:.7}
+.mvp-checkout .rf-phone-local{flex:1;min-width:0;min-height:50px;border:0!important;border-radius:0;background:transparent;box-shadow:none!important;padding:0 14px;font-size:17px;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:inherit;outline:0}
+.rf-phone-list{position:absolute;z-index:30;top:100%;left:0;right:0;margin:6px 0 0;padding:6px;list-style:none;max-height:min(320px,50vh);overflow:auto;border-radius:14px;border:1px solid var(--glass-line,rgba(16,185,129,.35));background:var(--panel,#fff);color:var(--text,#123540);box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.rf-phone-list[hidden]{display:none}
+.rf-phone-list li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:44px;padding:0 10px;border-radius:10px;cursor:pointer}
+.rf-phone-list li:hover,.rf-phone-list li:focus{background:rgba(16,185,129,.14);outline:0}
+.rf-phone-list li[aria-selected=true]{background:rgba(16,185,129,.2)}
+.rf-phone-list li b{font-variant-numeric:tabular-nums;opacity:.85}

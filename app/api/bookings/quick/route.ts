@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
-import { ApiError, json, failure, body, text, integer, phone, throttle, clientIp } from '../../../http';
+import { ApiError, json, failure, body, text, integer, throttle, clientIp } from '../../../http';
+import { intlPhone } from '../../../phone-codes';
 import { interval, minutes, endMinuteSQL } from '../../../table-rules';
 import { quoteBookingMeals } from '../../../booking-preorder';
 import { bookingSlot, seatedWindow, SEATED_MESSAGE } from '../../../booking-rules';
@@ -39,7 +40,8 @@ export async function POST(request: Request) {
       name = String(acc.name || 'Mijoz').slice(0, 60);
     } else {
       name = text(b.name, 2, 60).replace(/\s+/g, ' ');
-      contact = phone(typeof b.phone === 'string' ? b.phone.replace(/[\s()-]/g, '') : b.phone);
+      // E.164 from the checkout's country selector (+998 and the tourists' countries, app/phone-codes.ts).
+      contact = intlPhone(typeof b.phone === 'string' ? b.phone.replace(/[\s()-]/g, '') : b.phone);
     }
     const restaurantId = text(b.restaurantId),
       date = text(b.date),

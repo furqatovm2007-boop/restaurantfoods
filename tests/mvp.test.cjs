@@ -23,7 +23,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(db.prepare("SELECT COUNT(*) n FROM restaurant_tables WHERE restaurant_id='rf-demo-amanda'").get().n,10);
  const dishes=db.prepare("SELECT name,price,image_url FROM menu WHERE restaurant_id='rf-demo-amanda'").all();assert.equal(dishes.length,8);assert.ok(dishes.every(d=>d.price>=10000&&d.image_url.startsWith('/demo-assets/')),'UZS prices and photos');
  for(const d of dishes)assert.ok(fs.existsSync('public'+d.image_url),d.image_url+' exists');
- const routeFor=mode=>load('app/api/bookings/quick/route.ts',{...cw,'../../../access':{identity:async()=>user},'../../../http':limited,'../../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../../booking-rules':load('app/booking-rules.ts',{'./http':http},{Date:FixedDate}),'../../../telegram':{notifyBooking:async id=>(told.push(id),true),notifyCustomer:async()=>false},'../../../booking-pass':load('app/booking-pass.ts',cw),'../../../mvp':{...mvp,MVP_CHECKOUT:mode},'../../../telegram-login':{botUsername:()=>'rf_bot'}});
+ const routeFor=mode=>load('app/api/bookings/quick/route.ts',{...cw,'../../../access':{identity:async()=>user},'../../../http':limited,'../../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../../booking-rules':load('app/booking-rules.ts',{'./http':http},{Date:FixedDate}),'../../../telegram':{notifyBooking:async id=>(told.push(id),true),notifyCustomer:async()=>false},'../../../booking-pass':load('app/booking-pass.ts',cw),'../../../mvp':{...mvp,MVP_CHECKOUT:mode},'../../../telegram-login':{botUsername:()=>'rf_bot'},'../../../phone-codes':load('app/phone-codes.ts',{'./http':http})});
  const route=routeFor('telegram');
  db.exec("INSERT INTO accounts(id,email,name,created_at,role) VALUES ('owner','o@x','O','now','restaurant_owner')");
  db.prepare("INSERT INTO restaurants(id,name,owner_id,status,tables,floors,booking_open,booking_close,plan,paid_until) VALUES ('r','Real','owner','active',3,1,'08:00','23:00','premium',?)").run(new Date(Date.now()+30*86400000).toISOString());
@@ -61,7 +61,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const gpost=x=>guest.POST(request('/api/bookings/quick',{restaurantId:'r',date:today,slot:'18:00',endSlot:'19:00',tableNumber:1,tableId:'t1',guests:2,name:'Dilnoza',phone:'+998 90 555 66 77',...x}));
  assert.equal((await gpost({name:''})).status,400,'name required');assert.equal((await gpost({phone:'123'})).status,400,'phone format');
  r=await gpost({});assert.equal(r.status,201);d=await r.json();assert.equal(d.name,'Dilnoza');assert.equal(d.phone,'+998905556677');assert.equal(d.telegramLink,'https://t.me/rf_bot?start=book_'+d.id);
- assert.equal(db.prepare('SELECT user_id FROM bookings WHERE id=?').get(d.id).user_id,'guest:+998905556677');assert.ok(told.includes(d.id),'restaurant told');
+ assert.equal(db.prepare('SELECT user_id FROM bookings WHERE id=?').get(d.id).user_id,'guest:+998905556677');
+ // Tourists: E.164 from the country selector; numbers too short/long for the country or from other codes are refused.
+ {const t=await gpost({name:'John',phone:'+15551234567',tableNumber:2,tableId:'t2'});assert.equal(t.status,201);assert.equal((await t.json()).phone,'+15551234567');
+  for(const bad of ['+1555123456','+998905556','+4479111234567','+3361234567','15551234567'])assert.equal((await gpost({phone:bad,tableNumber:3,tableId:'t3'})).status,400,bad+' refused');}assert.ok(told.includes(d.id),'restaurant told');
  const sentTg=[];const tgb=load('app/telegram.ts',{...cw,'./otp-store':load('app/otp-store.ts',cw),'./telegram-login':{createMagicLink:async()=>'',saveTelegramUsername:async()=>{}}});
  const msg=(chat,text)=>({message:{chat:{id:chat},from:{id:chat},text}});
  assert.equal(await tgb.handleUpdate(msg(901,'/start book_'+d.id)),'book_claimed');assert.equal(db.prepare("SELECT value FROM app_settings WHERE key=?").get('bookchat:'+d.id).value,'901');

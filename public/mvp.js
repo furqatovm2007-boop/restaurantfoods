@@ -39,7 +39,7 @@
       guests: 'Mehmonlar soni',
       confirm: 'Tasdiqlash',
       sending: 'Yuborilmoqda…',
-      badPhone: 'Telefon raqamni +998 va 9 ta raqam ko‘rinishida kiriting.',
+      badPhone: 'Telefon raqamni to‘liq kiriting (mamlakat kodini chapdan tanlang).',
       badName: 'Ismingizni kiriting.',
       done: 'Bron tasdiqlandi!',
       doneDemo: 'DEMO bron ko‘rsatildi',
@@ -90,7 +90,7 @@
       guests: 'Гостей',
       confirm: 'Подтвердить',
       sending: 'Отправка…',
-      badPhone: 'Введите номер в формате +998 и 9 цифр.',
+      badPhone: 'Введите номер полностью (код страны — слева).',
       badName: 'Введите ваше имя.',
       done: 'Бронь подтверждена!',
       doneDemo: 'DEMO-бронь показана',
@@ -141,7 +141,7 @@
       guests: 'Guests',
       confirm: 'Confirm Booking',
       sending: 'Sending…',
-      badPhone: 'Enter the phone as +998 and 9 digits.',
+      badPhone: 'Enter the full phone number (pick the country code on the left).',
       badName: 'Enter your name.',
       done: 'Booking Confirmed!',
       doneDemo: 'DEMO booking shown',
@@ -267,6 +267,11 @@
     return d.length === 9 ? '+998' + d : d.length === 12 && d.startsWith('998') ? '+' + d : '';
   };
   const telegramMode = () => window.MVP_CHECKOUT !== 'guest';
+  // Country flag + dial code and the local digits (public/phone-input.js); a plain field if that script is missing.
+  const phoneField = () =>
+    window.RFPhone
+      ? window.RFPhone.html(typed.phone || me()?.contactPhone || '', typed.country || 'uz', lang(), c('phone'))
+      : `<label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone || me()?.contactPhone || '')}"></label>`;
   const me = () => (typeof state !== 'undefined' ? state.user : null);
   const tgUser = () => {
     const u = me();
@@ -324,17 +329,20 @@
       ? u
         ? `<p class="mvp-who">✈️ ${h(u.name || '')}${u.contactPhone ? ' · 📞 ' + h(u.contactPhone) : ''}</p>`
         : `<p class="mvp-who">✈️ ${h(c('tgNote'))}</p>`
-      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name || me()?.name || '')}"></label><label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone || me()?.contactPhone || '')}"></label>`;
+      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name || me()?.name || '')}"></label>${phoneField()}`;
     const label = tg && u ? '✅ ' + c('bookNow') : '✈️ ' + c('tgBook');
     form.className = 'form mvp-checkout';
     form.noValidate = true;
     form.innerHTML = `<p class="mvp-slot">🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · 📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p>${who}<div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm${tg && u ? '' : ' mvp-tg'}" type="button">${h(label)}</button><p class="form-message" role="status" data-mvp-msg></p>`;
     const remember = () => {
       if (form.elements.name) typed.name = form.elements.name.value;
-      if (form.elements.phone) typed.phone = form.elements.phone.value;
+      if (form.elements.phone) typed.phone = form.elements.phone.value || form.elements.phoneLocal?.value || '';
+      const cc = form.querySelector('[data-rf-phone]')?.dataset.country;
+      if (cc) typed.country = cc;
       typed.guests = form.elements.guests.value;
     };
     form.addEventListener('input', remember);
+    if (window.RFPhone && form.querySelector('[data-rf-phone]')) window.RFPhone.bind(form, () => remember());
     form.elements.slot.onchange = () => {
       remember();
       if (!start) return;
@@ -366,7 +374,8 @@
       let name = '',
         phone = '';
       if (!tg) {
-        phone = normPhone(form.elements.phone.value);
+        // E.164 from the country selector ("+998993847384", "+15551234567").
+        phone = form.querySelector('[data-rf-phone]') ? form.elements.phone.value : normPhone(form.elements.phone.value);
         name = form.elements.name.value.trim().replace(/\s+/g, ' ');
         if (name.length < 2) return (msg.textContent = c('badName'));
         if (!phone) return (msg.textContent = c('badPhone'));
