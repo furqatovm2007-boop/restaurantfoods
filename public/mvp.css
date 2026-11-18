@@ -1,0 +1,61 @@
+/* SIMPLE_MVP_MODE (html.rf-mvp, public/mvp-mode.js): the 3-step booking flow, phone first. */
+/* Hidden in this mode (the features stay in the code): AI assistant launcher and its panel, Call AI ringing. */
+.rf-mvp .rf-ai-launch,.rf-mvp .rf-robot,.rf-mvp .rf-robot-panel,.rf-mvp .call-ai-ring{display:none!important}
+
+/* Step 1: hero line, search, simple cards */
+.rf-mvp #content .page-head h1{font-size:clamp(1.6rem,6vw,2.6rem);line-height:1.15;max-width:22ch}
+.mvp-sub{margin:-4px 0 16px;color:var(--muted,#7d9a97);max-width:52ch}
+#content .mvp-search{display:flex;align-items:center;gap:10px;margin:0 0 20px;padding:0 14px;min-height:54px;border-radius:16px;border:1px solid var(--glass-line,rgba(16,185,129,.35));background:var(--glass,rgba(255,255,255,.75))}
+#content .mvp-search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:16px;color:inherit;outline:0;min-height:52px;padding:0}
+.mvp-search:focus-within{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.mvp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:16px}
+.mvp-card{display:flex;flex-direction:column;overflow:hidden;border-radius:20px;border:1px solid var(--glass-line,rgba(0,0,0,.08));background:var(--glass,#fff);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.mvp-card.featured{border-color:rgba(217,169,44,.6);box-shadow:0 10px 30px rgba(217,169,44,.18)}
+.mvp-card-photo{position:relative;display:block;aspect-ratio:16/10;background:linear-gradient(135deg,#0f5f4a,#06291f);overflow:hidden}
+.mvp-card-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.mvp-card-photo>span:first-child{display:grid;place-items:center;height:100%;font-size:44px;color:#f6d27a;font-weight:800}
+.mvp-demo-tag{position:absolute;top:10px;left:10px;padding:3px 9px;border-radius:999px;background:rgba(6,41,31,.85);color:#f6d27a;font-size:11px;font-weight:800;letter-spacing:.06em}
+.mvp-card-body{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;flex:1}
+.mvp-card-body h3{margin:0;font-size:1.15rem}
+.mvp-card-body p{margin:0;color:var(--muted,#7d9a97);font-size:.9rem}
+.mvp-book{margin-top:auto;display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:10px;border-radius:14px;font-weight:800;text-decoration:none}
+.mvp-empty{padding:24px 0;color:var(--muted,#7d9a97)}
+
+/* Step 2: one page — hall on top, menu below */
+.mvp-place{margin:4px 0 12px;color:var(--muted,#7d9a97)}
+.mvp-step{padding:16px}
+.mvp-step>h2{margin:0 0 4px}
+.mvp-step>.muted{margin:0 0 12px}
+.mvp-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+.mvp-dish{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;padding:10px;border-radius:16px;border:1px solid var(--glass-line,rgba(0,0,0,.08));background:var(--glass,#fff)}
+.mvp-dish.off{opacity:.55}
+.mvp-dish img,.mvp-dish-ph{width:96px;height:80px;border-radius:12px;object-fit:cover;display:grid;place-items:center;background:rgba(16,185,129,.1);font-size:28px}
+.mvp-dish h3{margin:0 0 2px;font-size:1rem;line-height:1.25}
+.mvp-price{margin:0 0 8px;font-weight:800;color:#0f766e}
+.mvp-add{min-height:40px;padding:0 14px;border-radius:12px;border:0;background:linear-gradient(135deg,#10b981,#0f766e);color:#fff;font-weight:800;cursor:pointer}
+.mvp-qty{display:inline-flex;align-items:center;gap:10px}
+.mvp-qty button{width:40px;height:40px;border-radius:12px;border:1px solid rgba(16,185,129,.4);background:transparent;color:inherit;font-size:20px;font-weight:700;cursor:pointer}
+.mvp-picked{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:rgba(16,185,129,.1);font-size:.92rem}
+
+/* Step 3: Name, Phone, Time & Guests */
+.mvp-checkout{display:grid;gap:12px}
+.mvp-checkout input,.mvp-checkout select{min-height:50px;font-size:16px}
+.mvp-slot{margin:0;padding:10px 12px;border-radius:12px;background:rgba(217,169,44,.12);font-size:.92rem}
+.mvp-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.mvp-confirm{min-height:54px;font-size:1.05rem;font-weight:800;border-radius:16px}
+.mvp-checkout .mvp-picked{margin:0}
+.mvp-done{width:min(420px,calc(100vw - 32px));border:0;border-radius:24px;padding:24px 20px;text-align:center;background:#fff;color:#0b1c26;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.mvp-done::backdrop{background:rgba(2,13,22,.6)}
+.mvp-done-check{width:64px;height:64px;margin:0 auto 10px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#10b981,#0f766e);color:#fff;font-size:34px;font-weight:900;animation:mvpPop .45s cubic-bezier(.2,.9,.25,1.3)}
+.mvp-done h2{margin:0 0 6px;font-size:1.4rem}
+.mvp-done-sub,.mvp-done-name,.mvp-done-meals{margin:4px 0;font-size:.92rem}
+.mvp-pass{margin:12px auto;display:grid;justify-items:center;gap:6px}
+.mvp-pass svg{width:200px;height:200px;border-radius:12px;border:1px solid #e5e7eb}
+.mvp-pass figcaption{font-size:.85rem}
+.mvp-done .primary{width:100%;min-height:50px;margin-top:8px}
+.mvp-footer{justify-content:center}
+@keyframes mvpPop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@media(max-width:480px){.mvp-row{grid-template-columns:1fr}.mvp-step{padding:12px}}
+@media(prefers-reduced-motion:reduce){.mvp-done-check{animation:none}}
+.mvp-checkout .mvp-picked{color:inherit;background:rgba(16,185,129,.18)}
+.mvp-room .chosen-restaurant{display:none}

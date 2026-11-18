@@ -6,6 +6,7 @@ import { runBirthdays } from "../app/birthday";
 import { securityTxt } from "../app/security-txt";
 import { recordServerError, runHealthCheck } from "../app/health";
 import { runBotSync } from "../app/telegram-menu";
+import { ensureDemoAmanda } from "../app/mvp";
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
@@ -44,5 +45,7 @@ export default {
     ctx.waitUntil(runHealthCheck().catch(() => console.error(JSON.stringify({ event: "health_check_failed" }))));
     // Bot menu: commands + menu button once per release, and the one-time announcement with the new keyboard.
     ctx.waitUntil(runBotSync().catch(() => console.error(JSON.stringify({ event: "bot_sync_failed" }))));
+    // SIMPLE_MVP_MODE: the featured demo restaurant (app/mvp.ts), created once.
+    ctx.waitUntil(ensureDemoAmanda().catch(() => console.error(JSON.stringify({ event: "demo_seed_failed" }))));
   },
 };

@@ -5,7 +5,7 @@ const fs = require('fs'),
   path = require('path'),
   // esbuild comes with Vite (no extra dependency).
   esbuild = require(require.resolve('esbuild', { paths: [path.dirname(require.resolve('vite/package.json'))] }));
-const FILES = ['restaurant', 'call-ai', 'otp-glass', 'menu-book', 'ai-chat', 'welcome-guide', 'demo-room', 'premium', 'motion', 'glass', 'auth'];
+const FILES = ['restaurant', 'call-ai', 'otp-glass', 'menu-book', 'ai-chat', 'welcome-guide', 'demo-room', 'premium', 'motion', 'glass', 'auth', 'mvp'];
 function build() {
   const joined = FILES.map((f) => `/* ${f}.css */\n` + fs.readFileSync(path.join('public', f + '.css'), 'utf8')).join('\n');
   // No syntax lowering: the browsers that run the site read the CSS as written.

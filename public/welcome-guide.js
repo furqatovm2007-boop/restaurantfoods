@@ -202,9 +202,11 @@
     n.textContent = note || '';
     n.hidden = !note;
   }
+  // SIMPLE_MVP_MODE hides flowers and the AI assistant, so the tour skips those two steps.
+  const stepsOf = (c) => (window.SIMPLE_MVP_MODE ? c.steps.filter(([, target]) => !/flowers|rf-ai-launch/.test(target || '')) : c.steps);
   function show(i) {
     const c = COPY[lang()],
-      steps = c.steps;
+      steps = stepsOf(c);
     step = Math.max(0, Math.min(steps.length - 1, i));
     const [text, target] = steps[step];
     box.querySelector('[data-dots]').innerHTML = steps.map((_, n) => `<i class="${n === step ? 'on' : n < step ? 'seen' : ''}"></i>`).join('');
@@ -250,11 +252,11 @@
     avatar?.mode('idle');
     box.querySelector('[data-close]').onclick = close;
     box.querySelector('[data-skip]').onclick = close;
-    box.querySelector('[data-next]').onclick = () => (step >= COPY[lang()].steps.length - 1 ? close() : show(step + 1));
+    box.querySelector('[data-next]').onclick = () => (step >= stepsOf(COPY[lang()]).length - 1 ? close() : show(step + 1));
     box.querySelector('[data-voice]').onclick = () => {
       voiceOn = !voiceOn;
       renderVoice();
-      if (voiceOn) say(COPY[lang()].steps[step][0]);
+      if (voiceOn) say(stepsOf(COPY[lang()])[step][0]);
       else stopSound();
     };
     document.addEventListener('keydown', onKey);

@@ -6698,5 +6698,10 @@
     "uz": "🚶 Bu stol faqat jonli (walk-in) mehmonlar uchun saqlangan. Boshqa stol tanlang.",
     "ru": "🚶 Этот стол оставлен для гостей без брони (walk-in). Выберите другой стол.",
     "en": "🚶 This table is kept for walk-in guests. Please choose another table."
+  },
+  "Restoraningizni qo‘shing (Hamkorlik)": {
+    "uz": "Restoraningizni qo‘shing (Hamkorlik)",
+    "ru": "Добавьте свой ресторан (Партнёрство)",
+    "en": "Add Your Restaurant (Partnership)"
   }
 }
