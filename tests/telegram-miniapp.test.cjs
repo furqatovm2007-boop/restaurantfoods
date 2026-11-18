@@ -162,9 +162,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
   const chatCmds=sent.find(s=>s.method==='setMyCommands'&&s.body.scope.type==='chat');assert.equal(String(chatCmds.body.scope.chat_id),'42');assert.equal(chatCmds.body.commands.length,1);
   const out=sent.filter(s=>s.method==='sendMessage');assert.equal(out.length,2);
   assert.equal(JSON.stringify(out[0].body.reply_markup),JSON.stringify({remove_keyboard:true}),'keyboard removed first');
-  assert.match(out[1].body.text,/Assalomu alaykum/);const rows=out[1].body.reply_markup.inline_keyboard;assert.equal(rows.length,2,'two buttons only');
+  assert.match(out[1].body.text,/Assalomu alaykum/);const rows=out[1].body.reply_markup.inline_keyboard;assert.equal(rows.length,2,'two rows');
   assert.equal(rows[0][0].text,'🪑 Restoran tanlash va 3D bron (Mini App)');assert.match(rows[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz/);
-  assert.equal(JSON.stringify(rows[1][0]),JSON.stringify({text:'📅 Mening bronlarim (My Bookings)',callback_data:'my_bookings'}));
+  assert.equal(JSON.stringify(rows[1][0]),JSON.stringify({text:'📅 Mening bronlarim',callback_data:'my_bookings'}));
   sent.length=0;assert.equal(await m.menu.handleMenu(cb('my_bookings')),'menu_bookings','my_bookings button');
   // Any other message: the keyboard is removed once per chat, then not again.
   db.exec("DELETE FROM app_settings WHERE key LIKE 'tgkbd-gone:%'");
@@ -172,6 +172,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
   sent.length=0;await m.menu.handleMenu(msg(42,{text:'/mybookings'}));assert.ok(!sent.some(s=>s.body?.reply_markup?.remove_keyboard),'only once');
   sent.length=0;await m.menu.handleMenu(msg(42,{text:'salom'}));assert.ok(sent.some(s=>s.body?.reply_markup?.remove_keyboard)&&sent.some(s=>s.body?.reply_markup?.inline_keyboard),'any text: greeting again');
   sent.length=0;await m.menu.handleMenu(cb('m:l:ru'));assert.ok(sent.some(s=>/Здравствуйте/.test(s.body?.text||'')));
-  await m.menu.handleMenu(cb('m:l:uz'));}
- console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: no reply keyboard (removed on /start and once on any message), /start only (old lists deleted), two inline buttons.');
+  await m.menu.handleMenu(cb('m:l:uz'));
+  // /start: Book (Mini App) on top, My bookings + My profile side by side.
+  sent.length=0;await m.menu.handleMenu(msg(42,{text:'/start'}));const r3=sent.filter(s=>s.method==='sendMessage').pop().body.reply_markup.inline_keyboard;
+  assert.equal(JSON.stringify(r3[1].map(b=>b.callback_data)),JSON.stringify(['my_bookings','my_profile']));assert.equal(r3[1][1].text,'👤 Mening profilim');
+  // A guest booking (site, name + phone) taken by chat 555 with the t.me link: profile and bookings see it.
+  db.prepare("INSERT INTO accounts(id,email,name,created_at,role,provider,contact_phone) VALUES ('guest:g1','','Malika','now','customer','guest','+15551234567')").run();
+  db.prepare("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('gb1','r1','guest:g1',?,'18:00',2,2,'+15551234567','pending','2026-02-01')").run(day);
+  db.prepare("INSERT INTO app_settings(key,value,updated_at,updated_by) VALUES ('bookchat:gb1','555','now','telegram')").run();
+  const cb555=data=>({callback_query:{id:'q',data,from:{id:555,first_name:'Malika',last_name:'K',username:'malika_k'},message:{chat:{id:555,type:'private'},message_id:1}}});
+  sent.length=0;assert.equal(await m.menu.handleMenu(cb555('my_profile')),'menu_my_profile');const pr=sent.find(s=>s.method==='sendMessage').body;
+  assert.match(pr.text,/Malika K/);assert.match(pr.text,/@malika_k/);assert.match(pr.text,/\+15551234567/);assert.match(pr.text,/Bronlar: 1 ta \(faol: 1\)/);
+  assert.match(pr.reply_markup.inline_keyboard[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz&open=profile$/);
+  sent.length=0;assert.equal(await m.menu.handleMenu(cb555('my_bookings')),'menu_bookings');assert.ok(sent.some(s=>s.form&&/table 2|2-stol|stol 2|2 /.test(s.caption||'')||s.form),'the guest booking is listed');
+  sent.length=0;await m.menu.handleMenu(cb('my_profile'));assert.match(sent.find(s=>s.method==='sendMessage').body.text,/\+998 ?90|\+99890/,'linked account phone');}
+ // Signing in with Telegram on the browser that booked as a guest moves its bookings to the real account.
+ {const gtok='G'.repeat(48);db.prepare('INSERT INTO telegram_sessions(token_hash,user_id,expires_at,created_at) VALUES (?,?,?,?)').run(await login.sha256(gtok),'guest:g1',Date.now()+86400000,Date.now());
+  jar=new Map([['__Host-rf-tg',gtok]]);await login.magicLogin(await login.createMagicLink('tg:42'));
+  assert.equal(db.prepare("SELECT user_id FROM bookings WHERE id='gb1'").get().user_id,'tg:42','guest booking adopted');
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM telegram_sessions WHERE token_hash=?').get(await login.sha256(gtok)).n,0,'guest session ended');
+  assert.equal((await login.telegramIdentity()).userId,'tg:42');}
+ console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: no reply keyboard (removed on /start and once on any message), /start only (old lists deleted), inline Book / My bookings / My profile (guest bookings via the t.me link too), guest bookings adopted on Telegram sign-in.');
 })().catch(e=>{console.error(e);process.exitCode=1});

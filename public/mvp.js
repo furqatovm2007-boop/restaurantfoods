@@ -61,6 +61,26 @@
       tgWait: 'Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing. Shu sahifa o‘zi davom etadi.',
       tgOpen: 'Telegram’ni ochish',
       tgFail: 'Telegram orqali kirish tugamadi. Qayta urinib ko‘ring.',
+      profBtn: '👤 Profil / Bronlarim',
+      profTitle: 'Profilim',
+      profName: 'Ism',
+      profPhone: 'Telefon',
+      tgLinked: '✈️ Telegram ulangan',
+      tgNotLinked: '✈️ Telegram ulanmagan',
+      tgConnect: '✈️ Telegram’ni ulash (1 bosish)',
+      profGuest: 'Bron qilganingizdan keyin bronlaringiz shu yerda chiqadi — parol shart emas. Boshqa qurilmada ko‘rish uchun Telegram’ni ulang.',
+      profSave: 'Saqlash',
+      profSaved: 'Saqlandi ✓',
+      bkTitle: 'Bronlarim',
+      bkActive: 'Faol bronlar',
+      bkPast: 'O‘tgan bronlar',
+      bkNone: 'Hozircha bron yo‘q.',
+      bkFind: '🪑 Restoran tanlash',
+      bkCancel: 'Bekor qilish',
+      bkCancelAsk: 'Bu bronni bekor qilasizmi?',
+      bkDishes: 'Taomlar',
+      st: { pending: '⏳ Tasdiq kutilmoqda', confirmed: '✅ Tasdiqlangan', cancelled: '✖️ Bekor qilingan', rejected: '❌ Joy band', completed: '✔️ Yakunlangan', no_show: '⚠️ Kelinmagan', seated: '🪑 Joyida' },
+      close: 'Yopish',
       tgPhone: 'Telegram botda “📱 Raqamni yuborish” tugmasini bosing, so‘ng qayta urinib ko‘ring.',
       reserved: (t, n, time) => `${t}-stol ${n} uchun soat ${time} ga band qilindi`,
       tgSent: 'Bron tafsilotlari Telegram’ingizga yuborildi. Restoran tasdiqlaganda Telegram’da xabar olasiz.',
@@ -112,6 +132,26 @@
       tgWait: 'В Telegram нажмите «Start», затем «📱 Отправить номер». Эта страница продолжит сама.',
       tgOpen: 'Открыть Telegram',
       tgFail: 'Вход через Telegram не завершён. Попробуйте ещё раз.',
+      profBtn: '👤 Профиль / Брони',
+      profTitle: 'Мой профиль',
+      profName: 'Имя',
+      profPhone: 'Телефон',
+      tgLinked: '✈️ Telegram подключён',
+      tgNotLinked: '✈️ Telegram не подключён',
+      tgConnect: '✈️ Подключить Telegram (1 нажатие)',
+      profGuest: 'После бронирования ваши брони появятся здесь — без пароля. Чтобы видеть их на другом устройстве, подключите Telegram.',
+      profSave: 'Сохранить',
+      profSaved: 'Сохранено ✓',
+      bkTitle: 'Мои брони',
+      bkActive: 'Активные брони',
+      bkPast: 'Прошлые брони',
+      bkNone: 'Пока нет броней.',
+      bkFind: '🪑 Выбрать ресторан',
+      bkCancel: 'Отменить',
+      bkCancelAsk: 'Отменить эту бронь?',
+      bkDishes: 'Блюда',
+      st: { pending: '⏳ Ждёт подтверждения', confirmed: '✅ Подтверждена', cancelled: '✖️ Отменена', rejected: '❌ Мест нет', completed: '✔️ Завершена', no_show: '⚠️ Не пришли', seated: '🪑 На месте' },
+      close: 'Закрыть',
       tgPhone: 'В боте Telegram нажмите «📱 Отправить номер» и попробуйте снова.',
       reserved: (t, n, time) => `Стол №${t} забронирован для ${n} на ${time}`,
       tgSent: 'Детали брони отправлены вам в Telegram. Когда ресторан подтвердит, придёт сообщение.',
@@ -163,6 +203,26 @@
       tgWait: 'In Telegram tap “Start”, then “📱 Share my number”. This page continues by itself.',
       tgOpen: 'Open Telegram',
       tgFail: 'Telegram sign-in did not finish. Please try again.',
+      profBtn: '👤 Profile / Bookings',
+      profTitle: 'My profile',
+      profName: 'Name',
+      profPhone: 'Phone',
+      tgLinked: '✈️ Telegram connected',
+      tgNotLinked: '✈️ Telegram not connected',
+      tgConnect: '✈️ Connect Telegram (1 tap)',
+      profGuest: 'After you book, your bookings show up here — no password needed. Connect Telegram to see them on another device.',
+      profSave: 'Save',
+      profSaved: 'Saved ✓',
+      bkTitle: 'My bookings',
+      bkActive: 'Active bookings',
+      bkPast: 'Past bookings',
+      bkNone: 'No bookings yet.',
+      bkFind: '🪑 Choose a restaurant',
+      bkCancel: 'Cancel',
+      bkCancelAsk: 'Cancel this booking?',
+      bkDishes: 'Dishes',
+      st: { pending: '⏳ Waiting for confirmation', confirmed: '✅ Confirmed', cancelled: '✖️ Cancelled', rejected: '❌ No seats', completed: '✔️ Completed', no_show: '⚠️ No-show', seated: '🪑 Seated' },
+      close: 'Close',
       tgPhone: 'In the Telegram bot tap “📱 Share my number”, then try again.',
       reserved: (t, n, time) => `Table #${t} reserved for ${n} at ${time}`,
       tgSent: 'The booking details were sent to your Telegram. You will get a message when the restaurant confirms.',
@@ -408,6 +468,8 @@
             localStorage.setItem('rf-mvp-contact', JSON.stringify({ name, phone }));
           } catch {}
         picks.delete(r.id);
+        // The booking gave this browser a session (guest record): "👤 Profil / Bronlarim" now shows it.
+        if (!tg && !me() && !res.demo) refreshMe().catch(() => null);
         done(res);
         ctx.reload?.();
       } catch (err) {
@@ -442,11 +504,123 @@
   const LANGS = ['uz', 'ru', 'en'];
   function syncLang() {
     const l = lang();
+    const pl = document.querySelector('.mvp-prof-label');
+    if (pl) pl.textContent = c('profBtn').replace(/^👤\s*/, '');
     document.querySelectorAll('.mvp-lang [data-site-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.siteLang === l)));
   }
+  /*
+   * "👤 Profil / Bronlarim" (top bar, always visible): name, phone and Telegram status, then active and past
+   * bookings (restaurant, table, date/time, dishes, status, cancel). A guest who booked with name + phone has
+   * a session of this browser (POST /api/bookings/quick), so it opens without a password. Not signed in: the
+   * name and phone saved in this browser and one-tap "Connect Telegram".
+   */
+  const fmtDishes = (raw) => {
+    try {
+      return (JSON.parse(raw || '[]') || []).map((d) => `${d.name} × ${d.quantity}`).join(', ');
+    } catch {
+      return '';
+    }
+  };
+  const today = () => new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
+  async function openProfile() {
+    let dlg = document.getElementById('mvpProfile');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'mvpProfile';
+      dlg.className = 'mvp-profile';
+      dlg.addEventListener('click', (e) => {
+        if (e.target === dlg) dlg.close();
+      });
+      document.body.append(dlg);
+    }
+    dlg.innerHTML = `<div class="mvp-profile-in"><div class="mvp-profile-head"><h2>${h(c('profTitle'))}</h2><button type="button" class="mvp-x" data-close aria-label="${h(c('close'))}">×</button></div><div data-prof><p class="muted">…</p></div><h3>${h(c('bkTitle'))}</h3><div data-bk><p class="muted">…</p></div></div>`;
+    dlg.querySelector('[data-close]').onclick = () => dlg.close();
+    if (!dlg.open) dlg.showModal();
+    const u = me() || (await refreshMe().catch(() => null), me());
+    renderProfile(dlg, u);
+    renderBookings(dlg, u);
+  }
+  function renderProfile(dlg, u) {
+    const box = dlg.querySelector('[data-prof]');
+    if (u) {
+      const linked = u.telegram?.linked;
+      box.innerHTML = `<dl class="mvp-prof-dl"><dt>${h(c('profName'))}</dt><dd>${h(u.name || '—')}</dd><dt>${h(c('profPhone'))}</dt><dd>${h(u.contactPhone || '—')}</dd></dl><p class="mvp-tg-state ${linked ? 'on' : ''}">${h(c(linked ? 'tgLinked' : 'tgNotLinked'))}</p>${linked ? '' : `<button type="button" class="primary mvp-tg mvp-prof-tg" data-tg>${h(c('tgConnect'))}</button>`}<p class="form-message" data-prof-msg></p>`;
+    } else {
+      box.innerHTML = `<p class="muted mvp-prof-note">${h(c('profGuest'))}</p><form class="form mvp-prof-form" novalidate><label>${h(c('profName'))}<input name="name" autocomplete="name" maxlength="60" value="${h(typed.name || '')}"></label>${phoneField()}<button type="submit" class="quiet">${h(c('profSave'))}</button></form><button type="button" class="primary mvp-tg mvp-prof-tg" data-tg>${h(c('tgConnect'))}</button><p class="form-message" data-prof-msg></p>`;
+      const f = box.querySelector('form');
+      if (window.RFPhone) window.RFPhone.bind(f);
+      f.onsubmit = (e) => {
+        e.preventDefault();
+        typed.name = f.elements.name.value.trim();
+        typed.phone = f.elements.phone.value || f.elements.phoneLocal?.value || '';
+        typed.country = f.querySelector('[data-rf-phone]')?.dataset.country || typed.country;
+        try {
+          localStorage.setItem('rf-mvp-contact', JSON.stringify({ name: typed.name, phone: typed.phone }));
+        } catch {}
+        box.querySelector('[data-prof-msg]').textContent = c('profSaved');
+      };
+    }
+    const tgBtn = box.querySelector('[data-tg]');
+    if (tgBtn)
+      tgBtn.onclick = async () => {
+        const msg = box.querySelector('[data-prof-msg]');
+        // The Telegram tab opens inside the click so the phone's browser allows it.
+        const tab = window.RFTelegram?.active ? null : window.open('', '_blank');
+        tgBtn.disabled = true;
+        try {
+          if (await telegramSignIn(msg, tab)) openProfile();
+        } catch (err) {
+          tab?.close();
+          msg.textContent = err.message || c('tgFail');
+        } finally {
+          tgBtn.disabled = false;
+        }
+      };
+  }
+  async function renderBookings(dlg, u) {
+    const box = dlg.querySelector('[data-bk]');
+    let rows = [];
+    if (u)
+      try {
+        rows = await api('/api/bookings');
+      } catch {}
+    const day = today();
+    const active = rows.filter((b) => ['pending', 'confirmed', 'seated'].includes(b.status) && b.date >= day);
+    const past = rows.filter((b) => !active.includes(b));
+    const item = (b) => {
+      const dishes = fmtDishes(b.preorder_items);
+      const canCancel = ['pending', 'confirmed'].includes(b.status) && b.date >= day;
+      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(String(b.table_number))}-${h(c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
+    };
+    const list = (title, xs) => (xs.length ? `<h4>${h(title)}</h4><ul class="mvp-bk-list">${xs.map(item).join('')}</ul>` : '');
+    box.innerHTML = rows.length ? list(c('bkActive'), active) + list(c('bkPast'), past.slice(0, 20)) : `<p class="muted">${h(c('bkNone'))}</p><a class="primary mvp-pass-link" href="#/discover" data-close-go>${h(c('bkFind'))}</a>`;
+    box.querySelector('[data-close-go]')?.addEventListener('click', () => dlg.close());
+    box.querySelectorAll('[data-cancel]').forEach((btn) => {
+      btn.onclick = async () => {
+        if (!confirm(c('bkCancelAsk'))) return;
+        btn.disabled = true;
+        try {
+          await api('/api/bookings', 'PATCH', { id: btn.dataset.cancel });
+          renderBookings(dlg, u);
+        } catch (err) {
+          btn.disabled = false;
+          btn.closest('li').querySelector('[data-bk-msg]').textContent = err.message;
+        }
+      };
+    });
+  }
+  function profileButton(bar) {
+    if (bar.querySelector('.mvp-prof-btn')) return;
+    bar.insertAdjacentHTML('beforeend', `<button type="button" class="mvp-prof-btn" aria-haspopup="dialog"><span aria-hidden="true">👤</span><span class="mvp-prof-label">${h(c('profBtn').replace(/^👤\s*/, ''))}</span></button>`);
+    bar.querySelector('.mvp-prof-btn').onclick = () => openProfile();
+  }
+  // ?open=profile (the bot's "👤 Mening profilim"): the profile opens once the page is ready.
+  if (/[?&]open=profile\b/.test(location.search)) setTimeout(() => openProfile(), 1200);
+
   function langBar() {
     const bar = document.getElementById('topbar');
-    if (!bar || bar.querySelector('.mvp-lang')) return syncLang();
+    if (!bar) return;
+    if (bar.querySelector('.mvp-lang')) return (profileButton(bar), syncLang());
     bar.insertAdjacentHTML('beforeend', `<div class="mvp-lang" role="group" aria-label="Til / Язык / Language">${LANGS.map((l) => `<button type="button" data-site-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`);
     bar.querySelector('.mvp-lang').onclick = async (e) => {
       const b = e.target.closest('[data-site-lang]');
@@ -455,6 +629,7 @@
       else if (typeof RF_I18N !== 'undefined') RF_I18N.set(b.dataset.siteLang);
       syncLang();
     };
+    profileButton(bar);
     syncLang();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });

@@ -32,8 +32,17 @@ const FLOWERS_PUBLIC = "f.active=1 AND f.status='active' AND f.is_approved=1 AND
 
 export const mainMenu = (l: Lang = 'uz') => {
   const t = BOT[l];
-  // SIMPLE_MVP_MODE: two buttons only — book in the Mini App, or my bookings.
-  if (SIMPLE_MVP_MODE) return { inline_keyboard: [[openButton(t.mvpBook, l)], [{ text: t.mvpBookings, callback_data: 'my_bookings' }]] };
+  // SIMPLE_MVP_MODE: book in the Mini App; my bookings and my profile side by side.
+  if (SIMPLE_MVP_MODE)
+    return {
+      inline_keyboard: [
+        [openButton(t.mvpBook, l)],
+        [
+          { text: t.mvpBookings, callback_data: 'my_bookings' },
+          { text: t.mvpProfile, callback_data: 'my_profile' },
+        ],
+      ],
+    };
   return {
     inline_keyboard: [[openButton(t.openApp, l)], [{ text: t.list, callback_data: 'm:r:0' }], [{ text: t.flowersCatalog, callback_data: 'm:f:0' }], [{ text: t.myBookings, callback_data: 'm:b' }]],
   };
@@ -169,9 +178,10 @@ async function flowers(chatId: string, offset: number, l: Lang) {
 async function bookings(chatId: string, l: Lang) {
   const t = BOT[l];
   const acc = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
-  if (!acc) return (await signIn(chatId, '/bookings', t.bookingsSignIn, l)) && 'menu_bookings_signin';
   const today = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
-  const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,r.name AS restaurant_name FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE b.user_id=? AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc.id, today).all<any>()).results;
+  // The chat's own account, plus guest bookings (name + phone on the site) this chat took with the t.me link.
+  const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,r.name AS restaurant_name FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE (b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?)) AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc?.id || '', chatId, today).all<any>()).results;
+  if (!acc && !rows.length) return (await signIn(chatId, '/bookings', t.bookingsSignIn, l)) && 'menu_bookings_signin';
   if (!rows.length) {
     await telegram('sendMessage', { chat_id: chatId, text: t.noBookings, reply_markup: { inline_keyboard: [[openButton(t.bookTable, l)]] } });
     return 'menu_bookings_empty';
@@ -211,6 +221,27 @@ async function profile(chatId: string, l: Lang) {
   const phone = a.contact_phone_verified && maskPhone(a.contact_phone) ? '📱 ' + maskPhone(a.contact_phone) + ' ✅' : t.phoneUnverified;
   await telegram('sendMessage', { chat_id: chatId, text: `👤 <b>${html(a.name || t.customer)}</b>\n${phone}\n${birth}`, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[openButton(t.profileOpen, l, '/account')]] } });
   return 'menu_profile';
+}
+
+/*
+ * "👤 Mening profilim" (SIMPLE_MVP_MODE): the Telegram name and @username, the saved phone (the linked
+ * account's, else the one given with the guest bookings this chat took) and how many bookings there are,
+ * with a button that opens the profile in the Mini App.
+ */
+async function mvpProfile(chatId: string, from: { first_name?: string; last_name?: string; username?: string } | undefined, l: Lang) {
+  const t = BOT[l];
+  const acc = await env.DB!.prepare('SELECT id,name,contact_phone FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string; name: string; contact_phone: string }>();
+  const mine = "(b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?))";
+  const stats = await env.DB!.prepare(`SELECT COUNT(*) AS n,SUM(CASE WHEN b.status IN ('pending','confirmed') THEN 1 ELSE 0 END) AS active FROM bookings b WHERE ${mine}`).bind(acc?.id || '', chatId).first<{ n: number; active: number | null }>();
+  const phone = acc?.contact_phone || (await env.DB!.prepare(`SELECT b.phone FROM bookings b WHERE ${mine} ORDER BY b.created_at DESC LIMIT 1`).bind(acc?.id || '', chatId).first<{ phone: string }>())?.phone || '';
+  const name = [from?.first_name, from?.last_name].filter(Boolean).join(' ') || acc?.name || t.customer;
+  const text = [
+    `👤 <b>${html(name)}</b>${from?.username ? ' (@' + html(from.username) + ')' : ''}`,
+    `📞 ${phone ? html(phone) : t.noPhone}`,
+    `📅 ${t.bookingsCount(Number(stats?.n || 0), Number(stats?.active || 0))}`,
+  ].join('\n');
+  await telegram('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: t.profileOpen, web_app: { url: miniAppUrl('', l) + '&open=profile' } }], [{ text: t.mvpBookings, callback_data: 'my_bookings' }]] } });
+  return 'menu_my_profile';
 }
 
 async function signIn(chatId: string, go: string, text: string, l: Lang) {
@@ -297,7 +328,7 @@ export async function handleMenu(update: any): Promise<string | null> {
     return null;
   }
   const cb = update?.callback_query;
-  if (typeof cb?.data !== 'string' || !(cb.data.startsWith('m:') || cb.data === 'my_bookings') || !cb.message) return null;
+  if (typeof cb?.data !== 'string' || !(cb.data.startsWith('m:') || cb.data === 'my_bookings' || cb.data === 'my_profile') || !cb.message) return null;
   await telegram('answerCallbackQuery', { callback_query_id: cb.id });
   if (cb.message.chat?.type && cb.message.chat.type !== 'private') return 'menu_not_private';
   const chatId = String(cb.message.chat.id),
@@ -306,6 +337,7 @@ export async function handleMenu(update: any): Promise<string | null> {
   if (op === 'l') return isLang(arg) ? chooseLanguage(chatId, arg, cb.message.message_id) : 'menu_unknown';
   const l = await chatLang(chatId);
   if (cb.data === 'my_bookings') return bookings(chatId, l);
+  if (cb.data === 'my_profile') return mvpProfile(chatId, cb.from, l);
   const offset = Math.max(0, Math.min(1000, Number(arg) || 0));
   if (op === 'r') return restaurants(chatId, offset, l);
   if (op === 'c') return restaurantCard(chatId, arg, l);

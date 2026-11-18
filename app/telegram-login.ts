@@ -51,6 +51,7 @@ export async function pollTelegramLogin() {
   // One-time: the request is consumed by the browser that started it.
   const claimed = await env.DB!.prepare("DELETE FROM telegram_logins WHERE code=? AND status='approved' RETURNING user_id").bind(code).first<{ user_id: string }>();
   if (!claimed) throw new ApiError(410, 'So‘rov allaqachon ishlatilgan.');
+  await adoptGuest(claimed.user_id).catch(() => null);
   await issueSession(claimed.user_id);
   await rememberDevice(claimed.user_id);
   jar.set(LOGIN_COOKIE, '', cookieOptions(0));
@@ -75,12 +76,26 @@ export async function magicLogin(code: unknown) {
   const acc = row ? await env.DB!.prepare('SELECT id,role,status FROM accounts WHERE id=?').bind(row.user_id).first<{ id: string; role: string; status: string }>() : null;
   if (!acc) throw new ApiError(410, 'Havola eskirgan yoki allaqachon ishlatilgan. Telegram orqali qayta kiring.');
   if (acc.role === 'admin' || acc.status === 'suspended') throw new ApiError(403, 'Bu akkaunt bilan tezkor kirish mumkin emas.');
+  await adoptGuest(acc.id).catch(() => null);
   await issueSession(acc.id);
   await rememberDevice(acc.id);
   return { ok: true };
 }
 
 /** A site session of its own for this browser (30 days, HttpOnly cookie, only the hash in D1). */
+/*
+ * Guest bookings (SIMPLE_MVP_MODE: name + phone, no sign-in) live under a guest record of the browser. When
+ * that browser signs in for real, they move to the real account, and the guest session ends.
+ */
+export async function adoptGuest(userId: string) {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token || token.length < 32 || userId.startsWith('guest:')) return;
+  const hash = await sha256(token);
+  const row = await env.DB!.prepare("SELECT user_id FROM telegram_sessions WHERE token_hash=? AND user_id LIKE 'guest:%'").bind(hash).first<{ user_id: string }>();
+  if (!row) return;
+  await env.DB!.prepare('UPDATE bookings SET user_id=? WHERE user_id=?').bind(userId, row.user_id).run();
+  await env.DB!.prepare('DELETE FROM telegram_sessions WHERE token_hash=?').bind(hash).run();
+}
 export async function issueSession(userId: string) {
   const token = random(48),
     now = Date.now();

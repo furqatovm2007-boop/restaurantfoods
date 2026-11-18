@@ -10,7 +10,7 @@ import { otherHold, releaseHolds } from '../../../holds';
 import { walkinTables, WALKIN_ONLY } from '../../../hall-layout';
 import { ensurePassCode, PASS_PREFIX } from '../../../booking-pass';
 import { SIMPLE_MVP_MODE, MVP_CHECKOUT } from '../../../mvp';
-import { botUsername } from '../../../telegram-login';
+import { botUsername, issueSession } from '../../../telegram-login';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -69,9 +69,16 @@ export async function POST(request: Request) {
     }
     let userId = u?.userId || '';
     if (!userId) {
-      // Guest record keyed by the phone: the restaurant sees the name and number, nothing else is kept.
-      userId = 'guest:' + contact;
-      await env.DB!.prepare("INSERT INTO accounts (id,email,name,created_at,role,role_selected,provider,contact_phone) VALUES (?,'',?,?,'customer',1,'guest',?) ON CONFLICT(id) DO UPDATE SET name=excluded.name").bind(userId, name, new Date().toISOString(), contact).run();
+      /*
+       * A guest record of this browser (not of the phone number: the number is not verified, so another
+       * browser typing the same number never sees these bookings). The browser gets a site session (HttpOnly
+       * cookie, 30 days, only the hash kept), so "👤 Profil / Bronlarim" shows the bookings without a password;
+       * signing in with Telegram later moves them to that account (app/telegram-login.ts adoptGuest).
+       */
+      userId = 'guest:' + crypto.randomUUID();
+      await env.DB!.prepare("INSERT INTO accounts (id,email,name,created_at,role,role_selected,provider,contact_phone) VALUES (?,'',?,?,'customer',1,'guest',?)").bind(userId, name, new Date().toISOString(), contact).run();
+    } else if (userId.startsWith('guest:')) {
+      await env.DB!.prepare('UPDATE accounts SET name=?,contact_phone=? WHERE id=?').bind(name, contact, userId).run();
     }
     if (await otherHold(restaurantId, [tableNumber], date, start, end, userId)) throw new ApiError(409, 'Bu stolni hozirgina boshqa mijoz tanladi. Boshqa stol tanlang.');
     if (seatedWindow(date, slot) && (await env.DB!.prepare("SELECT 1 FROM table_live_status WHERE restaurant_id=? AND table_number=? AND status='occupied' AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes')").bind(restaurantId, tableNumber).first())) throw new ApiError(409, SEATED_MESSAGE);
@@ -83,6 +90,7 @@ export async function POST(request: Request) {
       .run();
     if (!result.meta.changes) throw new ApiError(409, 'Bu stol tanlangan vaqtda band. Boshqa vaqt yoki stol tanlang.');
     await releaseHolds(userId).catch(() => null);
+    if (!u) await issueSession(userId);
     const code = await ensurePassCode(id, null);
     // The restaurant gets the card with Confirm / Cancel at once; a linked customer gets their own message.
     const notified = await notifyBooking(id);
