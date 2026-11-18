@@ -50,6 +50,10 @@
       close: 'Yopish',
       guestsShort: 'kishi',
       sum: 'so‘m',
+      booking: 'Band qilinmoqda…',
+      doneOk: 'Joyingiz muvaffaqiyatli band qilindi!',
+      getPass: '✈️ Telegram’da chiptani olish',
+      passHint: 'Bir bosishda botni oching — bron chiptasi va restoran tasdig‘i Telegram’ga keladi.',
       tabs: [['all', 'Barchasi'], ['national', 'Milliy taomlar'], ['europe', 'Yevropa'], ['fast', 'Fast-food']],
       tgBook: 'Telegram orqali band qilish',
       bookNow: 'Joyni band qilish',
@@ -97,6 +101,10 @@
       close: 'Закрыть',
       guestsShort: 'гост.',
       sum: 'сум',
+      booking: 'Бронируем…',
+      doneOk: 'Ваш столик успешно забронирован!',
+      getPass: '✈️ Получить бронь в Telegram',
+      passHint: 'Откройте бота в одно касание — бронь и подтверждение ресторана придут в Telegram.',
       tabs: [['all', 'Все'], ['national', 'Национальная кухня'], ['europe', 'Европейская'], ['fast', 'Фастфуд']],
       tgBook: 'Забронировать через Telegram',
       bookNow: 'Забронировать',
@@ -144,6 +152,10 @@
       close: 'Close',
       guestsShort: 'guests',
       sum: 'UZS',
+      booking: 'Booking…',
+      doneOk: 'Booking Confirmed!',
+      getPass: '✈️ Get your pass in Telegram',
+      passHint: 'Open the bot in one tap — your booking and the restaurant’s confirmation arrive in Telegram.',
       tabs: [['all', 'All'], ['national', 'National cuisine'], ['europe', 'European'], ['fast', 'Fast-food']],
       tgBook: 'Book with Telegram',
       bookNow: 'Book Now',
@@ -312,11 +324,11 @@
       ? u
         ? `<p class="mvp-who">✈️ ${h(u.name || '')}${u.contactPhone ? ' · 📞 ' + h(u.contactPhone) : ''}</p>`
         : `<p class="mvp-who">✈️ ${h(c('tgNote'))}</p>`
-      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name)}"></label><label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone)}"></label>`;
-    const label = tg && !u ? '✈️ ' + c('tgBook') : '✅ ' + c(tg ? 'bookNow' : 'confirm');
+      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name || me()?.name || '')}"></label><label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone || me()?.contactPhone || '')}"></label>`;
+    const label = tg && u ? '✅ ' + c('bookNow') : '✈️ ' + c('tgBook');
     form.className = 'form mvp-checkout';
     form.noValidate = true;
-    form.innerHTML = `<p class="mvp-slot">🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · 📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p>${who}<div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm${tg && !u ? ' mvp-tg' : ''}" type="submit">${h(label)}</button><p class="form-message" role="status" data-mvp-msg></p>`;
+    form.innerHTML = `<p class="mvp-slot">🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · 📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p>${who}<div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm${tg && u ? '' : ' mvp-tg'}" type="button">${h(label)}</button><p class="form-message" role="status" data-mvp-msg></p>`;
     const remember = () => {
       if (form.elements.name) typed.name = form.elements.name.value;
       if (form.elements.phone) typed.phone = form.elements.phone.value;
@@ -329,8 +341,25 @@
       start.value = form.elements.slot.value;
       start.dispatchEvent(new Event('change'));
     };
-    form.onsubmit = async (e) => {
+    // Never a real form submit: the page must not reload and the chosen dishes must stay.
+    form.onsubmit = (e) => {
       e.preventDefault();
+      book(e);
+    };
+    form.querySelector('.mvp-confirm').onclick = (e) => {
+      e.preventDefault();
+      book(e);
+    };
+    // Enter in a field books too (the button is not a submit button, so the browser would not do it).
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.matches('input')) {
+        e.preventDefault();
+        book(e);
+      }
+    });
+    let busy = false;
+    const book = async () => {
+      if (busy) return;
       remember();
       const msg = form.querySelector('[data-mvp-msg]'),
         btn = form.querySelector('.mvp-confirm');
@@ -344,8 +373,9 @@
       }
       // The Telegram tab opens inside the click (before any await) so the phone's browser allows it.
       const tab = tg && !tgUser() && !window.RFTelegram?.active ? window.open('', '_blank') : null;
+      busy = true;
       btn.disabled = true;
-      btn.textContent = c('sending');
+      btn.innerHTML = `<span class="mvp-spin" aria-hidden="true"></span> ${h(c('booking'))}`;
       msg.textContent = '';
       const body = () => ({ restaurantId: r.id, tableNumber: tb.number, tableId: tb.id, date, slot: start?.value, endSlot: document.getElementById('planEnd')?.value, guests: Number(form.elements.guests.value), ...(tg ? {} : { name, phone }), preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })) });
       try {
@@ -375,8 +405,9 @@
         tab?.close();
         msg.textContent = err.status === 428 ? c('tgPhone') : err.message;
       } finally {
+        busy = false;
         btn.disabled = false;
-        btn.textContent = tg && !tgUser() ? '✈️ ' + c('tgBook') : '✅ ' + c(tg ? 'bookNow' : 'confirm');
+        btn.textContent = tg && tgUser() ? '✅ ' + c('bookNow') : '✈️ ' + c('tgBook');
       }
     };
   }
@@ -387,7 +418,7 @@
     dlg.className = 'mvp-done';
     dlg.setAttribute('aria-labelledby', 'mvpDoneTitle');
     const first = String(res.name || '').split(/\s+/)[0] || res.name;
-    dlg.innerHTML = `<div class="mvp-done-check" aria-hidden="true">✓</div><h2 id="mvpDoneTitle">${h(res.demo ? c('doneDemo') : c('done'))}</h2><div class="mvp-ticket"><span class="mvp-ticket-table">🪑 ${res.table}</span><span class="mvp-ticket-line">${h(c('reserved')(res.table, first, res.slot))}</span><small>${h(res.restaurant)} · 📅 ${h(res.date)} · ${res.guests} ${h(c('guestsShort'))}</small></div>${res.preorderItems?.length ? `<p class="mvp-done-meals">🍽 ${res.preorderItems.map((i) => h(i.name) + ' ×' + i.quantity).join(', ')} · ${money(res.preorderTotal)}</p>` : ''}<p class="${res.demo ? 'notice' : 'muted'}">${h(res.demo ? c('doneDemoText') : telegramMode() ? (res.notified ? c('tgSent') : c('tgQueued')) : res.notified ? c('doneText') : c('doneQueued'))}</p><button type="button" class="primary" data-close>${h(c('close'))}</button>`;
+    dlg.innerHTML = `<div class="mvp-done-check" aria-hidden="true">✓</div><h2 id="mvpDoneTitle">${h(res.demo ? c('doneDemo') : c('doneOk'))}</h2><div class="mvp-ticket"><span class="mvp-ticket-table">🪑 ${res.table}</span><span class="mvp-ticket-line">${h(c('reserved')(res.table, first, res.slot))}</span><small>${h(res.restaurant)} · 📅 ${h(res.date)} · ${res.guests} ${h(c('guestsShort'))}</small></div>${res.preorderItems?.length ? `<p class="mvp-done-meals">🍽 ${res.preorderItems.map((i) => h(i.name) + ' ×' + i.quantity).join(', ')} · ${money(res.preorderTotal)}</p>` : ''}<p class="${res.demo ? 'notice' : 'muted'}">${h(res.demo ? c('doneDemoText') : telegramMode() ? (res.notified ? c('tgSent') : c('tgQueued')) : res.notified ? c('doneText') : c('doneQueued'))}</p>${res.telegramLink ? `<a class="primary mvp-tg mvp-pass-link" href="${h(res.telegramLink)}" target="_blank" rel="noopener">${h(c('getPass'))}</a><p class="muted mvp-pass-hint">${h(c('passHint'))}</p>` : ''}<button type="button" class="${res.telegramLink ? 'quiet' : 'primary'}" data-close>${h(c('close'))}</button>`;
     document.body.append(dlg);
     const close = () => {
       dlg.close();

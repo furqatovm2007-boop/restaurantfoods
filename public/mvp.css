@@ -76,3 +76,10 @@
 .mvp-ticket-table{display:block;font-size:2.2rem;font-weight:900;color:#f6d27a;line-height:1.1}
 .mvp-ticket-line{display:block;margin-top:6px;font-size:1.05rem;font-weight:700}
 .mvp-ticket small{display:block;margin-top:6px;opacity:.85}
+/* Booking button spinner and the "get it in Telegram" link on the success screen */
+.mvp-spin{display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-3px;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;animation:mvpSpin .7s linear infinite}
+.mvp-pass-link{display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;margin-top:8px;border-radius:14px;font-weight:800;text-decoration:none}
+.mvp-pass-hint{margin:6px 0 0;font-size:.82rem}
+.mvp-done .quiet{width:100%;min-height:46px;margin-top:8px}
+@keyframes mvpSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.mvp-spin{animation-duration:2s}}

@@ -188,7 +188,8 @@ const CUSTOMER_TEXT: Record<string, (restaurant: string) => string> = {
 export async function notifyCustomer(bookingId: string, kind: keyof typeof CUSTOMER_TEXT) {
   if (!telegramConfigured()) return false;
   try {
-    const b = await env.DB!.prepare('SELECT b.date,b.slot,b.end_slot,b.table_number,b.guests,r.name AS restaurant_name,r.address,r.latitude,r.longitude,a.telegram_chat_id FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id JOIN accounts a ON a.id=b.user_id WHERE b.id=?').bind(bookingId).first<any>();
+    // The account's chat, or the chat that opened this booking's link from the success screen (bookchat:<id>).
+    const b = await env.DB!.prepare("SELECT b.date,b.slot,b.end_slot,b.table_number,b.guests,r.name AS restaurant_name,r.address,r.latitude,r.longitude,COALESCE(a.telegram_chat_id,c.value) AS telegram_chat_id FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings c ON c.key='bookchat:'||b.id WHERE b.id=?").bind(bookingId).first<any>();
     if (!b?.telegram_chat_id) return false;
     const map = Number.isFinite(Number(b.latitude)) && Number.isFinite(Number(b.longitude)) && (b.latitude || b.longitude) ? `https://maps.google.com/?q=${Number(b.latitude)},${Number(b.longitude)}` : '';
     const text = [`<b>${html(CUSTOMER_TEXT[kind](b.restaurant_name))}</b>`, `🏠 ${html(b.restaurant_name)}${b.address ? ' · ' + html(b.address) : ''}`, `📅 ${html(b.date)} · 🕒 ${html(String(b.slot).slice(0, 5))}${b.end_slot ? '–' + html(String(b.end_slot).slice(0, 5)) : ''}`, `🍽 ${b.table_number}-stol · ${b.guests} kishi`].join('\n');
@@ -292,6 +293,27 @@ async function webAppContact(chatId: string, phone: string | null) {
   return 'webapp_contact_saved';
 }
 
+/*
+ * A guest booked on the site with name and phone (SIMPLE_MVP_MODE) and opened the bot from the success screen:
+ * this chat now receives that booking's messages (the restaurant's confirm / reject). The first chat to open the
+ * link keeps it; another chat is refused. The booking id is the secret here — it is shown only to the guest.
+ */
+async function claimBooking(chatId: string, bookingId: string) {
+  const b = await env.DB!.prepare("SELECT b.id,b.status,a.telegram_chat_id AS account_chat,c.value AS claimed FROM bookings b LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings c ON c.key='bookchat:'||b.id WHERE b.id=?").bind(bookingId).first<any>();
+  if (!b || !['pending', 'confirmed'].includes(b.status)) {
+    await telegram('sendMessage', { chat_id: chatId, text: 'Bu bron topilmadi yoki faol emas.', reply_markup: await keyboardFor(chatId) });
+    return 'book_claim_missing';
+  }
+  const owner = b.claimed || b.account_chat;
+  if (owner && owner !== chatId) {
+    await telegram('sendMessage', { chat_id: chatId, text: 'Bu bron boshqa Telegram akkauntiga ulangan.', reply_markup: await keyboardFor(chatId) });
+    return 'book_claim_taken';
+  }
+  if (!owner) await env.DB!.prepare("INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,'telegram') ON CONFLICT(key) DO NOTHING").bind('bookchat:' + b.id, chatId, new Date().toISOString()).run();
+  await notifyCustomer(b.id, b.status === 'confirmed' ? 'confirmed' : 'created');
+  return 'book_claimed';
+}
+
 /** Customer side of the webhook: /start c_CODE, the shared contact, /stop. Null when not a customer message. */
 async function customerUpdate(msg: NonNullable<Update['message']>) {
   const chatId = String(msg.chat.id);
@@ -334,6 +356,8 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
     return 'unlinked';
   }
   const code = text.startsWith('/start') ? text.split(/\s+/)[1]?.trim() : '';
+  // "Telegram’da chiptani olish" from the booking success screen: t.me/<bot>?start=book_<booking id>.
+  if (code && /^book_[0-9a-f-]{36}$/.test(code)) return claimBooking(chatId, code.slice(5));
   if (code && /^l_[A-Za-z0-9]{24}$/.test(code)) {
     const opened = await env.DB!.prepare("UPDATE telegram_logins SET chat_id=?,status='awaiting_contact' WHERE code=? AND status IN ('pending','awaiting_contact') AND expires_at>?").bind(chatId, code, Date.now()).run();
     // This Telegram account already belongs to a site account with a verified number: approve at once,

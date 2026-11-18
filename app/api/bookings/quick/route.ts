@@ -9,6 +9,7 @@ import { otherHold, releaseHolds } from '../../../holds';
 import { walkinTables, WALKIN_ONLY } from '../../../hall-layout';
 import { ensurePassCode, PASS_PREFIX } from '../../../booking-pass';
 import { SIMPLE_MVP_MODE, MVP_CHECKOUT } from '../../../mvp';
+import { botUsername } from '../../../telegram-login';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
       name = String(acc.name || 'Mijoz').slice(0, 60);
     } else {
       name = text(b.name, 2, 60).replace(/\s+/g, ' ');
-      contact = phone(b.phone);
+      contact = phone(typeof b.phone === 'string' ? b.phone.replace(/[\s()-]/g, '') : b.phone);
     }
     const restaurantId = text(b.restaurantId),
       date = text(b.date),
@@ -84,7 +85,10 @@ export async function POST(request: Request) {
     // The restaurant gets the card with Confirm / Cancel at once; a linked customer gets their own message.
     const notified = await notifyBooking(id);
     await notifyCustomer(id, 'created').catch(() => false);
-    return json({ ok: true, demo: false, id, passCode: code, passPayload: code ? PASS_PREFIX + code : '', notified, ...summary }, 201);
+    // One tap to get the booking (and later the restaurant's answer) in Telegram.
+    const bot = botUsername();
+    const telegramLink = bot ? `https://t.me/${bot}?start=book_${id}` : '';
+    return json({ ok: true, demo: false, id, passCode: code, passPayload: code ? PASS_PREFIX + code : '', notified, telegramLink, ...summary }, 201);
   } catch (e) {
     return failure(e);
   }

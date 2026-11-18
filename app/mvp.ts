@@ -14,9 +14,11 @@ export const SIMPLE_MVP_MODE = true;
 /*
  * Who may book in this mode: 'telegram' — the guest signs in with Telegram at checkout (the Mini App signs in
  * by itself; on the web the bot asks for the contact once), so name, phone and the Telegram chat come from
- * Telegram and both sides get messages there. 'guest' — name and phone typed in, no sign-in (kept for later).
+ * Telegram and both sides get messages there. 'guest' (now) — name and phone typed in, no sign-in; the success
+ * screen gives a t.me/<bot>?start=book_<id> link so the guest gets the booking and the restaurant's answer in
+ * Telegram with one tap.
  */
-export const MVP_CHECKOUT: 'telegram' | 'guest' = 'telegram';
+export const MVP_CHECKOUT: 'telegram' | 'guest' = 'guest';
 
 /*
  * "Amanda Restaurant": the featured demo card (first in the catalogue). It is a demo (is_demo=1, DEMO tag
