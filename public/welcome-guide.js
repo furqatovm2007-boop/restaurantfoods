@@ -1,14 +1,15 @@
 /*
  * Welcome guide: on a visitor's first visit the AI concierge (concierge-avatar.js) appears in the corner
- * with a short animation and explains the site in a few steps — restaurants and table booking, quick
- * filters, the 3D menu and preorders, flowers, the AI assistant, the Telegram bot — pointing at each part.
+ * with a short animation and explains the site, pointing at each part.
+ *  - SIMPLE_MVP_MODE: three steps that match the simple flow (choose a restaurant → pick a table and, if
+ *    wanted, dishes → book with Telegram), each spoken by the owner's recorded voice
+ *    /audio/concierge/<uz|ru|en>-step<1|2|3>.mp3 in the site's language. "🔇 Mute" pauses and mutes it; a
+ *    new step stops the previous recording. No browser speech synthesis is used.
+ *  - Full mode: the longer tour (restaurants, filters, 3D menu, flowers, AI assistant, Telegram bot); the
+ *    words are typed with the mouth following the syllables, "🔊 Ovoz bilan" asks the server voice.
  *  - Shown once per browser ('rf-guide-v1'), only on the home / catalogue page, never over a deep link
  *    (Telegram "book this restaurant") or while the AI assistant is open. "Skip" and Esc close it for good.
- *  - Browsers do not let a page start sound by itself, so the concierge "speaks" in text first: the words
- *    are typed and the mouth follows the syllables. "🔊 Ovoz bilan" plays the real voice (/api/ai/tts, for
- *    signed-in visitors) and the mouth follows that sound through an AnalyserNode.
- *  - Uzbek, Russian and English, following the site's language. Nothing is sent anywhere except the
- *    voice request the visitor asks for. window.RFGuide.open() shows it again.
+ *  - Uzbek, Russian and English, following the site's language. window.RFGuide.open() shows it again.
  */
 (() => {
   'use strict';
@@ -31,6 +32,19 @@
       voiceOff: '🔇 Ovozsiz',
       voiceLogin: 'Ovozli tanishtiruv uchun akkauntga kiring.',
       title: 'RestaurantFoods konsyerji',
+      // SIMPLE_MVP_MODE: three steps, each read by the recorded voice /audio/concierge/uz-stepN.mp3.
+      mvp: {
+        steps: [
+          ['👋 Assalomu alaykum! Avval katalogdan o‘zingizga yoqqan restoranni tanlang.', '.mvp-card'],
+          ['🪑 Interaktiv zal xaritasida stolni tanlang. Xohlasangiz, rasmli menyudan taom ham qo‘shing.', '.mvp-book'],
+          ['✈️ Telegram orqali bir bosishda band qiling — tasdiq xabari darhol keladi.', null],
+        ],
+        next: 'Keyingi ›',
+        done: 'Boshladik ✓',
+        skip: 'O‘tkazib yuborish',
+        mute: '🔇 Ovozni o‘chirish',
+        unmute: '🔊 Ovozni yoqish',
+      },
       close: 'Yopish',
     },
     ru: {
@@ -50,6 +64,18 @@
       voiceOff: '🔇 Без звука',
       voiceLogin: 'Чтобы слушать голосом, войдите в аккаунт.',
       title: 'Консьерж RestaurantFoods',
+      mvp: {
+        steps: [
+          ['👋 Здравствуйте! Сначала выберите ресторан в нашем каталоге.', '.mvp-card'],
+          ['🪑 Выберите столик на интерактивной схеме зала и, если хотите, блюда из фото-меню.', '.mvp-book'],
+          ['✈️ Бронируйте в один клик через Telegram — подтверждение придёт сразу.', null],
+        ],
+        next: 'Далее ›',
+        done: 'Поехали ✓',
+        skip: 'Пропустить',
+        mute: '🔇 Без звука',
+        unmute: '🔊 Со звуком',
+      },
       close: 'Закрыть',
     },
     en: {
@@ -69,6 +95,18 @@
       voiceOff: '🔇 Mute',
       voiceLogin: 'Sign in to hear the voice tour.',
       title: 'RestaurantFoods concierge',
+      mvp: {
+        steps: [
+          ['👋 Hello! First, pick a restaurant you like from our catalogue.', '.mvp-card'],
+          ['🪑 Choose your table on the interactive hall map, and add dishes from the photo menu if you like.', '.mvp-book'],
+          ['✈️ Book in one tap with Telegram — your confirmation arrives instantly.', null],
+        ],
+        next: 'Next ›',
+        done: 'Let’s go ✓',
+        skip: 'Skip',
+        mute: '🔇 Mute',
+        unmute: '🔊 Unmute',
+      },
       close: 'Close',
     },
   };
@@ -202,24 +240,98 @@
     n.textContent = note || '';
     n.hidden = !note;
   }
-  // SIMPLE_MVP_MODE hides flowers and the AI assistant, so the tour skips those two steps.
-  const stepsOf = (c) => (window.SIMPLE_MVP_MODE ? c.steps.filter(([, target]) => !/flowers|rf-ai-launch/.test(target || '')) : c.steps);
+  // SIMPLE_MVP_MODE: the 3-step tour of the simple flow, with the recorded voice.
+  const mvp = () => !!window.SIMPLE_MVP_MODE;
+  const stepsOf = (c) => (mvp() ? c.mvp.steps : c.steps);
+  const labels = (c) => (mvp() ? c.mvp : c);
+
+  /*
+   * The recorded voice (SIMPLE_MVP_MODE): /audio/concierge/<lang>-step<N>.mp3 through one HTML5 <audio>.
+   * Each step stops the previous recording and plays its own; the mouth follows the sound (an AnalyserNode
+   * on the audio element). "Mute" pauses and mutes it and is remembered on this device. A browser that does
+   * not let a page start sound by itself, or a missing file, leaves the typed words (mouth by syllables) —
+   * no robotic browser voice is ever used.
+   */
+  const MUTE_KEY = 'rf-guide-muted';
+  let muted = (() => {
+      try {
+        return localStorage.getItem(MUTE_KEY) === '1';
+      } catch {
+        return false;
+      }
+    })(),
+    player = null,
+    playerAnalyser = null;
+  const clipUrl = (n) => `/audio/concierge/${lang()}-step${n + 1}.mp3`;
+  function stopClip() {
+    if (player) {
+      player.pause();
+      player.currentTime = 0;
+    }
+    avatar?.speak(null);
+  }
+  async function playClip(n) {
+    stopClip();
+    if (muted) return;
+    try {
+      player ||= Object.assign(new Audio(), { preload: 'auto' });
+      player.muted = false;
+      player.src = clipUrl(n);
+      player.onended = () => {
+        avatar?.speak(null);
+        avatar?.mode('idle');
+      };
+      // Lip-sync from the recording itself (same-origin file, so the analyser may read it).
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC && !playerAnalyser) {
+        try {
+          ctx ||= new AC();
+          const src = ctx.createMediaElementSource(player);
+          playerAnalyser = ctx.createAnalyser();
+          playerAnalyser.fftSize = 512;
+          src.connect(playerAnalyser);
+          playerAnalyser.connect(ctx.destination);
+        } catch {
+          playerAnalyser = null;
+        }
+      }
+      await ctx?.resume().catch(() => {});
+      await player.play();
+      if (!box || step !== n) return stopClip();
+      clearInterval(typing);
+      box.querySelector('[data-text]').textContent = stepsOf(COPY[lang()])[n][0];
+      avatar?.level(null);
+      avatar?.mode('speaking');
+      if (playerAnalyser) avatar?.speak(playerAnalyser);
+    } catch {
+      // Autoplay blocked or no recording: the typed words carry the step; one tap on 🔊 plays it.
+    }
+  }
+  function renderMute() {
+    const b = box?.querySelector('[data-voice]');
+    if (!b) return;
+    const c = labels(COPY[lang()]);
+    b.textContent = muted ? c.unmute : c.mute;
+    b.setAttribute('aria-pressed', String(!muted));
+  }
   function show(i) {
     const c = COPY[lang()],
       steps = stepsOf(c);
     step = Math.max(0, Math.min(steps.length - 1, i));
     const [text, target] = steps[step];
     box.querySelector('[data-dots]').innerHTML = steps.map((_, n) => `<i class="${n === step ? 'on' : n < step ? 'seen' : ''}"></i>`).join('');
-    box.querySelector('[data-next]').textContent = step === steps.length - 1 ? c.done : c.next;
+    box.querySelector('[data-next]').textContent = step === steps.length - 1 ? labels(c).done : labels(c).next;
     focus(target);
     if (step) avatar?.gesture();
     type(text);
-    say(text);
+    if (mvp()) playClip(step);
+    else say(text);
   }
   function close() {
     store.set();
     clearInterval(typing);
     stopSound();
+    stopClip();
     unfocus();
     document.removeEventListener('keydown', onKey);
     if (!box) return;
@@ -241,12 +353,13 @@
   };
   function open() {
     if (box) return;
-    const c = COPY[lang()];
+    const c = COPY[lang()],
+      l = labels(c);
     box = document.createElement('section');
     box.className = 'rf-guide';
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-label', c.title);
-    box.innerHTML = `<button type="button" class="rf-guide-x" data-close aria-label="${c.close}">✕</button><div class="rf-guide-hero" data-avatar></div><div class="rf-guide-body"><p class="rf-guide-name">${c.title}</p><p class="rf-guide-text" data-text aria-live="polite"></p><p class="rf-guide-note" data-note hidden></p><div class="rf-guide-dots" data-dots aria-hidden="true"></div><div class="rf-guide-actions"><button type="button" class="rf-guide-skip" data-skip>${c.skip}</button><button type="button" class="rf-guide-voice" data-voice aria-pressed="false">${c.voice}</button><button type="button" class="rf-guide-next" data-next>${c.next}</button></div></div>`;
+    box.innerHTML = `<button type="button" class="rf-guide-x" data-close aria-label="${c.close}">✕</button><div class="rf-guide-hero" data-avatar></div><div class="rf-guide-body"><p class="rf-guide-name">${c.title}</p><p class="rf-guide-text" data-text aria-live="polite"></p><p class="rf-guide-note" data-note hidden></p><div class="rf-guide-dots" data-dots aria-hidden="true"></div><div class="rf-guide-actions"><button type="button" class="rf-guide-skip" data-skip>${l.skip}</button><button type="button" class="rf-guide-voice" data-voice aria-pressed="false">${mvp() ? (muted ? l.unmute : l.mute) : c.voice}</button><button type="button" class="rf-guide-next" data-next>${l.next}</button></div></div>`;
     document.body.append(box);
     avatar = window.RFConcierge?.mount(box.querySelector('[data-avatar]')) || null;
     avatar?.mode('idle');
@@ -254,6 +367,19 @@
     box.querySelector('[data-skip]').onclick = close;
     box.querySelector('[data-next]').onclick = () => (step >= stepsOf(COPY[lang()]).length - 1 ? close() : show(step + 1));
     box.querySelector('[data-voice]').onclick = () => {
+      if (mvp()) {
+        // Mute / unmute the recording; unmuting (a tap) also lets a blocked autoplay start.
+        muted = !muted;
+        try {
+          localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
+        } catch {}
+        renderMute();
+        if (muted) {
+          if (player) player.muted = true;
+          stopClip();
+        } else playClip(step);
+        return;
+      }
       voiceOn = !voiceOn;
       renderVoice();
       if (voiceOn) say(stepsOf(COPY[lang()])[step][0]);
