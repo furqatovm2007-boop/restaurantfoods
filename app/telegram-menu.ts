@@ -32,19 +32,8 @@ const FLOWERS_PUBLIC = "f.active=1 AND f.status='active' AND f.is_approved=1 AND
 
 export const mainMenu = (l: Lang = 'uz') => {
   const t = BOT[l];
-  // SIMPLE_MVP_MODE: book in the Mini App, or see my bookings — plus the three languages in one small row.
-  if (SIMPLE_MVP_MODE)
-    return {
-      inline_keyboard: [
-        [openButton(t.mvpBook, l)],
-        [{ text: t.mvpBookings, callback_data: 'm:b' }],
-        [
-          { text: '🇺🇿 UZ', callback_data: 'm:l:uz' },
-          { text: '🇷🇺 RU', callback_data: 'm:l:ru' },
-          { text: '🇬🇧 EN', callback_data: 'm:l:en' },
-        ],
-      ],
-    };
+  // SIMPLE_MVP_MODE: two buttons only — book in the Mini App, or my bookings.
+  if (SIMPLE_MVP_MODE) return { inline_keyboard: [[openButton(t.mvpBook, l)], [{ text: t.mvpBookings, callback_data: 'my_bookings' }]] };
   return {
     inline_keyboard: [[openButton(t.openApp, l)], [{ text: t.list, callback_data: 'm:r:0' }], [{ text: t.flowersCatalog, callback_data: 'm:f:0' }], [{ text: t.myBookings, callback_data: 'm:b' }]],
   };
@@ -231,17 +220,23 @@ async function signIn(chatId: string, go: string, text: string, l: Lang) {
 
 /*
  * SIMPLE_MVP_MODE /start: 1) the chat's commands are set to /start only (a chat-scoped list, so an old cached
- * list cannot linger); 2) the new 3-key keyboard is sent at once, so Telegram redraws the chat; 3) the greeting
- * with the inline buttons (book in the Mini App, my bookings, language).
+ * list cannot linger); 2) remove_keyboard, so an old keyboard under the input field is deleted from the screen;
+ * 3) the greeting with two inline buttons (book in the Mini App, my bookings).
  */
 async function mvpWelcome(chatId: string, l: Lang) {
   // The global lists too, if this release has not set them yet (the cron does it within 5 minutes of a deploy).
   await ensureBotSetup().catch(() => null);
   await telegram('setMyCommands', { commands: MVP_COMMANDS, scope: { type: 'chat', chat_id: chatId } });
-  await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpRefreshed, reply_markup: mainKeyboard(l) });
+  await clearKeyboard(chatId, l);
   await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpWelcome, reply_markup: mainMenu(l) });
   return 'menu';
 }
+/** One short message with remove_keyboard; remembered per chat, so other messages do it only once. */
+async function clearKeyboard(chatId: string, l: Lang) {
+  await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpRefreshed, reply_markup: mainKeyboard(l) });
+  await saveSetting(KEYBOARD_GONE + chatId, '1').catch(() => null);
+}
+const KEYBOARD_GONE = 'tgkbd-gone:';
 
 async function welcome(chatId: string, l: Lang) {
   if (SIMPLE_MVP_MODE) return mvpWelcome(chatId, l);
@@ -281,6 +276,8 @@ export async function handleMenu(update: any): Promise<string | null> {
     if (!command && !section && text.startsWith('/')) return null;
     const l = await chatLang(chatId);
     if (command === 'start') return welcome(chatId, l);
+    // Any other message from a chat that may still show the old keyboard: it is removed first (once).
+    if (SIMPLE_MVP_MODE && !(await setting(KEYBOARD_GONE + chatId).catch(() => null))) await clearKeyboard(chatId, l);
     if (command === 'language' || section === 'language') {
       await telegram('sendMessage', { chat_id: chatId, ...LANG_PICKER });
       return 'menu_language';
@@ -300,7 +297,7 @@ export async function handleMenu(update: any): Promise<string | null> {
     return null;
   }
   const cb = update?.callback_query;
-  if (typeof cb?.data !== 'string' || !cb.data.startsWith('m:') || !cb.message) return null;
+  if (typeof cb?.data !== 'string' || !(cb.data.startsWith('m:') || cb.data === 'my_bookings') || !cb.message) return null;
   await telegram('answerCallbackQuery', { callback_query_id: cb.id });
   if (cb.message.chat?.type && cb.message.chat.type !== 'private') return 'menu_not_private';
   const chatId = String(cb.message.chat.id),
@@ -308,6 +305,7 @@ export async function handleMenu(update: any): Promise<string | null> {
     arg = rest.join(':');
   if (op === 'l') return isLang(arg) ? chooseLanguage(chatId, arg, cb.message.message_id) : 'menu_unknown';
   const l = await chatLang(chatId);
+  if (cb.data === 'my_bookings') return bookings(chatId, l);
   const offset = Math.max(0, Math.min(1000, Number(arg) || 0));
   if (op === 'r') return restaurants(chatId, offset, l);
   if (op === 'c') return restaurantCard(chatId, arg, l);
@@ -422,8 +420,8 @@ export async function setupMiniApp() {
  *     the Worker's subrequest limit). Progress is kept in app_settings so nobody gets it twice; chats that
  *     unlinked themselves (/stop) are not linked any more and are skipped, as are suspended accounts.
  */
-// v5: SIMPLE_MVP_MODE — /start only, old lists deleted first; the full list comes back with the full mode.
-const SETUP_VERSION = SIMPLE_MVP_MODE ? '5-mvp' : '4';
+// v6: SIMPLE_MVP_MODE — /start only ("Asosiy menyu"), old lists deleted first; the full list comes back with the full mode.
+const SETUP_VERSION = SIMPLE_MVP_MODE ? '6-mvp' : '5';
 // v2: the three-language bot (the 🌐 key and the keyboard in the chat's language).
 export const SYNC_KEY = 'tg:sync-old-users:v2';
 export const SYNC_TEXT =

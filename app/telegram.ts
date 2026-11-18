@@ -2,8 +2,7 @@ import { env } from 'cloudflare:workers';
 import { issueOtp, recentOtps } from './otp-store';
 import { createMagicLink, saveTelegramUsername } from './telegram-login';
 import { planState } from './plans';
-import { chatLang, KEY_LABELS, LANG_KEY, type Lang } from './bot-i18n';
-import { SIMPLE_MVP_MODE } from './mvp';
+import { chatLang, type Lang } from './bot-i18n';
 
 /*
  * Telegram bot.
@@ -152,32 +151,14 @@ export function telegramPhone(raw: string) {
 }
 
 const CONTACT_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true };
-/*
- * The customer's persistent keyboard (the square icon next to 📎) in the chat's language: the Mini App on
- * top (opened in the same language), then the bot's sections and the language key. It also takes the place
- * of the one-off "share contact" keyboard once a number is received, so the menu never disappears. The
- * labels are matched in app/telegram-menu.ts (app/bot-i18n.ts keySection).
- */
 export const miniAppBase = (l: Lang = 'uz') => site() + '/?source=tg_miniapp&lang=' + l;
-export const mainKeyboard = (l: Lang = 'uz'): Record<string, unknown> => {
-  const k = KEY_LABELS[l];
-  /*
-   * SIMPLE_MVP_MODE: three keys only (Mini App; Restaurants, My bookings). Not persistent and one-time, so
-   * Telegram shows the ⊞ toggle in the input bar and the guest can hide or reopen the keys at any time.
-   */
-  if (SIMPLE_MVP_MODE)
-    return {
-      keyboard: [[{ text: k.app, web_app: { url: miniAppBase(l) } }], [{ text: k.restaurants }, { text: k.bookings }]],
-      is_persistent: false,
-      resize_keyboard: true,
-      one_time_keyboard: true,
-    };
-  return {
-    keyboard: [[{ text: k.app, web_app: { url: miniAppBase(l) } }], [{ text: k.restaurants }, { text: k.menu }], [{ text: k.flowers }, { text: k.bookings }], [{ text: k.ai }, { text: k.profile }], [{ text: LANG_KEY }]],
-    is_persistent: true,
-    resize_keyboard: true,
-  };
-};
+/*
+ * No keyboard under the input field any more: the old 7-key keyboard (Mini App, Restaurants, Menu, Flowers,
+ * My bookings, AI, Profile) was deleted. Every place that used to send it sends remove_keyboard instead, so a
+ * keyboard still cached in a chat disappears with the next bot message. The bot works with inline buttons
+ * under its messages (app/telegram-menu.ts). Old key labels still tapped are understood (bot-i18n keySection).
+ */
+export const mainKeyboard = (_l: Lang = 'uz'): Record<string, unknown> => ({ remove_keyboard: true });
 /** The keyboard in this chat's language. */
 export const keyboardFor = async (chatId: string | number) => mainKeyboard(await chatLang(chatId));
 export const site = () => (env.SITE_URL?.trim() || 'https://restaurantfoods.online').replace(/\/$/, '');

@@ -64,9 +64,9 @@ export const BOT = {
   uz: {
     langSaved: '✅ Til saqlandi: O‘zbekcha',
     mvpWelcome: '👋 Assalomu alaykum! RestaurantFoods — Samarqand restoranlarida bir necha soniyada joy band qiling.\nRestoranni tanlang, zaldan bo‘sh stolni belgilang — tamom 👇',
-    mvpBook: '🪑 Restoran tanlash va 3D bron qilish',
-    mvpBookings: '📅 Mening bronlarim',
-    mvpRefreshed: '🔄 Menyu yangilandi — pastdagi tugmalarni ⊞ belgisi bilan yashirish yoki ochish mumkin.',
+    mvpBook: '🪑 Restoran tanlash va 3D bron (Mini App)',
+    mvpBookings: '📅 Mening bronlarim (My Bookings)',
+    mvpRefreshed: '🔄 Menyu yangilandi.',
     welcome: '👋 RestaurantFoods’ga xush kelibsiz! Pastdagi tugmalar doim shu yerda turadi 👇',
     welcomeMore: 'Restoranlar, 3D stol va menyuni Telegram’dan chiqmasdan oching — kirish avtomatik, kod so‘ralmaydi. Yoki shu chatning o‘zida ko‘ring:',
     hint: 'Pastdagi tugmalardan birini tanlang 👇 yoki /start ni bosing.',
@@ -133,9 +133,9 @@ export const BOT = {
   ru: {
     langSaved: '✅ Язык сохранён: Русский',
     mvpWelcome: '👋 Здравствуйте! RestaurantFoods — бронь столика в ресторанах Самарканда за несколько секунд.\nВыберите ресторан и свободный стол в зале 👇',
-    mvpBook: '🪑 Выбрать ресторан и забронировать в 3D',
-    mvpBookings: '📅 Мои брони',
-    mvpRefreshed: '🔄 Меню обновлено — кнопки внизу можно скрыть или открыть значком ⊞.',
+    mvpBook: '🪑 Выбор ресторана и бронь в 3D (Mini App)',
+    mvpBookings: '📅 Мои брони (My Bookings)',
+    mvpRefreshed: '🔄 Меню обновлено.',
     welcome: '👋 Добро пожаловать в RestaurantFoods! Кнопки внизу всегда под рукой 👇',
     welcomeMore: 'Откройте рестораны, 3D-зал и меню, не выходя из Telegram — вход автоматический, без кодов. Или смотрите прямо в этом чате:',
     hint: 'Выберите кнопку внизу 👇 или нажмите /start.',
@@ -202,9 +202,9 @@ export const BOT = {
   en: {
     langSaved: '✅ Language saved: English',
     mvpWelcome: '👋 Hello! RestaurantFoods books a table at Samarkand restaurants in seconds.\nPick a restaurant and a free table in the hall 👇',
-    mvpBook: '🪑 Choose a restaurant & book in 3D',
+    mvpBook: '🪑 Choose a restaurant & 3D booking (Mini App)',
     mvpBookings: '📅 My bookings',
-    mvpRefreshed: '🔄 Menu refreshed — hide or show the keys below with the ⊞ icon.',
+    mvpRefreshed: '🔄 Menu refreshed.',
     welcome: '👋 Welcome to RestaurantFoods! The buttons below are always here 👇',
     welcomeMore: 'Open restaurants, the 3D hall and menus without leaving Telegram — you are signed in automatically, no codes. Or browse right here in the chat:',
     hint: 'Pick one of the buttons below 👇 or tap /start.',
@@ -309,4 +309,4 @@ export const COMMANDS_BY_LANG: Record<Lang, { command: string; description: stri
  * SIMPLE_MVP_MODE (app/mvp.ts): the blue "Menu" button lists only /start; the full list above stays for the
  * full mode (and its commands still answer when typed).
  */
-export const MVP_COMMANDS = [{ command: 'start', description: '🚀 Botni yangilash / Asosiy menyu' }];
+export const MVP_COMMANDS = [{ command: 'start', description: '🚀 Asosiy menyu (Main menu)' }];

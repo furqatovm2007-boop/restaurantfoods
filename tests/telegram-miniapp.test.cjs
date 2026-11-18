@@ -68,7 +68,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
 
  // Bot menu.
  sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'/start'})),'menu');
- const kbd=sent[0].body.reply_markup;assert.equal(kbd.is_persistent,true);assert.equal(kbd.resize_keyboard,true);assert.equal(kbd.keyboard[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=uz');assert.deepEqual(kbd.keyboard.slice(1).map(r=>r.map(k=>k.text)),[['🍽️ Restoranlar','📖 Menyu'],['💐 Gullar','📅 Bronlarim'],['🤖 AI Yordamchi','👤 Profilim'],['🌐 Til / Язык / Language']]);assert.deepEqual(sent[1].body.reply_markup.inline_keyboard[0].map(b=>b.callback_data),['m:l:uz','m:l:ru','m:l:en'],'/start offers the three languages');const main=sent[2].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=uz');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
+ assert.deepEqual({...sent[0].body.reply_markup},{remove_keyboard:true},'the old keyboard under the input is removed');assert.deepEqual(sent[1].body.reply_markup.inline_keyboard[0].map(b=>b.callback_data),['m:l:uz','m:l:ru','m:l:en'],'/start offers the three languages');const main=sent[2].body.reply_markup.inline_keyboard;assert.equal(main[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=uz');assert.match(main[0][0].text,/Restoranlar, 3D Stol va Menyu/);assert.deepEqual(main.slice(1).map(r=>r[0].callback_data),['m:r:0','m:f:0','m:b']);
  assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'/start'}}),null,'groups keep the restaurant bot');
  assert.equal(await menu.handleMenu(msg(42,{text:'/start l_abc'})),null,'deep links go to the regular bot');
  const until=new Date(Date.now()+30*86400000).toISOString();
@@ -119,57 +119,59 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  for(const t of ['/stop','/start c_abcdefghijklmnopqrstuvwx','/start l_abc'])assert.equal(await menu.handleMenu(msg(42,{text:t})),null,t+' stays with the regular bot');
  assert.equal(await menu.handleMenu({message:{chat:{id:-5,type:'group'},text:'salom'}}),null,'groups are never answered by the menu');
  // Contact flows bring the menu keyboard back instead of removing it.
- sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.is_persistent,true);
+ sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.remove_keyboard,true);
  // Language: /language and the 🌐 key show the picker; a choice is saved for the chat and the linked account,
  // and the keyboard, the menus and the Mini App links follow it. Old keyboard labels keep working.
  sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'/language'})),'menu_language');assert.equal(sent[0].body.reply_markup.inline_keyboard[0].length,3);
  assert.equal(await menu.handleMenu(msg(42,{text:'🌐 Til / Язык / Language'})),'menu_language');
  sent.length=0;assert.equal(await menu.handleMenu(cb('m:l:ru')),'menu_language_ru');
  assert.equal(sent.find(s=>s.method==='editMessageText').body.text,'✅ Язык сохранён: Русский');
- const ruKbd=sent.find(s=>s.body?.reply_markup?.keyboard).body.reply_markup;assert.equal(ruKbd.keyboard[0][0].web_app.url,'https://restaurantfoods.online/?source=tg_miniapp&lang=ru');assert.deepEqual(ruKbd.keyboard.slice(1,4).map(r=>r.map(k=>k.text)),[['🍽️ Рестораны','📖 Меню'],['💐 Цветы','📅 Мои брони'],['🤖 ИИ Помощник','👤 Профиль']]);
+ assert.ok(!sent.some(s=>s.body?.reply_markup?.keyboard),'no reply keyboard');assert.match(sent.find(s=>s.body?.reply_markup?.inline_keyboard?.[0]?.[0]?.web_app).body.reply_markup.inline_keyboard[0][0].web_app.url,/lang=ru/);
  assert.equal(db.prepare("SELECT preferred_language FROM accounts WHERE telegram_chat_id='42'").get().preferred_language,'ru','saved on the linked account');
  sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'🍽️ Рестораны'})),'menu_restaurants');assert.match(sent[0].body.text,/Выберите ресторан/);
  sent.length=0;assert.equal(await menu.handleMenu(msg(42,{text:'🏢 Restoranlar ro‘yxati'})),'menu_restaurants','old keyboard label');
  sent.length=0;await menu.handleMenu(cb('m:c:r1'));const ruCard=sent.find(s=>s.method==='sendPhoto');assert.match(ruCard.body.reply_markup.inline_keyboard[0][0].web_app.url,/lang=ru&restaurant_id=r1/);assert.match(ruCard.body.caption,/Свободных столов сейчас/);
- sent.length=0;await menu.handleMenu(msg(42,{text:'salom'}));assert.match(sent[0].body.text,/Выберите кнопку/);assert.equal(sent[0].body.reply_markup.keyboard[1][0].text,'🍽️ Рестораны');
+ sent.length=0;await menu.handleMenu(msg(42,{text:'salom'}));assert.match(sent[0].body.text,/Выберите кнопку/);assert.equal(sent[0].body.reply_markup.remove_keyboard,true);
  sent.length=0;await menu.handleMenu(cb('m:l:en'));await menu.handleMenu(msg(42,{text:'📅 My Bookings'}));assert.ok(sent.some(s=>s.form&&/Confirmed/.test(s.caption)),'bookings in English');
  assert.equal(await menu.handleMenu(cb('m:l:xx')),'menu_unknown');
  // The site's language switch moves the bot too; contact flows keep the chat's keyboard language.
  const i18n=load('app/bot-i18n.ts',cf);await i18n.syncAccountLang('tg:42','ru');assert.equal(await i18n.chatLang('42'),'ru');
- sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.keyboard[1][0].text,'🍽️ Рестораны');
+ sent.length=0;await login.startWebAppContact('tg:42');await telegram.handleUpdate(msg(42,{contact:{phone_number:'998901234567',user_id:42}}));assert.equal(sent.find(s=>s.method==='sendMessage').body.reply_markup.remove_keyboard,true);
  assert.equal(await i18n.chatLang('999'),'uz','never chosen: Uzbek');
  await menu.handleMenu(cb('m:l:uz'));
  // One-time announcement to every linked chat, in batches, never twice; suspended and unlinked are skipped.
  db.exec("UPDATE accounts SET status='suspended' WHERE id='sb:off'");const linked=db.prepare("SELECT COUNT(*) n FROM accounts WHERE telegram_chat_id IS NOT NULL AND COALESCE(status,'active')<>'suspended'").get().n;assert.ok(linked>=4);
  sent.length=0;let st=await menu.syncOldUsers(2);assert.equal(st.sent,2);assert.equal(st.finished,false);
  while(!st.finished)st=await menu.syncOldUsers(2);assert.equal(st.sent,linked);assert.equal(st.failed,0);
- const msgs=sent.filter(s=>s.method==='sendMessage'&&s.body.text===menu.SYNC_TEXT);assert.equal(msgs.length,linked);assert.equal(new Set(msgs.map(m=>String(m.body.chat_id))).size,linked,'nobody twice');assert.ok(!msgs.some(m=>m.body.chat_id==='8'),'suspended skipped');assert.ok(msgs.every(m=>m.body.reply_markup.is_persistent));
+ const msgs=sent.filter(s=>s.method==='sendMessage'&&s.body.text===menu.SYNC_TEXT);assert.equal(msgs.length,linked);assert.equal(new Set(msgs.map(m=>String(m.body.chat_id))).size,linked,'nobody twice');assert.ok(!msgs.some(m=>m.body.chat_id==='8'),'suspended skipped');assert.ok(msgs.every(m=>m.body.reply_markup.remove_keyboard));
  sent.length=0;st=await menu.syncOldUsers(2);assert.equal(sent.length,0,'finished: no more messages');
  sent.length=0;await menu.ensureBotSetup();assert.ok(sent.some(s=>s.method==='setMyCommands'));sent.length=0;assert.equal((await menu.ensureBotSetup()).already,true);assert.equal(sent.length,0,'setup once per release');
  sent.length=0;await menu.runBotSync();assert.equal(sent.length,0);
- // SIMPLE_MVP_MODE: a 3-key keyboard Telegram can hide (⊞), only /start in the blue Menu (old lists deleted
- // first), and /start sets the chat's commands, redraws the keyboard and greets with inline buttons.
+ // SIMPLE_MVP_MODE: no keyboard under the input (remove_keyboard), only /start in the blue Menu (old lists
+ // deleted first); /start sets the chat's commands, removes the keyboard and greets with two inline buttons.
  {const m=botFor(true);
-  const k=m.telegram.mainKeyboard('en');assert.equal(k.is_persistent,false);assert.equal(k.resize_keyboard,true);assert.equal(k.one_time_keyboard,true);
-  assert.equal(JSON.stringify(k.keyboard.map(r=>r.map(x=>x.text))),JSON.stringify([['🚀 Mini App: 3D tables & booking'],['🍽️ Restaurants','📅 My Bookings']]));assert.match(k.keyboard[0][0].web_app.url,/lang=en/);
-  assert.ok(!JSON.stringify(k).match(/Flowers|AI Assistant|My profile/),'hidden sections are not on the keyboard');
+  assert.equal(JSON.stringify(m.telegram.mainKeyboard('en')),JSON.stringify({remove_keyboard:true}));
+  const src=fs.readFileSync('app/telegram.ts','utf8')+fs.readFileSync('app/telegram-menu.ts','utf8');assert.ok(!/k\.flowers|k\.ai\b|k\.profile|is_persistent/.test(src),'the 7-key keyboard is gone from the code');
   sent.length=0;await m.menu.setupMiniApp();
   const del=sent.filter(s=>s.method==='deleteMyCommands').map(s=>s.body.scope.type+':'+(s.body.language_code||''));assert.deepEqual(del.sort(),['all_private_chats:','all_private_chats:en','all_private_chats:ru','default:','default:en','default:ru']);
   const firstSet=sent.findIndex(s=>s.method==='setMyCommands');assert.ok(sent.slice(firstSet).every(s=>s.method!=='deleteMyCommands'),'deleted before set');
   const lists=sent.filter(s=>s.method==='setMyCommands');assert.deepEqual(lists.map(l=>l.body.scope.type).sort(),['all_private_chats','default']);
-  for(const l of lists)assert.equal(JSON.stringify(l.body.commands),JSON.stringify([{command:'start',description:'🚀 Botni yangilash / Asosiy menyu'}]));
+  for(const l of lists)assert.equal(JSON.stringify(l.body.commands),JSON.stringify([{command:'start',description:'🚀 Asosiy menyu (Main menu)'}]));
   await m.menu.handleMenu(cb('m:l:uz'));
   sent.length=0;assert.equal(await m.menu.handleMenu(msg(42,{text:'/start'})),'menu');
   const chatCmds=sent.find(s=>s.method==='setMyCommands'&&s.body.scope.type==='chat');assert.equal(String(chatCmds.body.scope.chat_id),'42');assert.equal(chatCmds.body.commands.length,1);
   const out=sent.filter(s=>s.method==='sendMessage');assert.equal(out.length,2);
-  assert.equal(out[0].body.reply_markup.is_persistent,false,'keyboard redrawn at once');assert.equal(out[0].body.reply_markup.keyboard[1][1].text,'📅 Bronlarim');
-  assert.match(out[1].body.text,/Assalomu alaykum/);const rows=out[1].body.reply_markup.inline_keyboard;
-  assert.equal(rows[0][0].text,'🪑 Restoran tanlash va 3D bron qilish');assert.match(rows[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz/);assert.deepEqual({...rows[1][0]},{text:'📅 Mening bronlarim',callback_data:'m:b'});
-  sent.length=0;await m.menu.handleMenu(msg(42,{text:'salom'}));assert.ok(sent.some(s=>s.body?.reply_markup?.keyboard),'any text: keyboard and greeting again');
+  assert.equal(JSON.stringify(out[0].body.reply_markup),JSON.stringify({remove_keyboard:true}),'keyboard removed first');
+  assert.match(out[1].body.text,/Assalomu alaykum/);const rows=out[1].body.reply_markup.inline_keyboard;assert.equal(rows.length,2,'two buttons only');
+  assert.equal(rows[0][0].text,'🪑 Restoran tanlash va 3D bron (Mini App)');assert.match(rows[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz/);
+  assert.equal(JSON.stringify(rows[1][0]),JSON.stringify({text:'📅 Mening bronlarim (My Bookings)',callback_data:'my_bookings'}));
+  sent.length=0;assert.equal(await m.menu.handleMenu(cb('my_bookings')),'menu_bookings','my_bookings button');
+  // Any other message: the keyboard is removed once per chat, then not again.
+  db.exec("DELETE FROM app_settings WHERE key LIKE 'tgkbd-gone:%'");
+  sent.length=0;assert.equal(await m.menu.handleMenu(msg(42,{text:'📅 Мои брони'})),'menu_bookings','an old key still works');assert.equal(sent[0].body.reply_markup.remove_keyboard,true,'and removes the old keyboard first');
+  sent.length=0;await m.menu.handleMenu(msg(42,{text:'/mybookings'}));assert.ok(!sent.some(s=>s.body?.reply_markup?.remove_keyboard),'only once');
+  sent.length=0;await m.menu.handleMenu(msg(42,{text:'salom'}));assert.ok(sent.some(s=>s.body?.reply_markup?.remove_keyboard)&&sent.some(s=>s.body?.reply_markup?.inline_keyboard),'any text: greeting again');
   sent.length=0;await m.menu.handleMenu(cb('m:l:ru'));assert.ok(sent.some(s=>/Здравствуйте/.test(s.body?.text||'')));
-  assert.equal(await m.menu.handleMenu(msg(42,{text:'📅 Мои брони'})),'menu_bookings','keyboard key works');
-  assert.equal(await m.menu.handleMenu(msg(42,{text:'🍽️ Рестораны'})),'menu_restaurants');
-  assert.equal(await m.menu.handleMenu(cb('m:b')),'menu_bookings','inline My bookings');
   await m.menu.handleMenu(cb('m:l:uz'));}
- console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: hideable 3-key keyboard, /start only (old lists deleted), /start refreshes the chat.');
+ console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: no reply keyboard (removed on /start and once on any message), /start only (old lists deleted), two inline buttons.');
 })().catch(e=>{console.error(e);process.exitCode=1});
