@@ -147,22 +147,29 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require(
  sent.length=0;st=await menu.syncOldUsers(2);assert.equal(sent.length,0,'finished: no more messages');
  sent.length=0;await menu.ensureBotSetup();assert.ok(sent.some(s=>s.method==='setMyCommands'));sent.length=0;assert.equal((await menu.ensureBotSetup()).already,true);assert.equal(sent.length,0,'setup once per release');
  sent.length=0;await menu.runBotSync();assert.equal(sent.length,0);
- // SIMPLE_MVP_MODE: no reply keyboard (old ones removed), two commands, /start = one greeting with inline buttons.
+ // SIMPLE_MVP_MODE: a 3-key keyboard Telegram can hide (⊞), only /start in the blue Menu (old lists deleted
+ // first), and /start sets the chat's commands, redraws the keyboard and greets with inline buttons.
  {const m=botFor(true);
-  assert.deepEqual({...m.telegram.mainKeyboard('uz')},{remove_keyboard:true});
-  sent.length=0;await m.menu.setupMiniApp();const lists=sent.filter(s=>s.method==='setMyCommands');assert.equal(lists.length,3);
-  for(const l of lists)assert.deepEqual(l.body.commands.map(c=>c.command),['start','mybookings'],'only /start and /mybookings');
-  assert.equal(lists.find(l=>!l.body.language_code).body.commands[0].description,'🚀 Asosiy menyu');
+  const k=m.telegram.mainKeyboard('en');assert.equal(k.is_persistent,false);assert.equal(k.resize_keyboard,true);assert.equal(k.one_time_keyboard,true);
+  assert.equal(JSON.stringify(k.keyboard.map(r=>r.map(x=>x.text))),JSON.stringify([['🚀 Mini App: 3D tables & booking'],['🍽️ Restaurants','📅 My Bookings']]));assert.match(k.keyboard[0][0].web_app.url,/lang=en/);
+  assert.ok(!JSON.stringify(k).match(/Flowers|AI Assistant|My profile/),'hidden sections are not on the keyboard');
+  sent.length=0;await m.menu.setupMiniApp();
+  const del=sent.filter(s=>s.method==='deleteMyCommands').map(s=>s.body.scope.type+':'+(s.body.language_code||''));assert.deepEqual(del.sort(),['all_private_chats:','all_private_chats:en','all_private_chats:ru','default:','default:en','default:ru']);
+  const firstSet=sent.findIndex(s=>s.method==='setMyCommands');assert.ok(sent.slice(firstSet).every(s=>s.method!=='deleteMyCommands'),'deleted before set');
+  const lists=sent.filter(s=>s.method==='setMyCommands');assert.deepEqual(lists.map(l=>l.body.scope.type).sort(),['all_private_chats','default']);
+  for(const l of lists)assert.equal(JSON.stringify(l.body.commands),JSON.stringify([{command:'start',description:'🚀 Botni yangilash / Asosiy menyu'}]));
   await m.menu.handleMenu(cb('m:l:uz'));
   sent.length=0;assert.equal(await m.menu.handleMenu(msg(42,{text:'/start'})),'menu');
-  const greet=sent.filter(s=>s.method==='sendMessage');assert.equal(greet.length,1,'one message');assert.deepEqual({...greet[0].body.reply_markup},{remove_keyboard:true});assert.match(greet[0].body.text,/Assalomu alaykum/);
-  const kb=sent.find(s=>s.method==='editMessageReplyMarkup').body;assert.equal(kb.message_id,greet[0].body&&sent.indexOf(greet[0])+1);
-  const rows=kb.reply_markup.inline_keyboard;assert.equal(rows[0][0].text,'🪑 Restoran tanlash va 3D bron qilish');assert.match(rows[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz/);
-  assert.deepEqual({...rows[1][0]},{text:'📅 Mening bronlarim',callback_data:'m:b'});assert.equal(rows.length,3);assert.ok(!JSON.stringify(rows).match(/Gul|AI|Profil|flowers/i),'no hidden sections');
-  sent.length=0;await m.menu.handleMenu(msg(42,{text:'salom'}));assert.ok(sent.some(s=>s.body?.reply_markup?.remove_keyboard),'any text: the greeting again, keyboard removed');
-  sent.length=0;await m.menu.handleMenu(cb('m:l:ru'));assert.match(sent.find(s=>s.method==='sendMessage').body.text,/Здравствуйте/);assert.equal(sent.find(s=>s.method==='editMessageReplyMarkup').body.reply_markup.inline_keyboard[1][0].text,'📅 Мои брони');
-  sent.length=0;assert.equal(await m.menu.handleMenu(cb('m:b')),'menu_bookings','My bookings button');
-  assert.equal(await m.menu.handleMenu(msg(42,{text:'/mybookings'})),'menu_bookings');
+  const chatCmds=sent.find(s=>s.method==='setMyCommands'&&s.body.scope.type==='chat');assert.equal(String(chatCmds.body.scope.chat_id),'42');assert.equal(chatCmds.body.commands.length,1);
+  const out=sent.filter(s=>s.method==='sendMessage');assert.equal(out.length,2);
+  assert.equal(out[0].body.reply_markup.is_persistent,false,'keyboard redrawn at once');assert.equal(out[0].body.reply_markup.keyboard[1][1].text,'📅 Bronlarim');
+  assert.match(out[1].body.text,/Assalomu alaykum/);const rows=out[1].body.reply_markup.inline_keyboard;
+  assert.equal(rows[0][0].text,'🪑 Restoran tanlash va 3D bron qilish');assert.match(rows[0][0].web_app.url,/^https:\/\/restaurantfoods\.online\/\?source=tg_miniapp&lang=uz/);assert.deepEqual({...rows[1][0]},{text:'📅 Mening bronlarim',callback_data:'m:b'});
+  sent.length=0;await m.menu.handleMenu(msg(42,{text:'salom'}));assert.ok(sent.some(s=>s.body?.reply_markup?.keyboard),'any text: keyboard and greeting again');
+  sent.length=0;await m.menu.handleMenu(cb('m:l:ru'));assert.ok(sent.some(s=>/Здравствуйте/.test(s.body?.text||'')));
+  assert.equal(await m.menu.handleMenu(msg(42,{text:'📅 Мои брони'})),'menu_bookings','keyboard key works');
+  assert.equal(await m.menu.handleMenu(msg(42,{text:'🍽️ Рестораны'})),'menu_restaurants');
+  assert.equal(await m.menu.handleMenu(cb('m:b')),'menu_bookings','inline My bookings');
   await m.menu.handleMenu(cb('m:l:uz'));}
- console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: no reply keyboard, /start + /mybookings only, one greeting with inline Book / My bookings.');
+ console.log('PASS Telegram Mini App: signed launch data only, zero-click sign-in (admin/suspended refused), phone via share contact (saved/moved/foreign/admin), bot menu (no demo, free tables, menu, flowers, bookings with a decodable QR PNG), commands menu, persistent keyboard and its labels, one-time announcement to linked chats; MVP bot: hideable 3-key keyboard, /start only (old lists deleted), /start refreshes the chat.');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -66,6 +66,7 @@ export const BOT = {
     mvpWelcome: '👋 Assalomu alaykum! RestaurantFoods — Samarqand restoranlarida bir necha soniyada joy band qiling.\nRestoranni tanlang, zaldan bo‘sh stolni belgilang — tamom 👇',
     mvpBook: '🪑 Restoran tanlash va 3D bron qilish',
     mvpBookings: '📅 Mening bronlarim',
+    mvpRefreshed: '🔄 Menyu yangilandi — pastdagi tugmalarni ⊞ belgisi bilan yashirish yoki ochish mumkin.',
     welcome: '👋 RestaurantFoods’ga xush kelibsiz! Pastdagi tugmalar doim shu yerda turadi 👇',
     welcomeMore: 'Restoranlar, 3D stol va menyuni Telegram’dan chiqmasdan oching — kirish avtomatik, kod so‘ralmaydi. Yoki shu chatning o‘zida ko‘ring:',
     hint: 'Pastdagi tugmalardan birini tanlang 👇 yoki /start ni bosing.',
@@ -134,6 +135,7 @@ export const BOT = {
     mvpWelcome: '👋 Здравствуйте! RestaurantFoods — бронь столика в ресторанах Самарканда за несколько секунд.\nВыберите ресторан и свободный стол в зале 👇',
     mvpBook: '🪑 Выбрать ресторан и забронировать в 3D',
     mvpBookings: '📅 Мои брони',
+    mvpRefreshed: '🔄 Меню обновлено — кнопки внизу можно скрыть или открыть значком ⊞.',
     welcome: '👋 Добро пожаловать в RestaurantFoods! Кнопки внизу всегда под рукой 👇',
     welcomeMore: 'Откройте рестораны, 3D-зал и меню, не выходя из Telegram — вход автоматический, без кодов. Или смотрите прямо в этом чате:',
     hint: 'Выберите кнопку внизу 👇 или нажмите /start.',
@@ -202,6 +204,7 @@ export const BOT = {
     mvpWelcome: '👋 Hello! RestaurantFoods books a table at Samarkand restaurants in seconds.\nPick a restaurant and a free table in the hall 👇',
     mvpBook: '🪑 Choose a restaurant & book in 3D',
     mvpBookings: '📅 My bookings',
+    mvpRefreshed: '🔄 Menu refreshed — hide or show the keys below with the ⊞ icon.',
     welcome: '👋 Welcome to RestaurantFoods! The buttons below are always here 👇',
     welcomeMore: 'Open restaurants, the 3D hall and menus without leaving Telegram — you are signed in automatically, no codes. Or browse right here in the chat:',
     hint: 'Pick one of the buttons below 👇 or tap /start.',
@@ -303,20 +306,7 @@ export const COMMANDS_BY_LANG: Record<Lang, { command: string; description: stri
 };
 
 /*
- * SIMPLE_MVP_MODE (app/mvp.ts): the blue "Menu" button lists only these two; the full list above stays for
- * the full mode (and its commands still answer when typed).
+ * SIMPLE_MVP_MODE (app/mvp.ts): the blue "Menu" button lists only /start; the full list above stays for the
+ * full mode (and its commands still answer when typed).
  */
-export const MVP_COMMANDS_BY_LANG: Record<Lang, { command: string; description: string }[]> = {
-  uz: [
-    { command: 'start', description: '🚀 Asosiy menyu' },
-    { command: 'mybookings', description: '📅 Mening bronlarim' },
-  ],
-  ru: [
-    { command: 'start', description: '🚀 Главное меню' },
-    { command: 'mybookings', description: '📅 Мои брони' },
-  ],
-  en: [
-    { command: 'start', description: '🚀 Main menu' },
-    { command: 'mybookings', description: '📅 My bookings' },
-  ],
-};
+export const MVP_COMMANDS = [{ command: 'start', description: '🚀 Botni yangilash / Asosiy menyu' }];

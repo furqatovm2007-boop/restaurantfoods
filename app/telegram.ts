@@ -160,9 +160,18 @@ const CONTACT_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_
  */
 export const miniAppBase = (l: Lang = 'uz') => site() + '/?source=tg_miniapp&lang=' + l;
 export const mainKeyboard = (l: Lang = 'uz'): Record<string, unknown> => {
-  // SIMPLE_MVP_MODE: no keyboard under the input field (old ones are taken away); /start's inline buttons do it all.
-  if (SIMPLE_MVP_MODE) return { remove_keyboard: true };
   const k = KEY_LABELS[l];
+  /*
+   * SIMPLE_MVP_MODE: three keys only (Mini App; Restaurants, My bookings). Not persistent and one-time, so
+   * Telegram shows the ⊞ toggle in the input bar and the guest can hide or reopen the keys at any time.
+   */
+  if (SIMPLE_MVP_MODE)
+    return {
+      keyboard: [[{ text: k.app, web_app: { url: miniAppBase(l) } }], [{ text: k.restaurants }, { text: k.bookings }]],
+      is_persistent: false,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    };
   return {
     keyboard: [[{ text: k.app, web_app: { url: miniAppBase(l) } }], [{ text: k.restaurants }, { text: k.menu }], [{ text: k.flowers }, { text: k.bookings }], [{ text: k.ai }, { text: k.profile }], [{ text: LANG_KEY }]],
     is_persistent: true,

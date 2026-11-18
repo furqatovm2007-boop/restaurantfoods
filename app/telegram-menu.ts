@@ -5,7 +5,7 @@ import { ensurePassCode, PASS_PREFIX, receiptNumber } from './booking-pass';
 import { liveTables, freeNow } from './live-tables';
 import { countedReview } from './review-rules';
 import { SIMPLE_MVP_MODE } from './mvp';
-import { BOT, COMMANDS_BY_LANG, MVP_COMMANDS_BY_LANG, LANG_PICKER, chatLang, isLang, keySection, setChatLang, type BotText, type Lang } from './bot-i18n';
+import { BOT, COMMANDS_BY_LANG, MVP_COMMANDS, LANG_PICKER, chatLang, isLang, keySection, setChatLang, type BotText, type Lang } from './bot-i18n';
 
 /*
  * The bot's own menu, for customers who prefer to stay in the chat:
@@ -230,14 +230,16 @@ async function signIn(chatId: string, go: string, text: string, l: Lang) {
 }
 
 /*
- * SIMPLE_MVP_MODE greeting: one short message with the inline buttons. It is sent with remove_keyboard (so an
- * old 7-key keyboard goes away) and the inline buttons are attached right after; if Telegram does not take
- * that edit, they come in a second message.
+ * SIMPLE_MVP_MODE /start: 1) the chat's commands are set to /start only (a chat-scoped list, so an old cached
+ * list cannot linger); 2) the new 3-key keyboard is sent at once, so Telegram redraws the chat; 3) the greeting
+ * with the inline buttons (book in the Mini App, my bookings, language).
  */
 async function mvpWelcome(chatId: string, l: Lang) {
-  const sent = (await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpWelcome, reply_markup: { remove_keyboard: true } })) as { message_id?: number } | null;
-  const attached = sent?.message_id ? await telegram('editMessageReplyMarkup', { chat_id: chatId, message_id: sent.message_id, reply_markup: mainMenu(l) }) : null;
-  if (!attached) await telegram('sendMessage', { chat_id: chatId, text: sent ? '👇' : BOT[l].mvpWelcome, reply_markup: mainMenu(l) });
+  // The global lists too, if this release has not set them yet (the cron does it within 5 minutes of a deploy).
+  await ensureBotSetup().catch(() => null);
+  await telegram('setMyCommands', { commands: MVP_COMMANDS, scope: { type: 'chat', chat_id: chatId } });
+  await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpRefreshed, reply_markup: mainKeyboard(l) });
+  await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpWelcome, reply_markup: mainMenu(l) });
   return 'menu';
 }
 
@@ -390,13 +392,24 @@ export const COMMANDS = COMMANDS_BY_LANG.uz;
  * setChatMenuButton without chat_id changes the default for all chats.
  */
 export async function setupMiniApp() {
-  // SIMPLE_MVP_MODE: the blue "Menu" button shows only /start and /mybookings.
-  const list = SIMPLE_MVP_MODE ? MVP_COMMANDS_BY_LANG : COMMANDS_BY_LANG;
+  if (SIMPLE_MVP_MODE) {
+    // The blue "Menu" button: only /start. Every list set before (default and private chats, also the
+    // Russian and English ones) is deleted first so no cached command stays behind.
+    await Promise.all(
+      ['default', 'all_private_chats'].flatMap((type) => [undefined, 'ru', 'en'].map((language_code) => telegram('deleteMyCommands', { scope: { type }, ...(language_code ? { language_code } : {}) }))),
+    );
+    const [button, commands, privateChats] = await Promise.all([
+      telegram('setChatMenuButton', { menu_button: { type: 'commands' } }),
+      telegram('setMyCommands', { commands: MVP_COMMANDS, scope: { type: 'default' } }),
+      telegram('setMyCommands', { commands: MVP_COMMANDS, scope: { type: 'all_private_chats' } }),
+    ]);
+    return { menuButton: button === true, commands: commands === true && privateChats === true, url: miniAppUrl() };
+  }
   const [button, commands, ru, en] = await Promise.all([
     telegram('setChatMenuButton', { menu_button: { type: 'commands' } }),
-    telegram('setMyCommands', { commands: list.uz, scope: { type: 'default' } }),
-    telegram('setMyCommands', { commands: list.ru, scope: { type: 'default' }, language_code: 'ru' }),
-    telegram('setMyCommands', { commands: list.en, scope: { type: 'default' }, language_code: 'en' }),
+    telegram('setMyCommands', { commands: COMMANDS, scope: { type: 'default' } }),
+    telegram('setMyCommands', { commands: COMMANDS_BY_LANG.ru, scope: { type: 'default' }, language_code: 'ru' }),
+    telegram('setMyCommands', { commands: COMMANDS_BY_LANG.en, scope: { type: 'default' }, language_code: 'en' }),
   ]);
   return { menuButton: button === true, commands: commands === true && ru === true && en === true, url: miniAppUrl() };
 }
@@ -409,8 +422,8 @@ export async function setupMiniApp() {
  *     the Worker's subrequest limit). Progress is kept in app_settings so nobody gets it twice; chats that
  *     unlinked themselves (/stop) are not linked any more and are skipped, as are suspended accounts.
  */
-// v4: SIMPLE_MVP_MODE — two commands (/start, /mybookings); the full list comes back with the full mode.
-const SETUP_VERSION = SIMPLE_MVP_MODE ? '4-mvp' : '4';
+// v5: SIMPLE_MVP_MODE — /start only, old lists deleted first; the full list comes back with the full mode.
+const SETUP_VERSION = SIMPLE_MVP_MODE ? '5-mvp' : '4';
 // v2: the three-language bot (the 🌐 key and the keyboard in the chat's language).
 export const SYNC_KEY = 'tg:sync-old-users:v2';
 export const SYNC_TEXT =
