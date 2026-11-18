@@ -63,12 +63,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const {notifyCustomer}=deep['../../../telegram'],waitlist=deep['../../../waitlist'];
  db.exec("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at) VALUES ('b1','r','c1','2026-10-24','19:00','21:00',1,2,'+998901112233','pending','now'),('b2','r','c2','2026-10-24','19:00','21:00',2,2,'+998900000000','pending','now')");
  calls.length=0;assert.equal(await notifyCustomer('b1','confirmed'),true);
- assert.ok(last().body.text.includes('tasdiqlandi')&&last().body.text.includes('Real &lt;Osh&gt;'));assert.equal(last().body.reply_markup.inline_keyboard[0][0].url,'https://restaurantfoods.online/#/bookings');
+ assert.ok(last().body.text.includes('Real &lt;Osh&gt; restorani joyingizni tasdiqladi! Sizni kutamiz.'),'the restaurant is named in the confirmation');assert.equal(last().body.reply_markup.inline_keyboard[0][0].url,'https://restaurantfoods.online/#/bookings');
  assert.equal(await notifyCustomer('b2','confirmed'),false,'no Telegram linked: nothing sent');
- // The restaurant's Confirm button in Telegram also notifies the customer.
+ // The restaurant's "❌ Joy band (Reject)" button in Telegram tells the customer the table is full.
  db.exec("UPDATE restaurants SET telegram_chat_id='777' WHERE id='r'");calls.length=0;
  await update({callback_query:{id:'q',data:'b:x:b1',message:{chat:{id:777},message_id:1}}});
- assert.ok(calls.some(c=>c.body.chat_id==='500'&&c.body.text.includes('bekor qilindi')));
+ assert.ok(calls.some(c=>c.body.chat_id==='500'&&c.body.text.includes('bu vaqtga joy band')));
  // 6. Waitlist: the table turning free sends "table is free" to the first in line.
  db.exec("INSERT INTO waitlist(id,restaurant_id,table_number,user_id,guests,status,created_at) VALUES ('w1','r',2,'c1',2,'waiting','2026-10-23T10:00:00Z')");
  calls.length=0;assert.equal(await waitlist.notifyNext('r',2),'w1');assert.ok(last().body.text.includes('2-stol bo‘shadi'));assert.ok(last().body.reply_markup.inline_keyboard[0][0].url.endsWith('/#/restaurant/r'));

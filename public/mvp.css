@@ -59,3 +59,20 @@
 @media(prefers-reduced-motion:reduce){.mvp-done-check{animation:none}}
 .mvp-checkout .mvp-picked{color:inherit;background:rgba(16,185,129,.18)}
 .mvp-room .chosen-restaurant{display:none}
+/* No sign-in screens in this mode: the header's login button and the drawer's sign-in link are hidden. */
+.rf-mvp #accountButton,.rf-mvp .drawer-profile[href="#/login"]{display:none!important}
+/* Category tabs */
+.mvp-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 0 16px;padding:2px}
+.mvp-tabs::-webkit-scrollbar{display:none}
+.mvp-tabs button{flex:none;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid var(--glass-line,rgba(16,185,129,.35));background:var(--glass,#fff);color:inherit;font:600 14px/1 inherit;cursor:pointer;white-space:nowrap}
+.mvp-tabs button[aria-pressed=true]{background:linear-gradient(135deg,#10b981,#0f766e);border-color:transparent;color:#fff}
+/* Telegram checkout */
+.mvp-who{margin:0;padding:10px 12px;border-radius:12px;background:rgba(56,165,226,.12);font-size:.92rem}
+.mvp-tg{background:linear-gradient(135deg,#2aabee,#1e88d0)!important;color:#fff!important;border:0}
+.mvp-wait{font-size:.88rem}
+.mvp-wait a{font-weight:700}
+/* Success: the summary card replaces the QR code */
+.mvp-ticket{margin:14px 0;padding:18px 16px;border-radius:18px;background:linear-gradient(150deg,#06291f,#0f5f4a);color:#f4fffb;text-align:center;border:1px solid rgba(217,169,44,.5)}
+.mvp-ticket-table{display:block;font-size:2.2rem;font-weight:900;color:#f6d27a;line-height:1.1}
+.mvp-ticket-line{display:block;margin-top:6px;font-size:1.05rem;font-weight:700}
+.mvp-ticket small{display:block;margin-top:6px;opacity:.85}

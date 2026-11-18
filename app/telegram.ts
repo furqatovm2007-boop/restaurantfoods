@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { issueOtp, recentOtps } from './otp-store';
-import { createMagicLink } from './telegram-login';
+import { createMagicLink, saveTelegramUsername } from './telegram-login';
 import { planState } from './plans';
 import { chatLang, KEY_LABELS, LANG_KEY, type Lang } from './bot-i18n';
 
@@ -63,6 +63,9 @@ export interface BookingMessage {
   deposit_provider?: string | null;
   status: string;
   preorder_items?: string | null;
+  customer_name?: string | null;
+  customer_chat?: string | null;
+  customer_username?: string | null;
 }
 
 export function bookingText(b: BookingMessage) {
@@ -70,7 +73,10 @@ export function bookingText(b: BookingMessage) {
   const lines = [
     '📌 <b>Yangi Bron!</b>',
     `🏠 <b>Restoran:</b> ${html(b.restaurant_name)}`,
-    `👤 <b>Mijoz:</b> ${html(prettyPhone(b.phone))}`,
+    // The guest's Telegram profile (tap to open the chat) when they booked through Telegram.
+    b.customer_chat && /^\d{1,15}$/.test(b.customer_chat)
+      ? `👤 <b>Mijoz:</b> <a href="tg://user?id=${b.customer_chat}">${html(b.customer_name || 'Telegram')}</a>${b.customer_username ? ' (@' + html(b.customer_username) + ')' : ''} · ${html(prettyPhone(b.phone))}`
+      : `👤 <b>Mijoz:</b> ${html(prettyPhone(b.phone))}`,
     `🍽 <b>Stol:</b> ${b.table_number}-stol · ${b.guests} kishi`,
     `📅 <b>Sana:</b> ${html(b.date)}`,
     `🕒 <b>Vaqt:</b> ${html(b.slot)}${b.end_slot ? '–' + html(b.end_slot.slice(0, 5)) : ''}`,
@@ -87,12 +93,12 @@ export function bookingText(b: BookingMessage) {
 }
 
 export const bookingKeyboard = (id: string) => ({
-  inline_keyboard: [[{ text: '✅ Tasdiqlash', callback_data: 'b:c:' + id }, { text: '❌ Bekor qilish', callback_data: 'b:x:' + id }]],
+  inline_keyboard: [[{ text: '✅ Tasdiqlash (Confirm)', callback_data: 'b:c:' + id }, { text: '❌ Joy band (Reject)', callback_data: 'b:x:' + id }]],
 });
 
 async function loadBooking(id: string) {
   return env.DB!.prepare(
-    'SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id WHERE b.id=?',
+    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,a.telegram_chat_id AS customer_chat,u.value AS customer_username FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings u ON u.key='tguser:'||a.telegram_chat_id WHERE b.id=?",
   )
     .bind(id)
     .first<BookingMessage & { restaurant_id: string; telegram_chat_id: string | null }>();
@@ -134,7 +140,7 @@ export async function notifyBooking(id: string) {
 const TRANSITIONS: Record<string, Record<string, string>> = { c: { pending: 'confirmed' }, x: { pending: 'cancelled', confirmed: 'cancelled' } };
 
 interface Update {
-  message?: { chat: { id: number }; from?: { id: number; first_name?: string; last_name?: string }; text?: string; contact?: { phone_number: string; user_id?: number } };
+  message?: { chat: { id: number }; from?: { id: number; first_name?: string; last_name?: string; username?: string }; text?: string; contact?: { phone_number: string; user_id?: number } };
   callback_query?: { id: string; data?: string; message?: { chat: { id: number }; message_id: number } };
 }
 
@@ -169,21 +175,25 @@ export async function sendTelegramCode(chatId: string, code: string) {
   return !!(await telegram('sendMessage', { chat_id: chatId, text: `🔐 RestaurantFoods tasdiqlash kodi: <b>${code}</b>\nKod 5 daqiqa amal qiladi. Uni hech kimga bermang.`, parse_mode: 'HTML' }));
 }
 
-const CUSTOMER_TEXT: Record<string, string> = {
-  created: '📌 Broningiz qabul qilindi — restoran tasdiqlashini kuting.',
-  confirmed: '✅ Broningiz tasdiqlandi.',
-  cancelled: '❌ Broningiz bekor qilindi.',
-  no_show: '⚠️ Bron vaqtida kelmaganingiz qayd etildi.',
+const CUSTOMER_TEXT: Record<string, (restaurant: string) => string> = {
+  created: () => '📌 Broningiz qabul qilindi — restoran tasdiqlashini kuting.',
+  confirmed: (r) => `✅ ${r} restorani joyingizni tasdiqladi! Sizni kutamiz.`,
+  cancelled: () => '❌ Broningiz bekor qilindi.',
+  // "❌ Joy band (Reject)" from the restaurant's Telegram card.
+  rejected: (r) => `❌ Afsuski, ${r} restoranida bu vaqtga joy band. Boshqa vaqt yoki stol tanlang.`,
+  no_show: () => '⚠️ Bron vaqtida kelmaganingiz qayd etildi.',
 };
 
 /** Booking update to the customer who made it, when their Telegram is linked. Never throws. */
 export async function notifyCustomer(bookingId: string, kind: keyof typeof CUSTOMER_TEXT) {
   if (!telegramConfigured()) return false;
   try {
-    const b = await env.DB!.prepare('SELECT b.date,b.slot,b.end_slot,b.table_number,b.guests,r.name AS restaurant_name,r.address,a.telegram_chat_id FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id JOIN accounts a ON a.id=b.user_id WHERE b.id=?').bind(bookingId).first<any>();
+    const b = await env.DB!.prepare('SELECT b.date,b.slot,b.end_slot,b.table_number,b.guests,r.name AS restaurant_name,r.address,r.latitude,r.longitude,a.telegram_chat_id FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id JOIN accounts a ON a.id=b.user_id WHERE b.id=?').bind(bookingId).first<any>();
     if (!b?.telegram_chat_id) return false;
-    const text = [`<b>${CUSTOMER_TEXT[kind]}</b>`, `🏠 ${html(b.restaurant_name)}${b.address ? ' · ' + html(b.address) : ''}`, `📅 ${html(b.date)} · 🕒 ${html(String(b.slot).slice(0, 5))}${b.end_slot ? '–' + html(String(b.end_slot).slice(0, 5)) : ''}`, `🍽 ${b.table_number}-stol · ${b.guests} kishi`].join('\n');
-    return !!(await telegram('sendMessage', { chat_id: b.telegram_chat_id, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🧾 Chek va QR chipta', url: site() + '/#/bookings' }]] } }));
+    const map = Number.isFinite(Number(b.latitude)) && Number.isFinite(Number(b.longitude)) && (b.latitude || b.longitude) ? `https://maps.google.com/?q=${Number(b.latitude)},${Number(b.longitude)}` : '';
+    const text = [`<b>${html(CUSTOMER_TEXT[kind](b.restaurant_name))}</b>`, `🏠 ${html(b.restaurant_name)}${b.address ? ' · ' + html(b.address) : ''}`, `📅 ${html(b.date)} · 🕒 ${html(String(b.slot).slice(0, 5))}${b.end_slot ? '–' + html(String(b.end_slot).slice(0, 5)) : ''}`, `🍽 ${b.table_number}-stol · ${b.guests} kishi`].join('\n');
+    const buttons = [[{ text: '🧾 Mening bronlarim', url: site() + '/#/bookings' }], ...(map ? [[{ text: '📍 Xaritada ochish', url: map }]] : [])];
+    return !!(await telegram('sendMessage', { chat_id: b.telegram_chat_id, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } }));
   } catch {
     return false;
   }
@@ -210,7 +220,7 @@ async function telegramBirthday(chatId: string) {
   return `${b.year}-${String(b.month).padStart(2, '0')}-${String(b.day).padStart(2, '0')}`;
 }
 /** The shared own contact approves a sign-in request: existing account with that verified number, or a new one. */
-async function approveLogin(code: string, chatId: string, from: { id: number; first_name?: string; last_name?: string } | undefined, phone: string | null, viaContact = true) {
+async function approveLogin(code: string, chatId: string, from: { id: number; first_name?: string; last_name?: string; username?: string } | undefined, phone: string | null, viaContact = true) {
   const deny = async (reason: string, text: string) => {
     await env.DB!.prepare("UPDATE telegram_logins SET status='denied' WHERE code=?").bind(code).run();
     await telegram('sendMessage', { chat_id: chatId, text, reply_markup: await keyboardFor(chatId) });
@@ -224,6 +234,7 @@ async function approveLogin(code: string, chatId: string, from: { id: number; fi
   const birthday = await telegramBirthday(chatId);
   const name = [from.first_name, from.last_name].filter(Boolean).join(' ').trim().slice(0, 80) || 'Mijoz';
   const userId = existing?.id || 'tg:' + from.id;
+  if (from.username) await saveTelegramUsername(chatId, from.username);
   // One chat per account.
   await env.DB!.prepare('UPDATE accounts SET telegram_chat_id=NULL WHERE telegram_chat_id=? AND id<>?').bind(chatId, userId).run();
   if (existing)
@@ -393,7 +404,7 @@ export async function handleUpdate(update: Update) {
     if (next === 'cancelled' && b.deposit_status === 'pending') await env.DB!.prepare("UPDATE bookings SET deposit_status='cancelled' WHERE id=?").bind(b.id).run();
     await telegram('editMessageText', { chat_id: cb.message.chat.id, message_id: cb.message.message_id, text: bookingText({ ...b, status: next, deposit_status: next === 'cancelled' && b.deposit_status === 'pending' ? 'cancelled' : b.deposit_status }), parse_mode: 'HTML' });
     await answer(next === 'confirmed' ? 'Tasdiqlandi' : 'Bekor qilindi');
-    await notifyCustomer(b.id, next as 'confirmed' | 'cancelled');
+    await notifyCustomer(b.id, next === 'cancelled' ? 'rejected' : 'confirmed');
     return next;
   }
   return 'ignored';

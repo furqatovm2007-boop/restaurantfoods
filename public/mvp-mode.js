@@ -3,3 +3,5 @@
 // Vision and pricing from menus and the landing page. Set to false to bring every full screen back.
 window.SIMPLE_MVP_MODE = true;
 if (window.SIMPLE_MVP_MODE) document.documentElement.classList.add('rf-mvp');
+// Who books (app/mvp.ts MVP_CHECKOUT): 'telegram' — sign in with Telegram at checkout; 'guest' — name and phone.
+window.MVP_CHECKOUT = 'telegram';

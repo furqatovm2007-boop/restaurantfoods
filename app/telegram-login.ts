@@ -209,6 +209,11 @@ export async function verifyWebAppData(raw: unknown, botToken: string, now = Dat
   return { user: { id: user.id, first_name: str(user.first_name, 64), last_name: str(user.last_name, 64), username: str(user.username, 32), language: ['uz', 'ru', 'en'].includes(user.language_code) ? user.language_code : '' }, authDate };
 }
 
+/** Telegram @username of a chat (from sign-in), kept for the restaurant's booking card. */
+export async function saveTelegramUsername(chatId: string, username: string) {
+  if (!/^[A-Za-z0-9_]{3,32}$/.test(username)) return;
+  await env.DB!.prepare("INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,'telegram') ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind('tguser:' + chatId, username, new Date().toISOString()).run();
+}
 export async function webAppLogin(initData: unknown) {
   const token = env.TELEGRAM_BOT_TOKEN?.trim();
   if (!token) throw new ApiError(503, 'Telegram Mini App hozircha yoqilmagan.');
@@ -228,6 +233,8 @@ export async function webAppLogin(initData: unknown) {
     // The site speaks the language of the user's Telegram app from the first screen (uz / ru / en).
     await env.DB!.prepare("INSERT INTO accounts (id,email,name,created_at,role,role_selected,phone,phone_verified,provider,contact_phone,contact_phone_verified,telegram_chat_id,preferred_language) VALUES (?,?,?,?,'customer',1,'',0,'telegram','',0,?,?)").bind(userId, '', name, new Date().toISOString(), chatId, checked.user.language || 'uz').run();
   }
+  // The @username lets the restaurant open the guest's Telegram profile from a booking card.
+  if (checked.user.username) await saveTelegramUsername(chatId, checked.user.username);
   await endTelegramSession();
   await issueSession(userId);
   await rememberDevice(userId);

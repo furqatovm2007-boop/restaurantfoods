@@ -8,25 +8,39 @@ import { notifyBooking, notifyCustomer } from '../../../telegram';
 import { otherHold, releaseHolds } from '../../../holds';
 import { walkinTables, WALKIN_ONLY } from '../../../hall-layout';
 import { ensurePassCode, PASS_PREFIX } from '../../../booking-pass';
-import { SIMPLE_MVP_MODE } from '../../../mvp';
+import { SIMPLE_MVP_MODE, MVP_CHECKOUT } from '../../../mvp';
 export const dynamic = 'force-dynamic';
 
 /*
- * One-click booking for SIMPLE_MVP_MODE (app/mvp.ts): name, phone, time and guests — no card binding, online
+ * One-click booking for SIMPLE_MVP_MODE (app/mvp.ts): time and guests, with name and phone from Telegram
+ * (MVP_CHECKOUT "telegram"; typed in for "guest") — no card binding, online
  * deposit, SMS code or penalty texts. The table rules stay: the restaurant's hours, the table's seats, walk-in
  * tables, tables held or occupied right now and overlapping bookings are all refused as in /api/bookings.
  * Abuse guard instead of the code: same-origin JSON only, at most 5 bookings per phone and 10 per network an
- * hour. A signed-in customer books under their own account; a guest gets a light guest record by phone.
- * The restaurant is told on Telegram at once (Confirm / Cancel buttons) and the answer carries the QR pass.
+ * hour. The booking is made under the Telegram account (a guest record by phone in "guest" mode).
+ * The restaurant gets its Telegram card at once (✅ Tasdiqlash / ❌ Joy band) and the guest a Telegram message
+ * with the details and a map link; the restaurant's answer reaches the guest in Telegram too.
  * Demo restaurants run the same checks and answer with a sample pass, but nothing is saved or sent.
  */
 export async function POST(request: Request) {
   try {
     if (!SIMPLE_MVP_MODE) throw new ApiError(404, 'Topilmadi.');
     const b = await body(request);
-    const name = text(b.name, 2, 60).replace(/\s+/g, ' '),
-      contact = phone(b.phone),
-      restaurantId = text(b.restaurantId),
+    // Telegram checkout: the signed-in Telegram account gives the name, the phone and the chat.
+    const u = await identity().catch(() => null);
+    let name = '',
+      contact = '';
+    if (MVP_CHECKOUT === 'telegram') {
+      const acc = u ? await env.DB!.prepare('SELECT name,telegram_chat_id,contact_phone,contact_phone_verified,telegram_phone FROM accounts WHERE id=?').bind(u.userId).first<any>() : null;
+      if (!acc?.telegram_chat_id) throw new ApiError(401, 'TELEGRAM_LOGIN');
+      contact = (acc.contact_phone_verified && acc.contact_phone) || acc.telegram_phone || '';
+      if (!/^\+998\d{9}$/.test(contact)) throw new ApiError(428, 'TELEGRAM_PHONE');
+      name = String(acc.name || 'Mijoz').slice(0, 60);
+    } else {
+      name = text(b.name, 2, 60).replace(/\s+/g, ' ');
+      contact = phone(b.phone);
+    }
+    const restaurantId = text(b.restaurantId),
       date = text(b.date),
       slot = text(b.slot),
       endSlot = text(b.endSlot),
@@ -50,7 +64,6 @@ export async function POST(request: Request) {
       const code = 'DEMO-' + crypto.randomUUID().slice(0, 8).toUpperCase();
       return json({ ok: true, demo: true, id: 'demo', passCode: code, passPayload: PASS_PREFIX + code, notified: false, ...summary }, 201);
     }
-    const u = await identity().catch(() => null);
     let userId = u?.userId || '';
     if (!userId) {
       // Guest record keyed by the phone: the restaurant sees the name and number, nothing else is kept.

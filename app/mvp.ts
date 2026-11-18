@@ -11,6 +11,12 @@ import { env } from 'cloudflare:workers';
  * AI, pricing) is back as it was. The regular /api/bookings keeps all its checks either way.
  */
 export const SIMPLE_MVP_MODE = true;
+/*
+ * Who may book in this mode: 'telegram' — the guest signs in with Telegram at checkout (the Mini App signs in
+ * by itself; on the web the bot asks for the contact once), so name, phone and the Telegram chat come from
+ * Telegram and both sides get messages there. 'guest' — name and phone typed in, no sign-in (kept for later).
+ */
+export const MVP_CHECKOUT: 'telegram' | 'guest' = 'telegram';
 
 /*
  * "Amanda Restaurant": the featured demo card (first in the catalogue). It is a demo (is_demo=1, DEMO tag

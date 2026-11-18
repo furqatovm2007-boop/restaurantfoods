@@ -43,13 +43,24 @@
       badName: 'Ismingizni kiriting.',
       done: 'Bron tasdiqlandi!',
       doneDemo: 'DEMO bron ko‘rsatildi',
-      doneText: 'Restoranga Telegram orqali darhol xabar yuborildi. Eshikda shu QR-kodni ko‘rsating.',
-      doneQueued: 'Bron saqlandi. Restoran tez orada tasdiqlaydi. Eshikda shu QR-kodni ko‘rsating.',
+      doneText: 'Restoranga Telegram orqali darhol xabar yuborildi.',
+      doneQueued: 'Bron saqlandi. Restoran tez orada tasdiqlaydi.',
       doneDemoText: 'Bu namuna restoran: bron saqlanmadi va hech kimga yuborilmadi. Haqiqiy restoranlarda xuddi shunday ishlaydi.',
       pass: 'QR chipta',
       close: 'Yopish',
       guestsShort: 'kishi',
       sum: 'so‘m',
+      tabs: [['all', 'Barchasi'], ['national', 'Milliy taomlar'], ['europe', 'Yevropa'], ['fast', 'Fast-food']],
+      tgBook: 'Telegram orqali band qilish',
+      bookNow: 'Joyni band qilish',
+      tgNote: 'Ism va telefon Telegram’dan olinadi — hech narsa yozish shart emas.',
+      tgWait: 'Telegram’da “Start”, keyin “📱 Raqamni yuborish” tugmasini bosing. Shu sahifa o‘zi davom etadi.',
+      tgOpen: 'Telegram’ni ochish',
+      tgFail: 'Telegram orqali kirish tugamadi. Qayta urinib ko‘ring.',
+      tgPhone: 'Telegram botda “📱 Raqamni yuborish” tugmasini bosing, so‘ng qayta urinib ko‘ring.',
+      reserved: (t, n, time) => `${t}-stol ${n} uchun soat ${time} ga band qilindi`,
+      tgSent: 'Bron tafsilotlari Telegram’ingizga yuborildi. Restoran tasdiqlaganda Telegram’da xabar olasiz.',
+      tgQueued: 'Bron saqlandi. Restoran tasdiqlaganda Telegram’da xabar olasiz.',
     },
     ru: {
       hero: 'Выберите ресторан и забронируйте стол за 30 секунд',
@@ -79,13 +90,24 @@
       badName: 'Введите ваше имя.',
       done: 'Бронь подтверждена!',
       doneDemo: 'DEMO-бронь показана',
-      doneText: 'Ресторан сразу получил уведомление в Telegram. Покажите этот QR-код у входа.',
-      doneQueued: 'Бронь сохранена. Ресторан скоро подтвердит её. Покажите этот QR-код у входа.',
+      doneText: 'Ресторан сразу получил уведомление в Telegram.',
+      doneQueued: 'Бронь сохранена. Ресторан скоро подтвердит её.',
       doneDemoText: 'Это пример ресторана: бронь не сохранена и никуда не отправлена. В настоящих ресторанах всё работает так же.',
       pass: 'QR-пропуск',
       close: 'Закрыть',
       guestsShort: 'гост.',
       sum: 'сум',
+      tabs: [['all', 'Все'], ['national', 'Национальная кухня'], ['europe', 'Европейская'], ['fast', 'Фастфуд']],
+      tgBook: 'Забронировать через Telegram',
+      bookNow: 'Забронировать',
+      tgNote: 'Имя и телефон берутся из Telegram — ничего вводить не нужно.',
+      tgWait: 'В Telegram нажмите «Start», затем «📱 Отправить номер». Эта страница продолжит сама.',
+      tgOpen: 'Открыть Telegram',
+      tgFail: 'Вход через Telegram не завершён. Попробуйте ещё раз.',
+      tgPhone: 'В боте Telegram нажмите «📱 Отправить номер» и попробуйте снова.',
+      reserved: (t, n, time) => `Стол №${t} забронирован для ${n} на ${time}`,
+      tgSent: 'Детали брони отправлены вам в Telegram. Когда ресторан подтвердит, придёт сообщение.',
+      tgQueued: 'Бронь сохранена. Когда ресторан подтвердит, придёт сообщение в Telegram.',
     },
     en: {
       hero: 'Choose a restaurant and book your table in 30 seconds',
@@ -115,13 +137,24 @@
       badName: 'Enter your name.',
       done: 'Booking Confirmed!',
       doneDemo: 'DEMO booking shown',
-      doneText: 'The restaurant was notified on Telegram right away. Show this QR code at the door.',
-      doneQueued: 'Your booking is saved. The restaurant will confirm it shortly. Show this QR code at the door.',
+      doneText: 'The restaurant was notified on Telegram right away.',
+      doneQueued: 'Your booking is saved. The restaurant will confirm it shortly.',
       doneDemoText: 'This is a sample restaurant: the booking was not saved or sent. Real restaurants work exactly like this.',
       pass: 'QR pass',
       close: 'Close',
       guestsShort: 'guests',
       sum: 'UZS',
+      tabs: [['all', 'All'], ['national', 'National cuisine'], ['europe', 'European'], ['fast', 'Fast-food']],
+      tgBook: 'Book with Telegram',
+      bookNow: 'Book Now',
+      tgNote: 'Your name and phone come from Telegram — nothing to type.',
+      tgWait: 'In Telegram tap “Start”, then “📱 Share my number”. This page continues by itself.',
+      tgOpen: 'Open Telegram',
+      tgFail: 'Telegram sign-in did not finish. Please try again.',
+      tgPhone: 'In the Telegram bot tap “📱 Share my number”, then try again.',
+      reserved: (t, n, time) => `Table #${t} reserved for ${n} at ${time}`,
+      tgSent: 'The booking details were sent to your Telegram. You will get a message when the restaurant confirms.',
+      tgQueued: 'Your booking is saved. You will get a Telegram message when the restaurant confirms.',
     },
   };
   // RF_I18N (i18n.js) is a top-level const, not a window property.
@@ -152,8 +185,13 @@
       .split(/\s+/)
       .every((w) => hay.includes(w));
   }
+  // Basic category tabs: by the restaurant's cuisine and its dishes.
+  const TAB_RX = { national: /milliy|o[‘'ʻ`]?zbek|uzbek|национ|узбек|osh|palov|shashlik/i, europe: /yevropa|europe|европ|ital|итал|pasta|pitsa|pizza|steyk|steak/i, fast: /fast|burger|lavash|hot.?dog|фаст|бургер|шаурм|donar|kfc/i };
+  let tab = 'all';
+  const inTab = (r) => tab === 'all' || TAB_RX[tab].test([r.cuisine, r.name, ...(state.menu || []).filter((m) => m.restaurant_id === r.id).map((m) => m.name + ' ' + m.category)].join(' '));
+  const tabs = () => `<div class="mvp-tabs" role="tablist">${c('tabs').map(([k, v]) => `<button type="button" role="tab" data-tab="${k}" aria-pressed="${tab === k}">${h(v)}</button>`).join('')}</div>`;
   function grid(q) {
-    const list = sorted().filter((r) => matches(r, q));
+    const list = sorted().filter((r) => inTab(r) && matches(r, q));
     return list.length ? `<div class="mvp-grid">${list.map(card).join('')}</div>` : `<p class="mvp-empty">${h(state.catalog?.length ? c('none') : c('empty'))}</p>`;
   }
   function home() {
@@ -161,12 +199,19 @@
     try {
       q = sessionStorage.getItem('rf-mvp-q') || '';
     } catch {}
-    page(c('hero'), `<p class="mvp-sub">${h(c('sub'))}</p><label class="mvp-search"><span aria-hidden="true">🔍</span><input type="search" id="mvpSearch" value="${h(q)}" placeholder="${h(c('search'))}" aria-label="${h(c('search'))}" autocomplete="off" enterkeyhint="search"></label><section id="mvpGrid">${grid(q)}</section>`);
+    page(c('hero'), `<p class="mvp-sub">${h(c('sub'))}</p><label class="mvp-search"><span aria-hidden="true">🔍</span><input type="search" id="mvpSearch" value="${h(q)}" placeholder="${h(c('search'))}" aria-label="${h(c('search'))}" autocomplete="off" enterkeyhint="search"></label><div id="mvpTabs">${tabs()}</div><section id="mvpGrid">${grid(q)}</section>`);
     const input = document.getElementById('mvpSearch');
     input.oninput = () => {
       try {
         sessionStorage.setItem('rf-mvp-q', input.value);
       } catch {}
+      document.getElementById('mvpGrid').innerHTML = grid(input.value.trim());
+    };
+    document.getElementById('mvpTabs').onclick = (e) => {
+      const b = e.target.closest('[data-tab]');
+      if (!b) return;
+      tab = b.dataset.tab;
+      document.getElementById('mvpTabs').innerHTML = tabs();
       document.getElementById('mvpGrid').innerHTML = grid(input.value.trim());
     };
   }
@@ -204,11 +249,55 @@
     await bookingPlan(r.id, r, seq);
   }
 
-  // ---------- Step 3: the 3-field checkout ----------
+  // ---------- Step 3: checkout — time and guests; who books comes from Telegram ----------
   const normPhone = (v) => {
     const d = String(v || '').replace(/\D/g, '');
     return d.length === 9 ? '+998' + d : d.length === 12 && d.startsWith('998') ? '+' + d : '';
   };
+  const telegramMode = () => window.MVP_CHECKOUT !== 'guest';
+  const me = () => (typeof state !== 'undefined' ? state.user : null);
+  const tgUser = () => {
+    const u = me();
+    return u && u.telegram?.linked ? u : null;
+  };
+  const refreshMe = async () => {
+    try {
+      state.user = (await api('/api/me')).user;
+      if (typeof navigation === 'function') navigation();
+      if (typeof mobileNavigation === 'function') mobileNavigation();
+    } catch {}
+    return tgUser();
+  };
+  /*
+   * Telegram sign-in at checkout. Inside the Mini App the signed launch data signs in at once; on the web the
+   * bot opens (one tap "Start", one tap "Share my number") and this page polls until the bot approves —
+   * the same flow as the regular "Sign in with Telegram". The tab is opened in the click itself so phones
+   * do not block it.
+   */
+  async function telegramSignIn(msg, tab) {
+    if (window.RFTelegram?.active) {
+      await window.RFTelegram.signIn?.();
+      return refreshMe();
+    }
+    const start = await api('/api/auth/telegram-start', 'POST', {});
+    if (tab && !tab.closed) tab.location.href = start.url;
+    else window.open(start.url, '_blank', 'noopener');
+    msg.innerHTML = `<span class="mvp-wait">${h(c('tgWait'))} <a href="${h(start.url)}" target="_blank" rel="noopener">${h(c('tgOpen'))}</a></span>`;
+    const until = Date.now() + 10 * 60000;
+    while (Date.now() < until) {
+      await new Promise((r) => setTimeout(r, 2000));
+      if (!document.body.contains(msg)) return null;
+      if (document.visibilityState === 'hidden') continue;
+      const r = await api('/api/auth/telegram-poll', 'POST', {}).catch((e) => ({ status: 'error', message: e.message }));
+      if (r.status === 'approved') {
+        msg.textContent = '';
+        return refreshMe();
+      }
+      if (r.status === 'denied' || r.status === 'error') break;
+    }
+    msg.textContent = c('tgFail');
+    return null;
+  }
   function checkout(form, ctx) {
     const { restaurant: r, table: tb, menu } = ctx;
     const start = document.getElementById('planStart'),
@@ -217,12 +306,20 @@
     const options = start ? [...start.options].map((o) => `<option value="${h(o.value)}" ${o.value === start.value ? 'selected' : ''}>${h(o.textContent)}</option>`).join('') : '';
     const max = ctx.maxGuests || tb.seats;
     const guests = Math.min(max, Number(typed.guests) || Math.min(2, max));
+    const tg = telegramMode(),
+      u = tgUser();
+    const who = tg
+      ? u
+        ? `<p class="mvp-who">✈️ ${h(u.name || '')}${u.contactPhone ? ' · 📞 ' + h(u.contactPhone) : ''}</p>`
+        : `<p class="mvp-who">✈️ ${h(c('tgNote'))}</p>`
+      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name)}"></label><label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone)}"></label>`;
+    const label = tg && !u ? '✈️ ' + c('tgBook') : '✅ ' + c(tg ? 'bookNow' : 'confirm');
     form.className = 'form mvp-checkout';
     form.noValidate = true;
-    form.innerHTML = `<p class="mvp-slot">🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · 📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p><label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name)}"></label><label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone)}"></label><div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm" type="submit">✅ ${h(c('confirm'))}</button><p class="form-message" role="status" data-mvp-msg></p>`;
+    form.innerHTML = `<p class="mvp-slot">🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · 📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p>${who}<div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm${tg && !u ? ' mvp-tg' : ''}" type="submit">${h(label)}</button><p class="form-message" role="status" data-mvp-msg></p>`;
     const remember = () => {
-      typed.name = form.elements.name.value;
-      typed.phone = form.elements.phone.value;
+      if (form.elements.name) typed.name = form.elements.name.value;
+      if (form.elements.phone) typed.phone = form.elements.phone.value;
       typed.guests = form.elements.guests.value;
     };
     form.addEventListener('input', remember);
@@ -236,77 +333,61 @@
       e.preventDefault();
       remember();
       const msg = form.querySelector('[data-mvp-msg]'),
-        btn = form.querySelector('.mvp-confirm'),
-        phone = normPhone(form.elements.phone.value),
+        btn = form.querySelector('.mvp-confirm');
+      let name = '',
+        phone = '';
+      if (!tg) {
+        phone = normPhone(form.elements.phone.value);
         name = form.elements.name.value.trim().replace(/\s+/g, ' ');
-      if (name.length < 2) return (msg.textContent = c('badName'));
-      if (!phone) return (msg.textContent = c('badPhone'));
+        if (name.length < 2) return (msg.textContent = c('badName'));
+        if (!phone) return (msg.textContent = c('badPhone'));
+      }
+      // The Telegram tab opens inside the click (before any await) so the phone's browser allows it.
+      const tab = tg && !tgUser() && !window.RFTelegram?.active ? window.open('', '_blank') : null;
       btn.disabled = true;
       btn.textContent = c('sending');
       msg.textContent = '';
+      const body = () => ({ restaurantId: r.id, tableNumber: tb.number, tableId: tb.id, date, slot: start?.value, endSlot: document.getElementById('planEnd')?.value, guests: Number(form.elements.guests.value), ...(tg ? {} : { name, phone }), preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })) });
       try {
-        const res = await api('/api/bookings/quick', 'POST', {
-          restaurantId: r.id,
-          tableNumber: tb.number,
-          tableId: tb.id,
-          date,
-          slot: start?.value,
-          endSlot: document.getElementById('planEnd')?.value,
-          guests: Number(form.elements.guests.value),
-          name,
-          phone,
-          preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })),
-        });
+        if (tg && !tgUser() && !(await telegramSignIn(msg, tab))) return;
+        let res;
         try {
-          localStorage.setItem('rf-mvp-contact', JSON.stringify({ name, phone }));
-        } catch {}
+          res = await api('/api/bookings/quick', 'POST', body());
+        } catch (err) {
+          // Signed in but no phone yet: inside the Mini App Telegram asks for it in one tap.
+          if (err.status === 428 && window.RFTelegram?.active) {
+            await window.RFTelegram.sharePhone?.();
+            await refreshMe();
+            res = await api('/api/bookings/quick', 'POST', body());
+          } else if (err.status === 401 && tg) {
+            if (!(await telegramSignIn(msg, null))) return;
+            res = await api('/api/bookings/quick', 'POST', body());
+          } else throw err;
+        }
+        if (!tg)
+          try {
+            localStorage.setItem('rf-mvp-contact', JSON.stringify({ name, phone }));
+          } catch {}
         picks.delete(r.id);
-        await done(res);
+        done(res);
         ctx.reload?.();
       } catch (err) {
-        msg.textContent = err.message;
+        tab?.close();
+        msg.textContent = err.status === 428 ? c('tgPhone') : err.message;
       } finally {
         btn.disabled = false;
-        btn.textContent = '✅ ' + c('confirm');
+        btn.textContent = tg && !tgUser() ? '✈️ ' + c('tgBook') : '✅ ' + c(tg ? 'bookNow' : 'confirm');
       }
     };
   }
 
-  // ---------- "Booking Confirmed!" with the QR pass ----------
-  let qrReady = null;
-  const loadQr = () =>
-    (qrReady ??= window.qrcode
-      ? Promise.resolve()
-      : new Promise((ok, fail) => {
-          const s = document.createElement('script');
-          s.src = '/vendor/qrcode-2.0.4.js';
-          s.onload = ok;
-          s.onerror = () => ((qrReady = null), fail(new Error('QR')));
-          document.head.append(s);
-        }));
-  function qrSvg(text, size = 220) {
-    const qr = window.qrcode(0, 'M');
-    qr.addData(text);
-    qr.make();
-    const n = qr.getModuleCount(),
-      q = 3,
-      cell = size / (n + q * 2);
-    let d = '';
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.isDark(y, x)) d += `M${((x + q) * cell).toFixed(2)} ${((y + q) * cell).toFixed(2)}h${cell.toFixed(2)}v${cell.toFixed(2)}h-${cell.toFixed(2)}z`;
-    return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="QR"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
-  }
-  async function done(res) {
-    let qr = '';
-    try {
-      if (res.passPayload) {
-        await loadQr();
-        qr = qrSvg(res.passPayload);
-      }
-    } catch {}
+  // ---------- Success: a clear summary card (no QR to scan at the door) ----------
+  function done(res) {
     const dlg = document.createElement('dialog');
     dlg.className = 'mvp-done';
     dlg.setAttribute('aria-labelledby', 'mvpDoneTitle');
-    dlg.innerHTML = `<div class="mvp-done-check" aria-hidden="true">✓</div><h2 id="mvpDoneTitle">${h(res.demo ? c('doneDemo') : c('done'))}</h2><p class="mvp-done-sub">${h(res.restaurant)} · ${res.table}-${h(c('table'))} · ${h(res.date)} ${h(res.slot)}–${h(res.endSlot)} · ${res.guests} ${h(c('guestsShort'))}</p><p class="mvp-done-name">👤 ${h(res.name)} · 📞 ${h(res.phone)}</p>${res.preorderItems?.length ? `<p class="mvp-done-meals">🍽 ${res.preorderItems.map((i) => h(i.name) + ' ×' + i.quantity).join(', ')} · ${money(res.preorderTotal)}</p>` : ''}${qr ? `<figure class="mvp-pass">${qr}<figcaption>${h(c('pass'))} · <code>${h(res.passCode)}</code></figcaption></figure>` : ''}<p class="${res.demo ? 'notice' : 'muted'}">${h(res.demo ? c('doneDemoText') : res.notified ? c('doneText') : c('doneQueued'))}</p><button type="button" class="primary" data-close>${h(c('close'))}</button>`;
+    const first = String(res.name || '').split(/\s+/)[0] || res.name;
+    dlg.innerHTML = `<div class="mvp-done-check" aria-hidden="true">✓</div><h2 id="mvpDoneTitle">${h(res.demo ? c('doneDemo') : c('done'))}</h2><div class="mvp-ticket"><span class="mvp-ticket-table">🪑 ${res.table}</span><span class="mvp-ticket-line">${h(c('reserved')(res.table, first, res.slot))}</span><small>${h(res.restaurant)} · 📅 ${h(res.date)} · ${res.guests} ${h(c('guestsShort'))}</small></div>${res.preorderItems?.length ? `<p class="mvp-done-meals">🍽 ${res.preorderItems.map((i) => h(i.name) + ' ×' + i.quantity).join(', ')} · ${money(res.preorderTotal)}</p>` : ''}<p class="${res.demo ? 'notice' : 'muted'}">${h(res.demo ? c('doneDemoText') : telegramMode() ? (res.notified ? c('tgSent') : c('tgQueued')) : res.notified ? c('doneText') : c('doneQueued'))}</p><button type="button" class="primary" data-close>${h(c('close'))}</button>`;
     document.body.append(dlg);
     const close = () => {
       dlg.close();
