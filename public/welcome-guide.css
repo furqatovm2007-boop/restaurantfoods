@@ -24,3 +24,13 @@
 @media(max-width:650px){.rf-guide{left:12px;right:12px;width:auto;grid-template-columns:92px minmax(0,1fr);padding:12px 12px 12px 4px}.rf-guide-hero{width:92px;height:120px;margin-top:-38px}.rf-guide-text{font-size:13.5px}body:has(.mobile-nav:not([hidden])) .rf-guide{bottom:calc(146px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.rf-guide{transition:none}.rf-guide-dots i{transition:none}}
 body:has(#drawer[open]) .rf-guide{visibility:hidden}
+/* SIMPLE_MVP_MODE: step 0 (language choice) and the UZ | RU | EN corner switch */
+.rf-guide-pick p{margin:0 0 10px;font-weight:700;line-height:1.35}
+.rf-guide-pick div{display:grid;gap:8px}
+.rf-guide-pick button{min-height:46px;border-radius:14px;border:1px solid rgba(246,210,122,.45);background:rgba(255,255,255,.08);color:#f4fffb;font:700 15px system-ui,sans-serif;text-align:left;padding:0 14px;cursor:pointer}
+.rf-guide-pick button:hover,.rf-guide-pick button:focus-visible{background:rgba(52,211,153,.18);border-color:#34d399;outline:0}
+.rf-guide.picking [data-text],.rf-guide.picking [data-dots],.rf-guide.picking [data-next],.rf-guide.picking [data-voice]{display:none}
+.rf-guide-lang{position:absolute;top:10px;right:46px;display:flex;gap:2px;padding:2px;border-radius:999px;background:rgba(255,255,255,.08)}
+.rf-guide-lang button{min-width:34px;min-height:28px;padding:0 6px;border:0;border-radius:999px;background:transparent;color:#a7c1ca;font:800 11px system-ui,sans-serif;cursor:pointer}
+.rf-guide-lang button[aria-pressed=true]{background:#f6d27a;color:#062b21}
+.rf-guide:has(.rf-guide-lang) .rf-guide-name{padding-right:120px}

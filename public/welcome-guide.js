@@ -35,9 +35,9 @@
       // SIMPLE_MVP_MODE: three steps, each read by the recorded voice /audio/concierge/uz-stepN.mp3.
       mvp: {
         steps: [
-          ['👋 Assalomu alaykum! Avval katalogdan o‘zingizga yoqqan restoranni tanlang.', '.mvp-card'],
-          ['🪑 Interaktiv zal xaritasida stolni tanlang. Xohlasangiz, rasmli menyudan taom ham qo‘shing.', '.mvp-book'],
-          ['✈️ Telegram orqali bir bosishda band qiling — tasdiq xabari darhol keladi.', null],
+          ['👋 Assalomu alaykum! Pastdagi ro‘yxatdan o‘zingizga yoqqan restoranni tanlab, ustiga bosing.', '.mvp-card'],
+          ['🪑 Endi zaldagi bo‘sh stollardan birini tanlang. Pastroqdagi menyudan ovqatlarni ham belgilashingiz mumkin.', '.mvp-book'],
+          ['✈️ Vaqtni belgilab, ko‘k Telegram tugmasini bosing — joyingiz darhol band bo‘ladi!', null],
         ],
         next: 'Keyingi ›',
         done: 'Boshladik ✓',
@@ -66,9 +66,9 @@
       title: 'Консьерж RestaurantFoods',
       mvp: {
         steps: [
-          ['👋 Здравствуйте! Сначала выберите ресторан в нашем каталоге.', '.mvp-card'],
-          ['🪑 Выберите столик на интерактивной схеме зала и, если хотите, блюда из фото-меню.', '.mvp-book'],
-          ['✈️ Бронируйте в один клик через Telegram — подтверждение придёт сразу.', null],
+          ['👋 Здравствуйте! Выберите нужный ресторан из списка ниже и нажмите на него.', '.mvp-card'],
+          ['🪑 Нажмите на любой свободный столик в зале. Чуть ниже можно сразу выбрать блюда из меню.', '.mvp-book'],
+          ['✈️ Укажите время и нажмите синюю кнопку Telegram — столик сразу забронируется!', null],
         ],
         next: 'Далее ›',
         done: 'Поехали ✓',
@@ -97,9 +97,9 @@
       title: 'RestaurantFoods concierge',
       mvp: {
         steps: [
-          ['👋 Hello! First, pick a restaurant you like from our catalogue.', '.mvp-card'],
-          ['🪑 Choose your table on the interactive hall map, and add dishes from the photo menu if you like.', '.mvp-book'],
-          ['✈️ Book in one tap with Telegram — your confirmation arrives instantly.', null],
+          ['👋 Hello! Scroll down, pick a restaurant you like, and tap on it.', '.mvp-card'],
+          ['🪑 Tap on any free table in the hall. Scroll down to the menu if you want to pre-order food.', '.mvp-book'],
+          ['✈️ Pick your time and tap the blue Telegram button — your table is booked instantly!', null],
         ],
         next: 'Next ›',
         done: 'Let’s go ✓',
@@ -111,7 +111,7 @@
     },
   };
   const lang = () => {
-    const l = window.RF_I18N?.lang || document.documentElement.lang;
+    const l = (typeof RF_I18N !== 'undefined' ? RF_I18N.lang : window.RF_I18N?.lang) || document.documentElement.lang;
     return COPY[l] ? l : 'uz';
   };
   const store = {
@@ -295,8 +295,9 @@
           playerAnalyser = null;
         }
       }
-      await ctx?.resume().catch(() => {});
-      await player.play();
+      const playing = player.play();
+      ctx?.resume().catch(() => {});
+      await playing;
       if (!box || step !== n) return stopClip();
       clearInterval(typing);
       box.querySelector('[data-text]').textContent = stepsOf(COPY[lang()])[n][0];
@@ -359,7 +360,9 @@
     box.className = 'rf-guide';
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-label', c.title);
-    box.innerHTML = `<button type="button" class="rf-guide-x" data-close aria-label="${c.close}">✕</button><div class="rf-guide-hero" data-avatar></div><div class="rf-guide-body"><p class="rf-guide-name">${c.title}</p><p class="rf-guide-text" data-text aria-live="polite"></p><p class="rf-guide-note" data-note hidden></p><div class="rf-guide-dots" data-dots aria-hidden="true"></div><div class="rf-guide-actions"><button type="button" class="rf-guide-skip" data-skip>${l.skip}</button><button type="button" class="rf-guide-voice" data-voice aria-pressed="false">${mvp() ? (muted ? l.unmute : l.mute) : c.voice}</button><button type="button" class="rf-guide-next" data-next>${l.next}</button></div></div>`;
+    const langBar = mvp() ? `<div class="rf-guide-lang" role="group" aria-label="Til / Язык / Language">${LANGS.map(([k]) => `<button type="button" data-lang="${k}" aria-pressed="${k === lang()}">${k.toUpperCase()}</button>`).join('')}</div>` : '';
+    const picker = mvp() ? `<div class="rf-guide-pick" data-pick><p>Tilni tanlang / Выберите язык / Choose language:</p><div>${LANGS.map(([k, label]) => `<button type="button" data-pick-lang="${k}">${label}</button>`).join('')}</div></div>` : '';
+    box.innerHTML = `<button type="button" class="rf-guide-x" data-close aria-label="${c.close}">✕</button>${langBar}<div class="rf-guide-hero" data-avatar></div><div class="rf-guide-body"><p class="rf-guide-name">${c.title}</p>${picker}<p class="rf-guide-text" data-text aria-live="polite"></p><p class="rf-guide-note" data-note hidden></p><div class="rf-guide-dots" data-dots aria-hidden="true"></div><div class="rf-guide-actions"><button type="button" class="rf-guide-skip" data-skip>${l.skip}</button><button type="button" class="rf-guide-voice" data-voice aria-pressed="false">${mvp() ? (muted ? l.unmute : l.mute) : c.voice}</button><button type="button" class="rf-guide-next" data-next>${l.next}</button></div></div>`;
     document.body.append(box);
     avatar = window.RFConcierge?.mount(box.querySelector('[data-avatar]')) || null;
     avatar?.mode('idle');
@@ -389,8 +392,59 @@
     // Opening the AI assistant ends the tour (both talk).
     document.querySelector('.rf-ai-launch')?.addEventListener('click', close, { once: true });
     requestAnimationFrame(() => box?.classList.add('in'));
+    if (mvp()) {
+      // Step 0: a silent language choice (the avatar waves); the tap that picks the language starts the voice,
+      // so no browser blocks it. The UZ | RU | EN corner switch changes the language mid-tour.
+      step = -1;
+      box.classList.add('picking');
+      setTimeout(() => avatar?.gesture(), reduced() ? 0 : 500);
+      box.querySelectorAll('[data-pick-lang]').forEach((b) => (b.onclick = () => startIn(b.dataset.pickLang)));
+      box.querySelectorAll('[data-lang]').forEach((b) => (b.onclick = () => (step < 0 ? startIn(b.dataset.lang) : switchTo(b.dataset.lang))));
+      return;
+    }
     // The greeting starts once the entrance animation has played.
     setTimeout(() => box && show(0), reduced() ? 0 : 450);
+  }
+  // ---------- language (SIMPLE_MVP_MODE) ----------
+  const LANGS = [
+    ['uz', '🇺🇿 O‘zbekcha'],
+    ['ru', '🇷🇺 Русский'],
+    ['en', '🇬🇧 English'],
+  ];
+  /** The whole site in this language (saved like the site's own switcher), then the widget's own words. */
+  function setLang(l) {
+    if (typeof RF_I18N !== 'undefined') {
+      RF_I18N.set(l);
+      RF_I18N.chosen = true;
+    } else document.documentElement.lang = l;
+    try {
+      localStorage.setItem('rf-language', l);
+    } catch {}
+    // The page itself re-renders in the new language (and a signed-in profile keeps it) — after the voice
+    // has started, so the tap still counts as the gesture that allows sound.
+    setTimeout(async () => {
+      if (typeof applyLanguage === 'function') await applyLanguage(l);
+      window.RFMvp?.syncLang?.();
+    }, 0);
+    if (!box) return;
+    const c = COPY[l],
+      lb = labels(c);
+    box.setAttribute('aria-label', c.title);
+    box.querySelector('.rf-guide-name').textContent = c.title;
+    box.querySelector('[data-skip]').textContent = lb.skip;
+    box.querySelector('[data-close]').setAttribute('aria-label', c.close);
+    renderMute();
+    box.querySelectorAll('[data-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === l)));
+  }
+  function startIn(l) {
+    setLang(l);
+    box.classList.remove('picking');
+    box.querySelector('[data-pick]')?.remove();
+    show(0);
+  }
+  function switchTo(l) {
+    setLang(l);
+    show(step);
   }
   /** First visit on the home / catalogue page, not over a Telegram deep link or the open AI assistant. */
   function maybeOpen() {

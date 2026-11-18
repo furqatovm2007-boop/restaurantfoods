@@ -83,3 +83,8 @@
 .mvp-done .quiet{width:100%;min-height:46px;margin-top:8px}
 @keyframes mvpSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.mvp-spin{animation-duration:2s}}
+/* UZ | RU | EN in the top bar */
+.mvp-lang{display:flex;gap:2px;margin-left:auto;padding:3px;border-radius:999px;border:1px solid var(--glass-line,rgba(16,185,129,.3));background:var(--glass,rgba(255,255,255,.6))}
+.mvp-lang button{min-width:36px;min-height:32px;padding:0 6px;border:0;border-radius:999px;background:transparent;color:inherit;font:800 12px/1 system-ui,sans-serif;cursor:pointer}
+.mvp-lang button[aria-pressed=true]{background:linear-gradient(135deg,#10b981,#0f766e);color:#fff}
+#topbar:has(.mvp-lang) .animated-brand{margin-right:8px}

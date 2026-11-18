@@ -429,5 +429,27 @@
     dlg.showModal();
   }
 
-  window.RFMvp = { home, restaurant, checkout, card, normPhone };
+  // ---------- UZ | RU | EN in the top bar (the concierge has the same switch) ----------
+  const LANGS = ['uz', 'ru', 'en'];
+  function syncLang() {
+    const l = lang();
+    document.querySelectorAll('.mvp-lang [data-site-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.siteLang === l)));
+  }
+  function langBar() {
+    const bar = document.getElementById('topbar');
+    if (!bar || bar.querySelector('.mvp-lang')) return syncLang();
+    bar.insertAdjacentHTML('beforeend', `<div class="mvp-lang" role="group" aria-label="Til / Язык / Language">${LANGS.map((l) => `<button type="button" data-site-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`);
+    bar.querySelector('.mvp-lang').onclick = async (e) => {
+      const b = e.target.closest('[data-site-lang]');
+      if (!b || b.dataset.siteLang === lang()) return;
+      if (typeof applyLanguage === 'function') await applyLanguage(b.dataset.siteLang);
+      else if (typeof RF_I18N !== 'undefined') RF_I18N.set(b.dataset.siteLang);
+      syncLang();
+    };
+    syncLang();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });
+  else langBar();
+
+  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang };
 })();
