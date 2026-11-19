@@ -5,6 +5,7 @@ import { intlPhone } from '../../../phone-codes';
 import { banned, restricted, guestKeys, BAN_MESSAGE, STRIKE_MESSAGE } from '../../../guest-policy';
 import { p2pEnabled, startP2P } from '../../../p2p';
 import { DEPOSIT_MIN } from '../../../deposits';
+import { addGroupTables, GROUP_MAX_TABLES } from '../../../table-group';
 import { interval, minutes, endMinuteSQL } from '../../../table-rules';
 import { quoteBookingMeals } from '../../../booking-preorder';
 import { bookingSlot, seatedWindow, SEATED_MESSAGE } from '../../../booking-rules';
@@ -62,11 +63,25 @@ export async function POST(request: Request) {
     if (!r || start < minutes(r.booking_open) || end > minutes(r.booking_close)) throw new ApiError(400, 'Vaqt restoran bron soatlariga mos emas.');
     const table = await env.DB!.prepare('SELECT id,seats FROM restaurant_tables WHERE restaurant_id=? AND number=? AND active=1').bind(restaurantId, tableNumber).first<any>();
     if (table && b.tableId != null && String(b.tableId) !== String(table.id)) throw new ApiError(409, 'Bu stol tanlangan restoranga tegishli emas. Sahifani yangilang.');
-    if (!table || guests > table.seats) throw new ApiError(400, 'Stol mavjud emas yoki sig‘imi yetarli emas.');
-    if ((await walkinTables(restaurantId)).has(tableNumber)) throw new ApiError(409, WALKIN_ONLY);
+    // Several tables in one reservation (app/table-group.ts): the others come as extraTables [{number,id}].
+    const extraRaw = Array.isArray(b.extraTables) ? b.extraTables.slice(0, GROUP_MAX_TABLES) : [];
+    if (Array.isArray(b.extraTables) && b.extraTables.length > GROUP_MAX_TABLES - 1) throw new ApiError(400, `Bir bronda ko‘pi bilan ${GROUP_MAX_TABLES} ta stol.`);
+    const extras: { id: string; number: number; seats: number }[] = [];
+    for (const x of extraRaw) {
+      const n = integer(x?.number, 1, 50);
+      if (n === tableNumber || extras.some((e) => e.number === n)) throw new ApiError(400, 'Bir stol ikki marta tanlangan.');
+      const t = await env.DB!.prepare('SELECT id,seats FROM restaurant_tables WHERE restaurant_id=? AND number=? AND active=1').bind(restaurantId, n).first<any>();
+      if (!t || (x?.id != null && String(x.id) !== String(t.id))) throw new ApiError(409, `Stol #${n} bu restoranga tegishli emas. Sahifani yangilang.`);
+      extras.push({ id: String(t.id), number: n, seats: Number(t.seats) || 0 });
+    }
+    const seatsTotal = (Number(table?.seats) || 0) + extras.reduce((s, t) => s + t.seats, 0);
+    if (!table || guests > seatsTotal) throw new ApiError(400, extras.length ? `Tanlangan stollarda jami ${seatsTotal} o‘rin bor — mehmonlar sonini kamaytiring yoki yana stol qo‘shing.` : 'Stol mavjud emas yoki sig‘imi yetarli emas.');
+    const walkins = await walkinTables(restaurantId);
+    if (walkins.has(tableNumber) || extras.some((t) => walkins.has(t.number))) throw new ApiError(409, WALKIN_ONLY);
     const meals = Array.isArray(b.preorderItems) && b.preorderItems.length ? (await env.DB!.prepare('SELECT id,name,price,available FROM menu WHERE restaurant_id=? AND available=1').bind(restaurantId).all<any>()).results : [];
     const preorder = quoteBookingMeals(b.preorderItems, meals);
-    const summary = { restaurant: r.name, table: tableNumber, date, slot, endSlot, guests, name, phone: contact, preorderItems: preorder.items, preorderTotal: preorder.total };
+    const tablesAll = [tableNumber, ...extras.map((t) => t.number)];
+    const summary = { restaurant: r.name, table: tableNumber, tables: tablesAll, seatsTotal, date, slot, endSlot, guests, name, phone: contact, preorderItems: preorder.items, preorderTotal: preorder.total };
     // Demo: the whole flow on screen, nothing saved or sent.
     if (r.is_demo || restaurantId.startsWith('rf-demo-')) {
       const code = 'DEMO-' + crypto.randomUUID().slice(0, 8).toUpperCase();
@@ -83,7 +98,8 @@ export async function POST(request: Request) {
     // Prepayment to the central card (app/p2p.ts). The bill: the pre-ordered dishes (or the deposit itself when
     // nothing is ordered). The least the guest may send now: the restaurant's deposit, 100 000 after strikes,
     // else 100 000 or the whole bill when it is smaller — the guest picks full or an advance. 0 = no payment.
-    const required = Math.max(Number(r.deposit_amount) || 0, strike ? DEPOSIT_MIN : 0);
+    // Several tables: the default advance grows with them (100 000 × tables).
+    const required = Math.max(Number(r.deposit_amount) || 0, strike ? DEPOSIT_MIN : 0, extras.length ? DEPOSIT_MIN * tablesAll.length : 0);
     const amount = prepay ? Math.max(preorder.total, required) : 0;
     const minDeposit = Math.min(amount, Math.max(required, DEPOSIT_MIN));
     let userId = u?.userId || '';
@@ -99,8 +115,8 @@ export async function POST(request: Request) {
     } else if (userId.startsWith('guest:')) {
       await env.DB!.prepare('UPDATE accounts SET name=?,contact_phone=? WHERE id=?').bind(name, contact, userId).run();
     }
-    if (await otherHold(restaurantId, [tableNumber], date, start, end, userId)) throw new ApiError(409, 'Bu stolni hozirgina boshqa mijoz tanladi. Boshqa stol tanlang.');
-    if (seatedWindow(date, slot) && (await env.DB!.prepare("SELECT 1 FROM table_live_status WHERE restaurant_id=? AND table_number=? AND status='occupied' AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes')").bind(restaurantId, tableNumber).first())) throw new ApiError(409, SEATED_MESSAGE);
+    if (await otherHold(restaurantId, tablesAll, date, start, end, userId)) throw new ApiError(409, 'Bu stolni hozirgina boshqa mijoz tanladi. Boshqa stol tanlang.');
+    if (seatedWindow(date, slot) && (await env.DB!.prepare("SELECT 1 FROM table_live_status WHERE restaurant_id=? AND table_number IN (SELECT value FROM json_each(?)) AND status='occupied' AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes')").bind(restaurantId, JSON.stringify(tablesAll)).first())) throw new ApiError(409, SEATED_MESSAGE);
     const id = crypto.randomUUID();
     const result = await env.DB!.prepare(
       "INSERT INTO bookings (id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at,preorder_items,preorder_total,deposit_status,phone_verified,penalty_accepted) SELECT ?,?,?,?,?,?,?,?,?,'pending',?,?,?,?,0,0 WHERE NOT EXISTS (SELECT 1 FROM bookings WHERE restaurant_id=? AND date=? AND (table_number=? OR merged_table=?) AND status IN ('pending','confirmed') AND CAST(substr(slot,1,2) AS INTEGER)*60+CAST(substr(slot,4,2) AS INTEGER)<? AND (" + endMinuteSQL + ')>?)',
@@ -108,6 +124,10 @@ export async function POST(request: Request) {
       .bind(id, restaurantId, userId, date, slot, endSlot, tableNumber, guests, contact, new Date().toISOString(), JSON.stringify(preorder.items), preorder.total, amount ? 'p2p_wait' : 'not_required', restaurantId, date, tableNumber, tableNumber, end, start)
       .run();
     if (!result.meta.changes) throw new ApiError(409, 'Bu stol tanlangan vaqtda band. Boshqa vaqt yoki stol tanlang.');
+    if (extras.length) {
+      const group = await addGroupTables({ id, restaurantId, userId, date, slot, endSlot, guests, phone: contact, status: 'pending', createdAt: new Date().toISOString() }, extras, [{ number: tableNumber, seats: Number(table.seats) || 0 }, ...extras]);
+      if (!group) throw new ApiError(409, 'Tanlangan stollardan biri shu vaqtda band bo‘lib qoldi. Zalni yangilab, boshqa stol tanlang.');
+    }
     await releaseHolds(userId).catch(() => null);
     if (!u) await issueSession(userId);
     const code = await ensurePassCode(id, null);

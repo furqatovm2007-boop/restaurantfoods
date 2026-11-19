@@ -51,6 +51,9 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      tablesSel: (list, seats) => `Tanlangan stollar: ${list} (Jami: ${seats} o‘rin)`,
+      addMore: 'Katta guruhmisiz? Zal rejasidan yana bo‘sh stolni tanlang — u ham shu bronga qo‘shiladi.',
+      removeTable: 'Olib tashlash',
       logout: 'Chiqish',
       themeLight: 'Kunduzgi rejim',
       themeDark: 'Tungi rejim',
@@ -156,6 +159,9 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      tablesSel: (list, seats) => `Выбранные столы: ${list} (Всего: ${seats} мест)`,
+      addMore: 'Большая компания? Выберите на схеме зала ещё свободный стол — он добавится в эту бронь.',
+      removeTable: 'Убрать',
       logout: 'Выйти',
       themeLight: 'Светлая тема',
       themeDark: 'Тёмная тема',
@@ -261,6 +267,9 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      tablesSel: (list, seats) => `Selected tables: ${list} (Total: ${seats} seats)`,
+      addMore: 'Large group? Pick another free table on the hall plan — it joins this booking.',
+      removeTable: 'Remove',
       logout: 'Log out',
       themeLight: 'Light mode',
       themeDark: 'Dark mode',
@@ -491,7 +500,13 @@
       end = document.getElementById('planEnd')?.value || '';
     const options = start ? [...start.options].map((o) => `<option value="${h(o.value)}" ${o.value === start.value ? 'selected' : ''}>${h(o.textContent)}</option>`).join('') : '';
     const max = ctx.maxGuests || tb.seats;
-    const guests = Math.min(max, Number(typed.guests) || Math.min(2, max));
+    // Several tables (ui/tables.js): all of them, the combined seats, a ✕ to take one out.
+    const tables = ctx.tables?.length ? ctx.tables : [tb],
+      many = tables.length > 1;
+    const guests = Math.min(max, Number(typed.guests) || (many ? max : Math.min(2, max)));
+    const tablesPill = many
+      ? `<div class="mvp-tables"><b>🪑 ${h(c('tablesSel')(tables.map((x) => '#' + x.number).join(', '), max))}</b><div class="mvp-table-chips">${tables.map((x) => `<button type="button" class="mvp-chip" data-untable="${h(x.id)}" aria-label="${h(c('removeTable'))} #${x.number}">#${x.number} · ${x.seats} ✕</button>`).join('')}</div></div>`
+      : '';
     const tg = telegramMode(),
       u = tgUser();
     const who = tg
@@ -502,7 +517,8 @@
     const label = tg && u ? '✅ ' + c('bookNow') : '✈️ ' + c('tgBook');
     form.className = 'form mvp-checkout';
     form.noValidate = true;
-    form.innerHTML = `<p class="mvp-slot">🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · 📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p>${who}<div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm${tg && u ? '' : ' mvp-tg'}" type="button">${h(label)}</button><p class="form-message" role="status" data-mvp-msg></p>`;
+    form.innerHTML = `${tablesPill}<p class="mvp-slot">${many ? '' : `🪑 <b>${tb.number}-${h(c('table'))}</b> · ${tb.seats} ${h(c('seats'))} · `}📅 ${h(date)} · 🕒 ${h(start?.value || '')}–${h(end)}</p><p class="mvp-add-hint">➕ ${h(c('addMore'))}</p>${who}<div class="mvp-row"><label>${h(c('time'))}<select name="slot">${options}</select></label><label>${h(c('guests'))}<input name="guests" type="number" inputmode="numeric" min="1" max="${max}" value="${guests}" required></label></div><div data-mvp-form-picked>${pickedSummary(r, menu)}</div><button class="primary mvp-confirm${tg && u ? '' : ' mvp-tg'}" type="button">${h(label)}</button><p class="form-message" role="status" data-mvp-msg></p>`;
+    form.querySelectorAll('[data-untable]').forEach((b) => (b.onclick = () => ctx.onRemove?.(b.dataset.untable)));
     const remember = () => {
       if (form.elements.name) typed.name = form.elements.name.value;
       if (form.elements.phone) typed.phone = form.elements.phone.value || form.elements.phoneLocal?.value || '';
@@ -561,7 +577,7 @@
       btn.disabled = true;
       btn.innerHTML = `<span class="mvp-spin" aria-hidden="true"></span> ${h(c('booking'))}`;
       msg.textContent = '';
-      const body = () => ({ restaurantId: r.id, tableNumber: tb.number, tableId: tb.id, date, slot: start?.value, endSlot: document.getElementById('planEnd')?.value, guests: Number(form.elements.guests.value), ...(tg ? (activePhone ? { phone: activePhone } : {}) : { name, phone }), preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })) });
+      const body = () => ({ restaurantId: r.id, tableNumber: tb.number, tableId: tb.id, ...(many ? { extraTables: tables.slice(1).map((x) => ({ number: x.number, id: x.id })) } : {}), date, slot: start?.value, endSlot: document.getElementById('planEnd')?.value, guests: Number(form.elements.guests.value), ...(tg ? (activePhone ? { phone: activePhone } : {}) : { name, phone }), preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })) });
       try {
         if (tg && !tgUser() && !(await telegramSignIn(msg, tab))) return;
         let res;
@@ -711,7 +727,7 @@
     dlg.className = 'mvp-done';
     dlg.setAttribute('aria-labelledby', 'mvpDoneTitle');
     const first = String(res.name || '').split(/\s+/)[0] || res.name;
-    dlg.innerHTML = `<div class="mvp-done-check" aria-hidden="true">✓</div><h2 id="mvpDoneTitle">${h(res.demo ? c('doneDemo') : c('doneOk'))}</h2><div class="mvp-ticket"><span class="mvp-ticket-table">🪑 ${res.table}</span><span class="mvp-ticket-line">${h(c('reserved')(res.table, first, res.slot))}</span><small>${h(res.restaurant)} · 📅 ${h(res.date)} · ${res.guests} ${h(c('guestsShort'))}</small></div>${res.preorderItems?.length ? `<p class="mvp-done-meals">🍽 ${res.preorderItems.map((i) => h(i.name) + ' ×' + i.quantity).join(', ')} · ${money(res.preorderTotal)}</p>` : ''}<p class="${res.demo ? 'notice' : 'muted'}">${h(res.demo ? c('doneDemoText') : telegramMode() ? (res.notified ? c('tgSent') : c('tgQueued')) : res.notified ? c('doneText') : c('doneQueued'))}</p>${res.telegramLink ? `<a class="primary mvp-tg mvp-pass-link" href="${h(res.telegramLink)}" target="_blank" rel="noopener">${h(c('getPass'))}</a><p class="muted mvp-pass-hint">${h(c('passHint'))}</p>` : ''}<button type="button" class="${res.telegramLink ? 'quiet' : 'primary'}" data-close>${h(c('close'))}</button>`;
+    dlg.innerHTML = `<div class="mvp-done-check" aria-hidden="true">✓</div><h2 id="mvpDoneTitle">${h(res.demo ? c('doneDemo') : c('doneOk'))}</h2><div class="mvp-ticket"><span class="mvp-ticket-table">🪑 ${res.tables?.length > 1 ? res.tables.map((n) => "#" + n).join(", ") : res.table}</span>${res.tables?.length > 1 ? `<small>${h(c("tablesSel")(res.tables.map((n) => "#" + n).join(", "), res.seatsTotal))}</small>` : ""}${res.tables?.length > 1 ? '' : `<span class="mvp-ticket-line">${h(c('reserved')(res.table, first, res.slot))}</span>`}<small>${h(res.restaurant)} · 📅 ${h(res.date)} · ${res.guests} ${h(c('guestsShort'))}</small></div>${res.preorderItems?.length ? `<p class="mvp-done-meals">🍽 ${res.preorderItems.map((i) => h(i.name) + ' ×' + i.quantity).join(', ')} · ${money(res.preorderTotal)}</p>` : ''}<p class="${res.demo ? 'notice' : 'muted'}">${h(res.demo ? c('doneDemoText') : telegramMode() ? (res.notified ? c('tgSent') : c('tgQueued')) : res.notified ? c('doneText') : c('doneQueued'))}</p>${res.telegramLink ? `<a class="primary mvp-tg mvp-pass-link" href="${h(res.telegramLink)}" target="_blank" rel="noopener">${h(c('getPass'))}</a><p class="muted mvp-pass-hint">${h(c('passHint'))}</p>` : ''}<button type="button" class="${res.telegramLink ? 'quiet' : 'primary'}" data-close>${h(c('close'))}</button>`;
     document.body.append(dlg);
     const close = () => {
       dlg.close();
@@ -736,6 +752,14 @@
    * a session of this browser (POST /api/bookings/quick), so it opens without a password. Not signed in: the
    * name and phone saved in this browser and one-tap "Connect Telegram".
    */
+  const groupOf = (b) => {
+    try {
+      const g = b.group_tables ? JSON.parse(b.group_tables) : null;
+      return g?.tables?.length > 1 ? g : null;
+    } catch {
+      return null;
+    }
+  };
   const fmtDishes = (raw) => {
     try {
       return (JSON.parse(raw || '[]') || []).map((d) => `${d.name} × ${d.quantity}`).join(', ');
@@ -857,7 +881,7 @@
         }
       } catch {}
       const upload = b.status === 'pending' && b.deposit_status === 'p2p_wait' ? `<button type="button" class="primary mvp-bk-pay" data-pay="${h(b.id)}">${h(c('payUpload'))}</button>` : '';
-      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(dep && b.status === 'pending' ? dep : c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(String(b.table_number))}-${h(c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${balance}${upload}${late}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
+      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(dep && b.status === 'pending' ? dep : c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(groupOf(b) ? groupOf(b).tables.map((n) => '#' + n).join(', ') : String(b.table_number) + '-' + c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${balance}${upload}${late}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
     };
     const list = (title, xs) => (xs.length ? `<h4>${h(title)}</h4><ul class="mvp-bk-list">${xs.map(item).join('')}</ul>` : '');
     box.innerHTML = rows.length ? list(c('bkActive'), active) + list(c('bkPast'), past.slice(0, 20)) : `<p class="muted">${h(c('bkNone'))}</p><a class="primary mvp-pass-link" href="#/discover" data-close-go>${h(c('bkFind'))}</a>`;

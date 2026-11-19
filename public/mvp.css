@@ -222,3 +222,12 @@ body[data-theme=dark] .mvp-prof-logout{color:#f87171;border-color:rgba(248,113,1
 .mvp-page{max-width:32rem;margin:0 auto;padding:8px 0 96px}
 .mvp-prof-card{padding:18px}
 .mvp-page .mvp-prof-links{margin-top:16px}
+/* Several tables in one booking */
+.hp-extra .hp-halo{stroke:#eab308}
+.hp-extra .hp-body{filter:drop-shadow(0 0 16px rgba(234,179,8,.6))}
+.table-list .hp-extra,[data-table].hp-extra{outline:2px solid #eab308}
+.mvp-tables{margin:0;padding:10px 12px;border-radius:12px;background:rgba(234,179,8,.14);border:1px solid rgba(234,179,8,.4)}
+.mvp-table-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mvp-chip{min-height:34px;padding:0 10px;border-radius:999px;border:1px solid rgba(234,179,8,.5);background:transparent;color:inherit;font:700 13px/1 inherit;cursor:pointer}
+.mvp-add-hint{margin:-4px 0 0;font-size:.82rem;color:var(--muted,#64748b)}
+body[data-theme=dark] .mvp-add-hint{color:#94a3b8}

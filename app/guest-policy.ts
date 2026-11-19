@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { telegram, html, restaurantChats, customerLines } from './telegram';
 import { bookingStartMs } from './booking-rules';
+import { groupLine, parseGroup } from './table-group';
 
 /*
  * Guest cancellation & anti-spam (SIMPLE_MVP_MODE, site "Profil / Bronlarim" and the bot's "Mening bronlarim"):
@@ -71,10 +72,11 @@ export interface GuestBooking {
   customer_name: string | null;
   customer_chat: string | null;
   customer_username: string | null;
+  group_tables?: string | null;
 }
 export const loadGuestBooking = (id: string) =>
   env.DB!.prepare(
-    `SELECT b.id,b.user_id,b.date,b.slot,b.table_number,b.guests,b.status,b.deposit_status,b.phone,b.restaurant_id,r.name AS restaurant_name,r.phone AS restaurant_phone,a.name AS customer_name,${CHAT} AS customer_chat,u.value AS customer_username FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||${CHAT} WHERE b.id=?`,
+    `SELECT b.id,b.user_id,b.date,b.slot,b.table_number,b.guests,b.status,b.deposit_status,b.phone,b.restaurant_id,r.name AS restaurant_name,r.phone AS restaurant_phone,a.name AS customer_name,${CHAT} AS customer_chat,u.value AS customer_username,gm.value AS group_tables FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN app_settings gm ON gm.key='grpm:'||b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||${CHAT} WHERE b.id=?`,
   )
     .bind(id)
     .first<GuestBooking>();
@@ -86,7 +88,7 @@ export async function tellRestaurantCancelled(b: GuestBooking) {
   if (b.deposit_status === 'p2p_wait' || b.deposit_status === 'p2p_review') return;
   const name = b.customer_name && !b.customer_name.startsWith('guest:') ? b.customer_name : 'Mijoz';
   const text = [
-    `⚠️ <b>Bron bekor qilindi!</b> Mijoz: ${html(name)} (${html(b.phone)}), Stol #${b.table_number}, Vaqt: ${html(String(b.slot).slice(0, 5))}. Stol yana bo‘sh.`,
+    `⚠️ <b>Bron bekor qilindi!</b> Mijoz: ${html(name)} (${html(b.phone)}), ${groupLine(parseGroup(b.group_tables))?.replace(/^🪑 /, '') || 'Stol #' + b.table_number}, Vaqt: ${html(String(b.slot).slice(0, 5))}. Stol yana bo‘sh.`,
     `🏠 ${html(b.restaurant_name)} · 📅 ${html(b.date)}`,
     customerLines(b)[2],
   ].join('\n');

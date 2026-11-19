@@ -3,6 +3,7 @@ import { issueOtp, recentOtps } from './otp-store';
 import { createMagicLink, saveTelegramUsername } from './telegram-login';
 import { planState } from './plans';
 import { chatLang, type Lang } from './bot-i18n';
+import { groupLine, parseGroup } from './table-group';
 
 /*
  * Telegram bot.
@@ -70,6 +71,7 @@ export interface BookingMessage {
   customer_chat?: string | null;
   customer_username?: string | null;
   p2p_state?: string | null;
+  group_tables?: string | null;
 }
 
 /*
@@ -93,7 +95,8 @@ export function bookingText(b: BookingMessage) {
     '📌 <b>Yangi Bron!</b>',
     `🏠 <b>Restoran:</b> ${html(b.restaurant_name)}`,
     ...customerLines(b),
-    `🍽 <b>Stol:</b> ${b.table_number}-stol · ${b.guests} kishi`,
+    // Several tables in one reservation (app/table-group.ts): all of them on one line.
+    groupLine(parseGroup(b.group_tables)) ? `<b>${html(groupLine(parseGroup(b.group_tables))!)}</b> · ${b.guests} kishi` : `🍽 <b>Stol:</b> ${b.table_number}-stol · ${b.guests} kishi`,
     `📅 <b>Sana:</b> ${html(b.date)}`,
     `🕒 <b>Vaqt:</b> ${html(b.slot)}${b.end_slot ? '–' + html(b.end_slot.slice(0, 5)) : ''}`,
     `💵 <b>Depozit:</b> ${DEPOSIT_TEXT[b.deposit_status] ?? html(b.deposit_status)}${provider}`,
@@ -125,7 +128,7 @@ export const bookingKeyboard = (id: string) => ({
 
 async function loadBooking(id: string) {
   return env.DB!.prepare(
-    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) AS customer_chat,u.value AS customer_username,ps.value AS p2p_state FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN app_settings ps ON ps.key='p2p:'||b.id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) WHERE b.id=?",
+    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) AS customer_chat,u.value AS customer_username,ps.value AS p2p_state,gm.value AS group_tables FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN app_settings ps ON ps.key='p2p:'||b.id LEFT JOIN app_settings gm ON gm.key='grpm:'||b.id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) WHERE b.id=?",
   )
     .bind(id)
     .first<BookingMessage & { restaurant_id: string; telegram_chat_id: string | null }>();

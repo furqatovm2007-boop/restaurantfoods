@@ -70,7 +70,7 @@ const setPing = (id: string, value: string, only?: string) =>
 
 export async function runHourPing(nowMs = Date.now()) {
   const sec = Math.floor(nowMs / 1000);
-  const due = await env.DB!.prepare(SELECT + "WHERE b.status IN ('pending','confirmed') AND b.deposit_status NOT IN ('p2p_wait','p2p_review') AND p.value IS NULL AND b.date BETWEEN date(?,'unixepoch','+5 hours','-1 day') AND date(?,'unixepoch','+5 hours','+1 day') LIMIT 300").bind(sec, sec).all<PingRow>();
+  const due = await env.DB!.prepare(SELECT + "WHERE b.status IN ('pending','confirmed') AND b.deposit_status NOT IN ('p2p_wait','p2p_review','group_hold') AND p.value IS NULL AND b.date BETWEEN date(?,'unixepoch','+5 hours','-1 day') AND date(?,'unixepoch','+5 hours','+1 day') LIMIT 300").bind(sec, sec).all<PingRow>();
   let sent = 0;
   for (const b of due.results) {
     const left = (Date.parse(b.date + 'T' + String(b.slot).slice(0, 5) + ':00+05:00') - nowMs) / 60000;

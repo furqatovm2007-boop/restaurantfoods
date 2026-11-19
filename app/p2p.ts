@@ -4,6 +4,7 @@ import { telegram, html, notifyBooking, customerLines } from './telegram';
 import { adminChats } from './health';
 import { CENTRAL_PAYMENT_CARD, CENTRAL_PAYMENT_HOLDER, SUPER_ADMIN_TG_ID } from './mvp';
 import { imageContent } from './image-content';
+import { groupLine, parseGroup } from './table-group';
 import { ban, guestKeys, loadGuestBooking, type GuestBooking } from './guest-policy';
 
 /*
@@ -106,7 +107,8 @@ export function ownerCaption(b: GuestBooking & { preorder_items?: string | null;
     `✅ Hozir o‘tkazilgan avans (Depozit): <b>${money(amount)} UZS</b>`,
     `💳 Qoldiq (Restoranda to‘lanadi): <b>${money(Math.max(0, total - amount))} UZS</b>`,
     `🕒 Zakaz vaqti: <b>${hhmm(now)}</b> (chekdagi vaqt bilan solishtiring!)`,
-    `🏪 Restoran: <b>${html(b.restaurant_name)}</b> | Stol #${b.table_number}`,
+    `🏪 Restoran: <b>${html(b.restaurant_name)}</b> | ${parseGroup(b.group_tables) ? 'Stollar: ' + parseGroup(b.group_tables)!.tables.map((n) => '#' + n).join(', ') : 'Stol #' + b.table_number}`,
+    groupLine(parseGroup(b.group_tables)) || '',
     `👤 Mijoz: ${html(name)} (${html(b.phone)})`,
     customerLines(b)[2],
     `📅 Bron: ${html(b.date)} · ${html(String(b.slot).slice(0, 5))}${b.end_slot ? '–' + html(String(b.end_slot).slice(0, 5)) : ''} · ${b.guests} kishi`,

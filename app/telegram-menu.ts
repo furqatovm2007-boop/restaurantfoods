@@ -6,6 +6,7 @@ import { liveTables, freeNow } from './live-tables';
 import { countedReview } from './review-rules';
 import { SIMPLE_MVP_MODE } from './mvp';
 import { canSelfCancel, cancelByGuest, loadGuestBooking } from './guest-policy';
+import { groupLine, parseGroup } from './table-group';
 import { BOT, COMMANDS_BY_LANG, MVP_COMMANDS, LANG_PICKER, chatLang, isLang, keySection, setChatLang, type BotText, type Lang } from './bot-i18n';
 
 /*
@@ -181,7 +182,7 @@ async function bookings(chatId: string, l: Lang) {
   const acc = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
   const today = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
   // The chat's own account, plus guest bookings (name + phone on the site) this chat took with the t.me link.
-  const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,b.deposit_status,r.name AS restaurant_name,r.phone AS restaurant_phone FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE (b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?)) AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc?.id || '', chatId, today).all<any>()).results;
+  const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,b.deposit_status,r.name AS restaurant_name,r.phone AS restaurant_phone,(SELECT value FROM app_settings WHERE key='grpm:'||b.id) AS group_tables FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE (b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?)) AND NOT EXISTS (SELECT 1 FROM app_settings g WHERE g.key='grp:'||b.id) AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc?.id || '', chatId, today).all<any>()).results;
   if (!acc && !rows.length) return (await signIn(chatId, '/bookings', t.bookingsSignIn, l)) && 'menu_bookings_signin';
   if (!rows.length) {
     await telegram('sendMessage', { chat_id: chatId, text: t.noBookings, reply_markup: { inline_keyboard: [[openButton(t.bookTable, l)]] } });
@@ -192,7 +193,7 @@ async function bookings(chatId: string, l: Lang) {
     // SIMPLE_MVP_MODE: a cancel button until 1 hour before; then the restaurant's phone instead.
     const selfCancel = SIMPLE_MVP_MODE && canSelfCancel(b);
     const waitPay = b.deposit_status === 'p2p_wait' || b.deposit_status === 'p2p_review';
-    const caption = [`🧾 <b>${html(b.restaurant_name)}</b> · ${receiptNumber(b)}`, `📅 ${b.date} · ${b.slot}${b.end_slot ? '–' + b.end_slot : ''}`, t.table(b.table_number, b.guests), waitPay ? t.payWait : b.status === 'confirmed' ? t.confirmed : t.waiting, '', t.showQr, ...(SIMPLE_MVP_MODE && !selfCancel ? ['', html(t.cancelLate(b.restaurant_phone || ''))] : [])].join('\n');
+    const caption = [`🧾 <b>${html(b.restaurant_name)}</b> · ${receiptNumber(b)}`, `📅 ${b.date} · ${b.slot}${b.end_slot ? '–' + b.end_slot : ''}`, groupLine(parseGroup(b.group_tables)) ? html(groupLine(parseGroup(b.group_tables))!) + ' · 👥 ' + b.guests : t.table(b.table_number, b.guests), waitPay ? t.payWait : b.status === 'confirmed' ? t.confirmed : t.waiting, '', t.showQr, ...(SIMPLE_MVP_MODE && !selfCancel ? ['', html(t.cancelLate(b.restaurant_phone || ''))] : [])].join('\n');
     const keyboard = { inline_keyboard: [[openButton(t.openReceipt, l, '/bookings')], ...(selfCancel ? [[{ text: t.cancelBtn, callback_data: 'bk:c:' + b.id }]] : [])] };
     if (!code || !(await sendPng(chatId, await qrPng(PASS_PREFIX + code), caption, keyboard))) await telegram('sendMessage', { chat_id: chatId, text: caption + (code ? `\n\n${t.code}: <code>${code}</code>` : ''), parse_mode: 'HTML', reply_markup: keyboard });
   }
@@ -235,7 +236,7 @@ async function profile(chatId: string, l: Lang) {
 async function mvpProfile(chatId: string, from: { first_name?: string; last_name?: string; username?: string } | undefined, l: Lang) {
   const t = BOT[l];
   const acc = await env.DB!.prepare('SELECT id,name,contact_phone FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string; name: string; contact_phone: string }>();
-  const mine = "(b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?))";
+  const mine = "(b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?)) AND NOT EXISTS (SELECT 1 FROM app_settings g WHERE g.key='grp:'||b.id)";
   const stats = await env.DB!.prepare(`SELECT COUNT(*) AS n,SUM(CASE WHEN b.status IN ('pending','confirmed') THEN 1 ELSE 0 END) AS active FROM bookings b WHERE ${mine}`).bind(acc?.id || '', chatId).first<{ n: number; active: number | null }>();
   const phone = acc?.contact_phone || (await env.DB!.prepare(`SELECT b.phone FROM bookings b WHERE ${mine} ORDER BY b.created_at DESC LIMIT 1`).bind(acc?.id || '', chatId).first<{ phone: string }>())?.phone || '';
   const name = [from?.first_name, from?.last_name].filter(Boolean).join(' ') || acc?.name || t.customer;
