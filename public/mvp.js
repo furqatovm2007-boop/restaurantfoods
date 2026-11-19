@@ -51,6 +51,10 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      view3d: '3D ko‘rinish',
+      loading3d: '3D model yuklanmoqda…',
+      hint3d: 'Barmoq bilan aylantiring, ikki barmoq bilan kattalashtiring.',
+      fail3d: '3D model hozir ochilmadi — taom rasmi ko‘rsatildi.',
       tablesSel: (list, seats) => `Tanlangan stollar: ${list} (Jami: ${seats} o‘rin)`,
       addMore: 'Katta guruhmisiz? Zal rejasidan yana bo‘sh stolni tanlang — u ham shu bronga qo‘shiladi.',
       removeTable: 'Olib tashlash',
@@ -159,6 +163,10 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      view3d: '3D-просмотр',
+      loading3d: 'Загружаем 3D-модель…',
+      hint3d: 'Вращайте пальцем, приближайте двумя пальцами.',
+      fail3d: '3D-модель сейчас не открылась — показано фото блюда.',
       tablesSel: (list, seats) => `Выбранные столы: ${list} (Всего: ${seats} мест)`,
       addMore: 'Большая компания? Выберите на схеме зала ещё свободный стол — он добавится в эту бронь.',
       removeTable: 'Убрать',
@@ -267,6 +275,10 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      view3d: '3D view',
+      loading3d: 'Loading the 3D model…',
+      hint3d: 'Drag to spin, pinch to zoom.',
+      fail3d: 'The 3D model could not open — showing the dish photo.',
       tablesSel: (list, seats) => `Selected tables: ${list} (Total: ${seats} seats)`,
       addMore: 'Large group? Pick another free table on the hall plan — it joins this booking.',
       removeTable: 'Remove',
@@ -403,7 +415,9 @@
   const picked = (id) => picks.get(id) || picks.set(id, new Map()).get(id);
   function dishCard(m, sel) {
     const q = sel.get(m.id) || 0;
-    return `<article class="mvp-dish${m.available ? '' : ' off'}" data-dish="${h(m.id)}">${m.image_url ? `<img src="${h(m.image_url)}" alt="" loading="lazy" decoding="async" width="320" height="240">` : '<span class="mvp-dish-ph" aria-hidden="true">🍽</span>'}<div><h3>${h(m.name)}</h3><p class="mvp-price">${money(m.price)}</p>${q ? `<span class="mvp-qty"><button type="button" data-step="-1" aria-label="−">−</button><b>${q}</b><button type="button" data-step="1" aria-label="+">+</button></span>` : `<button type="button" class="mvp-add" data-step="1" ${m.available ? '' : 'disabled'}>${h(c('add'))}</button>`}</div></article>`;
+    // Photo (or the food icon), with a "🧊 3D" button when the dish has a 3D model (menu.model_3d_url).
+    const media = m.image_url ? `<img src="${h(m.image_url)}" alt="" loading="lazy" decoding="async" width="320" height="240">` : '<span class="mvp-dish-ph" aria-hidden="true">🍽</span>';
+    return `<article class="mvp-dish${m.available ? '' : ' off'}" data-dish="${h(m.id)}"><div class="mvp-dish-media">${media}${m.model_3d_url ? `<button type="button" class="mvp-3d" data-3d="${h(m.id)}" aria-label="${h(c('view3d'))}: ${h(m.name)}">🧊 3D</button>` : ''}</div><div><h3>${h(m.name)}</h3><p class="mvp-price">${money(m.price)}</p>${q ? `<span class="mvp-qty"><button type="button" data-step="-1" aria-label="−">−</button><b>${q}</b><button type="button" data-step="1" aria-label="+">+</button></span>` : `<button type="button" class="mvp-add" data-step="1" ${m.available ? '' : 'disabled'}>${h(c('add'))}</button>`}</div></article>`;
   }
   function pickedSummary(r, menu) {
     const sel = picked(r.id),
@@ -413,6 +427,71 @@
     return `<p class="mvp-picked">🍽 ${h(c('picked'))}: ${rows.map((x) => h(x.m.name) + ' ×' + x.q).join(', ')} · <b>${money(total)}</b></p>`;
   }
   const menuInner = (r, menu, sel) => `<h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${menu.length ? `<div class="mvp-menu">${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div>`;
+  /*
+   * One place that changes a dish's quantity: the card, the "Selected dishes" bar and the open checkout form follow
+   * (the booking sends these dishes; the prepayment step then shows the bill, the advance and the rest).
+   */
+  function stepDish(r, menu, id, delta) {
+    const sel = picked(r.id),
+      m = menu.find((x) => x.id === id);
+    if (!m?.available) return sel.get(id) || 0;
+    const q = Math.max(0, Math.min(20, (sel.get(id) || 0) + delta));
+    q ? sel.set(id, q) : sel.delete(id);
+    const card = document.querySelector(`#mvpMenu [data-dish="${CSS.escape(id)}"]`);
+    if (card) card.outerHTML = dishCard(m, sel);
+    const bar = document.querySelector('#mvpMenu [data-mvp-picked]');
+    if (bar) bar.innerHTML = pickedSummary(r, menu);
+    document.querySelectorAll('[data-mvp-form-picked]').forEach((x) => (x.innerHTML = pickedSummary(r, menu)));
+    return q;
+  }
+  /*
+   * 🧊 3D: the dish's .glb in <model-viewer> (vendored, loaded only now; auto-rotate, drag to spin, pinch to zoom),
+   * with the same − / + / Add controls. A model that cannot load leaves the photo and a short note.
+   */
+  let viewerLoad = null;
+  const loadViewer = () => (viewerLoad ??= import('/vendor/model-viewer-4.4.0.min.js'));
+  async function open3d(r, menu, id) {
+    const m = menu.find((x) => x.id === id);
+    if (!m?.model_3d_url) return;
+    let dlg = document.getElementById('mvp3d');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'mvp3d';
+      dlg.className = 'mvp-done mvp-3d-dlg';
+      dlg.addEventListener('click', (e) => {
+        if (e.target === dlg) dlg.close();
+      });
+      dlg.addEventListener('close', () => (dlg.innerHTML = ''));
+      document.body.append(dlg);
+    }
+    const controls = () => {
+      const q = picked(r.id).get(id) || 0;
+      return q ? `<span class="mvp-qty"><button type="button" data-q="-1" aria-label="−">−</button><b>${q}</b><button type="button" data-q="1" aria-label="+">+</button></span>` : `<button type="button" class="mvp-add" data-q="1" ${m.available ? '' : 'disabled'}>${h(c('add'))}</button>`;
+    };
+    dlg.innerHTML = `<div class="mvp-3d-stage"><p class="mvp-3d-wait">⏳ ${h(c('loading3d'))}</p></div><h2>${h(m.name)}</h2><p class="mvp-price">${money(m.price)}</p><div class="mvp-3d-controls">${controls()}</div><p class="muted mvp-3d-hint">${h(c('hint3d'))}</p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
+    dlg.querySelector('[data-close]').onclick = () => dlg.close();
+    dlg.querySelector('.mvp-3d-controls').onclick = (e) => {
+      const b = e.target.closest('[data-q]');
+      if (!b) return;
+      stepDish(r, menu, id, Number(b.dataset.q));
+      dlg.querySelector('.mvp-3d-controls').innerHTML = controls();
+    };
+    if (!dlg.open) dlg.showModal();
+    const stage = dlg.querySelector('.mvp-3d-stage');
+    try {
+      await loadViewer();
+      if (!dlg.open) return;
+      const viewer = document.createElement('model-viewer');
+      Object.assign(viewer, { src: m.model_3d_url, alt: m.name });
+      for (const [k, v] of Object.entries({ 'camera-controls': '', 'auto-rotate': '', 'touch-action': 'pan-y', 'shadow-intensity': '1', 'interaction-prompt': 'auto', exposure: '1' })) viewer.setAttribute(k, v);
+      if (m.image_url) viewer.setAttribute('poster', m.image_url);
+      viewer.addEventListener('error', () => (stage.innerHTML = `${m.image_url ? `<img src="${h(m.image_url)}" alt="">` : '<span class="mvp-dish-ph" aria-hidden="true">🍽</span>'}<p class="muted">${h(c('fail3d'))}</p>`));
+      viewer.addEventListener('load', () => stage.querySelector('.mvp-3d-wait')?.remove());
+      stage.append(viewer);
+    } catch {
+      stage.innerHTML = `${m.image_url ? `<img src="${h(m.image_url)}" alt="">` : '<span class="mvp-dish-ph" aria-hidden="true">🍽</span>'}<p class="muted">${h(c('fail3d'))}</p>`;
+    }
+  }
   let shown = null; // the restaurant page on screen: { r, menu } (for relabel)
   let lastCheckout = null; // the open checkout: { form, ctx }
   async function restaurant(r, menu, seq) {
@@ -422,16 +501,11 @@
     page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
     const box = document.getElementById('mvpMenu');
     box.addEventListener('click', (e) => {
+      const v = e.target.closest('[data-3d]');
+      if (v) return open3d(r, menu, v.dataset['3d']);
       const b = e.target.closest('[data-step]');
       if (!b) return;
-      const id = b.closest('[data-dish]').dataset.dish,
-        m = menu.find((x) => x.id === id);
-      if (!m?.available) return;
-      const q = Math.max(0, Math.min(20, (sel.get(id) || 0) + Number(b.dataset.step)));
-      q ? sel.set(id, q) : sel.delete(id);
-      b.closest('[data-dish]').outerHTML = dishCard(m, sel);
-      box.querySelector('[data-mvp-picked]').innerHTML = pickedSummary(r, menu);
-      document.querySelectorAll('[data-mvp-form-picked]').forEach((x) => (x.innerHTML = pickedSummary(r, menu)));
+      stepDish(r, menu, b.closest('[data-dish]').dataset.dish, Number(b.dataset.step));
     });
     await bookingPlan(r.id, r, seq);
   }
