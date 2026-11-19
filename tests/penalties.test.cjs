@@ -22,7 +22,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  let user={userId:'c1',role:'customer'};
  const deps={...cf,...integrationDeps(env,http,'../../',extras),'../../access':{identity:async()=>user},'../../http':noLimit,'../../plans':load('app/plans.ts',{...cf,'./http':http}),'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':rules,'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http}),'../../payme-cards':cards,'../../penalties':penalties};
  Object.assign(deps,{'../../account-admin':{audit:()=>{}},'../../demo-drinks':load('app/demo-drinks.ts',{}),'../../auth-service':{authConfig:()=>({url:'',key:''})}});
- const bookings=load('app/api/bookings/route.ts',deps,extras),cardRoute=load('app/api/cards/route.ts',deps,extras),manage=load('app/api/manage/route.ts',deps,extras);
+ const bookings=load('app/api/bookings/route.ts',{...deps,'../../mvp':{SIMPLE_MVP_MODE:false}},extras),cardRoute=load('app/api/cards/route.ts',deps,extras),manage=load('app/api/manage/route.ts',deps,extras);
  db.exec("INSERT INTO accounts(id,email,name,created_at,role) VALUES ('owner','o@x','O','now','restaurant_owner'),('c1','c1@x','C1','now','customer'),('c2','c2@x','C2','now','customer')");
  db.exec("INSERT INTO restaurants(id,name,owner_id,status,tables,floors,booking_open,booking_close) VALUES ('r','Real','owner','active',3,1,'08:00','23:00')");
  db.exec("INSERT INTO restaurant_tables(id,restaurant_id,number,seats,x,y) VALUES ('t1','r',1,4,20,30),('t2','r',2,4,50,30),('t3','r',3,4,80,30)");

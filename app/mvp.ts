@@ -21,6 +21,17 @@ export const SIMPLE_MVP_MODE = true;
 export const MVP_CHECKOUT: 'telegram' | 'guest' = 'guest';
 
 /*
+ * Prepayment to one central card (app/p2p.ts): shown to the guest when the restaurant asks for a deposit,
+ * dishes are pre-ordered, or the guest has 2 recent cancellations. The site owner checks each receipt in
+ * Telegram (SUPER_ADMIN_TG_ID) and forwards the money to the restaurant. Set the real card and chat id here or
+ * as Worker variables (CENTRAL_PAYMENT_CARD, CENTRAL_PAYMENT_HOLDER, SUPER_ADMIN_TG_ID); while the card still
+ * has X's in it the step stays off and bookings go through without prepayment.
+ */
+export const CENTRAL_PAYMENT_CARD = '8600 XXXX XXXX XXXX';
+export const CENTRAL_PAYMENT_HOLDER = 'MUHAMMADJON F.';
+export const SUPER_ADMIN_TG_ID = '';
+
+/*
  * "Amanda Restaurant": the featured demo card (first in the catalogue). It is a demo (is_demo=1, DEMO tag
  * on the card and page): bookings for it run the whole flow on screen but are not saved or sent anywhere.
  * Created once, idempotently (INSERT OR IGNORE), by the cron and the catalogue.

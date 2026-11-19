@@ -12,7 +12,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const http=load('app/http.ts',cw),httpNoLimit={...http,throttle:async()=>{}},plans=load('app/plans.ts',{...cw,'./http':http});
  const rules=load('app/booking-rules.ts',{'./http':http},{Date:FixedDate});
  const deps={...cw,'../../access':{identity:async()=>user},'../../http':httpNoLimit,'../../plans':plans,'../../geo':load('app/geo.ts',{'./http':http}),'../../table-rules':load('app/table-rules.ts',{'./http':http}),'../../booking-rules':rules,'../../booking-preorder':load('app/booking-preorder.ts',{'./http':http})};Object.assign(deps,integrationDeps(Object.assign(env,{CLICK_SERVICE_ID:'11',CLICK_MERCHANT_ID:'22',CLICK_SECRET_KEY:'click-secret'}),http));
- const bookings=load('app/api/bookings/route.ts',deps);
+ const bookings=load('app/api/bookings/route.ts',{...deps,'../../mvp':{SIMPLE_MVP_MODE:false}});
  const camAuth=load('app/camera-auth.ts',{...cw,'./access':{identity:async()=>user},'./http':http});
  const occupancy=load('app/api/manage/occupancy/route.ts',{...cw,...integrationDeps(Object.assign(env,{CLICK_SERVICE_ID:'11',CLICK_MERCHANT_ID:'22',CLICK_SECRET_KEY:'click-secret'}),http,'../../../'),'../../../http':httpNoLimit,'../../../camera-auth':camAuth,'../../../plans':plans,'../../../waitlist':load('app/waitlist.ts',{...cw,'./telegram':load('app/telegram.ts',{...cw,'./otp-store':load('app/otp-store.ts',cw)})})});
  db.exec("INSERT INTO accounts(id,email,name,created_at,role) VALUES ('owner','o@x','O','now','restaurant_owner'),('c1','c1@x','C1','now','customer'),('c2','c2@x','C2','now','customer'),('c3','c3@x','C3','now','customer'),('c4','c4@x','C4','now','customer')");

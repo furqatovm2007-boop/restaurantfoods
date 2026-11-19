@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { telegram, html, restaurantChats, customerLines } from './telegram';
 import { chatLang, type Lang } from './bot-i18n';
+import { addStrike, guestKeys } from './guest-policy';
 
 /*
  * One hour before the table (every restaurant, no SMS): the bot asks the guest in Telegram "Kelasizmi?" with
@@ -69,7 +70,7 @@ const setPing = (id: string, value: string, only?: string) =>
 
 export async function runHourPing(nowMs = Date.now()) {
   const sec = Math.floor(nowMs / 1000);
-  const due = await env.DB!.prepare(SELECT + "WHERE b.status IN ('pending','confirmed') AND p.value IS NULL AND b.date BETWEEN date(?,'unixepoch','+5 hours','-1 day') AND date(?,'unixepoch','+5 hours','+1 day') LIMIT 300").bind(sec, sec).all<PingRow>();
+  const due = await env.DB!.prepare(SELECT + "WHERE b.status IN ('pending','confirmed') AND b.deposit_status NOT IN ('p2p_wait','p2p_review') AND p.value IS NULL AND b.date BETWEEN date(?,'unixepoch','+5 hours','-1 day') AND date(?,'unixepoch','+5 hours','+1 day') LIMIT 300").bind(sec, sec).all<PingRow>();
   let sent = 0;
   for (const b of due.results) {
     const left = (Date.parse(b.date + 'T' + String(b.slot).slice(0, 5) + ':00+05:00') - nowMs) / 60000;
@@ -117,6 +118,8 @@ export async function handleHourPing(update: any): Promise<string | null> {
   if (op === 'n') {
     await env.DB!.prepare("UPDATE bookings SET status='cancelled',deposit_status=CASE WHEN deposit_status='pending' THEN 'cancelled' ELSE deposit_status END WHERE id=? AND status IN ('pending','confirmed')").bind(b.id).run();
     await env.DB!.prepare("UPDATE deposits SET state='cancelled' WHERE booking_id=? AND state='pending'").bind(b.id).run();
+    // Counts like any other own cancellation (app/guest-policy.ts strikes).
+    await addStrike(guestKeys(b.phone, [b.customer_chat]));
   }
   await telegram('editMessageReplyMarkup', { chat_id: chatId, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
   await telegram('sendMessage', { chat_id: chatId, text: op === 'y' ? t.thanks : t.cancelled });

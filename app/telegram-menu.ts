@@ -5,6 +5,7 @@ import { ensurePassCode, PASS_PREFIX, receiptNumber } from './booking-pass';
 import { liveTables, freeNow } from './live-tables';
 import { countedReview } from './review-rules';
 import { SIMPLE_MVP_MODE } from './mvp';
+import { canSelfCancel, cancelByGuest, loadGuestBooking } from './guest-policy';
 import { BOT, COMMANDS_BY_LANG, MVP_COMMANDS, LANG_PICKER, chatLang, isLang, keySection, setChatLang, type BotText, type Lang } from './bot-i18n';
 
 /*
@@ -180,7 +181,7 @@ async function bookings(chatId: string, l: Lang) {
   const acc = await env.DB!.prepare('SELECT id FROM accounts WHERE telegram_chat_id=?').bind(chatId).first<{ id: string }>();
   const today = new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
   // The chat's own account, plus guest bookings (name + phone on the site) this chat took with the t.me link.
-  const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,r.name AS restaurant_name FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE (b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?)) AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc?.id || '', chatId, today).all<any>()).results;
+  const rows = (await env.DB!.prepare("SELECT b.id,b.date,b.slot,b.end_slot,b.table_number,b.guests,b.status,b.pass_code,b.deposit_status,r.name AS restaurant_name,r.phone AS restaurant_phone FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id WHERE (b.user_id=? OR b.id IN (SELECT substr(key,10) FROM app_settings WHERE key LIKE 'bookchat:%' AND value=?)) AND b.status IN ('pending','confirmed') AND b.date>=? ORDER BY b.date,b.slot LIMIT 3").bind(acc?.id || '', chatId, today).all<any>()).results;
   if (!acc && !rows.length) return (await signIn(chatId, '/bookings', t.bookingsSignIn, l)) && 'menu_bookings_signin';
   if (!rows.length) {
     await telegram('sendMessage', { chat_id: chatId, text: t.noBookings, reply_markup: { inline_keyboard: [[openButton(t.bookTable, l)]] } });
@@ -188,8 +189,11 @@ async function bookings(chatId: string, l: Lang) {
   }
   for (const b of rows) {
     const code = await ensurePassCode(b.id, b.pass_code);
-    const caption = [`🧾 <b>${html(b.restaurant_name)}</b> · ${receiptNumber(b)}`, `📅 ${b.date} · ${b.slot}${b.end_slot ? '–' + b.end_slot : ''}`, t.table(b.table_number, b.guests), b.status === 'confirmed' ? t.confirmed : t.waiting, '', t.showQr].join('\n');
-    const keyboard = { inline_keyboard: [[openButton(t.openReceipt, l, '/bookings')]] };
+    // SIMPLE_MVP_MODE: a cancel button until 1 hour before; then the restaurant's phone instead.
+    const selfCancel = SIMPLE_MVP_MODE && canSelfCancel(b);
+    const waitPay = b.deposit_status === 'p2p_wait' || b.deposit_status === 'p2p_review';
+    const caption = [`🧾 <b>${html(b.restaurant_name)}</b> · ${receiptNumber(b)}`, `📅 ${b.date} · ${b.slot}${b.end_slot ? '–' + b.end_slot : ''}`, t.table(b.table_number, b.guests), waitPay ? t.payWait : b.status === 'confirmed' ? t.confirmed : t.waiting, '', t.showQr, ...(SIMPLE_MVP_MODE && !selfCancel ? ['', html(t.cancelLate(b.restaurant_phone || ''))] : [])].join('\n');
+    const keyboard = { inline_keyboard: [[openButton(t.openReceipt, l, '/bookings')], ...(selfCancel ? [[{ text: t.cancelBtn, callback_data: 'bk:c:' + b.id }]] : [])] };
     if (!code || !(await sendPng(chatId, await qrPng(PASS_PREFIX + code), caption, keyboard))) await telegram('sendMessage', { chat_id: chatId, text: caption + (code ? `\n\n${t.code}: <code>${code}</code>` : ''), parse_mode: 'HTML', reply_markup: keyboard });
   }
   return 'menu_bookings';
@@ -242,6 +246,29 @@ async function mvpProfile(chatId: string, from: { first_name?: string; last_name
   ].join('\n');
   await telegram('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: t.profileOpen, web_app: { url: miniAppUrl('', l) + '&open=profile' } }], [{ text: t.mvpBookings, callback_data: 'my_bookings' }]] } });
   return 'menu_my_profile';
+}
+
+/** "❌ Bronni bekor qilish" under a booking: ask once, then cancel (app/guest-policy.ts). */
+async function guestCancel(chatId: string, data: string, l: Lang) {
+  const t = BOT[l];
+  const [, op, id] = data.split(':');
+  const b = id ? await loadGuestBooking(id) : null;
+  if (!b || b.customer_chat !== chatId || !['pending', 'confirmed'].includes(b.status)) {
+    await telegram('sendMessage', { chat_id: chatId, text: t.cancelGone });
+    return 'cancel_missing';
+  }
+  if (!canSelfCancel(b)) {
+    await telegram('sendMessage', { chat_id: chatId, text: t.cancelLate(b.restaurant_phone || '') });
+    return 'cancel_too_late';
+  }
+  if (op === 'c') {
+    await telegram('sendMessage', { chat_id: chatId, text: t.cancelAsk(b.restaurant_name, `${b.date} ${String(b.slot).slice(0, 5)}`), reply_markup: { inline_keyboard: [[{ text: t.cancelYes, callback_data: 'bk:y:' + b.id }]] } });
+    return 'cancel_ask';
+  }
+  if (op !== 'y') return 'menu_unknown';
+  const r = await cancelByGuest(b.id, { chatId });
+  await telegram('sendMessage', { chat_id: chatId, text: r.ok ? t.cancelDone : r.reason === 'too_late' ? t.cancelLate(r.phone || '') : t.cancelGone });
+  return r.ok ? 'cancel_done' : 'cancel_' + r.reason;
 }
 
 async function signIn(chatId: string, go: string, text: string, l: Lang) {
@@ -328,7 +355,7 @@ export async function handleMenu(update: any): Promise<string | null> {
     return null;
   }
   const cb = update?.callback_query;
-  if (typeof cb?.data !== 'string' || !(cb.data.startsWith('m:') || cb.data === 'my_bookings' || cb.data === 'my_profile') || !cb.message) return null;
+  if (typeof cb?.data !== 'string' || !(cb.data.startsWith('m:') || cb.data.startsWith('bk:') || cb.data === 'my_bookings' || cb.data === 'my_profile') || !cb.message) return null;
   await telegram('answerCallbackQuery', { callback_query_id: cb.id });
   if (cb.message.chat?.type && cb.message.chat.type !== 'private') return 'menu_not_private';
   const chatId = String(cb.message.chat.id),
@@ -338,6 +365,7 @@ export async function handleMenu(update: any): Promise<string | null> {
   const l = await chatLang(chatId);
   if (cb.data === 'my_bookings') return bookings(chatId, l);
   if (cb.data === 'my_profile') return mvpProfile(chatId, cb.from, l);
+  if (cb.data.startsWith('bk:')) return guestCancel(chatId, cb.data, l);
   const offset = Math.max(0, Math.min(1000, Number(arg) || 0));
   if (op === 'r') return restaurants(chatId, offset, l);
   if (op === 'c') return restaurantCard(chatId, arg, l);

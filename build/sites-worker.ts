@@ -7,6 +7,7 @@ import { securityTxt } from "../app/security-txt";
 import { recordServerError, runHealthCheck } from "../app/health";
 import { runBotSync } from "../app/telegram-menu";
 import { runHourPing } from "../app/hour-ping";
+import { sweepP2P } from "../app/p2p";
 import { ensureDemoAmanda } from "../app/mvp";
 
 export default {
@@ -42,6 +43,8 @@ export default {
   scheduled(_controller: ScheduledController, _env: Cloudflare.Env, ctx: ExecutionContext) {
     ctx.waitUntil(runCallAi().catch(() => console.error(JSON.stringify({ event: "call_ai_failed" }))));
     // 1 hour before every booking: "Kelasizmi?" in the guest's Telegram, the answer to the restaurant.
+    // Central-card prepayment: a table held 30 minutes for a transfer that never came is released.
+    ctx.waitUntil(sweepP2P().catch(() => console.error(JSON.stringify({ event: "p2p_sweep_failed" }))));
     ctx.waitUntil(runHourPing().catch(() => console.error(JSON.stringify({ event: "hour_ping_failed" }))));
     ctx.waitUntil(runBirthdays().catch(() => console.error(JSON.stringify({ event: "birthday_failed" }))));
     // Health watch: Telegram webhook and API error bursts → a Telegram message to the administrator.

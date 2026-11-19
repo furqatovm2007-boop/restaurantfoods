@@ -11,6 +11,10 @@ declare namespace Cloudflare {
     TELEGRAM_BOT_USERNAME?: string;
     SITE_URL?: string;
     ADMIN_TELEGRAM_CHAT_ID?: string;
+    /** SIMPLE_MVP_MODE prepayment to one central card (app/p2p.ts); defaults in app/mvp.ts. */
+    CENTRAL_PAYMENT_CARD?: string;
+    CENTRAL_PAYMENT_HOLDER?: string;
+    SUPER_ADMIN_TG_ID?: string;
     VAPI_API_KEY?: string;
     VAPI_ASSISTANT_ID?: string;
     VAPI_PHONE_NUMBER_ID?: string;

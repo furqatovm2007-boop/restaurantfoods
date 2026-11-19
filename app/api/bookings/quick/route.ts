@@ -2,6 +2,9 @@ import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
 import { ApiError, json, failure, body, text, integer, phone, throttle, clientIp } from '../../../http';
 import { intlPhone } from '../../../phone-codes';
+import { banned, restricted, guestKeys, BAN_MESSAGE, STRIKE_MESSAGE } from '../../../guest-policy';
+import { p2pEnabled, startP2P } from '../../../p2p';
+import { DEPOSIT_MIN } from '../../../deposits';
 import { interval, minutes, endMinuteSQL } from '../../../table-rules';
 import { quoteBookingMeals } from '../../../booking-preorder';
 import { bookingSlot, seatedWindow, SEATED_MESSAGE } from '../../../booking-rules';
@@ -69,6 +72,17 @@ export async function POST(request: Request) {
       const code = 'DEMO-' + crypto.randomUUID().slice(0, 8).toUpperCase();
       return json({ ok: true, demo: true, id: 'demo', passCode: code, passPayload: PASS_PREFIX + code, notified: false, ...summary }, 201);
     }
+    // Anti-spam (app/guest-policy.ts): a banned phone / Telegram never books; 2 own cancellations in 7 days stop
+    // 1-click booking — with the central card on, such a guest may still book by paying in advance.
+    const tgChat = u ? (await env.DB!.prepare('SELECT telegram_chat_id FROM accounts WHERE id=?').bind(u.userId).first<{ telegram_chat_id: string | null }>())?.telegram_chat_id : null;
+    const keys = guestKeys(contact, [tgChat]);
+    if (await banned(keys)) throw new ApiError(403, BAN_MESSAGE);
+    const strike = await restricted(keys);
+    const prepay = await p2pEnabled();
+    if (strike && !prepay) throw new ApiError(403, STRIKE_MESSAGE);
+    // Prepayment to the central card (app/p2p.ts): the restaurant's deposit, the pre-ordered dishes, or 100 000
+    // after the strikes — whichever is highest. 0 = no payment step.
+    const amount = prepay ? Math.max(preorder.total, Number(r.deposit_amount) || 0, strike ? DEPOSIT_MIN : 0) : 0;
     let userId = u?.userId || '';
     if (!userId) {
       /*
@@ -86,20 +100,25 @@ export async function POST(request: Request) {
     if (seatedWindow(date, slot) && (await env.DB!.prepare("SELECT 1 FROM table_live_status WHERE restaurant_id=? AND table_number=? AND status='occupied' AND updated_at>=strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes')").bind(restaurantId, tableNumber).first())) throw new ApiError(409, SEATED_MESSAGE);
     const id = crypto.randomUUID();
     const result = await env.DB!.prepare(
-      "INSERT INTO bookings (id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at,preorder_items,preorder_total,deposit_status,phone_verified,penalty_accepted) SELECT ?,?,?,?,?,?,?,?,?,'pending',?,?,?,'not_required',0,0 WHERE NOT EXISTS (SELECT 1 FROM bookings WHERE restaurant_id=? AND date=? AND (table_number=? OR merged_table=?) AND status IN ('pending','confirmed') AND CAST(substr(slot,1,2) AS INTEGER)*60+CAST(substr(slot,4,2) AS INTEGER)<? AND (" + endMinuteSQL + ')>?)',
+      "INSERT INTO bookings (id,restaurant_id,user_id,date,slot,end_slot,table_number,guests,phone,status,created_at,preorder_items,preorder_total,deposit_status,phone_verified,penalty_accepted) SELECT ?,?,?,?,?,?,?,?,?,'pending',?,?,?,?,0,0 WHERE NOT EXISTS (SELECT 1 FROM bookings WHERE restaurant_id=? AND date=? AND (table_number=? OR merged_table=?) AND status IN ('pending','confirmed') AND CAST(substr(slot,1,2) AS INTEGER)*60+CAST(substr(slot,4,2) AS INTEGER)<? AND (" + endMinuteSQL + ')>?)',
     )
-      .bind(id, restaurantId, userId, date, slot, endSlot, tableNumber, guests, contact, new Date().toISOString(), JSON.stringify(preorder.items), preorder.total, restaurantId, date, tableNumber, tableNumber, end, start)
+      .bind(id, restaurantId, userId, date, slot, endSlot, tableNumber, guests, contact, new Date().toISOString(), JSON.stringify(preorder.items), preorder.total, amount ? 'p2p_wait' : 'not_required', restaurantId, date, tableNumber, tableNumber, end, start)
       .run();
     if (!result.meta.changes) throw new ApiError(409, 'Bu stol tanlangan vaqtda band. Boshqa vaqt yoki stol tanlang.');
     await releaseHolds(userId).catch(() => null);
     if (!u) await issueSession(userId);
     const code = await ensurePassCode(id, null);
+    const bot = botUsername();
+    const telegramLink = bot ? `https://t.me/${bot}?start=book_${id}` : '';
+    if (amount) {
+      // Held for the transfer: the restaurant hears about it only after the receipt is approved.
+      const payment = await startP2P(id, amount);
+      return json({ ok: true, demo: false, id, passCode: code, passPayload: code ? PASS_PREFIX + code : '', notified: false, telegramLink, payment, restricted: strike ? STRIKE_MESSAGE + ' Oldindan to‘lov bilan bron qilishingiz mumkin.' : '', ...summary }, 201);
+    }
     // The restaurant gets the card with Confirm / Cancel at once; a linked customer gets their own message.
     const notified = await notifyBooking(id);
     await notifyCustomer(id, 'created').catch(() => false);
-    // One tap to get the booking (and later the restaurant's answer) in Telegram.
-    const bot = botUsername();
-    const telegramLink = bot ? `https://t.me/${bot}?start=book_${id}` : '';
+    // One tap to get the booking (and later the restaurant's answer) in Telegram: telegramLink above.
     return json({ ok: true, demo: false, id, passCode: code, passPayload: code ? PASS_PREFIX + code : '', notified, telegramLink, ...summary }, 201);
   } catch (e) {
     return failure(e);

@@ -45,6 +45,9 @@ const DEPOSIT_TEXT: Record<string, string> = {
   paid: 'To‘langan',
   pending: 'Kutilmoqda',
   not_required: 'Talab qilinmaydi',
+  p2p_paid: 'To‘langan. Oldindan to‘lov markaziy hisobga qabul qilindi',
+  p2p_wait: 'Markaziy kartaga o‘tkazma kutilmoqda',
+  p2p_review: 'Chek tekshirilmoqda',
   refunded: 'Qaytarilgan',
   cancelled: 'Bekor qilingan',
 };

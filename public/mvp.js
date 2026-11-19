@@ -50,6 +50,23 @@
       doneDemoText: 'Bu namuna restoran: bron saqlanmadi va hech kimga yuborilmadi. Haqiqiy restoranlarda xuddi shunday ishlaydi.',
       pass: 'QR chipta',
       close: 'Yopish',
+      payTitle: '💳 Oldindan to‘lov (Card Transfer)',
+      payWhy: 'Restoran oldindan to‘lovni so‘raydi (yoki taomlar oldindan buyurtma qilingan). Pulni quyidagi kartaga o‘tkazing va chek rasmini yuklang — tekshirilgach stolingiz tasdiqlanadi.',
+      payAmount: 'O‘tkaziladigan summa',
+      payCard: 'Karta raqami',
+      payHolder: 'Karta egasi',
+      payCopy: '📋 Kartani nusxalash (Copy)',
+      payCopied: 'Nusxalandi ✓',
+      payUntil: (t) => `Stol ${t} gacha ushlab turiladi — shu vaqtgacha to‘lang, aks holda bo‘shatiladi.`,
+      payFile: '🧾 To‘lov chekini yuklang / Upload receipt screenshot',
+      paySend: '📤 Chekni yuborish',
+      paySending: 'Yuborilmoqda…',
+      payNoFile: 'Avval chek rasmini tanlang.',
+      paySent: '✅ Chek yuborildi! Tekshirilgach stolingiz tasdiqlanadi va restoranga xabar boradi.',
+      payTgHint: 'Natijani Telegram’da olish uchun:',
+      payUpload: '🧾 Chekni yuklash',
+      dep: { p2p_wait: '💳 To‘lov kutilmoqda', p2p_review: '🧾 Chek tekshirilmoqda', p2p_paid: '✅ Oldindan to‘langan', p2p_fake: '🚫 Chek rad etildi' },
+      lateCancel: (p) => `Bron vaqtiga 1 soatdan kam qoldi. Bekor qilish uchun restoran admini bilan bog‘laning: ${p || 'restoran telefoni'}`,
       guestsShort: 'kishi',
       sum: 'so‘m',
       booking: 'Band qilinmoqda…',
@@ -123,6 +140,23 @@
       doneDemoText: 'Это пример ресторана: бронь не сохранена и никуда не отправлена. В настоящих ресторанах всё работает так же.',
       pass: 'QR-пропуск',
       close: 'Закрыть',
+      payTitle: '💳 Предоплата (перевод на карту)',
+      payWhy: 'Ресторан просит предоплату (или заказаны блюда заранее). Переведите сумму на карту ниже и загрузите снимок чека — после проверки столик будет подтверждён.',
+      payAmount: 'Сумма перевода',
+      payCard: 'Номер карты',
+      payHolder: 'Владелец карты',
+      payCopy: '📋 Скопировать карту',
+      payCopied: 'Скопировано ✓',
+      payUntil: (t) => `Столик держится до ${t} — оплатите до этого времени, иначе он освободится.`,
+      payFile: '🧾 Загрузите чек оплаты / Upload receipt screenshot',
+      paySend: '📤 Отправить чек',
+      paySending: 'Отправляем…',
+      payNoFile: 'Сначала выберите снимок чека.',
+      paySent: '✅ Чек отправлен! После проверки столик подтвердят, а ресторан получит уведомление.',
+      payTgHint: 'Чтобы получить ответ в Telegram:',
+      payUpload: '🧾 Загрузить чек',
+      dep: { p2p_wait: '💳 Ждём оплату', p2p_review: '🧾 Чек проверяется', p2p_paid: '✅ Предоплата получена', p2p_fake: '🚫 Чек отклонён' },
+      lateCancel: (p) => `До брони меньше 1 часа. Чтобы отменить, свяжитесь с администратором ресторана: ${p || 'телефон ресторана'}`,
       guestsShort: 'гост.',
       sum: 'сум',
       booking: 'Бронируем…',
@@ -196,6 +230,23 @@
       doneDemoText: 'This is a sample restaurant: the booking was not saved or sent. Real restaurants work exactly like this.',
       pass: 'QR pass',
       close: 'Close',
+      payTitle: '💳 Prepayment (card transfer)',
+      payWhy: 'The restaurant asks for a prepayment (or dishes are pre-ordered). Transfer the amount to the card below and upload a screenshot of the receipt — your table is confirmed once it is checked.',
+      payAmount: 'Amount to transfer',
+      payCard: 'Card number',
+      payHolder: 'Card holder',
+      payCopy: '📋 Copy card number',
+      payCopied: 'Copied ✓',
+      payUntil: (t) => `The table is held until ${t} — pay before then, or it is released.`,
+      payFile: '🧾 Upload receipt screenshot',
+      paySend: '📤 Send receipt',
+      paySending: 'Sending…',
+      payNoFile: 'Choose the receipt picture first.',
+      paySent: '✅ Receipt sent! Once it is checked your table is confirmed and the restaurant is told.',
+      payTgHint: 'To get the answer in Telegram:',
+      payUpload: '🧾 Upload receipt',
+      dep: { p2p_wait: '💳 Payment awaited', p2p_review: '🧾 Receipt being checked', p2p_paid: '✅ Prepaid', p2p_fake: '🚫 Receipt rejected' },
+      lateCancel: (p) => `Less than 1 hour to your booking. To cancel, contact the restaurant admin: ${p || 'the restaurant phone'}`,
       guestsShort: 'guests',
       sum: 'UZS',
       booking: 'Booking…',
@@ -484,7 +535,9 @@
         picks.delete(r.id);
         // The booking gave this browser a session (guest record): "👤 Profil / Bronlarim" now shows it.
         if (!tg && !me() && !res.demo) refreshMe().catch(() => null);
-        done(res);
+        // Prepayment to the central card: the payment step instead of the success screen.
+        if (res.payment) payStep(res);
+        else done(res);
         ctx.reload?.();
       } catch (err) {
         tab?.close();
@@ -498,6 +551,67 @@
   }
 
   // ---------- Success: a clear summary card (no QR to scan at the door) ----------
+  /*
+   * "💳 Oldindan to‘lov": the central card (copy button), the exact amount, the deadline and the receipt upload
+   * (POST /api/bookings/p2p — the server refuses a picture used before). Opened after a booking that needs a
+   * prepayment, and from the profile for a booking still waiting for it.
+   */
+  const fmtMoney = (n) => String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const tashkentTime = (iso) => new Date(Date.parse(iso) + 5 * 3600000).toISOString().slice(11, 16);
+  async function payStep(res) {
+    let pay = res.payment;
+    if (!pay)
+      try {
+        pay = await api('/api/bookings/p2p?id=' + encodeURIComponent(res.id));
+      } catch (err) {
+        return alert(err.message);
+      }
+    let dlg = document.getElementById('mvpPay');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'mvpPay';
+      dlg.className = 'mvp-done mvp-pay';
+      document.body.append(dlg);
+    }
+    dlg.innerHTML = `<h2>${h(c('payTitle'))}</h2>${res.restricted ? `<p class="mvp-pay-warn">${h(res.restricted)}</p>` : ''}<p class="mvp-pay-why">${h(c('payWhy'))}</p><div class="mvp-pay-sum"><small>${h(c('payAmount'))}</small><b>${h(fmtMoney(pay.amount))} so‘m</b></div><div class="mvp-pay-card"><small>${h(c('payCard'))}</small><b data-card>${h(pay.card)}</b><small>${h(c('payHolder'))}: <b>${h(pay.holder)}</b></small><button type="button" class="quiet mvp-pay-copy" data-copy>${h(c('payCopy'))}</button></div><p class="mvp-pay-until">⏳ ${h(c('payUntil')(tashkentTime(pay.until)))}</p><label class="mvp-pay-file">${h(c('payFile'))}<input type="file" accept="image/*" data-receipt></label><button type="button" class="primary mvp-pay-send" data-send>${h(c('paySend'))}</button><p class="form-message" role="status" data-pay-msg></p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
+    const msg = dlg.querySelector('[data-pay-msg]');
+    dlg.querySelector('[data-close]').onclick = () => dlg.close();
+    dlg.querySelector('[data-copy]').onclick = async (e) => {
+      const btn = e.currentTarget,
+        digits = String(pay.card).replace(/\s+/g, '');
+      try {
+        await navigator.clipboard.writeText(digits);
+      } catch {
+        const r = document.createRange();
+        r.selectNodeContents(dlg.querySelector('[data-card]'));
+        getSelection().removeAllRanges();
+        getSelection().addRange(r);
+        document.execCommand?.('copy');
+      }
+      btn.textContent = c('payCopied');
+    };
+    const send = dlg.querySelector('[data-send]');
+    send.onclick = async () => {
+      const file = dlg.querySelector('[data-receipt]').files?.[0];
+      if (!file) return (msg.textContent = c('payNoFile'));
+      send.disabled = true;
+      send.innerHTML = `<span class="mvp-spin" aria-hidden="true"></span> ${h(c('paySending'))}`;
+      msg.textContent = '';
+      try {
+        const r = await fetch('/api/bookings/p2p?id=' + encodeURIComponent(res.id), { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || data.message || 'Xatolik');
+        dlg.querySelector('.mvp-pay-file').remove();
+        send.remove();
+        msg.innerHTML = `${h(c('paySent'))}${res.telegramLink ? `<br>${h(c('payTgHint'))} <a class="mvp-pass-link primary mvp-tg" href="${h(res.telegramLink)}" target="_blank" rel="noopener">${h(c('getPass'))}</a>` : ''}`;
+      } catch (err) {
+        msg.textContent = err.message;
+        send.disabled = false;
+        send.textContent = c('paySend');
+      }
+    };
+    if (!dlg.open) dlg.showModal();
+  }
   function done(res) {
     const dlg = document.createElement('dialog');
     dlg.className = 'mvp-done';
@@ -603,12 +717,19 @@
     const past = rows.filter((b) => !active.includes(b));
     const item = (b) => {
       const dishes = fmtDishes(b.preorder_items);
-      const canCancel = ['pending', 'confirmed'].includes(b.status) && b.date >= day;
-      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(String(b.table_number))}-${h(c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
+      // Self-cancel until 1 hour before the start; then only the restaurant (its phone is shown).
+      const live = ['pending', 'confirmed'].includes(b.status) && b.date >= day;
+      const startMs = Date.parse(b.date + 'T' + String(b.slot).slice(0, 5) + ':00+05:00');
+      const canCancel = live && startMs - Date.now() > 3600000;
+      const late = live && !canCancel ? `<p class="mvp-bk-late">${h(c('lateCancel')(b.restaurant_phone || ''))}</p>` : '';
+      const dep = c('dep')[b.deposit_status];
+      const upload = b.status === 'pending' && b.deposit_status === 'p2p_wait' ? `<button type="button" class="primary mvp-bk-pay" data-pay="${h(b.id)}">${h(c('payUpload'))}</button>` : '';
+      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(dep && b.status === 'pending' ? dep : c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(String(b.table_number))}-${h(c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${upload}${late}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
     };
     const list = (title, xs) => (xs.length ? `<h4>${h(title)}</h4><ul class="mvp-bk-list">${xs.map(item).join('')}</ul>` : '');
     box.innerHTML = rows.length ? list(c('bkActive'), active) + list(c('bkPast'), past.slice(0, 20)) : `<p class="muted">${h(c('bkNone'))}</p><a class="primary mvp-pass-link" href="#/discover" data-close-go>${h(c('bkFind'))}</a>`;
     box.querySelector('[data-close-go]')?.addEventListener('click', () => dlg.close());
+    box.querySelectorAll('[data-pay]').forEach((btn) => (btn.onclick = () => (dlg.close(), payStep({ id: btn.dataset.pay }))));
     box.querySelectorAll('[data-cancel]').forEach((btn) => {
       btn.onclick = async () => {
         if (!confirm(c('bkCancelAsk'))) return;
