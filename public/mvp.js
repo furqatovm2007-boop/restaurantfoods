@@ -358,10 +358,14 @@
     const total = rows.reduce((s, x) => s + x.m.price * x.q, 0);
     return `<p class="mvp-picked">🍽 ${h(c('picked'))}: ${rows.map((x) => h(x.m.name) + ' ×' + x.q).join(', ')} · <b>${money(total)}</b></p>`;
   }
+  const menuInner = (r, menu, sel) => `<h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${menu.length ? `<div class="mvp-menu">${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div>`;
+  let shown = null; // the restaurant page on screen: { r, menu } (for relabel)
+  let lastCheckout = null; // the open checkout: { form, ctx }
   async function restaurant(r, menu, seq) {
+    shown = { r, menu };
     const sel = picked(r.id);
     const place = [r.cuisine, r.address].filter(Boolean).join(' · ');
-    page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu"><h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${menu.length ? `<div class="mvp-menu">${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div></section>`);
+    page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
     const box = document.getElementById('mvpMenu');
     box.addEventListener('click', (e) => {
       const b = e.target.closest('[data-step]');
@@ -435,6 +439,7 @@
     return null;
   }
   function checkout(form, ctx) {
+    lastCheckout = { form, ctx };
     const { restaurant: r, table: tb, menu } = ctx;
     const start = document.getElementById('planStart'),
       date = document.getElementById('planDate')?.value || '',
@@ -752,6 +757,31 @@
   // ?open=profile (the bot's "👤 Mening profilim"): the profile opens once the page is ready.
   if (/[?&]open=profile\b/.test(location.search)) setTimeout(() => openProfile(), 1200);
 
+  /*
+   * Instant language switch on the restaurant page (applyLanguage): the hall plan is NOT rebuilt — its words are
+   * translated in place (RF_I18N.retranslate) — while this page's own parts (headings, menu, the open checkout
+   * form with what was typed) are drawn again in the new language. False when not on that page.
+   */
+  function relabel(from, to) {
+    const plan = document.getElementById('bookingPlan');
+    const menuBox = document.getElementById('mvpMenu');
+    if (!shown || !plan?.isConnected || !menuBox) return false;
+    const { r, menu } = shown;
+    const back = document.querySelector('#content .link.back');
+    if (back) back.textContent = c('back');
+    const note = document.querySelector('.mvp-demo-note');
+    if (note) note.textContent = c('demo');
+    const hall = document.getElementById('mvpHall');
+    if (hall) {
+      hall.querySelector(':scope > h2').textContent = c('hall');
+      hall.querySelector(':scope > p.muted').textContent = c('hallHint');
+    }
+    menuBox.innerHTML = menuInner(r, menu, picked(r.id));
+    RF_I18N.retranslate(plan, from, to);
+    if (lastCheckout?.form?.isConnected) checkout(lastCheckout.form, lastCheckout.ctx);
+    return true;
+  }
+
   function langBar() {
     const bar = document.getElementById('topbar');
     if (!bar) return;
@@ -770,5 +800,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });
   else langBar();
 
-  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang };
+  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel };
 })();
