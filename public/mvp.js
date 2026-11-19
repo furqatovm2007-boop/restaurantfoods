@@ -744,6 +744,27 @@
     }
   };
   const today = () => new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10);
+  /*
+   * Full pages (inside #content, with the top bar and the bottom bar): Profile = the info card, then Help center
+   * and Log out; My reservations = the booking list. openProfile (the old dialog) is kept for other callers.
+   */
+  async function profilePage(seq) {
+    page(c('profTitle'), `<section class="mvp-page"><div class="panel mvp-prof-card" data-prof><p class="muted">…</p></div><div class="mvp-prof-links"><a class="mvp-prof-help" href="#/help">❓ ${h(c('helpCenter'))}</a><button type="button" class="mvp-prof-logout" data-logout hidden>🚪 ${h(c('logout'))}</button></div></section>`);
+    const root = document.querySelector('#content .mvp-page');
+    const u = me() || (await refreshMe().catch(() => null), me());
+    if (!root.isConnected || (seq && typeof state !== 'undefined' && seq !== state.seq)) return;
+    const out = root.querySelector('[data-logout]');
+    out.hidden = !u;
+    out.onclick = () => document.getElementById('logout')?.click();
+    renderProfile(root, u);
+  }
+  async function bookingsPage(seq) {
+    page(c('bkTitle'), `<section class="mvp-page"><div data-bk><p class="muted">…</p></div></section>`);
+    const root = document.querySelector('#content .mvp-page');
+    const u = me() || (await refreshMe().catch(() => null), me());
+    if (!root.isConnected || (seq && typeof state !== 'undefined' && seq !== state.seq)) return;
+    renderBookings(root, u);
+  }
   async function openProfile() {
     let dlg = document.getElementById('mvpProfile');
     if (!dlg) {
@@ -798,7 +819,7 @@
         const tab = window.RFTelegram?.active ? null : window.open('', '_blank');
         tgBtn.disabled = true;
         try {
-          if (await telegramSignIn(msg, tab)) openProfile();
+          if (await telegramSignIn(msg, tab)) (location.hash === '#/account' ? profilePage() : openProfile());
         } catch (err) {
           tab?.close();
           msg.textContent = err.message || c('tgFail');
@@ -840,8 +861,8 @@
     };
     const list = (title, xs) => (xs.length ? `<h4>${h(title)}</h4><ul class="mvp-bk-list">${xs.map(item).join('')}</ul>` : '');
     box.innerHTML = rows.length ? list(c('bkActive'), active) + list(c('bkPast'), past.slice(0, 20)) : `<p class="muted">${h(c('bkNone'))}</p><a class="primary mvp-pass-link" href="#/discover" data-close-go>${h(c('bkFind'))}</a>`;
-    box.querySelector('[data-close-go]')?.addEventListener('click', () => dlg.close());
-    box.querySelectorAll('[data-pay]').forEach((btn) => (btn.onclick = () => (dlg.close(), payStep({ id: btn.dataset.pay }))));
+    box.querySelector('[data-close-go]')?.addEventListener('click', () => dlg.close?.());
+    box.querySelectorAll('[data-pay]').forEach((btn) => (btn.onclick = () => (dlg.close?.(), payStep({ id: btn.dataset.pay }))));
     box.querySelectorAll('[data-cancel]').forEach((btn) => {
       btn.onclick = async () => {
         if (!confirm(c('bkCancelAsk'))) return;
@@ -872,16 +893,12 @@
   }
   // Bottom bar: "My reservations" opens the booking list (works for guests too), "Profile" opens the drawer.
   document.addEventListener('click', (e) => {
-    const a = e.target.closest?.('a[href="#/bookings"], #mobileNav a[href="#/account"], #drawer a.drawer-profile');
-    // Bottom bar Profile → the profile view (info, bookings, Help center, Log out).
+    // Profile and My reservations are full pages now (#/account, #/bookings); only the old drawer card is redirected.
+    const a = e.target.closest?.('#drawer a.drawer-profile');
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
     e.preventDefault();
-    // The drawer's profile card: the profile with name, phone, Telegram and bookings.
-    if (a.matches('#drawer a.drawer-profile')) {
-      if (typeof closeDrawer === 'function') closeDrawer();
-      openProfile();
-    } else if (a.getAttribute('href') === '#/bookings') openProfile();
-    else openProfile();
+    if (typeof closeDrawer === 'function') closeDrawer();
+    location.hash = '#/account';
   });
   function profileButton(bar) {
     if (bar.querySelector('.mvp-prof-btn')) return;
@@ -935,5 +952,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });
   else langBar();
 
-  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel };
+  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile };
 })();

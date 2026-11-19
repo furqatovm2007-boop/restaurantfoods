@@ -218,3 +218,7 @@ body[data-theme=light] #content .mvp-search input:not([type=checkbox]):not([type
 .mvp-prof-logout{color:#dc2626;border-color:rgba(220,38,38,.35)}
 body[data-theme=dark] .mvp-prof-help{border-color:#334155;color:#e2e8f0}
 body[data-theme=dark] .mvp-prof-logout{color:#f87171;border-color:rgba(248,113,113,.35)}
+/* Profile / My reservations as full pages */
+.mvp-page{max-width:32rem;margin:0 auto;padding:8px 0 96px}
+.mvp-prof-card{padding:18px}
+.mvp-page .mvp-prof-links{margin-top:16px}
