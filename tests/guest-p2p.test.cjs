@@ -63,19 +63,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),zlib=require('n
  told.length=0;r=await qpost(quickFor(real),{});assert.equal(r.status,201);let d=await r.json();assert.equal(d.payment.amount,100000);assert.equal(d.payment.card,'8600 1234 5678 9012');assert.equal(d.payment.holder,'MUHAMMADJON F.');assert.match(d.restricted,/cheklov/);
  assert.equal(db.prepare('SELECT deposit_status,status FROM bookings WHERE id=?').get(d.id).deposit_status,'p2p_wait');assert.equal(told.length,0,'restaurant not told before the payment');
  // Pre-ordered dishes → prepayment of exactly their total (no strike for this phone).
- r=await qpost(quickFor(real),{phone:'+998 97 000 11 22',tableNumber:3,tableId:'t3',preorderItems:[{id:'m1',quantity:2}]});const pre=await r.json();assert.equal(pre.payment.amount,90000);
+ r=await qpost(quickFor(real),{phone:'+998 97 000 11 22',tableNumber:3,tableId:'t3',preorderItems:[{id:'m1',quantity:6}]});const pre=await r.json();assert.equal(pre.payment.total,270000);assert.equal(pre.payment.minDeposit,100000,'advance from 100 000');
  // Nothing to prepay → booked at once, restaurant told.
  r=await qpost(quickFor(real),{phone:'+998 97 000 33 44',tableNumber:4,tableId:'t4'});const plain=await r.json();assert.equal(plain.payment,undefined);assert.deepEqual(told,[plain.id]);
 
  // 4) Receipt: owner gets the photo with the checklist and 3 buttons; the same picture is refused.
  const png=seed=>{const chunk=(t,data)=>{const b=Buffer.alloc(12+data.length);b.writeUInt32BE(data.length,0);b.write(t,4,'ascii');data.copy(b,8);b.writeUInt32BE(zlib.crc32(Buffer.concat([Buffer.from(t,'ascii'),data]))>>>0,8+data.length);return b};const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(1,0);ihdr.writeUInt32BE(1,4);ihdr[8]=8;ihdr[9]=0;return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',zlib.deflateSync(Buffer.from([0,seed]))),chunk('IEND',Buffer.alloc(0))])};
  const userId=db.prepare('SELECT user_id FROM bookings WHERE id=?').get(pre.id).user_id;
- const up=(id,bytes,uid=userId)=>p2p.submitReceipt(id,uid,new Request('https://test/api/bookings/p2p?id='+id,{method:'POST',body:bytes,headers:{'Content-Type':'image/png'}}));
+ const up=(id,bytes,uid=userId,deposit)=>p2p.submitReceipt(id,uid,new Request('https://test/api/bookings/p2p?id='+id,{method:'POST',body:bytes,headers:{'Content-Type':'image/png'}}),Date.now(),deposit);
  await assert.rejects(up(pre.id,png(1),'guest:other'),e=>e.status===404,'only the booking’s browser');
  await assert.rejects(up(pre.id,Buffer.from('not an image')),e=>e.status===400);
- sent.length=0;const out=await up(pre.id,png(1));assert.equal(out.status,'p2p_review');
+ await assert.rejects(up(pre.id,png(9),userId,50000),e=>e.status===400,'advance below the minimum');await assert.rejects(up(pre.id,png(9),userId,300000),e=>e.status===400,'more than the bill');
+ sent.length=0;const out=await up(pre.id,png(1),userId,100000);assert.equal(out.status,'p2p_review');assert.equal(out.remaining,170000);
  const photo=sent.find(s=>s.method==='sendPhoto');assert.equal(photo.chat,'4242');
- for(const part of ['💰 Kutilayotgan summa: <b>90 000 UZS</b>','🕒 Zakaz vaqti: <b>','(chekdagi vaqt bilan solishtiring!)','🏪 Restoran: <b>Amanda</b> | Stol #3','👤 Mijoz: Dilnoza (+998970001122)','🍽 Taomlar: Osh × 2'])assert.ok(photo.caption.includes(part),part);
+ for(const part of ['💰 Kutilayotgan summa: <b>100 000 UZS</b>','🧾 Jami zakaz summasi: <b>270 000 UZS</b>','✅ Hozir o‘tkazilgan avans (Depozit): <b>100 000 UZS</b>','💳 Qoldiq (Restoranda to‘lanadi): <b>170 000 UZS</b>','🕒 Zakaz vaqti: <b>','(chekdagi vaqt bilan solishtiring!)','🏪 Restoran: <b>Amanda</b> | Stol #3','👤 Mijoz: Dilnoza (+998970001122)','🍽 Taomlar: Osh × 6'])assert.ok(photo.caption.includes(part),part);
  assert.deepEqual([...photo.markup.inline_keyboard.map(r=>r[0].callback_data)],['pp:ok:'+pre.id,'pp:re:'+pre.id,'pp:ban:'+pre.id]);
  assert.deepEqual(photo.markup.inline_keyboard.map(r=>r[0].text),['✅ Pul tushdi (Tasdiqlash)','⚠️ Chek noaniq (Qayta so‘rash)','🚫 Soxta chek (Bloklash)']);
  const userId2=db.prepare('SELECT user_id FROM bookings WHERE id=?').get(d.id).user_id;
@@ -86,13 +87,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),zlib=require('n
  assert.equal(await p2p.handleP2P(ownerCb('pp:ok:'+pre.id,'999')),'p2p_denied');
  db.prepare("INSERT INTO app_settings(key,value,updated_at,updated_by) VALUES (?,?,'now','t')").run('bookchat:'+pre.id,'77');
  sent.length=0;assert.equal(await p2p.handleP2P(ownerCb('pp:re:'+pre.id)),'p2p_again');assert.equal(db.prepare('SELECT deposit_status FROM bookings WHERE id=?').get(pre.id).deposit_status,'p2p_wait');assert.match(sent.find(s=>s.body?.chat_id==='77').body.text,/noaniq/);
- sent.length=0;await up(pre.id,png(2));sent.length=0;assert.equal(await p2p.handleP2P(ownerCb('pp:ok:'+pre.id)),'p2p_confirmed');
+ sent.length=0;await up(pre.id,png(2),userId,100000);sent.length=0;assert.equal(await p2p.handleP2P(ownerCb('pp:ok:'+pre.id)),'p2p_confirmed');
+ {const st=await p2p.p2pState(pre.id);assert.equal(st.paid,100000);assert.equal(st.remaining,170000);assert.equal(st.paymentStatus,'partially_paid');}
  let row=db.prepare('SELECT status,deposit_status FROM bookings WHERE id=?').get(pre.id);assert.equal(row.status,'confirmed');assert.equal(row.deposit_status,'p2p_paid');
- const rCard=sent.find(s=>s.body?.chat_id==='900').body.text;assert.match(rCard,/Oldindan to‘lov markaziy hisobga qabul qilindi/);
- assert.equal(sent.find(s=>s.body?.chat_id==='77').body.text,'✅ To‘lovingiz tasdiqlandi va stolingiz band qilindi!');
+ const rCard=sent.find(s=>s.body?.chat_id==='900').body.text;assert.match(rCard,/Oldindan to‘lov markaziy hisobga qabul qilindi/);for(const line of ['🧾 Jami hisob: <b>270 000 UZS</b>','✅ Oldindan to‘langan: <b>100 000 UZS</b>','💳 Restoranda qolgan to‘lov: <b>170 000 UZS</b>'])assert.ok(rCard.includes(line),line);
+ {const g=sent.find(s=>s.body?.chat_id==='77').body.text;assert.ok(g.startsWith('✅ To‘lovingiz tasdiqlandi va stolingiz band qilindi!'));assert.ok(g.includes('💳 Restoranda qolgan to‘lov: <b>170 000 UZS</b>'));}
+ {const listed=await (await load('app/api/bookings/route.ts',{...bdeps,'../../access':{identity:async()=>({userId,role:'customer'})},'../../mvp':{SIMPLE_MVP_MODE:true},'../../guest-policy':policy,'../../telegram':tg}).GET()).json();const ps=JSON.parse(listed.find(b=>b.id===pre.id).p2p_state);assert.equal(ps.paid,100000);assert.equal(ps.total,270000);}
  assert.equal(await p2p.handleP2P(ownerCb('pp:ok:'+pre.id)),'p2p_stale','pressed once');
  // 🚫 fake: cancelled, phone + Telegram banned, the next booking refused.
- await up(d.id,png(3),userId2);db.prepare("INSERT INTO app_settings(key,value,updated_at,updated_by) VALUES (?,?,'now','t')").run('bookchat:'+d.id,'88');
+ await up(d.id,png(3),userId2);assert.equal((await p2p.p2pState(d.id)).deposit,100000,'no advance choice: the full amount');db.prepare("INSERT INTO app_settings(key,value,updated_at,updated_by) VALUES (?,?,'now','t')").run('bookchat:'+d.id,'88');
  sent.length=0;assert.equal(await p2p.handleP2P(ownerCb('pp:ban:'+d.id)),'p2p_banned');assert.equal(db.prepare('SELECT status FROM bookings WHERE id=?').get(d.id).status,'cancelled');
  assert.equal(await policy.banned(['ph:+998901112233']),true);assert.equal(await policy.banned(['tg:88']),true);assert.ok(!sent.some(s=>s.body?.chat_id==='900'),'restaurant never bothered');
  r=await qpost(quickFor(real),{slot:'15:00',endSlot:'16:00'});assert.equal(r.status,403);assert.equal((await r.json()).error,policy.BAN_MESSAGE);

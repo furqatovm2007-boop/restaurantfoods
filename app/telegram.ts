@@ -69,6 +69,7 @@ export interface BookingMessage {
   customer_name?: string | null;
   customer_chat?: string | null;
   customer_username?: string | null;
+  p2p_state?: string | null;
 }
 
 /*
@@ -103,6 +104,17 @@ export function bookingText(b: BookingMessage) {
     items = JSON.parse(b.preorder_items || '[]');
   } catch {}
   for (const d of Array.isArray(items) ? items.filter((i) => String(i?.id).startsWith('decor:')) : []) lines.push(`🎀 <b>Dekoratsiya:</b> ${html(String(d.name || '').replace(/^🎀\s*/, ''))} · ${Number(d.price || 0).toLocaleString('ru-RU').replace(/[\s,]/g, ' ')} so‘m`);
+  // Central-card prepayment: the 3-line balance (total / paid in advance / left to pay in the restaurant).
+  if (b.p2p_state)
+    try {
+      const s = JSON.parse(b.p2p_state);
+      if (Number(s.paid) > 0) {
+        const total = Number(s.total ?? s.amount) || 0,
+          paid = Number(s.paid) || 0,
+          fmt = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' UZS';
+        lines.push(`🧾 Jami hisob: <b>${fmt(total)}</b>`, `✅ Oldindan to‘langan: <b>${fmt(paid)}</b>`, `💳 Restoranda qolgan to‘lov: <b>${fmt(Math.max(0, total - paid))}</b>`);
+      }
+    } catch {}
   if (STATUS_TEXT[b.status]) lines.push('', `<b>${STATUS_TEXT[b.status]}</b>`);
   return lines.join('\n');
 }
@@ -113,7 +125,7 @@ export const bookingKeyboard = (id: string) => ({
 
 async function loadBooking(id: string) {
   return env.DB!.prepare(
-    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) AS customer_chat,u.value AS customer_username FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) WHERE b.id=?",
+    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) AS customer_chat,u.value AS customer_username,ps.value AS p2p_state FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN app_settings ps ON ps.key='p2p:'||b.id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) WHERE b.id=?",
   )
     .bind(id)
     .first<BookingMessage & { restaurant_id: string; telegram_chat_id: string | null }>();

@@ -65,6 +65,15 @@
       paySent: '✅ Chek yuborildi! Tekshirilgach stolingiz tasdiqlanadi va restoranga xabar boradi.',
       payTgHint: 'Natijani Telegram’da olish uchun:',
       payUpload: '🧾 Chekni yuklash',
+      payChoose: 'Qancha to‘laysiz?',
+      payFull: 'To‘liq summa (100%)',
+      payAdvance: 'Avans (depozit)',
+      payCustom: 'Boshqa summa',
+      payNow: 'Hozir o‘tkaziladi',
+      payRest: 'Restoranda to‘lanadi',
+      payRange: (a, b) => `${a} – ${b} so‘m oralig‘ida`,
+      payBad: 'Summa ruxsat etilgan oraliqda emas.',
+      bal: ['🧾 Jami hisob', '✅ Oldindan to‘langan', '💳 Restoranda qolgan to‘lov'],
       dep: { p2p_wait: '💳 To‘lov kutilmoqda', p2p_review: '🧾 Chek tekshirilmoqda', p2p_paid: '✅ Oldindan to‘langan', p2p_fake: '🚫 Chek rad etildi' },
       lateCancel: (p) => `Bron vaqtiga 1 soatdan kam qoldi. Bekor qilish uchun restoran admini bilan bog‘laning: ${p || 'restoran telefoni'}`,
       guestsShort: 'kishi',
@@ -155,6 +164,15 @@
       paySent: '✅ Чек отправлен! После проверки столик подтвердят, а ресторан получит уведомление.',
       payTgHint: 'Чтобы получить ответ в Telegram:',
       payUpload: '🧾 Загрузить чек',
+      payChoose: 'Сколько оплатите сейчас?',
+      payFull: 'Полная сумма (100%)',
+      payAdvance: 'Аванс (депозит)',
+      payCustom: 'Другая сумма',
+      payNow: 'Переводите сейчас',
+      payRest: 'Оплатите в ресторане',
+      payRange: (a, b) => `от ${a} до ${b} сум`,
+      payBad: 'Сумма вне допустимого диапазона.',
+      bal: ['🧾 Итого', '✅ Оплачено заранее', '💳 Оплатить в ресторане'],
       dep: { p2p_wait: '💳 Ждём оплату', p2p_review: '🧾 Чек проверяется', p2p_paid: '✅ Предоплата получена', p2p_fake: '🚫 Чек отклонён' },
       lateCancel: (p) => `До брони меньше 1 часа. Чтобы отменить, свяжитесь с администратором ресторана: ${p || 'телефон ресторана'}`,
       guestsShort: 'гост.',
@@ -245,6 +263,15 @@
       paySent: '✅ Receipt sent! Once it is checked your table is confirmed and the restaurant is told.',
       payTgHint: 'To get the answer in Telegram:',
       payUpload: '🧾 Upload receipt',
+      payChoose: 'How much will you pay now?',
+      payFull: 'Full amount (100%)',
+      payAdvance: 'Advance (deposit)',
+      payCustom: 'Other amount',
+      payNow: 'Transfer now',
+      payRest: 'Pay at the restaurant',
+      payRange: (a, b) => `between ${a} and ${b} UZS`,
+      payBad: 'The amount is outside the allowed range.',
+      bal: ['🧾 Total bill', '✅ Paid in advance', '💳 Left to pay at the restaurant'],
       dep: { p2p_wait: '💳 Payment awaited', p2p_review: '🧾 Receipt being checked', p2p_paid: '✅ Prepaid', p2p_fake: '🚫 Receipt rejected' },
       lateCancel: (p) => `Less than 1 hour to your booking. To cancel, contact the restaurant admin: ${p || 'the restaurant phone'}`,
       guestsShort: 'guests',
@@ -578,8 +605,38 @@
       dlg.className = 'mvp-done mvp-pay';
       document.body.append(dlg);
     }
-    dlg.innerHTML = `<h2>${h(c('payTitle'))}</h2>${res.restricted ? `<p class="mvp-pay-warn">${h(res.restricted)}</p>` : ''}<p class="mvp-pay-why">${h(c('payWhy'))}</p><div class="mvp-pay-sum"><small>${h(c('payAmount'))}</small><b>${h(fmtMoney(pay.amount))} so‘m</b></div><div class="mvp-pay-card"><small>${h(c('payCard'))}</small><b data-card>${h(pay.card)}</b><small>${h(c('payHolder'))}: <b>${h(pay.holder)}</b></small><button type="button" class="quiet mvp-pay-copy" data-copy>${h(c('payCopy'))}</button></div><p class="mvp-pay-until">⏳ ${h(c('payUntil')(tashkentTime(pay.until)))}</p><label class="mvp-pay-file">${h(c('payFile'))}<input type="file" accept="image/*" data-receipt></label><button type="button" class="primary mvp-pay-send" data-send>${h(c('paySend'))}</button><p class="form-message" role="status" data-pay-msg></p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
+    // Full bill or an advance (fixed 100 000 / the minimum, or a custom amount between the minimum and the bill).
+    const total = Number(pay.total ?? pay.amount) || 0,
+      min = Math.min(total, Number(pay.minDeposit ?? total) || total);
+    const advance = Math.min(total, Math.max(min, 100000));
+    const choice =
+      min < total
+        ? `<fieldset class="mvp-pay-choice"><legend>${h(c('payChoose'))}</legend><label><input type="radio" name="payMode" value="full" checked> ${h(c('payFull'))} — <b>${h(fmtMoney(total))} so‘m</b></label>${advance < total ? `<label><input type="radio" name="payMode" value="advance"> ${h(c('payAdvance'))} — <b>${h(fmtMoney(advance))} so‘m</b></label>` : ''}<label><input type="radio" name="payMode" value="custom"> ${h(c('payCustom'))}</label><input type="number" inputmode="numeric" data-custom min="${min}" max="${total}" step="1000" placeholder="${h(c('payRange')(fmtMoney(min), fmtMoney(total)))}" hidden></fieldset>`
+        : '';
+    dlg.innerHTML = `<h2>${h(c('payTitle'))}</h2>${res.restricted ? `<p class="mvp-pay-warn">${h(res.restricted)}</p>` : ''}<p class="mvp-pay-why">${h(c('payWhy'))}</p>${choice}<div class="mvp-pay-sum"><small>${h(c('payNow'))}</small><b data-now>${h(fmtMoney(total))} so‘m</b><small data-rest-line ${total > 0 ? '' : 'hidden'}>${h(c('payRest'))}: <b data-rest>0</b> so‘m</small></div><div class="mvp-pay-card"><small>${h(c('payCard'))}</small><b data-card>${h(pay.card)}</b><small>${h(c('payHolder'))}: <b>${h(pay.holder)}</b></small><button type="button" class="quiet mvp-pay-copy" data-copy>${h(c('payCopy'))}</button></div><p class="mvp-pay-until">⏳ ${h(c('payUntil')(tashkentTime(pay.until)))}</p><label class="mvp-pay-file">${h(c('payFile'))}<input type="file" accept="image/*" data-receipt></label><button type="button" class="primary mvp-pay-send" data-send>${h(c('paySend'))}</button><p class="form-message" role="status" data-pay-msg></p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
     const msg = dlg.querySelector('[data-pay-msg]');
+    const customBox = dlg.querySelector('[data-custom]');
+    const chosen = () => {
+      const mode = dlg.querySelector('[name=payMode]:checked')?.value || 'full';
+      if (mode === 'advance') return advance;
+      if (mode === 'custom') return Math.round(Number(customBox.value) || 0);
+      return total;
+    };
+    const showSplit = () => {
+      const now = chosen(),
+        ok = now >= min && now <= total;
+      dlg.querySelector('[data-now]').textContent = (ok ? fmtMoney(now) : '—') + ' so‘m';
+      dlg.querySelector('[data-rest]').textContent = ok ? fmtMoney(total - now) : '—';
+    };
+    dlg.querySelectorAll('[name=payMode]').forEach((r) =>
+      r.addEventListener('change', () => {
+        if (customBox) customBox.hidden = r.value !== 'custom' || !r.checked;
+        if (r.value === 'custom' && r.checked) customBox.focus();
+        showSplit();
+      }),
+    );
+    customBox?.addEventListener('input', showSplit);
+    showSplit();
     dlg.querySelector('[data-close]').onclick = () => dlg.close();
     dlg.querySelector('[data-copy]').onclick = async (e) => {
       const btn = e.currentTarget,
@@ -599,11 +656,13 @@
     send.onclick = async () => {
       const file = dlg.querySelector('[data-receipt]').files?.[0];
       if (!file) return (msg.textContent = c('payNoFile'));
+      const deposit = chosen();
+      if (!(deposit >= min && deposit <= total)) return (msg.textContent = c('payBad'));
       send.disabled = true;
       send.innerHTML = `<span class="mvp-spin" aria-hidden="true"></span> ${h(c('paySending'))}`;
       msg.textContent = '';
       try {
-        const r = await fetch('/api/bookings/p2p?id=' + encodeURIComponent(res.id), { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
+        const r = await fetch('/api/bookings/p2p?id=' + encodeURIComponent(res.id) + '&deposit=' + deposit, { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } });
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || data.message || 'Xatolik');
         dlg.querySelector('.mvp-pay-file').remove();
@@ -728,8 +787,18 @@
       const canCancel = live && startMs - Date.now() > 3600000;
       const late = live && !canCancel ? `<p class="mvp-bk-late">${h(c('lateCancel')(b.restaurant_phone || ''))}</p>` : '';
       const dep = c('dep')[b.deposit_status];
+      // Prepaid booking: total / paid in advance / left to pay at the restaurant.
+      let balance = '';
+      try {
+        const ps = b.p2p_state ? JSON.parse(b.p2p_state) : null;
+        if (ps) {
+          const tot = Number(ps.total ?? ps.amount) || 0,
+            paid = Number(ps.paid) || 0;
+          balance = `<ul class="mvp-balance">${[tot, paid, Math.max(0, tot - paid)].map((v, i) => `<li>${h(c('bal')[i])}: <b>${h(fmtMoney(v))} UZS</b></li>`).join('')}</ul>`;
+        }
+      } catch {}
       const upload = b.status === 'pending' && b.deposit_status === 'p2p_wait' ? `<button type="button" class="primary mvp-bk-pay" data-pay="${h(b.id)}">${h(c('payUpload'))}</button>` : '';
-      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(dep && b.status === 'pending' ? dep : c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(String(b.table_number))}-${h(c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${upload}${late}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
+      return `<li class="mvp-bk st-${h(b.status)}"><div class="mvp-bk-top"><b>${h(b.restaurant_name || '')}</b><span class="mvp-bk-st">${h(dep && b.status === 'pending' ? dep : c('st')[b.status] || b.status)}</span></div><div class="mvp-bk-line">🪑 ${h(String(b.table_number))}-${h(c('table'))} · 👥 ${h(String(b.guests))} · 📅 ${h(b.date)} · 🕒 ${h(b.slot)}${b.end_slot ? '–' + h(b.end_slot) : ''}</div>${dishes ? `<div class="mvp-bk-dish">🍽️ ${h(c('bkDishes'))}: ${h(dishes)}</div>` : ''}${balance}${upload}${late}${canCancel ? `<button type="button" class="quiet mvp-bk-cancel" data-cancel="${h(b.id)}">${h(c('bkCancel'))}</button>` : ''}<p class="form-message" data-bk-msg></p></li>`;
     };
     const list = (title, xs) => (xs.length ? `<h4>${h(title)}</h4><ul class="mvp-bk-list">${xs.map(item).join('')}</ul>` : '');
     box.innerHTML = rows.length ? list(c('bkActive'), active) + list(c('bkPast'), past.slice(0, 20)) : `<p class="muted">${h(c('bkNone'))}</p><a class="primary mvp-pass-link" href="#/discover" data-close-go>${h(c('bkFind'))}</a>`;

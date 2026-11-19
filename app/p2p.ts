@@ -33,11 +33,35 @@ export async function ownerChats() {
 /** On only with a real card number and a chat that can verify receipts. */
 export const p2pEnabled = async () => p2pCard().ready && (await ownerChats()).length > 0;
 
-interface P2PState {
-  amount: number;
+/*
+ * Balance of a prepaid booking (no migration: app_settings p2p:<id>):
+ *  total     — the whole bill (pre-ordered dishes, or the deposit itself when nothing was ordered);
+ *  minDeposit— the least the guest may send now (the restaurant's deposit / 100 000, never above total);
+ *  deposit   — what the guest chose to send now (full = total, or an advance), set with the receipt;
+ *  paid / remaining / paymentStatus — after the owner's ✅: paid = deposit, remaining = total − paid,
+ *  'paid' when nothing is left, else 'partially_paid'.
+ */
+export interface P2PState {
+  amount: number; // = total (kept for older records)
+  total?: number;
+  minDeposit?: number;
+  deposit?: number;
+  paid?: number;
+  remaining?: number;
+  paymentStatus?: 'pending' | 'partially_paid' | 'paid';
   until: number;
   createdAt: number;
   hash?: string;
+}
+export const totalOf = (s: P2PState) => Number(s.total ?? s.amount) || 0;
+export const minDepositOf = (s: P2PState) => Math.min(totalOf(s), Number(s.minDeposit ?? totalOf(s)) || totalOf(s));
+/** The 3-line balance shown everywhere (restaurant card, guest message, site profile). */
+export function balanceLines(s: P2PState | null, bold = true) {
+  if (!s) return [];
+  const b = (n: number) => (bold ? `<b>${money(n)} UZS</b>` : `${money(n)} UZS`);
+  const total = totalOf(s),
+    paid = Number(s.paid) || 0;
+  return [`🧾 Jami hisob: ${b(total)}`, `✅ Oldindan to‘langan: ${b(paid)}`, `💳 Restoranda qolgan to‘lov: ${b(Math.max(0, total - paid))}`];
 }
 const key = (id: string) => 'p2p:' + id;
 export async function p2pState(id: string): Promise<P2PState | null> {
@@ -52,13 +76,15 @@ const saveState = (id: string, s: P2PState) =>
   env.DB!.prepare("INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,'p2p') ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(key(id), JSON.stringify(s), new Date().toISOString()).run();
 
 /** Called by the quick booking right after the insert (deposit_status already "p2p_wait"). */
-export async function startP2P(id: string, amount: number, now = Date.now()) {
-  await saveState(id, { amount, until: now + P2P_HOLD_MS, createdAt: now });
-  return paymentInfo(amount, now + P2P_HOLD_MS);
+export async function startP2P(id: string, total: number, minDeposit = total, now = Date.now()) {
+  const state: P2PState = { amount: total, total, minDeposit: Math.min(total, minDeposit), paymentStatus: 'pending', until: now + P2P_HOLD_MS, createdAt: now };
+  await saveState(id, state);
+  return paymentInfo(state);
 }
-export const paymentInfo = (amount: number, until: number) => {
+/** What the payment step shows: the card, the full amount, the least advance allowed and the deadline. */
+export const paymentInfo = (s: P2PState) => {
   const c = p2pCard();
-  return { card: c.card, holder: c.holder, amount, until: new Date(until).toISOString() };
+  return { card: c.card, holder: c.holder, amount: totalOf(s), total: totalOf(s), minDeposit: minDepositOf(s), until: new Date(s.until).toISOString() };
 };
 
 const money = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -70,12 +96,15 @@ function dishes(raw: string | null | undefined) {
     return '';
   }
 }
-export function ownerCaption(b: GuestBooking & { preorder_items?: string | null; end_slot?: string | null }, amount: number, now: number) {
+export function ownerCaption(b: GuestBooking & { preorder_items?: string | null; end_slot?: string | null }, amount: number, now: number, total = amount) {
   const name = b.customer_name && !b.customer_name.startsWith('guest:') ? b.customer_name : 'Mijoz';
   const meals = dishes(b.preorder_items);
   return [
     '🧾 <b>Yangi to‘lov cheki</b>',
     `💰 Kutilayotgan summa: <b>${money(amount)} UZS</b>`,
+    `🧾 Jami zakaz summasi: <b>${money(total)} UZS</b>`,
+    `✅ Hozir o‘tkazilgan avans (Depozit): <b>${money(amount)} UZS</b>`,
+    `💳 Qoldiq (Restoranda to‘lanadi): <b>${money(Math.max(0, total - amount))} UZS</b>`,
     `🕒 Zakaz vaqti: <b>${hhmm(now)}</b> (chekdagi vaqt bilan solishtiring!)`,
     `🏪 Restoran: <b>${html(b.restaurant_name)}</b> | Stol #${b.table_number}`,
     `👤 Mijoz: ${html(name)} (${html(b.phone)})`,
@@ -119,13 +148,17 @@ async function readImage(request: Request) {
 export const sha256Hex = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>)), (v) => v.toString(16).padStart(2, '0')).join('');
 
 /** The guest's receipt for their own booking (the booking's account = this browser's session). */
-export async function submitReceipt(id: string, userId: string, request: Request, now = Date.now()) {
+export async function submitReceipt(id: string, userId: string, request: Request, now = Date.now(), depositRaw?: unknown) {
   const b = await env.DB!.prepare('SELECT b.user_id,b.status,b.deposit_status,b.preorder_items,b.end_slot FROM bookings b WHERE b.id=?').bind(id).first<{ user_id: string; status: string; deposit_status: string; preorder_items: string | null; end_slot: string | null }>();
   if (!b || b.user_id !== userId || b.status !== 'pending') throw new ApiError(404, 'Bron topilmadi.');
   if (b.deposit_status === 'p2p_review') throw new ApiError(409, 'Chek allaqachon yuborilgan — tekshirilmoqda.');
   const state = await p2pState(id);
   if (b.deposit_status !== 'p2p_wait' || !state) throw new ApiError(409, 'Bu bron uchun to‘lov kutilmayapti.');
   if (state.until < now) throw new ApiError(410, 'To‘lov vaqti tugadi — bron bekor qilindi. Qaytadan bron qiling.');
+  // Full amount or an advance: never less than the minimum deposit, never more than the bill.
+  const total = totalOf(state),
+    deposit = depositRaw === undefined || depositRaw === null || depositRaw === '' ? total : Math.round(Number(depositRaw));
+  if (!Number.isFinite(deposit) || deposit < minDepositOf(state) || deposit > total) throw new ApiError(400, `Avans ${money(minDepositOf(state))} dan ${money(total)} so‘mgacha bo‘lishi kerak.`);
   const { bytes, type } = await readImage(request);
   const hash = await sha256Hex(bytes);
   // The same picture is accepted once, for any booking.
@@ -133,7 +166,7 @@ export async function submitReceipt(id: string, userId: string, request: Request
   if (!fresh.meta.changes) throw new ApiError(409, DUPLICATE_RECEIPT);
   const full = await loadGuestBooking(id);
   if (!full) throw new ApiError(404, 'Bron topilmadi.');
-  const caption = ownerCaption({ ...full, preorder_items: b.preorder_items, end_slot: b.end_slot }, state.amount, now);
+  const caption = ownerCaption({ ...full, preorder_items: b.preorder_items, end_slot: b.end_slot }, deposit, now, total);
   let sent = false;
   for (const chat of await ownerChats()) if (await sendPhoto(chat, bytes, type, caption, ownerKeyboard(id))) sent = true;
   if (!sent) {
@@ -141,8 +174,8 @@ export async function submitReceipt(id: string, userId: string, request: Request
     throw new ApiError(503, 'Chekni hozir yuborib bo‘lmadi. Birozdan keyin qayta urinib ko‘ring.');
   }
   await env.DB!.prepare("UPDATE bookings SET deposit_status='p2p_review' WHERE id=? AND deposit_status='p2p_wait'").bind(id).run();
-  await saveState(id, { ...state, hash });
-  return { ok: true, status: 'p2p_review' };
+  await saveState(id, { ...state, hash, deposit });
+  return { ok: true, status: 'p2p_review', deposit, total, remaining: total - deposit };
 }
 
 const customerText = {
@@ -175,9 +208,19 @@ export async function handleP2P(update: any): Promise<string | null> {
   if (op === 'ok') {
     const res = await env.DB!.prepare("UPDATE bookings SET status='confirmed',deposit_status='p2p_paid' WHERE id=? AND status='pending' AND deposit_status='p2p_review'").bind(id).run();
     if (!res.meta.changes) return (await answer('Holat allaqachon o‘zgargan.'), 'p2p_stale');
+    // paid = the advance sent, remaining = the rest, paid in the restaurant.
+    const state = await p2pState(id);
+    let balance: P2PState | null = null;
+    if (state) {
+      const total = totalOf(state),
+        paid = Math.min(total, Number(state.deposit ?? total) || 0),
+        remaining = total - paid;
+      balance = { ...state, paid, remaining, paymentStatus: remaining > 0 ? 'partially_paid' : 'paid' };
+      await saveState(id, balance);
+    }
     await done('✅ Tasdiqlandi — restoranga yuborildi');
     await notifyBooking(id);
-    await toGuest(customerText.ok);
+    if (b.customer_chat) await telegram('sendMessage', { chat_id: b.customer_chat, text: [customerText.ok, '', ...balanceLines(balance)].join('\n'), parse_mode: 'HTML' });
     return 'p2p_confirmed';
   }
   if (op === 're') {

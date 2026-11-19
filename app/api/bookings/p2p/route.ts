@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const b = await ownWaiting(id, u.userId);
     const s = await p2pState(id);
     if (!s) throw new ApiError(404, 'To‘lov kutilayotgan bron topilmadi.');
-    return json({ ...paymentInfo(s.amount, s.until), status: b.deposit_status });
+    return json({ ...paymentInfo(s), status: b.deposit_status });
   } catch (e) {
     return failure(e);
   }
@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     if (!u) throw new ApiError(401, 'Avval kiring.');
     const id = bookingId(request);
     await throttle('p2p-receipt:' + u.userId, 10, 3600000);
-    return json(await submitReceipt(id, u.userId, request));
+    // ?deposit= the amount sent now (full bill or an advance, checked against the minimum).
+    return json(await submitReceipt(id, u.userId, request, Date.now(), new URL(request.url).searchParams.get('deposit')));
   } catch (e) {
     return failure(e);
   }
