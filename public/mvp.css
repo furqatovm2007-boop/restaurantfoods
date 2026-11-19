@@ -249,3 +249,15 @@ body[data-theme=dark] .mvp-price{color:#34d399}
 .mvp-click-pay{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;margin:10px 0 4px;border-radius:14px;background:linear-gradient(135deg,#00a6ff,#0072ff);color:#fff!important;font-weight:800;font-size:1.02rem;text-decoration:none;box-shadow:0 8px 20px rgba(0,114,255,.3)}
 .mvp-click-pay[aria-disabled]{opacity:.5;pointer-events:none}
 .mvp-click-hint{margin:0 0 8px;font-size:.82rem}
+/* Back from Click: the payment state */
+.mvp-return{display:grid;gap:10px;margin:0 0 16px;padding:16px;border-radius:16px;border:1px solid}
+.mvp-return b{font-size:1.02rem;line-height:1.4}
+.mvp-return p{margin:0;font-size:.9rem}
+.mvp-return.ok{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.5);color:#065f46}
+.mvp-return.wait{background:rgba(234,179,8,.14);border-color:rgba(234,179,8,.5);color:#854d0e}
+.mvp-return.bad{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.4);color:#991b1b}
+body[data-theme=dark] .mvp-return.ok{color:#a7f3d0}
+body[data-theme=dark] .mvp-return.wait{color:#fde68a}
+body[data-theme=dark] .mvp-return.bad{color:#fecaca}
+.mvp-return .primary{min-height:48px}
+.mvp-return{scroll-margin-top:96px}

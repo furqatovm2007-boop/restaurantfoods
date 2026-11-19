@@ -22,6 +22,13 @@ const bookingId = (request: Request) => {
 
 export async function GET(request: Request) {
   try {
+    // ?status=1: only the payment state of this booking (no personal data; the id is an unguessable UUID) — for the
+    // return from the Click app, which may open in a browser without the guest's session.
+    if (new URL(request.url).searchParams.get('status') === '1') {
+      const s = await env.DB!.prepare('SELECT status,deposit_status FROM bookings WHERE id=?').bind(bookingId(request)).first<{ status: string; deposit_status: string }>();
+      const state = !s ? 'unknown' : s.status === 'cancelled' || s.status === 'rejected' ? 'cancelled' : s.deposit_status === 'p2p_paid' ? 'paid' : s.deposit_status === 'p2p_review' ? 'review' : s.deposit_status === 'p2p_wait' ? 'wait' : s.status === 'confirmed' ? 'confirmed' : 'pending';
+      return json({ state });
+    }
     const u = await identity();
     if (!u) throw new ApiError(401, 'Avval kiring.');
     const id = bookingId(request);

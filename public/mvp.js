@@ -70,6 +70,12 @@
       payHolder: 'Karta egasi',
       payCopy: '📋 Kartani nusxalash (Copy)',
       clickPay: 'Click orqali to‘lash',
+      retPaid: '✅ To‘lov qabul qilindi! Joyingiz muvaffaqiyatli band qilindi.',
+      retWait: '⏳ To‘lov tekshirilmoqda — chek tasdiqlanishi bilan joyingiz band qilinadi',
+      retUpload: 'Click chekini yuklash',
+      retSent: 'Chek yuborilgan, tekshiruv natijasi shu yerda va Telegram’da chiqadi.',
+      retOtherBrowser: 'Chekni yuklash uchun bron qilgan brauzeringizda “Bronlarim” sahifasini oching.',
+      retCancelled: 'Bu bron bekor qilingan yoki to‘lov vaqti tugagan.',
       clickHint: 'Click ilovasi restoran nomi va summa bilan ochiladi. To‘lagach, chek skrinshotini pastga yuklang.',
       payCardOr: 'Yoki karta raqamiga o‘tkazing',
       payCopied: 'Nusxalandi ✓',
@@ -185,6 +191,12 @@
       payHolder: 'Владелец карты',
       payCopy: '📋 Скопировать карту',
       clickPay: 'Оплатить через Click',
+      retPaid: '✅ Оплата получена! Ваш стол забронирован.',
+      retWait: '⏳ Оплата проверяется — стол будет закреплён, как только чек подтвердят',
+      retUpload: 'Загрузить чек Click',
+      retSent: 'Чек отправлен, результат появится здесь и в Telegram.',
+      retOtherBrowser: 'Чтобы загрузить чек, откройте «Мои брони» в браузере, где делали бронь.',
+      retCancelled: 'Эта бронь отменена или время оплаты истекло.',
       clickHint: 'Откроется приложение Click с рестораном и суммой. После оплаты загрузите снимок чека ниже.',
       payCardOr: 'Или переведите на карту',
       payCopied: 'Скопировано ✓',
@@ -300,6 +312,12 @@
       payHolder: 'Card holder',
       payCopy: '📋 Copy card number',
       clickPay: 'Pay via Click',
+      retPaid: '✅ Payment received! Your table is booked.',
+      retWait: '⏳ Payment is being checked — your table is booked as soon as the receipt is confirmed',
+      retUpload: 'Upload the Click receipt',
+      retSent: 'Receipt sent — the result appears here and in Telegram.',
+      retOtherBrowser: 'To upload the receipt, open “My bookings” in the browser you booked with.',
+      retCancelled: 'This booking was cancelled or the payment time ran out.',
       clickHint: 'The Click app opens with the restaurant and the amount. After paying, upload the receipt screenshot below.',
       payCardOr: 'Or transfer to the card',
       payCopied: 'Copied ✓',
@@ -760,6 +778,8 @@
           const u = new URL(pay.clickPayUrl);
           u.searchParams.set('amount', String(now));
           u.searchParams.set('transaction_param', String(res.id));
+          // After paying, Click sends the guest back to this booking's status on our site.
+          u.searchParams.set('return_url', location.origin + '/' + lang() + '/#/bookings?payment_return=1&booking_id=' + res.id);
           click.href = u.toString();
         }
         click.toggleAttribute('aria-disabled', !ok);
@@ -882,11 +902,35 @@
     renderProfile(root, u);
   }
   async function bookingsPage(seq) {
-    page(c('bkTitle'), `<section class="mvp-page"><div data-bk><p class="muted">…</p></div></section>`);
+    page(c('bkTitle'), `<section class="mvp-page"><div data-pay-return></div><div data-bk><p class="muted">…</p></div></section>`);
     const root = document.querySelector('#content .mvp-page');
     const u = me() || (await refreshMe().catch(() => null), me());
     if (!root.isConnected || (seq && typeof state !== 'undefined' && seq !== state.seq)) return;
     renderBookings(root, u);
+    paymentReturn(root, u);
+  }
+  /*
+   * Back from the Click app (#/bookings?payment_return=1&booking_id=…): paid → a green confirmation; waiting for
+   * the receipt check → a status card with a 1-tap receipt upload (on the browser that made the booking). The
+   * state comes from GET /api/bookings/p2p?status=1 (works without the session — Click may open another browser).
+   */
+  async function paymentReturn(root, u) {
+    const q = new URLSearchParams(location.hash.split('?')[1] || '');
+    const id = q.get('booking_id') || '';
+    const box = root.querySelector('[data-pay-return]');
+    if (q.get('payment_return') !== '1' || !/^[0-9a-f-]{36}$/.test(id) || !box) return;
+    let st = 'unknown';
+    try {
+      st = (await api('/api/bookings/p2p?status=1&id=' + encodeURIComponent(id))).state;
+    } catch {}
+    const mine = !!u;
+    if (st === 'paid' || st === 'confirmed') box.innerHTML = `<div class="mvp-return ok" role="status"><b>${h(c('retPaid'))}</b></div>`;
+    else if (st === 'wait' || st === 'review')
+      box.innerHTML = `<div class="mvp-return wait" role="status"><b>${h(c('retWait'))}</b>${st === 'review' ? `<p>${h(c('retSent'))}</p>` : mine ? `<button type="button" class="primary" data-ret-upload>🧾 ${h(c('retUpload'))}</button>` : `<p>${h(c('retOtherBrowser'))}</p>`}</div>`;
+    else if (st === 'cancelled') box.innerHTML = `<div class="mvp-return bad" role="status"><b>${h(c('retCancelled'))}</b></div>`;
+    else return;
+    box.querySelector('[data-ret-upload]')?.addEventListener('click', () => payStep({ id }));
+    box.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   async function openProfile() {
     let dlg = document.getElementById('mvpProfile');

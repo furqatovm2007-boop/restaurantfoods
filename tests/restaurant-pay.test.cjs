@@ -32,5 +32,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  await save({clickPayUrl:'',cardNumber:'',cardHolder:''});assert.equal(db.prepare("SELECT COUNT(*) n FROM app_settings WHERE key='pay:r1'").get().n,0);assert.equal(await p2p.p2pEnabled('r1'),false);
  // The page adds amount + transaction_param to the link.
  const js=fs.readFileSync('public/mvp.js','utf8');assert.match(js,/searchParams\.set\('amount', String\(now\)\)/);assert.match(js,/searchParams\.set\('transaction_param', String\(res\.id\)\)/);
- console.log('PASS restaurant pay: Click link (https click.uz, params stripped) + card, owner only; prepayment with restaurant details; Click link in payment info; payee in the owner alert; page adds amount + transaction_param');
+ assert.match(js,/searchParams\.set\('return_url', location\.origin \+ '\/' \+ lang\(\) \+ '\/#\/bookings\?payment_return=1&booking_id=' \+ res\.id\)/,'Click sends the guest back, in their language');
+ // Back from Click: the payment state by booking id, without a session, nothing personal.
+ const p2pRoute=load('app/api/bookings/p2p/route.ts',{...cw,'../../../access':{identity:async()=>null},'../../../http':http,'../../../p2p':p2p});
+ const st=async id=>(await (await p2pRoute.GET(new Request('https://test/api/bookings/p2p?status=1&id='+id))).json());
+ const set=(d,stt='pending')=>db.prepare("UPDATE bookings SET deposit_status=?,status=? WHERE id='b1'").run(d,stt);
+ db.exec("INSERT INTO bookings(id,restaurant_id,user_id,date,slot,table_number,guests,phone,status,created_at) VALUES ('0b1b1b1b-0000-4000-8000-000000000001','r1','u','2031-01-01','19:00',2,2,'+998901112233','pending','now')");const bid='0b1b1b1b-0000-4000-8000-000000000001';
+ const setB=(d,stt='pending')=>db.prepare('UPDATE bookings SET deposit_status=?,status=? WHERE id=?').run(d,stt,bid);
+ setB('p2p_wait');assert.equal((await st(bid)).state,'wait');setB('p2p_review');assert.equal((await st(bid)).state,'review');
+ setB('p2p_paid','confirmed');const paid=await st(bid);assert.equal(paid.state,'paid');assert.deepEqual(Object.keys(paid),['state'],'nothing personal');
+ setB('cancelled','cancelled');assert.equal((await st(bid)).state,'cancelled');
+ assert.equal((await p2pRoute.GET(new Request('https://test/api/bookings/p2p?status=1&id=nope'))).status,400);
+ assert.equal((await p2pRoute.GET(new Request('https://test/api/bookings/p2p?id='+bid))).status,401,'details still need the session');
+ console.log('PASS restaurant pay: Click link (https click.uz, params stripped) + card, owner only; prepayment with restaurant details; Click link in payment info; payee in the owner alert; page adds amount + transaction_param + return_url; payment state on return');
 })().catch(e=>{console.error(e);process.exitCode=1});
