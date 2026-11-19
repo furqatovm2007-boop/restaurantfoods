@@ -181,3 +181,30 @@ body[data-theme=dark] .mvp-done .quiet,body[data-theme=dark] .mvp-profile .quiet
 .mvp-balance{list-style:none;margin:8px 0 0;padding:8px 10px;border-radius:10px;background:rgba(16,185,129,.1);display:grid;gap:4px;font-size:.88rem}
 .mvp-balance li:nth-child(3) b{color:#fcd34d}
 .mvp-pay-sum small b,body[data-theme=dark] .mvp-pay-sum small b{font-size:inherit;color:#fcd34d}
+/* ☀️ / 🌙 theme button in the top bar; the custom-amount error */
+.mvp-theme{flex:none;display:grid;place-items:center;width:40px;height:40px;margin-left:8px;border-radius:999px;border:1px solid var(--glass-line,rgba(16,185,129,.3));background:var(--glass,rgba(255,255,255,.6));font-size:18px;line-height:1;cursor:pointer}
+body[data-theme=dark] .mvp-theme{background:#132035;border-color:#334155}
+.mvp-pay-err{margin:4px 0 0;color:#ef4444;font-weight:700;font-size:.86rem}
+body[data-theme=dark] .mvp-pay-err{color:#f87171}
+.mvp-pay .mvp-pay-send:disabled{opacity:.5;cursor:not-allowed}
+/*
+ * Light theme (☀️): clean white / slate surfaces with dark text — the table details card (navy in the dark
+ * theme) turns white so nothing is dark-on-dark; bars, inputs and the summary boxes follow.
+ */
+body[data-theme=light] #topbar,body[data-theme=light] .mobile-nav{background:rgba(255,255,255,.97)!important;color:#0f172a;border-color:#e2e8f0!important}
+body[data-theme=light] .mobile-nav{border-top:1px solid #e2e8f0!important}
+body[data-theme=light] .mobile-nav a,body[data-theme=light] .mobile-nav button{color:#334155}
+body[data-theme=light] .room-grid .table-detail{background:#fff;border-color:#e2e8f0;color:#0f172a;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+body[data-theme=light] .room-grid .table-detail h3,body[data-theme=light] .room-grid .table-detail h4,body[data-theme=light] #bookingPlan h3,body[data-theme=light] #bookingPlan h4{color:#0f172a}
+body[data-theme=light] .room-grid .table-detail p,body[data-theme=light] .room-grid .table-detail .muted{color:#475569}
+body[data-theme=light] .mvp-checkout label,body[data-theme=light] .rf-phone-label{color:#334155}
+body[data-theme=light] .mvp-slot{background:#f1f5f9;color:#0f172a}
+body[data-theme=light] .mvp-picked,body[data-theme=light] .mvp-checkout .mvp-picked{background:#ecfdf5;color:#064e3b;border:1px solid #a7f3d0}
+body[data-theme=light] .mvp-picked b{color:#b45309}
+body[data-theme=light] #content input:not([type=checkbox]):not([type=radio]):not([type=file]),body[data-theme=light] #content select,body[data-theme=light] #content textarea{background:#fff;color:#0f172a;border-color:#cbd5e1}
+body[data-theme=light] input::placeholder{color:#64748b}
+body[data-theme=light] .rf-phone-group{background:#fff;border-color:#cbd5e1;color:#0f172a}
+body[data-theme=light] .rf-phone-cc{background:#f1f5f9;border-right-color:#cbd5e1;color:#0f172a}
+body[data-theme=light] #content .rf-phone-local{background:transparent!important;border:0!important}
+body[data-theme=light] .mvp-search{background:#fff!important;border-color:#cbd5e1!important}
+body[data-theme=light] #content .mvp-search input:not([type=checkbox]):not([type=radio]):not([type=file]){background:transparent!important;border:0!important;padding:0!important}

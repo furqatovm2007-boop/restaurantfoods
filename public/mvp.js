@@ -50,6 +50,10 @@
       doneDemoText: 'Bu namuna restoran: bron saqlanmadi va hech kimga yuborilmadi. Haqiqiy restoranlarda xuddi shunday ishlaydi.',
       pass: 'QR chipta',
       close: 'Yopish',
+      themeLight: 'Kunduzgi rejim',
+      themeDark: 'Tungi rejim',
+      payMinErr: (m) => `Minimal oldindan to‘lov summasi — ${m} so‘m`,
+      payMaxErr: (m) => `Maksimal summa — ${m} so‘m (jami hisob)`,
       payTitle: '💳 Oldindan to‘lov (Card Transfer)',
       payWhy: 'Restoran oldindan to‘lovni so‘raydi (yoki taomlar oldindan buyurtma qilingan). Pulni quyidagi kartaga o‘tkazing va chek rasmini yuklang — tekshirilgach stolingiz tasdiqlanadi.',
       payAmount: 'O‘tkaziladigan summa',
@@ -149,6 +153,10 @@
       doneDemoText: 'Это пример ресторана: бронь не сохранена и никуда не отправлена. В настоящих ресторанах всё работает так же.',
       pass: 'QR-пропуск',
       close: 'Закрыть',
+      themeLight: 'Светлая тема',
+      themeDark: 'Тёмная тема',
+      payMinErr: (m) => `Минимальная предоплата — ${m} сум`,
+      payMaxErr: (m) => `Максимум — ${m} сум (весь счёт)`,
       payTitle: '💳 Предоплата (перевод на карту)',
       payWhy: 'Ресторан просит предоплату (или заказаны блюда заранее). Переведите сумму на карту ниже и загрузите снимок чека — после проверки столик будет подтверждён.',
       payAmount: 'Сумма перевода',
@@ -248,6 +256,10 @@
       doneDemoText: 'This is a sample restaurant: the booking was not saved or sent. Real restaurants work exactly like this.',
       pass: 'QR pass',
       close: 'Close',
+      themeLight: 'Light mode',
+      themeDark: 'Dark mode',
+      payMinErr: (m) => `Minimum prepayment — ${m} UZS`,
+      payMaxErr: (m) => `Maximum — ${m} UZS (the whole bill)`,
       payTitle: '💳 Prepayment (card transfer)',
       payWhy: 'The restaurant asks for a prepayment (or dishes are pre-ordered). Transfer the amount to the card below and upload a screenshot of the receipt — your table is confirmed once it is checked.',
       payAmount: 'Amount to transfer',
@@ -611,7 +623,7 @@
     const advance = Math.min(total, Math.max(min, 100000));
     const choice =
       min < total
-        ? `<fieldset class="mvp-pay-choice"><legend>${h(c('payChoose'))}</legend><label><input type="radio" name="payMode" value="full" checked> ${h(c('payFull'))} — <b>${h(fmtMoney(total))} so‘m</b></label>${advance < total ? `<label><input type="radio" name="payMode" value="advance"> ${h(c('payAdvance'))} — <b>${h(fmtMoney(advance))} so‘m</b></label>` : ''}<label><input type="radio" name="payMode" value="custom"> ${h(c('payCustom'))}</label><input type="number" inputmode="numeric" data-custom min="${min}" max="${total}" step="1000" placeholder="${h(c('payRange')(fmtMoney(min), fmtMoney(total)))}" hidden></fieldset>`
+        ? `<fieldset class="mvp-pay-choice"><legend>${h(c('payChoose'))}</legend><label><input type="radio" name="payMode" value="full" checked> ${h(c('payFull'))} — <b>${h(fmtMoney(total))} so‘m</b></label>${advance < total ? `<label><input type="radio" name="payMode" value="advance"> ${h(c('payAdvance'))} — <b>${h(fmtMoney(advance))} so‘m</b></label>` : ''}<label><input type="radio" name="payMode" value="custom"> ${h(c('payCustom'))}</label><input type="number" inputmode="numeric" data-custom min="${min}" max="${total}" step="1000" placeholder="${h(c('payRange')(fmtMoney(min), fmtMoney(total)))}" hidden><p class="mvp-pay-err" data-custom-err role="alert" hidden></p></fieldset>`
         : '';
     dlg.innerHTML = `<h2>${h(c('payTitle'))}</h2>${res.restricted ? `<p class="mvp-pay-warn">${h(res.restricted)}</p>` : ''}<p class="mvp-pay-why">${h(c('payWhy'))}</p>${choice}<div class="mvp-pay-sum"><small>${h(c('payNow'))}</small><b data-now>${h(fmtMoney(total))} so‘m</b><small data-rest-line ${total > 0 ? '' : 'hidden'}>${h(c('payRest'))}: <b data-rest>0</b> so‘m</small></div><div class="mvp-pay-card"><small>${h(c('payCard'))}</small><b data-card>${h(pay.card)}</b><small>${h(c('payHolder'))}: <b>${h(pay.holder)}</b></small><button type="button" class="quiet mvp-pay-copy" data-copy>${h(c('payCopy'))}</button></div><p class="mvp-pay-until">⏳ ${h(c('payUntil')(tashkentTime(pay.until)))}</p><label class="mvp-pay-file">${h(c('payFile'))}<input type="file" accept="image/*" data-receipt></label><button type="button" class="primary mvp-pay-send" data-send>${h(c('paySend'))}</button><p class="form-message" role="status" data-pay-msg></p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
     const msg = dlg.querySelector('[data-pay-msg]');
@@ -625,6 +637,16 @@
     const showSplit = () => {
       const now = chosen(),
         ok = now >= min && now <= total;
+      // Custom amount: never below the minimum deposit or above the bill — red hint and the send button off.
+      const custom = dlg.querySelector('[name=payMode]:checked')?.value === 'custom';
+      const err = dlg.querySelector('[data-custom-err]');
+      if (err) {
+        const typedSome = custom && customBox.value !== '';
+        err.hidden = !custom || ok || !typedSome;
+        err.textContent = now > total ? c('payMaxErr')(fmtMoney(total)) : c('payMinErr')(fmtMoney(min));
+      }
+      const sendBtn = dlg.querySelector('[data-send]');
+      if (sendBtn && !sendBtn.dataset.busy) sendBtn.disabled = !ok;
       dlg.querySelector('[data-now]').textContent = (ok ? fmtMoney(now) : '—') + ' so‘m';
       dlg.querySelector('[data-rest]').textContent = ok ? fmtMoney(total - now) : '—';
     };
@@ -659,6 +681,7 @@
       const deposit = chosen();
       if (!(deposit >= min && deposit <= total)) return (msg.textContent = c('payBad'));
       send.disabled = true;
+      send.dataset.busy = '1';
       send.innerHTML = `<span class="mvp-spin" aria-hidden="true"></span> ${h(c('paySending'))}`;
       msg.textContent = '';
       try {
@@ -670,6 +693,7 @@
         msg.innerHTML = `${h(c('paySent'))}${res.telegramLink ? `<br>${h(c('payTgHint'))} <a class="mvp-pass-link primary mvp-tg" href="${h(res.telegramLink)}" target="_blank" rel="noopener">${h(c('getPass'))}</a>` : ''}`;
       } catch (err) {
         msg.textContent = err.message;
+        delete send.dataset.busy;
         send.disabled = false;
         send.textContent = c('paySend');
       }
@@ -818,6 +842,32 @@
       };
     });
   }
+  // ☀️ / 🌙 next to UZ | RU | EN: light / dark theme (ui/restaurant.js setTheme, saved in localStorage).
+  function themeButton(bar) {
+    let b = bar.querySelector('.mvp-theme');
+    if (!b) {
+      bar.insertAdjacentHTML('beforeend', '<button type="button" class="mvp-theme"></button>');
+      b = bar.querySelector('.mvp-theme');
+      b.onclick = () => window.rfSetTheme?.(document.body.dataset.theme === 'light' ? 'dark' : 'light');
+      document.addEventListener('rf-theme', () => themeButton(bar));
+    }
+    const light = document.body.dataset.theme === 'light';
+    b.textContent = light ? '🌙' : '☀️';
+    b.setAttribute('aria-label', c(light ? 'themeDark' : 'themeLight'));
+    b.title = c(light ? 'themeDark' : 'themeLight');
+  }
+  // Bottom bar: "My reservations" opens the booking list (works for guests too), "Profile" opens the drawer.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href="#/bookings"], #mobileNav a[href="#/account"], #drawer a.drawer-profile');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    // The drawer's profile card: the profile with name, phone, Telegram and bookings.
+    if (a.matches('#drawer a.drawer-profile')) {
+      if (typeof closeDrawer === 'function') closeDrawer();
+      openProfile();
+    } else if (a.getAttribute('href') === '#/bookings') openProfile();
+    else if (typeof openDrawer === 'function') openDrawer(a);
+  });
   function profileButton(bar) {
     if (bar.querySelector('.mvp-prof-btn')) return;
     bar.insertAdjacentHTML('beforeend', `<button type="button" class="mvp-prof-btn" aria-haspopup="dialog"><span aria-hidden="true">👤</span><span class="mvp-prof-label">${h(c('profBtn').replace(/^👤\s*/, ''))}</span></button>`);
@@ -854,7 +904,7 @@
   function langBar() {
     const bar = document.getElementById('topbar');
     if (!bar) return;
-    if (bar.querySelector('.mvp-lang')) return (profileButton(bar), syncLang());
+    if (bar.querySelector('.mvp-lang')) return (themeButton(bar), syncLang());
     bar.insertAdjacentHTML('beforeend', `<div class="mvp-lang" role="group" aria-label="Til / Язык / Language">${LANGS.map((l) => `<button type="button" data-site-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`);
     bar.querySelector('.mvp-lang').onclick = async (e) => {
       const b = e.target.closest('[data-site-lang]');
@@ -863,7 +913,8 @@
       else if (typeof RF_I18N !== 'undefined') RF_I18N.set(b.dataset.siteLang);
       syncLang();
     };
-    profileButton(bar);
+    // The round profile button is gone from the top bar: Profile lives in the bottom bar now (profileButton kept).
+    themeButton(bar);
     syncLang();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });
