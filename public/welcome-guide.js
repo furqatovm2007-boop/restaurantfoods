@@ -443,6 +443,8 @@
     show(0);
   }
   function switchTo(l) {
+    // The current clip stops at once (pause + rewind); the new language's clip loads without blocking.
+    stopClip();
     setLang(l);
     show(step);
   }

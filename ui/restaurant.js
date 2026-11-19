@@ -13,9 +13,12 @@ async function renewSession(){if(!refreshPending)refreshPending=fetch('/api/auth
 // kartalar…, each with its own fetch helper) renews an expired session once and repeats the request,
 // instead of showing "sign in again" or a "no internet" copy to a signed-in user.
 if(typeof window!=='undefined'&&window.fetch&&!window.fetch.rfRenews){const rawFetch=window.fetch.bind(window);const renewing=async(input,init)=>{const res=await rawFetch(input,init);if(res.status!==401)return res;let path='';try{path=new URL(typeof input==='string'?input:input.url,location.href);path=path.origin===location.origin?path.pathname:''}catch{}if(!path.startsWith('/api/')||path.startsWith('/api/auth/')||(input instanceof Request&&input.bodyUsed))return res;return await renewSession()?rawFetch(input,init):res};renewing.rfRenews=true;window.fetch=renewing}
-async function api(path,method='GET',data){const options={method,cache:'no-store',headers:method==='GET'?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)};const response=await fetch(path,options);// An expired session was already renewed and retried by the fetch wrapper above.
+// Language switch: the page is redrawn in the new language from the answers it already has — no network, so
+// the switch is instant. GET answers are kept (as JSON text, last 40) only for that redraw (state.reuseGets).
+const apiLangCache=new Map();
+async function api(path,method='GET',data){if(method==='GET'&&state.reuseGets&&apiLangCache.has(path))return JSON.parse(apiLangCache.get(path));const options={method,cache:'no-store',headers:method==='GET'?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data)};const response=await fetch(path,options);// An expired session was already renewed and retried by the fetch wrapper above.
 const value=await response.json();if(!response.ok)throw Object.assign(new Error(t(value.error||'So‘rov bajarlmadi.')),{status:response.status});// Any change (menu, restaurant, tables…) makes the next page read a fresh catalog.
-if(method!=='GET')state.catalogAt=0;return value;}
+if(method!=='GET')state.catalogAt=0;else{apiLangCache.delete(path);apiLangCache.set(path,JSON.stringify(value));if(apiLangCache.size>40)apiLangCache.delete(apiLangCache.keys().next().value)}return value;}
 
 function notify(message){$('#toast').textContent=t(message);$('#toast').hidden=false;clearTimeout(notify.timer);notify.timer=setTimeout(()=>$('#toast').hidden=true,5500)}
 function empty(title,description,symbol='◇'){return `<div class="empty"><div class="empty-symbol">${symbol}</div><h3>${esc(title)}</h3><p>${esc(description)}</p></div>`}

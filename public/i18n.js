@@ -1,5 +1,5 @@
 'use strict';
-const RF_I18N={lang:'ru',set(lang){this.lang=['ru','uz','en'].includes(lang)?lang:'ru';document.documentElement.lang=this.lang;try{localStorage.setItem('rf-language',this.lang)}catch{}},locale(){return {ru:'ru-RU',uz:'uz-UZ',en:'en-US'}[this.lang]}};
+const RF_I18N={lang:'ru',set(lang){this.lang=['ru','uz','en'].includes(lang)?lang:'ru';document.documentElement.lang=this.lang;const l=this.lang;/* saved after the frame: the switch never waits for storage */(typeof setTimeout==='function'?setTimeout:f=>f())(()=>{try{localStorage.setItem('rf-language',l)}catch{}},0)},locale(){return {ru:'ru-RU',uz:'uz-UZ',en:'en-US'}[this.lang]}};
 try{RF_I18N.set(localStorage.getItem('rf-language')||'ru')}catch{RF_I18N.set('ru')}
 function t(source){if(typeof source!=='string')return source;const key=source.trim(),entry=RF_MESSAGES[key];if(entry)return source.replace(key,entry[RF_I18N.lang]||entry.uz);const password=source.match(/^Parol kamida (\d+) va ko‘pi bilan 128 belgi bo‘lsin\.$/);if(password)return t('Parol kamida')+' '+password[1]+' '+t('va ko‘pi bilan 128 belgi bo‘lsin.');return source;}
 // Only static template segments pass through this function. Dynamic names, addresses,
