@@ -50,6 +50,8 @@
       doneDemoText: 'Bu namuna restoran: bron saqlanmadi va hech kimga yuborilmadi. Haqiqiy restoranlarda xuddi shunday ishlaydi.',
       pass: 'QR chipta',
       close: 'Yopish',
+      helpCenter: 'Yordam markazi',
+      logout: 'Chiqish',
       themeLight: 'Kunduzgi rejim',
       themeDark: 'Tungi rejim',
       payMinErr: (m) => `Minimal oldindan to‘lov summasi — ${m} so‘m`,
@@ -153,6 +155,8 @@
       doneDemoText: 'Это пример ресторана: бронь не сохранена и никуда не отправлена. В настоящих ресторанах всё работает так же.',
       pass: 'QR-пропуск',
       close: 'Закрыть',
+      helpCenter: 'Центр помощи',
+      logout: 'Выйти',
       themeLight: 'Светлая тема',
       themeDark: 'Тёмная тема',
       payMinErr: (m) => `Минимальная предоплата — ${m} сум`,
@@ -256,6 +260,8 @@
       doneDemoText: 'This is a sample restaurant: the booking was not saved or sent. Real restaurants work exactly like this.',
       pass: 'QR pass',
       close: 'Close',
+      helpCenter: 'Help center',
+      logout: 'Log out',
       themeLight: 'Light mode',
       themeDark: 'Dark mode',
       payMinErr: (m) => `Minimum prepayment — ${m} UZS`,
@@ -749,10 +755,18 @@
       });
       document.body.append(dlg);
     }
-    dlg.innerHTML = `<div class="mvp-profile-in"><div class="mvp-profile-head"><h2>${h(c('profTitle'))}</h2><button type="button" class="mvp-x" data-close aria-label="${h(c('close'))}">×</button></div><div data-prof><p class="muted">…</p></div><h3>${h(c('bkTitle'))}</h3><div data-bk><p class="muted">…</p></div></div>`;
+    dlg.innerHTML = `<div class="mvp-profile-in"><div class="mvp-profile-head"><h2>${h(c('profTitle'))}</h2><button type="button" class="mvp-x" data-close aria-label="${h(c('close'))}">×</button></div><div data-prof><p class="muted">…</p></div><h3>${h(c('bkTitle'))}</h3><div data-bk><p class="muted">…</p></div><div class="mvp-prof-links"><a class="mvp-prof-help" href="#/help" data-close-help>❓ ${h(c('helpCenter'))}</a><button type="button" class="mvp-prof-logout" data-logout hidden>🚪 ${h(c('logout'))}</button></div></div>`;
     dlg.querySelector('[data-close]').onclick = () => dlg.close();
+    dlg.querySelector('[data-close-help]').onclick = () => dlg.close();
     if (!dlg.open) dlg.showModal();
     const u = me() || (await refreshMe().catch(() => null), me());
+    // Log out (the same as the old drawer button: ends the session, also a guest's browser session).
+    const out = dlg.querySelector('[data-logout]');
+    out.hidden = !u;
+    out.onclick = () => {
+      dlg.close();
+      document.getElementById('logout')?.click();
+    };
     renderProfile(dlg, u);
     renderBookings(dlg, u);
   }
@@ -859,6 +873,7 @@
   // Bottom bar: "My reservations" opens the booking list (works for guests too), "Profile" opens the drawer.
   document.addEventListener('click', (e) => {
     const a = e.target.closest?.('a[href="#/bookings"], #mobileNav a[href="#/account"], #drawer a.drawer-profile');
+    // Bottom bar Profile → the profile view (info, bookings, Help center, Log out).
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
     e.preventDefault();
     // The drawer's profile card: the profile with name, phone, Telegram and bookings.
@@ -866,7 +881,7 @@
       if (typeof closeDrawer === 'function') closeDrawer();
       openProfile();
     } else if (a.getAttribute('href') === '#/bookings') openProfile();
-    else if (typeof openDrawer === 'function') openDrawer(a);
+    else openProfile();
   });
   function profileButton(bar) {
     if (bar.querySelector('.mvp-prof-btn')) return;

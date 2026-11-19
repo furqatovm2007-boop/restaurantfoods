@@ -208,3 +208,13 @@ body[data-theme=light] .rf-phone-cc{background:#f1f5f9;border-right-color:#cbd5e
 body[data-theme=light] #content .rf-phone-local{background:transparent!important;border:0!important}
 body[data-theme=light] .mvp-search{background:#fff!important;border-color:#cbd5e1!important}
 body[data-theme=light] #content .mvp-search input:not([type=checkbox]):not([type=radio]):not([type=file]){background:transparent!important;border:0!important;padding:0!important}
+/* No "More" drawer: the bottom bar (Home | My reservations | (Admin) | Profile) on every screen size */
+.rf-mvp #menuButton{display:none!important}
+.rf-mvp .mobile-nav:not([hidden]){display:grid;grid-template-columns:repeat(var(--nav-cols,3),minmax(0,1fr));position:fixed;bottom:0;left:0;right:0;z-index:6}
+@media(min-width:769px){.rf-mvp .mobile-nav:not([hidden]){padding-left:max(16px,calc(50vw - 320px));padding-right:max(16px,calc(50vw - 320px))}.rf-mvp body{padding-bottom:84px}}
+/* Profile view: Help center and Log out */
+.mvp-prof-links{display:grid;gap:10px;margin-top:18px}
+.mvp-prof-help,.mvp-prof-logout{display:flex;align-items:center;gap:8px;min-height:48px;padding:0 14px;border-radius:14px;border:1px solid var(--line,#cbd5e1);background:transparent;color:inherit;font:700 15px/1 inherit;text-decoration:none;cursor:pointer}
+.mvp-prof-logout{color:#dc2626;border-color:rgba(220,38,38,.35)}
+body[data-theme=dark] .mvp-prof-help{border-color:#334155;color:#e2e8f0}
+body[data-theme=dark] .mvp-prof-logout{color:#f87171;border-color:rgba(248,113,113,.35)}
