@@ -5,6 +5,7 @@ import { adminChats } from './health';
 import { CENTRAL_PAYMENT_CARD, CENTRAL_PAYMENT_HOLDER, SUPER_ADMIN_TG_ID } from './mvp';
 import { imageContent } from './image-content';
 import { groupLine, parseGroup } from './table-group';
+import { getRestaurantPay } from './restaurant-pay';
 import { ban, guestKeys, loadGuestBooking, type GuestBooking } from './guest-policy';
 
 /*
@@ -31,8 +32,24 @@ export async function ownerChats() {
   const own = env.SUPER_ADMIN_TG_ID?.trim() || SUPER_ADMIN_TG_ID;
   return own ? [own] : await adminChats();
 }
-/** On only with a real card number and a chat that can verify receipts. */
-export const p2pEnabled = async () => p2pCard().ready && (await ownerChats()).length > 0;
+/**
+ * On with a chat that can verify receipts and somewhere to pay: the restaurant's own Click link or card
+ * (app/restaurant-pay.ts), else the central card.
+ */
+export const p2pEnabled = async (restaurantId?: string) => {
+  if (!(await ownerChats()).length) return false;
+  if (p2pCard().ready) return true;
+  if (!restaurantId) return false;
+  const pay = await getRestaurantPay(restaurantId);
+  return !!(pay.clickPayUrl || pay.card);
+};
+/** Where this booking's money goes: the restaurant's Click link / card, or the central card. */
+export async function payeeFor(restaurantId: string) {
+  const pay = await getRestaurantPay(restaurantId);
+  const central = p2pCard();
+  if (pay.card) return { payee: 'restaurant' as const, clickPayUrl: pay.clickPayUrl, card: pay.card, holder: pay.holder };
+  return { payee: pay.clickPayUrl ? ('click' as const) : ('central' as const), clickPayUrl: pay.clickPayUrl, card: central.ready ? central.card : '', holder: central.ready ? central.holder : '' };
+}
 
 /*
  * Balance of a prepaid booking (no migration: app_settings p2p:<id>):
@@ -50,6 +67,10 @@ export interface P2PState {
   paid?: number;
   remaining?: number;
   paymentStatus?: 'pending' | 'partially_paid' | 'paid';
+  payee?: 'restaurant' | 'click' | 'central';
+  clickPayUrl?: string;
+  card?: string;
+  holder?: string;
   until: number;
   createdAt: number;
   hash?: string;
@@ -77,15 +98,17 @@ const saveState = (id: string, s: P2PState) =>
   env.DB!.prepare("INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,'p2p') ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(key(id), JSON.stringify(s), new Date().toISOString()).run();
 
 /** Called by the quick booking right after the insert (deposit_status already "p2p_wait"). */
-export async function startP2P(id: string, total: number, minDeposit = total, now = Date.now()) {
-  const state: P2PState = { amount: total, total, minDeposit: Math.min(total, minDeposit), paymentStatus: 'pending', until: now + P2P_HOLD_MS, createdAt: now };
+export async function startP2P(id: string, total: number, minDeposit = total, now = Date.now(), restaurantId = '') {
+  const to = restaurantId ? await payeeFor(restaurantId) : { payee: 'central' as const, clickPayUrl: '', card: p2pCard().card, holder: p2pCard().holder };
+  const state: P2PState = { amount: total, total, minDeposit: Math.min(total, minDeposit), paymentStatus: 'pending', until: now + P2P_HOLD_MS, createdAt: now, ...to };
   await saveState(id, state);
   return paymentInfo(state);
 }
 /** What the payment step shows: the card, the full amount, the least advance allowed and the deadline. */
 export const paymentInfo = (s: P2PState) => {
-  const c = p2pCard();
-  return { card: c.card, holder: c.holder, amount: totalOf(s), total: totalOf(s), minDeposit: minDepositOf(s), until: new Date(s.until).toISOString() };
+  const c = s.payee ? { card: s.card || '', holder: s.holder || '' } : p2pCard();
+  // clickPayUrl: the page adds &amount=<chosen>&transaction_param=<booking id> (the guest picks full or advance).
+  return { card: c.card, holder: c.holder, clickPayUrl: s.clickPayUrl || '', payee: s.payee || 'central', amount: totalOf(s), total: totalOf(s), minDeposit: minDepositOf(s), until: new Date(s.until).toISOString() };
 };
 
 const money = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -97,12 +120,13 @@ function dishes(raw: string | null | undefined) {
     return '';
   }
 }
-export function ownerCaption(b: GuestBooking & { preorder_items?: string | null; end_slot?: string | null }, amount: number, now: number, total = amount) {
+export function ownerCaption(b: GuestBooking & { preorder_items?: string | null; end_slot?: string | null }, amount: number, now: number, total = amount, payee = '') {
   const name = b.customer_name && !b.customer_name.startsWith('guest:') ? b.customer_name : 'Mijoz';
   const meals = dishes(b.preorder_items);
   return [
     '🧾 <b>Yangi to‘lov cheki</b>',
     `💰 Kutilayotgan summa: <b>${money(amount)} UZS</b>`,
+    payee ? `🏦 Qabul qiluvchi: <b>${payee}</b>` : '',
     `🧾 Jami zakaz summasi: <b>${money(total)} UZS</b>`,
     `✅ Hozir o‘tkazilgan avans (Depozit): <b>${money(amount)} UZS</b>`,
     `💳 Qoldiq (Restoranda to‘lanadi): <b>${money(Math.max(0, total - amount))} UZS</b>`,
@@ -168,7 +192,8 @@ export async function submitReceipt(id: string, userId: string, request: Request
   if (!fresh.meta.changes) throw new ApiError(409, DUPLICATE_RECEIPT);
   const full = await loadGuestBooking(id);
   if (!full) throw new ApiError(404, 'Bron topilmadi.');
-  const caption = ownerCaption({ ...full, preorder_items: b.preorder_items, end_slot: b.end_slot }, deposit, now, total);
+  const payee = state.payee === 'restaurant' ? `restoran kartasi ${state.card || ''}${state.clickPayUrl ? ' yoki Click (restoran)' : ''}` : state.payee === 'click' ? 'Click (restoran hisobi)' : 'markaziy karta';
+  const caption = ownerCaption({ ...full, preorder_items: b.preorder_items, end_slot: b.end_slot }, deposit, now, total, payee);
   let sent = false;
   for (const chat of await ownerChats()) if (await sendPhoto(chat, bytes, type, caption, ownerKeyboard(id))) sent = true;
   if (!sent) {

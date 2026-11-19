@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     const keys = guestKeys(contact, [tgChat]);
     if (await banned(keys)) throw new ApiError(403, BAN_MESSAGE);
     const strike = await restricted(keys);
-    const prepay = await p2pEnabled();
+    const prepay = await p2pEnabled(restaurantId);
     if (strike && !prepay) throw new ApiError(403, STRIKE_MESSAGE);
     // Prepayment to the central card (app/p2p.ts). The bill: the pre-ordered dishes (or the deposit itself when
     // nothing is ordered). The least the guest may send now: the restaurant's deposit, 100 000 after strikes,
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     const telegramLink = bot ? `https://t.me/${bot}?start=book_${id}` : '';
     if (amount) {
       // Held for the transfer: the restaurant hears about it only after the receipt is approved.
-      const payment = await startP2P(id, amount, minDeposit);
+      const payment = await startP2P(id, amount, minDeposit, Date.now(), restaurantId);
       return json({ ok: true, demo: false, id, passCode: code, passPayload: code ? PASS_PREFIX + code : '', notified: false, telegramLink, payment, restricted: strike ? STRIKE_MESSAGE + ' Oldindan to‘lov bilan bron qilishingiz mumkin.' : '', ...summary }, 201);
     }
     // The restaurant gets the card with Confirm / Cancel at once; a linked customer gets their own message.

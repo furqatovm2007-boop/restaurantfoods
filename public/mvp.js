@@ -69,6 +69,9 @@
       payCard: 'Karta raqami',
       payHolder: 'Karta egasi',
       payCopy: '📋 Kartani nusxalash (Copy)',
+      clickPay: 'Click orqali to‘lash',
+      clickHint: 'Click ilovasi restoran nomi va summa bilan ochiladi. To‘lagach, chek skrinshotini pastga yuklang.',
+      payCardOr: 'Yoki karta raqamiga o‘tkazing',
       payCopied: 'Nusxalandi ✓',
       payUntil: (t) => `Stol ${t} gacha ushlab turiladi — shu vaqtgacha to‘lang, aks holda bo‘shatiladi.`,
       payFile: '🧾 To‘lov chekini yuklang / Upload receipt screenshot',
@@ -181,6 +184,9 @@
       payCard: 'Номер карты',
       payHolder: 'Владелец карты',
       payCopy: '📋 Скопировать карту',
+      clickPay: 'Оплатить через Click',
+      clickHint: 'Откроется приложение Click с рестораном и суммой. После оплаты загрузите снимок чека ниже.',
+      payCardOr: 'Или переведите на карту',
       payCopied: 'Скопировано ✓',
       payUntil: (t) => `Столик держится до ${t} — оплатите до этого времени, иначе он освободится.`,
       payFile: '🧾 Загрузите чек оплаты / Upload receipt screenshot',
@@ -293,6 +299,9 @@
       payCard: 'Card number',
       payHolder: 'Card holder',
       payCopy: '📋 Copy card number',
+      clickPay: 'Pay via Click',
+      clickHint: 'The Click app opens with the restaurant and the amount. After paying, upload the receipt screenshot below.',
+      payCardOr: 'Or transfer to the card',
       payCopied: 'Copied ✓',
       payUntil: (t) => `The table is held until ${t} — pay before then, or it is released.`,
       payFile: '🧾 Upload receipt screenshot',
@@ -721,7 +730,7 @@
       min < total
         ? `<fieldset class="mvp-pay-choice"><legend>${h(c('payChoose'))}</legend><label><input type="radio" name="payMode" value="full" checked> ${h(c('payFull'))} — <b>${h(fmtMoney(total))} so‘m</b></label>${advance < total ? `<label><input type="radio" name="payMode" value="advance"> ${h(c('payAdvance'))} — <b>${h(fmtMoney(advance))} so‘m</b></label>` : ''}<label><input type="radio" name="payMode" value="custom"> ${h(c('payCustom'))}</label><input type="number" inputmode="numeric" data-custom min="${min}" max="${total}" step="1000" placeholder="${h(c('payRange')(fmtMoney(min), fmtMoney(total)))}" hidden><p class="mvp-pay-err" data-custom-err role="alert" hidden></p></fieldset>`
         : '';
-    dlg.innerHTML = `<h2>${h(c('payTitle'))}</h2>${res.restricted ? `<p class="mvp-pay-warn">${h(res.restricted)}</p>` : ''}<p class="mvp-pay-why">${h(c('payWhy'))}</p>${choice}<div class="mvp-pay-sum"><small>${h(c('payNow'))}</small><b data-now>${h(fmtMoney(total))} so‘m</b><small data-rest-line ${total > 0 ? '' : 'hidden'}>${h(c('payRest'))}: <b data-rest>0</b> so‘m</small></div><div class="mvp-pay-card"><small>${h(c('payCard'))}</small><b data-card>${h(pay.card)}</b><small>${h(c('payHolder'))}: <b>${h(pay.holder)}</b></small><button type="button" class="quiet mvp-pay-copy" data-copy>${h(c('payCopy'))}</button></div><p class="mvp-pay-until">⏳ ${h(c('payUntil')(tashkentTime(pay.until)))}</p><label class="mvp-pay-file">${h(c('payFile'))}<input type="file" accept="image/*" data-receipt></label><button type="button" class="primary mvp-pay-send" data-send>${h(c('paySend'))}</button><p class="form-message" role="status" data-pay-msg></p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
+    dlg.innerHTML = `<h2>${h(c('payTitle'))}</h2>${res.restricted ? `<p class="mvp-pay-warn">${h(res.restricted)}</p>` : ''}<p class="mvp-pay-why">${h(c('payWhy'))}</p>${choice}<div class="mvp-pay-sum"><small>${h(c('payNow'))}</small><b data-now>${h(fmtMoney(total))} so‘m</b><small data-rest-line ${total > 0 ? '' : 'hidden'}>${h(c('payRest'))}: <b data-rest>0</b> so‘m</small></div>${pay.clickPayUrl ? `<a class="mvp-click-pay" data-click href="#" target="_blank" rel="noopener"></a><p class="muted mvp-click-hint">${h(c('clickHint'))}</p>` : ''}${pay.card ? `<div class="mvp-pay-card"><small>${h(pay.clickPayUrl ? c('payCardOr') : c('payCard'))}</small><b data-card>${h(pay.card)}</b><small>${h(c('payHolder'))}: <b>${h(pay.holder)}</b></small><button type="button" class="quiet mvp-pay-copy" data-copy>${h(c('payCopy'))}</button></div>` : ''}<p class="mvp-pay-until">⏳ ${h(c('payUntil')(tashkentTime(pay.until)))}</p><label class="mvp-pay-file">${h(c('payFile'))}<input type="file" accept="image/*" data-receipt></label><button type="button" class="primary mvp-pay-send" data-send>${h(c('paySend'))}</button><p class="form-message" role="status" data-pay-msg></p><button type="button" class="quiet" data-close>${h(c('close'))}</button>`;
     const msg = dlg.querySelector('[data-pay-msg]');
     const customBox = dlg.querySelector('[data-custom]');
     const chosen = () => {
@@ -744,6 +753,18 @@
       const sendBtn = dlg.querySelector('[data-send]');
       if (sendBtn && !sendBtn.dataset.busy) sendBtn.disabled = !ok;
       dlg.querySelector('[data-now]').textContent = (ok ? fmtMoney(now) : '—') + ' so‘m';
+      // 1 tap in Click: the restaurant's link + the chosen amount + this booking's id.
+      const click = dlg.querySelector('[data-click]');
+      if (click) {
+        if (ok) {
+          const u = new URL(pay.clickPayUrl);
+          u.searchParams.set('amount', String(now));
+          u.searchParams.set('transaction_param', String(res.id));
+          click.href = u.toString();
+        }
+        click.toggleAttribute('aria-disabled', !ok);
+        click.textContent = `💳 ${c('clickPay')} (${ok ? fmtMoney(now) : '—'} so‘m)`;
+      }
       dlg.querySelector('[data-rest]').textContent = ok ? fmtMoney(total - now) : '—';
     };
     dlg.querySelectorAll('[name=payMode]').forEach((r) =>
@@ -754,9 +775,13 @@
       }),
     );
     customBox?.addEventListener('input', showSplit);
+    dlg.querySelector('[data-click]')?.addEventListener('click', (e) => {
+      if (e.currentTarget.hasAttribute('aria-disabled')) e.preventDefault();
+    });
     showSplit();
     dlg.querySelector('[data-close]').onclick = () => dlg.close();
-    dlg.querySelector('[data-copy]').onclick = async (e) => {
+    const copyBtn = dlg.querySelector('[data-copy]');
+    if (copyBtn) copyBtn.onclick = async (e) => {
       const btn = e.currentTarget,
         digits = String(pay.card).replace(/\s+/g, '');
       try {

@@ -245,3 +245,7 @@ body[data-theme=dark] .mvp-add-hint{color:#94a3b8}
 body[data-theme=light] .mvp-3d-stage{background:radial-gradient(circle at 50% 40%,#ffffff,#e2e8f0)}
 body[data-theme=light] .mvp-3d-wait{color:#334155}
 body[data-theme=dark] .mvp-price{color:#34d399}
+/* 1-tap "Pay via Click" */
+.mvp-click-pay{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;margin:10px 0 4px;border-radius:14px;background:linear-gradient(135deg,#00a6ff,#0072ff);color:#fff!important;font-weight:800;font-size:1.02rem;text-decoration:none;box-shadow:0 8px 20px rgba(0,114,255,.3)}
+.mvp-click-pay[aria-disabled]{opacity:.5;pointer-events:none}
+.mvp-click-hint{margin:0 0 8px;font-size:.82rem}
