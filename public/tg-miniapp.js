@@ -13,7 +13,8 @@
  */
 (function () {
   'use strict';
-  const BG = '#0a0f0d';
+  // The site's one dark theme (navy): Telegram's own theme colours never override it.
+  const BG = '#0b1526';
   const api = { active: false, webApp: null, ready: Promise.resolve(false), haptic() {}, async signIn() { return false; }, async sharePhone() { return { status: 'unavailable' }; } };
   window.RFTelegram = api;
   // Deep link from the bot (or any link): ?restaurant_id=ID&action=book opens exactly that restaurant's
@@ -65,10 +66,18 @@
       tg.setBackgroundColor?.(BG);
       tg.setBottomBarColor?.(BG);
       tg.disableVerticalSwipes?.();
+      // Telegram switching its light / dark theme must not repaint our bars white.
+      tg.onEvent?.('themeChanged', () => {
+        try {
+          tg.setHeaderColor?.(BG);
+          tg.setBackgroundColor?.(BG);
+          tg.setBottomBarColor?.(BG);
+        } catch {}
+      });
     } catch {}
     document.documentElement.classList.add('rf-tg');
     try {
-      if (!localStorage.getItem('rf-theme')) localStorage.setItem('rf-theme', 'dark');
+      localStorage.setItem('rf-theme', 'dark');
     } catch {}
     // Telegram puts its launch params in the hash; the app routes by hash, so open the wanted page instead.
     if (!location.hash || location.hash === '#' || /tgWebApp/.test(location.hash)) {

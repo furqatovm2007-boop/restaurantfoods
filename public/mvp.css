@@ -136,3 +136,38 @@
 .mvp-pay .mvp-pay-send{width:100%;min-height:50px}
 .mvp-bk-late{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:rgba(217,169,44,.14);font-size:.84rem}
 .mvp-bk-pay{margin:8px 8px 0 0;min-height:42px}
+/*
+ * One dark theme (the site and the Telegram Mini App; the theme switch is locked, ui/restaurant.js THEME_LOCK):
+ * navy bars, dark inputs with white text, light text on every dark card, and dark dialogs — no white bars.
+ */
+#drawerTheme[hidden]{display:none!important}
+body[data-theme=dark] #topbar,body[data-theme=dark] .mobile-nav{background:rgba(11,21,38,.96)!important;color:#f1f5f9;border-color:#1e293b!important;box-shadow:0 1px 0 #1e293b}
+body[data-theme=dark] .mobile-nav{border-top:1px solid #1e293b!important}
+body[data-theme=dark] .mobile-nav a,body[data-theme=dark] .mobile-nav button{color:#cbd5e1}
+body[data-theme=dark] .mvp-lang{background:#132035;border-color:#334155}
+body[data-theme=dark] .mvp-lang button{color:#e2e8f0}
+body[data-theme=dark] #content input:not([type=checkbox]):not([type=radio]):not([type=file]),body[data-theme=dark] #content select,body[data-theme=dark] #content textarea,body[data-theme=dark] dialog input:not([type=checkbox]):not([type=radio]):not([type=file]),body[data-theme=dark] dialog select{background:#132035!important;color:#fff!important;border:1px solid #334155!important}
+body[data-theme=dark] input::placeholder,body[data-theme=dark] textarea::placeholder{color:#94a3b8!important;opacity:1}
+body[data-theme=dark] .rf-phone-group{background:#132035;border-color:#334155;color:#fff}
+body[data-theme=dark] .rf-phone-cc{background:#1b2a44;border-right-color:#334155;color:#fff}
+body[data-theme=dark] #content .rf-phone-local{background:transparent!important;border:0!important;color:#fff!important}
+body[data-theme=dark] .rf-phone-list{background:#0f172a;color:#e2e8f0;border-color:#334155}
+body[data-theme=dark] .mvp-search{background:#132035!important;border-color:#334155!important}
+body[data-theme=dark] #content .mvp-search input:not([type=checkbox]):not([type=radio]):not([type=file]){background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
+/* Dark cards: the date / availability headings and the selected-dishes box stay readable */
+body[data-theme=dark] #bookingPlan h3,body[data-theme=dark] #bookingPlan h4{color:#e2e8f0}
+body[data-theme=dark] .mvp-picked,body[data-theme=dark] .mvp-checkout .mvp-picked{color:#fff;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.35)}
+body[data-theme=dark] .mvp-picked b{color:#fcd34d}
+body[data-theme=dark] .mvp-slot{color:#e2e8f0}
+/* Dialogs (success, prepayment, profile) in the dark theme too */
+body[data-theme=dark] .mvp-done,body[data-theme=dark] .mvp-profile{background:#0f172a;color:#e2e8f0;border:1px solid #1e293b}
+body[data-theme=dark] .mvp-pay-why,body[data-theme=dark] .mvp-done .muted,body[data-theme=dark] .mvp-profile .muted,body[data-theme=dark] .mvp-profile h4{color:#94a3b8}
+body[data-theme=dark] .mvp-pay-sum,body[data-theme=dark] .mvp-pay-card,body[data-theme=dark] .mvp-bk{background:#132035;border-color:#334155;color:#e2e8f0}
+body[data-theme=dark] .mvp-pay-sum b{color:#6ee7b7}
+body[data-theme=dark] .mvp-pay-until{color:#fcd34d}
+body[data-theme=dark] .mvp-pay-warn{background:rgba(248,113,113,.15);color:#fecaca}
+body[data-theme=dark] .mvp-x{border-color:#334155;color:#e2e8f0}
+body[data-theme=dark] .mvp-prof-dl dt{color:#94a3b8}
+body[data-theme=dark] .mvp-bk-late{background:rgba(252,211,77,.12);color:#fde68a}
+body[data-theme=dark] .mvp-done .quiet,body[data-theme=dark] .mvp-profile .quiet{color:#e2e8f0;border-color:#334155;background:transparent}
+#content .mvp-search:has(>input){display:flex!important;align-items:center;gap:10px;margin:0 0 20px}
