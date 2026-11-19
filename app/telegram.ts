@@ -68,15 +68,27 @@ export interface BookingMessage {
   customer_username?: string | null;
 }
 
+/*
+ * The guest for the restaurant: the typed (working) phone, and their Telegram account whenever it is known
+ * (booked through Telegram, or took the booking with the t.me link) — tg://user?id and @username, so the
+ * restaurant can write or Telegram-call them even when the SIM card is off.
+ */
+export function customerLines(b: Pick<BookingMessage, 'phone' | 'customer_name' | 'customer_chat' | 'customer_username'>) {
+  const chat = b.customer_chat && /^\d{1,15}$/.test(b.customer_chat) ? b.customer_chat : '';
+  const name = html(b.customer_name && !/^guest:/.test(b.customer_name) ? b.customer_name : chat ? 'Telegram' : 'Mijoz');
+  return [
+    chat ? `👤 <b>Mijoz:</b> <a href="tg://user?id=${chat}">${name}</a>${b.customer_username ? ' (@' + html(b.customer_username) + ')' : ''}` : `👤 <b>Mijoz:</b> ${name}`,
+    `📞 <b>Telefon:</b> ${html(prettyPhone(b.phone))}`,
+    chat ? `✈️ <b>Telegram:</b> <a href="tg://user?id=${chat}">profilni ochish</a>${b.customer_username ? ' · https://t.me/' + html(b.customer_username) : ''}` : '✈️ <b>Telegram:</b> hali ulanmagan',
+  ];
+}
+
 export function bookingText(b: BookingMessage) {
   const provider = b.deposit_status === 'paid' && b.deposit_provider ? ` (${b.deposit_provider === 'payme' ? 'Payme' : 'Click'})` : '';
   const lines = [
     '📌 <b>Yangi Bron!</b>',
     `🏠 <b>Restoran:</b> ${html(b.restaurant_name)}`,
-    // The guest's Telegram profile (tap to open the chat) when they booked through Telegram.
-    b.customer_chat && /^\d{1,15}$/.test(b.customer_chat)
-      ? `👤 <b>Mijoz:</b> <a href="tg://user?id=${b.customer_chat}">${html(b.customer_name || 'Telegram')}</a>${b.customer_username ? ' (@' + html(b.customer_username) + ')' : ''} · ${html(prettyPhone(b.phone))}`
-      : `👤 <b>Mijoz:</b> ${html(prettyPhone(b.phone))}`,
+    ...customerLines(b),
     `🍽 <b>Stol:</b> ${b.table_number}-stol · ${b.guests} kishi`,
     `📅 <b>Sana:</b> ${html(b.date)}`,
     `🕒 <b>Vaqt:</b> ${html(b.slot)}${b.end_slot ? '–' + html(b.end_slot.slice(0, 5)) : ''}`,
@@ -98,7 +110,7 @@ export const bookingKeyboard = (id: string) => ({
 
 async function loadBooking(id: string) {
   return env.DB!.prepare(
-    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,a.telegram_chat_id AS customer_chat,u.value AS customer_username FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings u ON u.key='tguser:'||a.telegram_chat_id WHERE b.id=?",
+    "SELECT b.id,b.phone,b.table_number,b.date,b.slot,b.end_slot,b.guests,b.status,b.deposit_status,b.preorder_items,b.restaurant_id,r.name AS restaurant_name,r.telegram_chat_id,d.provider AS deposit_provider,a.name AS customer_name,COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) AS customer_chat,u.value AS customer_username FROM bookings b JOIN restaurants r ON r.id=b.restaurant_id LEFT JOIN deposits d ON d.booking_id=b.id LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings bc ON bc.key='bookchat:'||b.id LEFT JOIN app_settings u ON u.key='tguser:'||COALESCE(NULLIF(a.telegram_chat_id,''),bc.value) WHERE b.id=?",
   )
     .bind(id)
     .first<BookingMessage & { restaurant_id: string; telegram_chat_id: string | null }>();
@@ -291,7 +303,7 @@ async function webAppContact(chatId: string, phone: string | null) {
  * this chat now receives that booking's messages (the restaurant's confirm / reject). The first chat to open the
  * link keeps it; another chat is refused. The booking id is the secret here — it is shown only to the guest.
  */
-async function claimBooking(chatId: string, bookingId: string) {
+async function claimBooking(chatId: string, bookingId: string, from?: { username?: string }) {
   const b = await env.DB!.prepare("SELECT b.id,b.status,a.telegram_chat_id AS account_chat,c.value AS claimed FROM bookings b LEFT JOIN accounts a ON a.id=b.user_id LEFT JOIN app_settings c ON c.key='bookchat:'||b.id WHERE b.id=?").bind(bookingId).first<any>();
   if (!b || !['pending', 'confirmed'].includes(b.status)) {
     await telegram('sendMessage', { chat_id: chatId, text: 'Bu bron topilmadi yoki faol emas.', reply_markup: await keyboardFor(chatId) });
@@ -302,7 +314,15 @@ async function claimBooking(chatId: string, bookingId: string) {
     await telegram('sendMessage', { chat_id: chatId, text: 'Bu bron boshqa Telegram akkauntiga ulangan.', reply_markup: await keyboardFor(chatId) });
     return 'book_claim_taken';
   }
-  if (!owner) await env.DB!.prepare("INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,'telegram') ON CONFLICT(key) DO NOTHING").bind('bookchat:' + b.id, chatId, new Date().toISOString()).run();
+  if (from?.username) await saveTelegramUsername(chatId, from.username).catch(() => null);
+  if (!owner) {
+    await env.DB!.prepare("INSERT INTO app_settings (key,value,updated_at,updated_by) VALUES (?,?,?,'telegram') ON CONFLICT(key) DO NOTHING").bind('bookchat:' + b.id, chatId, new Date().toISOString()).run();
+    // The restaurant got the card before the guest opened the bot: now it gets their Telegram too.
+    const full = await loadBooking(b.id);
+    if (full)
+      for (const chat_id of await restaurantChats(full.restaurant_id))
+        await telegram('sendMessage', { chat_id, parse_mode: 'HTML', text: [`🔗 <b>Mijoz Telegram’ni uladi</b> — ${full.table_number}-stol · ${html(full.date)} ${html(full.slot)}`, ...customerLines(full)].join('\n') });
+  }
   await notifyCustomer(b.id, b.status === 'confirmed' ? 'confirmed' : 'created');
   return 'book_claimed';
 }
@@ -350,7 +370,7 @@ async function customerUpdate(msg: NonNullable<Update['message']>) {
   }
   const code = text.startsWith('/start') ? text.split(/\s+/)[1]?.trim() : '';
   // "Telegram’da chiptani olish" from the booking success screen: t.me/<bot>?start=book_<booking id>.
-  if (code && /^book_[0-9a-f-]{36}$/.test(code)) return claimBooking(chatId, code.slice(5));
+  if (code && /^book_[0-9a-f-]{36}$/.test(code)) return claimBooking(chatId, code.slice(5), msg.from);
   if (code && /^l_[A-Za-z0-9]{24}$/.test(code)) {
     const opened = await env.DB!.prepare("UPDATE telegram_logins SET chat_id=?,status='awaiting_contact' WHERE code=? AND status IN ('pending','awaiting_contact') AND expires_at>?").bind(chatId, code, Date.now()).run();
     // This Telegram account already belongs to a site account with a verified number: approve at once,

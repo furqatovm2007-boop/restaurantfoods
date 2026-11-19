@@ -35,11 +35,13 @@
       seats: 'kishilik',
       name: 'Ismingiz',
       phone: 'Telefon raqam',
+      phoneActive: 'Hozir ishlaydigan telefon raqamingiz (Agar Telegram raqamingiz o‘chgan bo‘lsa, ishlaydiganini yozing)',
       time: 'Vaqt',
       guests: 'Mehmonlar soni',
       confirm: 'Tasdiqlash',
       sending: 'Yuborilmoqda…',
       badPhone: 'Telefon raqamni to‘liq kiriting (mamlakat kodini chapdan tanlang).',
+      badUzPhone: 'Raqamni +998 XX XXX XX XX ko‘rinishida kiriting.',
       badName: 'Ismingizni kiriting.',
       done: 'Bron tasdiqlandi!',
       doneDemo: 'DEMO bron ko‘rsatildi',
@@ -106,11 +108,13 @@
       seats: 'мест',
       name: 'Ваше имя',
       phone: 'Номер телефона',
+      phoneActive: 'Ваш рабочий номер телефона (если номер в Telegram уже не работает, укажите действующий)',
       time: 'Время',
       guests: 'Гостей',
       confirm: 'Подтвердить',
       sending: 'Отправка…',
       badPhone: 'Введите номер полностью (код страны — слева).',
+      badUzPhone: 'Введите номер в формате +998 XX XXX XX XX.',
       badName: 'Введите ваше имя.',
       done: 'Бронь подтверждена!',
       doneDemo: 'DEMO-бронь показана',
@@ -177,11 +181,13 @@
       seats: 'seats',
       name: 'Full name',
       phone: 'Phone number',
+      phoneActive: 'Your phone number that works now (if your Telegram number is switched off, enter a working one)',
       time: 'Time',
       guests: 'Guests',
       confirm: 'Confirm Booking',
       sending: 'Sending…',
       badPhone: 'Enter the full phone number (pick the country code on the left).',
+      badUzPhone: 'Enter the number as +998 XX XXX XX XX.',
       badName: 'Enter your name.',
       done: 'Booking Confirmed!',
       doneDemo: 'DEMO booking shown',
@@ -328,10 +334,12 @@
   };
   const telegramMode = () => window.MVP_CHECKOUT !== 'guest';
   // Country flag + dial code and the local digits (public/phone-input.js); a plain field if that script is missing.
-  const phoneField = () =>
+  // At checkout the label asks for the number that works now; it starts from the Telegram number when known.
+  const phoneField = (label = c('phone'), value = typed.phone || me()?.telegram?.phone || me()?.contactPhone || '') =>
     window.RFPhone
-      ? window.RFPhone.html(typed.phone || me()?.contactPhone || '', typed.country || 'uz', lang(), c('phone'))
-      : `<label>${h(c('phone'))}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(typed.phone || me()?.contactPhone || '')}"></label>`;
+      ? window.RFPhone.html(value, typed.country || 'uz', lang(), label)
+      : `<label>${h(label)}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(value)}"></label>`;
+  const uzPhone = (v) => /^\+998\d{9}$/.test(v);
   const me = () => (typeof state !== 'undefined' ? state.user : null);
   const tgUser = () => {
     const u = me();
@@ -387,9 +395,9 @@
       u = tgUser();
     const who = tg
       ? u
-        ? `<p class="mvp-who">✈️ ${h(u.name || '')}${u.contactPhone ? ' · 📞 ' + h(u.contactPhone) : ''}</p>`
+        ? `<p class="mvp-who">✈️ ${h(u.name || '')}</p>${phoneField(c('phoneActive'), typed.phone || u.telegram?.phone || u.contactPhone || '')}`
         : `<p class="mvp-who">✈️ ${h(c('tgNote'))}</p>`
-      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name || me()?.name || '')}"></label>${phoneField()}`;
+      : `<label>${h(c('name'))}<input name="name" autocomplete="name" minlength="2" maxlength="60" required value="${h(typed.name || me()?.name || '')}"></label>${phoneField(c('phoneActive'))}`;
     const label = tg && u ? '✅ ' + c('bookNow') : '✈️ ' + c('tgBook');
     form.className = 'form mvp-checkout';
     form.noValidate = true;
@@ -440,13 +448,19 @@
         if (name.length < 2) return (msg.textContent = c('badName'));
         if (!phone) return (msg.textContent = c('badPhone'));
       }
+      // Telegram checkout: the working number typed over the Telegram one, Uzbek format only.
+      let activePhone = '';
+      if (tg && form.elements.phone) {
+        activePhone = form.querySelector('[data-rf-phone]') ? form.elements.phone.value : normPhone(form.elements.phone.value);
+        if (!uzPhone(activePhone)) return (msg.textContent = c('badUzPhone'));
+      }
       // The Telegram tab opens inside the click (before any await) so the phone's browser allows it.
       const tab = tg && !tgUser() && !window.RFTelegram?.active ? window.open('', '_blank') : null;
       busy = true;
       btn.disabled = true;
       btn.innerHTML = `<span class="mvp-spin" aria-hidden="true"></span> ${h(c('booking'))}`;
       msg.textContent = '';
-      const body = () => ({ restaurantId: r.id, tableNumber: tb.number, tableId: tb.id, date, slot: start?.value, endSlot: document.getElementById('planEnd')?.value, guests: Number(form.elements.guests.value), ...(tg ? {} : { name, phone }), preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })) });
+      const body = () => ({ restaurantId: r.id, tableNumber: tb.number, tableId: tb.id, date, slot: start?.value, endSlot: document.getElementById('planEnd')?.value, guests: Number(form.elements.guests.value), ...(tg ? (activePhone ? { phone: activePhone } : {}) : { name, phone }), preorderItems: [...picked(r.id)].map(([id, quantity]) => ({ id, quantity })) });
       try {
         if (tg && !tgUser() && !(await telegramSignIn(msg, tab))) return;
         let res;

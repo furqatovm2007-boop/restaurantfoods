@@ -20,7 +20,9 @@ const {md5}=deep['../../../md5'],{bookingText,prettyPhone}=deep['../../../telegr
 for(const s of ['','a','abc','Click✓ooo',...Array.from({length:130},(_,i)=>'x'.repeat(i))])assert.equal(md5(s),crypto.createHash('md5').update(s).digest('hex'));
 assert.equal(prettyPhone('+998901234567'),'+998 90 123 45 67');
 const card=bookingText({id:'b',restaurant_name:'A&B',phone:'+998901234567',table_number:4,date:'2026-11-01',slot:'19:30',end_slot:'21:30',guests:2,deposit_status:'paid',deposit_provider:'payme',status:'pending'});
-for(const part of ['📌 <b>Yangi Bron!</b>','👤 <b>Mijoz:</b> +998 90 123 45 67','🍽 <b>Stol:</b> 4-stol','🕒 <b>Vaqt:</b> 19:30–21:30','💵 <b>Depozit:</b> To‘langan (Payme)','A&amp;B'])assert.ok(card.includes(part),part);
+for(const part of ['📌 <b>Yangi Bron!</b>','👤 <b>Mijoz:</b> Mijoz','📞 <b>Telefon:</b> +998 90 123 45 67','✈️ <b>Telegram:</b> hali ulanmagan','🍽 <b>Stol:</b> 4-stol','🕒 <b>Vaqt:</b> 19:30–21:30','💵 <b>Depozit:</b> To‘langan (Payme)','A&amp;B'])assert.ok(card.includes(part),part);
+{const tgCard=bookingText({id:'b',restaurant_name:'R',phone:'+15551234567',table_number:2,date:'2026-11-01',slot:'19:30',end_slot:'',guests:2,deposit_status:'not_required',status:'pending',customer_name:'Ann',customer_chat:'5551',customer_username:'ann_k'});
+ for(const part of ['👤 <b>Mijoz:</b> <a href="tg://user?id=5551">Ann</a> (@ann_k)','📞 <b>Telefon:</b> +15551234567','✈️ <b>Telegram:</b> <a href="tg://user?id=5551">profilni ochish</a> · https://t.me/ann_k'])assert.ok(tgCard.includes(part),part);}
 
 // Booking requires the SMS code for the phone it is made with.
 const date=new Date(Date.now()+3*86400000).toISOString().slice(0,10);

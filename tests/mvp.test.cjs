@@ -37,8 +37,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  let r=await post({});assert.equal(r.status,428);assert.equal((await r.json()).error,'TELEGRAM_PHONE');
  db.exec("UPDATE accounts SET contact_phone='+998901234567',contact_phone_verified=1,telegram_phone='+998901234567' WHERE id='tg:500'");
  // Booked under the Telegram account: name and phone from Telegram, no deposit, restaurant told, summary returned.
- r=await post({name:'Ignored',phone:'+998999999999',preorderItems:[{id:'m1',quantity:2}]});assert.equal(r.status,201);let d=await r.json();
+ r=await post({name:'Ignored',preorderItems:[{id:'m1',quantity:2}]});assert.equal(r.status,201);let d=await r.json();
  assert.equal(d.demo,false);assert.equal(d.name,'Aziz Karimov');assert.equal(d.phone,'+998901234567');assert.equal(d.table,1);assert.equal(d.slot,'14:00');assert.equal(d.notified,true);assert.deepEqual(told,[d.id]);assert.equal(d.preorderTotal,90000);
+ // The working number typed over the Telegram one (SIM off): used for the booking; +998 format only.
+ {limits.clear();const w=await post({slot:'16:00',endSlot:'17:00',phone:'+998 99 384 73 84'});assert.equal(w.status,201);const wd=await w.json();assert.equal(wd.phone,'+998993847384');assert.equal(wd.name,'Aziz Karimov','name still from Telegram');
+  assert.equal((await post({slot:'10:00',endSlot:'11:00',phone:'+15551234567'})).status,400,'Telegram checkout: Uzbek numbers only');
+  db.prepare("UPDATE bookings SET status='cancelled' WHERE id=?").run(wd.id);told.pop();limits.clear();}
  const b=db.prepare('SELECT * FROM bookings WHERE id=?').get(d.id);assert.equal(b.user_id,'tg:500');assert.equal(b.phone,'+998901234567');assert.equal(b.deposit_status,'not_required');assert.equal(b.status,'pending');
  // The table rules stay.
  limits.clear(); assert.equal((await post({})).status,409,'overlap refused');
@@ -53,7 +57,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // The restaurant's Telegram card: the guest's Telegram profile and ✅ Tasdiqlash / ❌ Joy band.
  const tgm=load('app/telegram.ts',{...cw,'./otp-store':load('app/otp-store.ts',cw),'./telegram-login':{createMagicLink:async()=>'',saveTelegramUsername:async()=>{}}});
  const card=tgm.bookingText({id:'x',restaurant_name:'Real',phone:'+998901234567',table_number:4,date:today,slot:'19:00',end_slot:'21:00',guests:2,deposit_status:'not_required',status:'pending',customer_name:'Aziz',customer_chat:'500',customer_username:'aziz_k'});
- assert.match(card,/<a href="tg:\/\/user\?id=500">Aziz<\/a> \(@aziz_k\) · \+998 90 123 45 67/);
+ assert.match(card,/<a href="tg:\/\/user\?id=500">Aziz<\/a> \(@aziz_k\)/);assert.match(card,/📞 <b>Telefon:<\/b> \+998 90 123 45 67/);assert.match(card,/✈️ <b>Telegram:<\/b> <a href="tg:\/\/user\?id=500">profilni ochish<\/a> · https:\/\/t\.me\/aziz_k/);
  assert.equal(tgm.bookingKeyboard('x').inline_keyboard[0].map(b=>b.text).join('|'),'✅ Tasdiqlash (Confirm)|❌ Joy band (Reject)');
  // Guest checkout (name + phone typed in): saved under a guest record, the restaurant told, and a one-tap
  // t.me/<bot>?start=book_<id> link; that link gives the booking to the first Telegram chat that opens it.

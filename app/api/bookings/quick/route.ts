@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
-import { ApiError, json, failure, body, text, integer, throttle, clientIp } from '../../../http';
+import { ApiError, json, failure, body, text, integer, phone, throttle, clientIp } from '../../../http';
 import { intlPhone } from '../../../phone-codes';
 import { interval, minutes, endMinuteSQL } from '../../../table-rules';
 import { quoteBookingMeals } from '../../../booking-preorder';
@@ -35,7 +35,9 @@ export async function POST(request: Request) {
     if (MVP_CHECKOUT === 'telegram') {
       const acc = u ? await env.DB!.prepare('SELECT name,telegram_chat_id,contact_phone,contact_phone_verified,telegram_phone FROM accounts WHERE id=?').bind(u.userId).first<any>() : null;
       if (!acc?.telegram_chat_id) throw new ApiError(401, 'TELEGRAM_LOGIN');
-      contact = (acc.contact_phone_verified && acc.contact_phone) || acc.telegram_phone || '';
+      // The number that works now: typed over the Telegram one when that SIM is off (+998 XX XXX XX XX only).
+      const typedPhone = typeof b.phone === 'string' && b.phone.trim() ? phone(b.phone.replace(/[\s()-]/g, '')) : '';
+      contact = typedPhone || (acc.contact_phone_verified && acc.contact_phone) || acc.telegram_phone || '';
       if (!/^\+998\d{9}$/.test(contact)) throw new ApiError(428, 'TELEGRAM_PHONE');
       name = String(acc.name || 'Mijoz').slice(0, 60);
     } else {
