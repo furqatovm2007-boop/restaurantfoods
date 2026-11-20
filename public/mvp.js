@@ -53,6 +53,8 @@
       helpCenter: 'Yordam markazi',
       view3d: '3D ko‘rinish',
       book3d: 'Interaktiv 3D menyu',
+      menuList: 'Oddiy menyu',
+      menu3dBtn: '3D menyu',
       book3dSub: 'Varaqlab ko‘ring va taom qo‘shing',
       book3dFail: '3D menyuni ochib bo‘lmadi.',
       loading3d: '3D model yuklanmoqda…',
@@ -177,6 +179,8 @@
       helpCenter: 'Центр помощи',
       view3d: '3D-просмотр',
       book3d: 'Интерактивное 3D-меню',
+      menuList: 'Обычное меню',
+      menu3dBtn: '3D-меню',
       book3dSub: 'Листайте и добавляйте блюда',
       book3dFail: 'Не удалось открыть 3D-меню.',
       loading3d: 'Загружаем 3D-модель…',
@@ -301,6 +305,8 @@
       helpCenter: 'Help center',
       view3d: '3D view',
       book3d: 'Interactive 3D menu',
+      menuList: 'Simple menu',
+      menu3dBtn: '3D menu',
       book3dSub: 'Flip through and add dishes',
       book3dFail: 'The 3D menu could not open.',
       loading3d: 'Loading the 3D model…',
@@ -462,7 +468,17 @@
     const total = rows.reduce((s, x) => s + x.m.price * x.q, 0);
     return `<p class="mvp-picked">🍽 ${h(c('picked'))}: ${rows.map((x) => h(x.m.name) + ' ×' + x.q).join(', ')} · <b>${money(total)}</b></p>`;
   }
-  const menuInner = (r, menu, sel) => `<h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${menu.length && webgl() ? `<button type="button" class="menu-3d-launch neon mvp-book3d" data-book3d><span class="menu-3d-launch-icon" aria-hidden="true">📖</span><span><b>${h(c('book3d'))}</b><small>${h(c('book3dSub'))}</small></span><span class="menu-3d-launch-arrow" aria-hidden="true">↗</span></button>` : ''}${menu.length ? `<div class="mvp-menu">${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div>`;
+  /*
+   * The menu section: two buttons on top — "📋 Oddiy menyu" (opens / hides the dish list) and "📖 3D menyu" (the
+   * full-screen 3D book). The list is not shown until asked for (no WebGL: the list is shown, no 3D button).
+   */
+  let menuListOpen = false;
+  const menuInner = (r, menu, sel) => {
+    const gl = webgl(),
+      open = menuListOpen || !gl;
+    const modes = menu.length ? `<div class="mvp-menu-modes" role="group" aria-label="${h(c('menu'))}"><button type="button" class="mvp-mode" data-menu-list aria-pressed="${open}" aria-expanded="${open}">📋 ${h(c('menuList'))}</button>${gl ? `<button type="button" class="mvp-mode mvp-mode-3d" data-book3d>📖 ${h(c('menu3dBtn'))}</button>` : ''}</div>` : '';
+    return `<h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${modes}${menu.length ? `<div class="mvp-menu" ${open ? '' : 'hidden'}>${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div>`;
+  };
   /*
    * One place that changes a dish's quantity: the card, the "Selected dishes" bar and the open checkout form follow
    * (the booking sends these dishes; the prepayment step then shows the bill, the advance and the rest).
@@ -484,6 +500,16 @@
    * 🧊 3D: the dish's .glb in <model-viewer> (vendored, loaded only now; auto-rotate, drag to spin, pinch to zoom),
    * with the same − / + / Add controls. A model that cannot load leaves the photo and a short note.
    */
+  // The 3D book's cart button: there is no cart page here — the book closes and the page shows the chosen dishes.
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!e.target.closest?.('[data-rf-book-cart]')) return;
+      e.preventDefault();
+      setTimeout(() => document.querySelector('#mvpMenu [data-mvp-picked]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 500);
+    },
+    true,
+  );
   let glOk = null;
   const webgl = () => {
     if (glOk === null)
@@ -498,6 +524,7 @@
   function openBook3d(r, menu, button) {
     if (button.getAttribute('aria-busy') === 'true' || typeof menuBookData !== 'function') return;
     button.setAttribute('aria-busy', 'true');
+    const done = () => document.documentElement.classList.remove('rf-book-open');
     window
       .RF3DLoad?.()
       .then((api) =>
@@ -510,10 +537,11 @@
             return stepDish(r, menu, dish.id, delta) !== before;
           },
           origin: button,
-          onClose: () => button.focus(),
+          onClose: () => (done(), button.focus()),
         }),
       )
-      .catch(() => alert(c('book3dFail')))
+      .then(() => setTimeout(() => document.documentElement.classList.add('rf-book-open'), 450))
+      .catch(() => (done(), alert(c('book3dFail'))))
       .finally(() => button.removeAttribute('aria-busy'));
   }
   let viewerLoad = null;
@@ -572,6 +600,14 @@
       // 📖 The full-screen 3D menu book: − / + in the book change the same dishes as the cards here.
       const book = e.target.closest('[data-book3d]');
       if (book) return openBook3d(r, menu, book);
+      const list = e.target.closest('[data-menu-list]');
+      if (list) {
+        menuListOpen = list.getAttribute('aria-pressed') !== 'true';
+        list.setAttribute('aria-pressed', String(menuListOpen));
+        list.setAttribute('aria-expanded', String(menuListOpen));
+        box.querySelector('.mvp-menu')?.toggleAttribute('hidden', !menuListOpen);
+        return;
+      }
       const v = e.target.closest('[data-3d]');
       if (v) return open3d(r, menu, v.dataset['3d']);
       const b = e.target.closest('[data-step]');

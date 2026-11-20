@@ -99,7 +99,7 @@ export function FullscreenMenu({ onClose, revealDishId, origin, lang, ...book }:
       aria-modal="true"
       aria-label={book.data.restaurantName}
       tabIndex={-1}
-      className={`rf:fixed rf:inset-0 rf:z-[2147483000] rf:flex rf:flex-col rf:bg-night/95 rf:backdrop-blur-md rf:outline-none rf:transition-opacity rf:duration-300 rf:ease-out ${shown || genie ? 'rf:opacity-100' : 'rf:opacity-0'}`}
+      className={`rf:fixed rf:inset-0 rf:z-[2147483000] rf:flex rf:flex-col rf:bg-night rf:outline-none rf:transition-opacity rf:duration-300 rf:ease-out ${shown || genie ? 'rf:opacity-100' : 'rf:opacity-0'}`}
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <button

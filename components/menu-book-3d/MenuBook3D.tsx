@@ -307,7 +307,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, on
       aria-roledescription="3D menu book"
       aria-label={`${data.restaurantName} — ${labels.menu}`}
     >
-      <nav className={`rf:flex rf:items-center rf:gap-2 rf:overflow-x-auto rf:px-4 rf:pt-4 rf:pb-1 rf:[scrollbar-width:none] ${fill ? 'rf:pr-32' : ''}`} aria-label={labels.contents}>
+      <nav className={`rf:flex rf:items-center rf:gap-2 rf:overflow-x-auto rf:px-4 rf:pt-4 rf:pb-1 rf:[scrollbar-width:none] ${fill ? 'rf:mr-32' : ''}`} aria-label={labels.contents}>
         <button type="button" className={`${chip} ${spread === 1 ? 'rf:border-teal rf:bg-teal rf:text-night' : 'rf:border-line rf:bg-transparent rf:text-text/80 rf:hover:border-teal/60'}`} onClick={() => turnTo(1, 'right')}>
           {labels.contents}
         </button>
@@ -348,10 +348,11 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, on
             resize={{ offsetSize: true }}
             flat
             shadows={lite || touch ? false : 'percentage'}
-            dpr={touch ? [1, 1.5] : [1, 2]}
+            // Phones: a lighter canvas (lower pixel ratio, no MSAA) so turning pages stays smooth.
+            dpr={touch ? [1, 1.25] : [1, 2]}
             frameloop="demand"
             camera={{ fov: 32, position: [0, 0, 4], near: 0.1, far: 20 }}
-            gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+            gl={{ antialias: !touch, alpha: true, powerPreference: 'high-performance' }}
             aria-hidden="true"
           >
             <BookScene
