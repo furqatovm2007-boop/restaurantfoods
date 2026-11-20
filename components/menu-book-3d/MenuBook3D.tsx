@@ -96,6 +96,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, on
   const zoomBy = useCallback((step: number) => setZoom((z) => ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(z) + step))] ?? 1), []);
   const [flashed, setFlashed] = useState<ReadonlySet<string>>(() => new Set());
   const [assetsVersion, setAssetsVersion] = useState(0);
+  const [imageTick, setImageTick] = useState(0);
   const images = useMemo(() => new ImageCache(), []);
   const last = sheets.length;
   const open = spread > 0 && spread < last;
@@ -106,18 +107,21 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, on
     let alive = true;
     // Photos arrive in a burst: repaint once for the whole burst, not once per photo.
     let timer = 0;
-    const bump = () => {
+    const photo = () => {
       clearTimeout(timer);
-      timer = window.setTimeout(() => alive && setAssetsVersion((v) => v + 1), 250);
+      timer = window.setTimeout(() => alive && setImageTick((v) => v + 1), 250);
     };
-    const unsubscribe = images.subscribe(bump);
-    document.fonts?.load("400 32px RFBook").then(() => document.fonts.load("italic 32px RFBook")).then(bump, () => {});
+    const unsubscribe = images.subscribe(photo);
+    // The font changes every page; photos only their own page.
+    document.fonts?.load("400 32px RFBook").then(() => document.fonts.load("italic 32px RFBook")).then(() => alive && setAssetsVersion((v) => v + 1), () => {});
+    // All photos are asked for at once, so they arrive as one burst (not page by page while turning).
+    for (const c of data.chapters) for (const d of c.dishes) images.get(d.image);
     return () => {
       alive = false;
       clearTimeout(timer);
       unsubscribe();
     };
-  }, [images]);
+  }, [images, data]);
 
   /** Moves to a spread and decides which half a phone should look at. */
   const turnTo = useCallback(
@@ -369,6 +373,7 @@ export function MenuBook3D({ data, lang, labels: labelOverrides, onAddToCart, on
               flashed={flashed}
               images={images}
               assetsVersion={assetsVersion}
+              imageTick={imageTick}
               folioOf={folioOf}
               onSpreadChange={(s) => turnTo(s, s < spread ? 'right' : undefined)}
               onAction={onAction}

@@ -45,6 +45,11 @@ export class ImageCache {
     return null;
   }
 
+  /** True once this photo is decoded (a page with it is repainted only then, not on every other photo). */
+  ready(url?: string | null): boolean {
+    return !!url && this.entries.get(url) instanceof HTMLImageElement;
+  }
+
   subscribe(fn: (url: string) => void): () => void {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);

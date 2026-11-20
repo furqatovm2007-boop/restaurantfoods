@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import {
   BoxGeometry,
   CanvasTexture,
+  LinearFilter,
   DoubleSide,
   FrontSide,
   BackSide,
@@ -35,6 +36,11 @@ const COVER_SECONDS = 0.9;
 const STAGGER_SECONDS = 0.07;
 /** Sheets kept textured around the open spread; the rest show blank paper. */
 const TEXTURE_WINDOW = { before: 2, after: 1 };
+// Phones: every page texture upload is a long main-thread task, so fewer pages are kept ready, they are smaller
+// (1024 px still matches a phone's page width in device pixels), and the off-screen ones wait until the opening
+// animation is over and are spread out.
+const COARSE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+const WINDOW = COARSE ? { before: 1, after: 1 } : TEXTURE_WINDOW;
 
 /** Holding a page longer than this without moving is not a tap. */
 const LONG_PRESS_MS = 450;
@@ -52,6 +58,8 @@ export interface BookSceneProps {
   images: ImageCache;
   /** Bumped when fonts or photos finish loading so pages are repainted. */
   assetsVersion: number;
+  /** Bumps when photos arrive: re-checks the page keys (only pages whose photo arrived repaint). */
+  imageTick?: number;
   folioOf: (page: number) => number | null;
   onSpreadChange: (spread: number) => void;
   /** `at` is the tap's screen point (for the cart flight animation). */
@@ -103,9 +111,11 @@ interface Drag {
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 
 /** A repaint key so a page canvas is redrawn only when something it shows changed. */
-function pageKey(page: BookPage, quantities: Record<string, number>, flashed: ReadonlySet<string>, version: number) {
+// version = the book font; a dish page also changes when one of ITS photos is ready — so a photo arriving repaints
+// only the page it is on (each repaint is a texture upload, a long task on phones).
+function pageKey(page: BookPage, quantities: Record<string, number>, flashed: ReadonlySet<string>, version: number, images: ImageCache) {
   if (page.content.kind !== 'dishes') return `${version}`;
-  return version + page.content.dishes.map((d) => `|${d.id}:${quantities[d.id] ?? 1}:${flashed.has(d.id) ? 1 : 0}`).join('');
+  return version + page.content.dishes.map((d) => `|${d.id}:${quantities[d.id] ?? 1}:${flashed.has(d.id) ? 1 : 0}:${images.ready(d.image) ? 1 : 0}`).join('');
 }
 
 export function BookScene(props: BookSceneProps) {
@@ -170,8 +180,9 @@ export function BookScene(props: BookSceneProps) {
   }, [sheets]);
 
   const slots = useRef(new Map<number, PageSlot>());
+  const opened = useRef(false);
   // Sharp text and photos: page canvases near the screen's real pixel size (crisper still when zoomed).
-  const texWidth = narrow ? 1280 : 1600;
+  const texWidth = narrow ? (COARSE ? 1024 : 1280) : 1600;
   const anisotropy = Math.min(narrow ? 4 : 8, gl.capabilities.getMaxAnisotropy());
 
   useEffect(
@@ -201,8 +212,8 @@ export function BookScene(props: BookSceneProps) {
   useEffect(() => {
     const { quantities, flashed, assetsVersion, restaurantName, labels, images, folioOf } = props;
     const wanted = new Set<number>();
-    const lo = Math.max(0, spread - 1 - TEXTURE_WINDOW.before);
-    const hi = Math.min(count - 1, spread + TEXTURE_WINDOW.after);
+    const lo = Math.max(0, spread - 1 - WINDOW.before);
+    const hi = Math.min(count - 1, spread + WINDOW.after);
     for (let i = lo; i <= hi; i++) wanted.add(i);
     // Covers stay painted so the closed book is never blank.
     wanted.add(0);
@@ -210,7 +221,7 @@ export function BookScene(props: BookSceneProps) {
     motionOf().list.forEach((m, i) => m.t !== m.to && wanted.add(i));
 
     const paint = (page: BookPage, side: 'left' | 'right') => {
-      const key = pageKey(page, quantities, flashed, assetsVersion) + texWidth;
+      const key = pageKey(page, quantities, flashed, assetsVersion, images) + texWidth;
       let slot = slots.current.get(page.index);
       if (slot?.key === key) return slot;
       if (!slot || slot.canvas.width !== texWidth) {
@@ -221,6 +232,11 @@ export function BookScene(props: BookSceneProps) {
         const texture = new CanvasTexture(canvas);
         texture.colorSpace = SRGBColorSpace;
         texture.anisotropy = anisotropy;
+        if (COARSE) {
+          // Phones: the page is drawn at about its screen size, so no mipmap chain is built on every upload.
+          texture.generateMipmaps = false;
+          texture.minFilter = LinearFilter;
+        }
         if (side === 'left') {
           // Back faces see the plane's UVs mirrored; flip so the page reads correctly.
           texture.repeat.set(-1, 1);
@@ -248,7 +264,7 @@ export function BookScene(props: BookSceneProps) {
         ];
         for (const [page, side, face] of faces) {
           const current = slots.current.get(page.index);
-          const fresh = current?.key === pageKey(page, quantities, flashed, assetsVersion) + texWidth;
+          const fresh = current?.key === pageKey(page, quantities, flashed, assetsVersion, images) + texWidth;
           if (fresh || now.has(i) || !current) {
             if (fresh || now.has(i)) m[face].map = paint(page, side).texture;
             else {
@@ -273,8 +289,8 @@ export function BookScene(props: BookSceneProps) {
     invalidate();
     let idle = 0;
     const idleCall: (cb: () => void) => number = (window as Window & { requestIdleCallback?: (cb: () => void, o?: object) => number }).requestIdleCallback
-      ? (cb) => (window as unknown as { requestIdleCallback: (cb: () => void, o?: object) => number }).requestIdleCallback(cb, { timeout: 600 })
-      : (cb) => window.setTimeout(cb, 60);
+      ? (cb) => (window as unknown as { requestIdleCallback: (cb: () => void, o?: object) => number }).requestIdleCallback(cb, { timeout: COARSE ? 1500 : 600 })
+      : (cb) => window.setTimeout(cb, COARSE ? 250 : 60);
     const next = () => {
       const job = later.shift();
       if (!job) return;
@@ -282,12 +298,16 @@ export function BookScene(props: BookSceneProps) {
       invalidate();
       idle = idleCall(next);
     };
-    if (later.length) idle = idleCall(next);
+    // The first off-screen page waits for the opening animation (phones), then one page per idle moment.
+    let start = 0;
+    if (later.length) start = window.setTimeout(() => (idle = idleCall(next)), COARSE && !opened.current ? 1200 : 0);
+    opened.current = true;
     return () => {
       (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idle);
       clearTimeout(idle);
+      clearTimeout(start);
     };
-  }, [props.quantities, props.flashed, props.assetsVersion, props.restaurantName, props.labels, spread, meshes, count, texWidth, motionOf]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [props.quantities, props.flashed, props.assetsVersion, props.imageTick, props.restaurantName, props.labels, spread, meshes, count, texWidth, motionOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ------------------------------------------------------- turn motion */
 
