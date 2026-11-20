@@ -270,3 +270,6 @@ body[data-theme=dark] .mvp-return.bad{color:#fecaca}
 body[data-theme=dark] .mvp-mode:not(.mvp-mode-3d){border-color:#334155}
 /* While the full-screen 3D book is open the page under it is not drawn (smoother on phones) */
 html.rf-book-open #content,html.rf-book-open #topbar,html.rf-book-open #mobileNav,html.rf-book-open #siteFooter{visibility:hidden}
+/* First open of the 3D book: an instant "preparing" layer */
+.mvp-book-wait{position:fixed;inset:0;z-index:2147482999;display:grid;place-content:center;justify-items:center;gap:16px;background:#081521;color:#e2e8f0;font-size:1rem}
+.mvp-book-spin{width:46px;height:46px;border-radius:50%;border:4px solid rgba(16,185,129,.25);border-top-color:#10b981;animation:mvpSpin .8s linear infinite;will-change:transform}

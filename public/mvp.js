@@ -57,6 +57,7 @@
       menu3dBtn: '3D menyu',
       book3dSub: 'Varaqlab ko‘ring va taom qo‘shing',
       book3dFail: '3D menyuni ochib bo‘lmadi.',
+      book3dWait: '3D menyu tayyorlanmoqda…',
       loading3d: '3D model yuklanmoqda…',
       hint3d: 'Barmoq bilan aylantiring, ikki barmoq bilan kattalashtiring.',
       fail3d: '3D model hozir ochilmadi — taom rasmi ko‘rsatildi.',
@@ -183,6 +184,7 @@
       menu3dBtn: '3D-меню',
       book3dSub: 'Листайте и добавляйте блюда',
       book3dFail: 'Не удалось открыть 3D-меню.',
+      book3dWait: 'Готовим 3D-меню…',
       loading3d: 'Загружаем 3D-модель…',
       hint3d: 'Вращайте пальцем, приближайте двумя пальцами.',
       fail3d: '3D-модель сейчас не открылась — показано фото блюда.',
@@ -309,6 +311,7 @@
       menu3dBtn: '3D menu',
       book3dSub: 'Flip through and add dishes',
       book3dFail: 'The 3D menu could not open.',
+      book3dWait: 'Preparing the 3D menu…',
       loading3d: 'Loading the 3D model…',
       hint3d: 'Drag to spin, pinch to zoom.',
       fail3d: 'The 3D model could not open — showing the dish photo.',
@@ -524,6 +527,14 @@
   function openBook3d(r, menu, button) {
     if (button.getAttribute('aria-busy') === 'true' || typeof menuBookData !== 'function') return;
     button.setAttribute('aria-busy', 'true');
+    // At once, before the 3D code starts: a full-screen "preparing" layer (its spinner runs on the compositor,
+    // so it keeps turning while the phone is busy) — the first open no longer looks frozen.
+    const wait = document.createElement('div');
+    wait.className = 'mvp-book-wait';
+    wait.setAttribute('role', 'status');
+    wait.innerHTML = `<span class="mvp-book-spin" aria-hidden="true"></span><b>📖 ${h(c('book3dWait'))}</b>`;
+    document.body.append(wait);
+    const unwait = () => setTimeout(() => wait.remove(), 350);
     const done = () => document.documentElement.classList.remove('rf-book-open');
     window
       .RF3DLoad?.()
@@ -540,8 +551,8 @@
           onClose: () => (done(), button.focus()),
         }),
       )
-      .then(() => setTimeout(() => document.documentElement.classList.add('rf-book-open'), 450))
-      .catch(() => (done(), alert(c('book3dFail'))))
+      .then(() => (unwait(), setTimeout(() => document.documentElement.classList.add('rf-book-open'), 450)))
+      .catch(() => (wait.remove(), done(), alert(c('book3dFail'))))
       .finally(() => button.removeAttribute('aria-busy'));
   }
   let viewerLoad = null;
@@ -596,6 +607,15 @@
     const place = [r.cuisine, r.address].filter(Boolean).join(' · ');
     page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
     const box = document.getElementById('mvpMenu');
+    // The 3D menu's code is downloaded (not run) once the menu section is near the screen.
+    if (webgl() && window.RF3DPrefetch && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        (window.requestIdleCallback || setTimeout)(() => window.RF3DPrefetch());
+      }, { rootMargin: '600px' });
+      io.observe(box);
+    }
     box.addEventListener('click', (e) => {
       // 📖 The full-screen 3D menu book: − / + in the book change the same dishes as the cards here.
       const book = e.target.closest('[data-book3d]');
