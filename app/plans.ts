@@ -20,7 +20,8 @@ export const TRIAL_DAYS = 14;
 const DAY = 86400000;
 
 export const PLANS: Record<PlanId, { price: number; features: Feature[] }> = {
-  start: { price: 199000, features: [] },
+  // The 3D menu book is for every restaurant (every plan, new ones and after the trial too).
+  start: { price: 199000, features: ['menu3d'] },
   // Business: 3D menu and a limited admin AI (bookings and incoming requests only, daily quota).
   // The camera, the live table map and the 3D hall are Premium only, together with the customer AI.
   // Both paid tiers: peak-hour deposits, table merging, birthday CRM, staff accounts, AI weekly report (Business: limited).

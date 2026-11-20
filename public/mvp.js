@@ -52,6 +52,9 @@
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
       view3d: '3D ko‘rinish',
+      book3d: 'Interaktiv 3D menyu',
+      book3dSub: 'Varaqlab ko‘ring va taom qo‘shing',
+      book3dFail: '3D menyuni ochib bo‘lmadi.',
       loading3d: '3D model yuklanmoqda…',
       hint3d: 'Barmoq bilan aylantiring, ikki barmoq bilan kattalashtiring.',
       fail3d: '3D model hozir ochilmadi — taom rasmi ko‘rsatildi.',
@@ -173,6 +176,9 @@
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
       view3d: '3D-просмотр',
+      book3d: 'Интерактивное 3D-меню',
+      book3dSub: 'Листайте и добавляйте блюда',
+      book3dFail: 'Не удалось открыть 3D-меню.',
       loading3d: 'Загружаем 3D-модель…',
       hint3d: 'Вращайте пальцем, приближайте двумя пальцами.',
       fail3d: '3D-модель сейчас не открылась — показано фото блюда.',
@@ -294,6 +300,9 @@
       close: 'Close',
       helpCenter: 'Help center',
       view3d: '3D view',
+      book3d: 'Interactive 3D menu',
+      book3dSub: 'Flip through and add dishes',
+      book3dFail: 'The 3D menu could not open.',
       loading3d: 'Loading the 3D model…',
       hint3d: 'Drag to spin, pinch to zoom.',
       fail3d: 'The 3D model could not open — showing the dish photo.',
@@ -453,7 +462,7 @@
     const total = rows.reduce((s, x) => s + x.m.price * x.q, 0);
     return `<p class="mvp-picked">🍽 ${h(c('picked'))}: ${rows.map((x) => h(x.m.name) + ' ×' + x.q).join(', ')} · <b>${money(total)}</b></p>`;
   }
-  const menuInner = (r, menu, sel) => `<h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${menu.length ? `<div class="mvp-menu">${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div>`;
+  const menuInner = (r, menu, sel) => `<h2>${h(c('menu'))}</h2><p class="muted">${h(c('menuHint'))}</p>${menu.length && webgl() ? `<button type="button" class="menu-3d-launch neon mvp-book3d" data-book3d><span class="menu-3d-launch-icon" aria-hidden="true">📖</span><span><b>${h(c('book3d'))}</b><small>${h(c('book3dSub'))}</small></span><span class="menu-3d-launch-arrow" aria-hidden="true">↗</span></button>` : ''}${menu.length ? `<div class="mvp-menu">${menu.map((m) => dishCard(m, sel)).join('')}</div>` : `<p>${h(c('noMenu'))}</p>`}<div data-mvp-picked>${pickedSummary(r, menu)}</div>`;
   /*
    * One place that changes a dish's quantity: the card, the "Selected dishes" bar and the open checkout form follow
    * (the booking sends these dishes; the prepayment step then shows the bill, the advance and the rest).
@@ -475,6 +484,38 @@
    * 🧊 3D: the dish's .glb in <model-viewer> (vendored, loaded only now; auto-rotate, drag to spin, pinch to zoom),
    * with the same − / + / Add controls. A model that cannot load leaves the photo and a short note.
    */
+  let glOk = null;
+  const webgl = () => {
+    if (glOk === null)
+      try {
+        const cv = document.createElement('canvas');
+        glOk = !!(cv.getContext('webgl2') || cv.getContext('webgl'));
+      } catch {
+        glOk = false;
+      }
+    return glOk;
+  };
+  function openBook3d(r, menu, button) {
+    if (button.getAttribute('aria-busy') === 'true' || typeof menuBookData !== 'function') return;
+    button.setAttribute('aria-busy', 'true');
+    window
+      .RF3DLoad?.()
+      .then((api) =>
+        api.fullscreenMenu.open({
+          data: menuBookData(r, menu),
+          lang: document.documentElement.lang,
+          cartQuantity: (id) => picked(r.id).get(id) || 0,
+          onCartChange: (dish, delta) => {
+            const before = picked(r.id).get(dish.id) || 0;
+            return stepDish(r, menu, dish.id, delta) !== before;
+          },
+          origin: button,
+          onClose: () => button.focus(),
+        }),
+      )
+      .catch(() => alert(c('book3dFail')))
+      .finally(() => button.removeAttribute('aria-busy'));
+  }
   let viewerLoad = null;
   const loadViewer = () => (viewerLoad ??= import('/vendor/model-viewer-4.4.0.min.js'));
   async function open3d(r, menu, id) {
@@ -528,6 +569,9 @@
     page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
     const box = document.getElementById('mvpMenu');
     box.addEventListener('click', (e) => {
+      // 📖 The full-screen 3D menu book: − / + in the book change the same dishes as the cards here.
+      const book = e.target.closest('[data-book3d]');
+      if (book) return openBook3d(r, menu, book);
       const v = e.target.closest('[data-3d]');
       if (v) return open3d(r, menu, v.dataset['3d']);
       const b = e.target.closest('[data-step]');

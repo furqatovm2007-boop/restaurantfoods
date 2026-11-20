@@ -11,8 +11,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  // Pure plan logic
  let s=plans.planState({plan:'business',trial_ends_at:iso(now+3*DAY)},now);assert.equal(s.status,'trial');assert.equal(s.effective,'premium');assert.equal(s.daysLeft,3);assert.ok(s.features.clientAi&&s.features.visionTables);
  s=plans.planState({plan:'business',trial_ends_at:iso(now-DAY),paid_until:iso(now+10*DAY)},now);assert.equal(s.status,'active');assert.equal(s.effective,'business');assert.ok(s.features.menu3d&&s.features.adminAi&&!s.features.liveTables&&!s.features.visionTables,'Business: 3D menu + limited admin AI, no camera/live map');assert.ok(!s.features.room3d&&!s.features.clientAi&&!s.features.visionTables,'3D hall and customer AI are Premium only');
- s=plans.planState({plan:'premium',trial_ends_at:iso(now-DAY)},now);assert.equal(s.status,'payment_required');assert.equal(s.effective,'start');assert.ok(Object.values(s.features).every(v=>!v));
- s=plans.planState({plan:'start',paid_until:iso(now+DAY)},now);assert.equal(s.effective,'start');assert.ok(!s.features.menu3d);
+ s=plans.planState({plan:'premium',trial_ends_at:iso(now-DAY)},now);assert.equal(s.status,'payment_required');assert.equal(s.effective,'start');assert.ok(Object.entries(s.features).every(([k,v])=>k==='menu3d'?v:!v),'after the trial only the 3D menu stays');
+ s=plans.planState({plan:'start',paid_until:iso(now+DAY)},now);assert.equal(s.effective,'start');assert.ok(s.features.menu3d,'3D menu on every plan');assert.ok(!s.features.room3d);
  assert.equal(plans.planState({plan:'bogus'},now).plan,'premium');
  assert.equal(plans.extendPaid(null,1,now),iso(now+30*DAY));assert.equal(plans.extendPaid(iso(now+5*DAY),2,now),iso(now+65*DAY));assert.equal(plans.extendPaid(iso(now-5*DAY),1,now),iso(now+30*DAY));
  assert.deepEqual([plans.PLANS.start.price,plans.PLANS.business.price,plans.PLANS.premium.price],[199000,399000,699000]);
