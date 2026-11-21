@@ -273,3 +273,29 @@ html.rf-book-open #content,html.rf-book-open #topbar,html.rf-book-open #mobileNa
 /* First open of the 3D book: an instant "preparing" layer */
 .mvp-book-wait{position:fixed;inset:0;z-index:2147482999;display:grid;place-content:center;justify-items:center;gap:16px;background:#081521;color:#e2e8f0;font-size:1rem}
 .mvp-book-spin{width:46px;height:46px;border-radius:50%;border:4px solid rgba(16,185,129,.25);border-top-color:#10b981;animation:mvpSpin .8s linear infinite;will-change:transform}
+/* 🛒 Korzinka: the floating bar above the bottom menu, and the #/cart page */
+.mvp-cartbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:90;display:flex;align-items:center;gap:10px;width:min(92vw,460px);padding:10px 16px 10px 10px;border-radius:999px;background:linear-gradient(135deg,#00c9a7,#0ea5e9);color:#04121f;font-weight:700;text-decoration:none;box-shadow:0 12px 32px #0007;animation:mvpCartIn .28s ease-out}
+.mvp-cartbar[hidden]{display:none}
+.mvp-cartbar-ico{position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#04121f;font-size:20px;flex:none}
+.mvp-cartbar-ico b{position:absolute;top:-4px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#facc15;color:#04121f;font-size:11px;line-height:20px;text-align:center}
+.mvp-cartbar-text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mvp-cartbar-go{font-size:22px;line-height:1}
+@media (min-width:900px){.mvp-cartbar{bottom:24px}}
+@keyframes mvpCartIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+html.rf-book-open .mvp-cartbar,body:has(dialog[open]) .mvp-cartbar{visibility:hidden}
+#content:has(.mvp-step) {padding-bottom:84px}
+.mvp-cart-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:10px}
+.mvp-cart-row{display:grid;grid-template-columns:56px 1fr auto auto;align-items:center;gap:10px;padding:10px;border:1px solid #1e293b;border-radius:14px}
+.mvp-cart-row img,.mvp-cart-row .mvp-dish-ph{width:56px;height:56px;border-radius:10px;object-fit:cover;display:grid;place-items:center}
+.mvp-cart-info{display:grid;gap:2px;min-width:0}
+.mvp-cart-info b:first-child{overflow:hidden;text-overflow:ellipsis}
+.mvp-cart-del{width:36px;height:36px;border-radius:50%;border:1px solid #475569;background:transparent;color:inherit;cursor:pointer}
+.mvp-cart-sum{display:grid;gap:6px;margin:14px 0 8px}
+.mvp-cart-sum div{display:flex;justify-content:space-between;gap:12px}
+.mvp-cart-sum dt,.mvp-cart-sum dd{margin:0}
+.mvp-cart-total{font-size:1.1em;font-weight:800;border-top:1px solid #334155;padding-top:6px}
+.mvp-cart-go{width:100%;margin-top:10px}
+.mvp-cart-empty{text-align:center}
+.mvp-cart-big{font-size:48px;margin:0}
+body[data-theme=light] .mvp-cart-row{border-color:#e2e8f0}
+@media (max-width:420px){.mvp-cart-row{grid-template-columns:48px 1fr auto;}.mvp-cart-row .mvp-cart-del{grid-column:3;grid-row:1}.mvp-cart-row .mvp-qty{grid-column:2/4}}

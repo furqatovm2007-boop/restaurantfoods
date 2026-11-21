@@ -29,6 +29,22 @@
       menuHint: 'Faqat stol band qilishingiz mumkin yoki taomlarni oldindan tanlang — kelganingizda tayyor bo‘ladi.',
       add: '+ Qo‘shish',
       picked: 'Tanlangan taomlar',
+      cartBar: 'Korzinka',
+      pcs: 'ta',
+      cartTitle: '🛒 Korzinka',
+      cartEmpty: 'Korzinka bo‘sh',
+      cartEmptyHint: 'Restoran menyusidan (oddiy yoki 3D) taom qo‘shing.',
+      toRestaurants: 'Restoranlar',
+      toMenu: '← Menyuga qaytish',
+      cartSubtotal: 'Taomlar',
+      cartTotal: 'Jami summa',
+      cartPaid: 'To‘langan',
+      cartLeft: 'Qolgan summa',
+      cartDepositNote: 'Oldindan to‘lov (avans) stol tanlangandan keyin to‘lov bosqichida ko‘rsatiladi: to‘liq yoki qisman to‘lash mumkin, qolgani restoranda.',
+      cartGo: 'Davom etish / Bron qilish',
+      cartRemove: 'O‘chirish',
+      cartOther: 'Korzinkada boshqa restoran taomlari bor. Ularni o‘chirib, shu restoran taomini qo‘shaymi?',
+      cartUnavailable: 'Ayrim taomlar endi mavjud emas — ular korzinkadan olib tashlandi.',
       noMenu: 'Menyu hali kiritilmagan.',
       demo: 'DEMO: namuna restoran — bron jarayonini sinab ko‘rishingiz mumkin, lekin bron haqiqiy restoranga yuborilmaydi.',
       table: 'stol',
@@ -156,6 +172,22 @@
       menuHint: 'Можно забронировать только стол или выбрать блюда заранее — они будут готовы к вашему приходу.',
       add: '+ Добавить',
       picked: 'Выбранные блюда',
+      cartBar: 'Корзина',
+      pcs: 'шт',
+      cartTitle: '🛒 Корзина',
+      cartEmpty: 'Корзина пуста',
+      cartEmptyHint: 'Добавьте блюда из меню ресторана (обычного или 3D).',
+      toRestaurants: 'Рестораны',
+      toMenu: '← Назад к меню',
+      cartSubtotal: 'Блюда',
+      cartTotal: 'Итого',
+      cartPaid: 'Оплачено',
+      cartLeft: 'Осталось',
+      cartDepositNote: 'Предоплата (аванс) будет показана на шаге оплаты после выбора стола: можно оплатить полностью или частично, остальное — в ресторане.',
+      cartGo: 'Продолжить / Забронировать',
+      cartRemove: 'Удалить',
+      cartOther: 'В корзине блюда другого ресторана. Удалить их и добавить это блюдо?',
+      cartUnavailable: 'Некоторые блюда больше недоступны — они удалены из корзины.',
       noMenu: 'Меню ещё не добавлено.',
       demo: 'DEMO: пример ресторана — бронирование можно попробовать, но бронь не отправляется в настоящий ресторан.',
       table: 'стол',
@@ -283,6 +315,22 @@
       menuHint: 'Book just a table, or pick dishes in advance — they will be ready when you arrive.',
       add: '+ Add',
       picked: 'Selected dishes',
+      cartBar: 'Cart',
+      pcs: 'pcs',
+      cartTitle: '🛒 Cart',
+      cartEmpty: 'Your cart is empty',
+      cartEmptyHint: 'Add dishes from a restaurant menu (list or 3D).',
+      toRestaurants: 'Restaurants',
+      toMenu: '← Back to the menu',
+      cartSubtotal: 'Dishes',
+      cartTotal: 'Total',
+      cartPaid: 'Paid',
+      cartLeft: 'Remaining',
+      cartDepositNote: 'The prepayment (advance) is shown at the payment step after you pick a table: pay in full or in part, the rest at the restaurant.',
+      cartGo: 'Continue / Book a table',
+      cartRemove: 'Remove',
+      cartOther: 'Your cart has dishes from another restaurant. Remove them and add this dish?',
+      cartUnavailable: 'Some dishes are no longer available — they were removed from the cart.',
       noMenu: 'The menu has not been added yet.',
       demo: 'DEMO: a sample restaurant — try the booking flow, but the booking is not sent to a real restaurant.',
       table: 'table',
@@ -404,8 +452,60 @@
   const money = (n) => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/\s/g, ' ') + ' ' + c('sum');
   const isDemo = (r) => !!r.is_demo || String(r.id).startsWith('rf-demo-');
   const AMANDA = 'rf-demo-amanda';
-  // Dishes picked per restaurant (dish id → quantity) and what the guest typed, kept while they move around.
-  const picks = new Map();
+  /*
+   * 🛒 The one cart ("Korzinka"): the dishes picked on the list, in the 3D book and in the 3D dish viewer are the
+   * same items, kept in localStorage "rf-cart" (the app's cart, one restaurant at a time — the shape readCart()
+   * reads: { restaurantId, fulfillment, items: [{ id, quantity }] }), so nothing is lost when the guest switches
+   * views, opens #/cart or reloads. Each item also keeps its name, price and photo for the floating bar.
+   */
+  const CART_KEY = 'rf-cart';
+  const menus = new Map(); // restaurant id → its menu (the last one shown)
+  function cartRead() {
+    try {
+      const x = JSON.parse(localStorage.getItem(CART_KEY) || 'null');
+      if (x && typeof x.restaurantId === 'string' && Array.isArray(x.items)) return { restaurantId: x.restaurantId, fulfillment: x.fulfillment === 'delivery' ? 'delivery' : 'pickup', items: x.items.filter((i) => i && typeof i.id === 'string' && Number.isInteger(i.quantity) && i.quantity > 0 && i.quantity <= 20).slice(0, 30) };
+    } catch {}
+    return null;
+  }
+  function cartWrite(cart) {
+    const keep = cart?.items.length ? cart : null;
+    try {
+      keep ? localStorage.setItem(CART_KEY, JSON.stringify(keep)) : localStorage.removeItem(CART_KEY);
+    } catch {}
+    // The app's own copy (ui/restaurant.js readCart) follows.
+    if (typeof state !== 'undefined' && state) state.cart = keep;
+    cartBar();
+  }
+  // A Map of dish id → quantity for one restaurant; every change is written to the cart at once.
+  class CartMap extends Map {
+    constructor(rid, entries) {
+      super(entries);
+      this.rid = rid;
+    }
+    set(k, v) {
+      super.set(k, v);
+      if (this.rid) this.save();
+      return this;
+    }
+    delete(k) {
+      const had = super.delete(k);
+      if (this.rid) this.save();
+      return had;
+    }
+    save() {
+      const old = cartRead(),
+        menu = menus.get(this.rid) || [];
+      const was = old?.restaurantId === this.rid ? new Map(old.items.map((i) => [i.id, i])) : new Map();
+      const items = [...super.entries()].map(([id, quantity]) => {
+        const m = menu.find((x) => x.id === id),
+          o = was.get(id) || {};
+        return { id, quantity, name: m?.name ?? o.name ?? '', price: Number(m?.price ?? o.price) || 0, image: m?.image_url ?? o.image ?? '' };
+      });
+      if (!items.length && old && old.restaurantId !== this.rid) return cartBar();
+      cartWrite({ restaurantId: this.rid, fulfillment: old?.fulfillment || 'pickup', items });
+    }
+  }
+  const picks = { delete: (rid) => (cartRead()?.restaurantId === rid ? cartWrite(null) : null) };
   const typed = { name: '', phone: '', guests: '' };
   try {
     Object.assign(typed, JSON.parse(localStorage.getItem('rf-mvp-contact') || '{}'));
@@ -457,7 +557,46 @@
   }
 
   // ---------- Step 2: one page — hall on top, menu below ----------
-  const picked = (id) => picks.get(id) || picks.set(id, new Map()).get(id);
+  const picked = (rid) => {
+    const x = cartRead();
+    return new CartMap(rid, x?.restaurantId === rid ? x.items.map((i) => [i.id, i.quantity]) : []);
+  };
+  const cartCount = (x = cartRead()) => (x?.items || []).reduce((n, i) => n + i.quantity, 0);
+  const cartSum = (x = cartRead()) => (x?.items || []).reduce((n, i) => n + (Number(i.price) || 0) * i.quantity, 0);
+  /*
+   * The floating bar "🛒 Korzinka · 3 ta · 145 000 so‘m" above the bottom menu, while the cart has dishes (not on
+   * the cart page itself); its round icon is where the dishes fly to (data-cart-target, RFCartFX).
+   */
+  function cartBar() {
+    if (typeof document === 'undefined' || !document.body) return;
+    let bar = document.getElementById('mvpCartBar');
+    const x = cartRead(),
+      n = cartCount(x),
+      onCart = /^#\/cart\b/.test(location.hash);
+    if (!bar) {
+      if (!n) return;
+      bar = document.createElement('a');
+      bar.id = 'mvpCartBar';
+      bar.className = 'mvp-cartbar';
+      bar.href = '#/cart';
+      document.body.append(bar);
+    }
+    bar.hidden = !n || onCart;
+    if (!n) return;
+    const label = `${c('cartBar')} · ${n} ${c('pcs')} · ${money(cartSum(x))}`;
+    bar.setAttribute('aria-label', '🛒 ' + label);
+    bar.innerHTML = `<span class="mvp-cartbar-ico" data-cart-target aria-hidden="true">🛒<b>${n}</b></span><span class="mvp-cartbar-text">${h(c('cartBar'))} · ${n} ${h(c('pcs'))} · <b>${h(money(cartSum(x)))}</b></span><span class="mvp-cartbar-go" aria-hidden="true">›</span>`;
+  }
+  /** The flight to the cart (RFCartFX): from the tapped "+" (with the dish photo), or back when one leaves. */
+  function flyToCart(at, photo, back) {
+    try {
+      window.RFCartFX?.point?.(at, photo || '', back);
+    } catch {}
+  }
+  const centre = (el) => {
+    const b = el.getBoundingClientRect();
+    return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+  };
   function dishCard(m, sel) {
     const q = sel.get(m.id) || 0;
     // Photo (or the food icon), with a "🧊 3D" button when the dish has a 3D model (menu.model_3d_url).
@@ -490,6 +629,12 @@
     const sel = picked(r.id),
       m = menu.find((x) => x.id === id);
     if (!m?.available) return sel.get(id) || 0;
+    menus.set(r.id, menu);
+    const other = cartRead();
+    if (delta > 0 && other && other.restaurantId !== r.id && other.items.length) {
+      if (!confirm(c('cartOther'))) return sel.get(id) || 0;
+      cartWrite(null);
+    }
     const q = Math.max(0, Math.min(20, (sel.get(id) || 0) + delta));
     q ? sel.set(id, q) : sel.delete(id);
     const card = document.querySelector(`#mvpMenu [data-dish="${CSS.escape(id)}"]`);
@@ -504,15 +649,7 @@
    * with the same − / + / Add controls. A model that cannot load leaves the photo and a short note.
    */
   // The 3D book's cart button: there is no cart page here — the book closes and the page shows the chosen dishes.
-  document.addEventListener(
-    'click',
-    (e) => {
-      if (!e.target.closest?.('[data-rf-book-cart]')) return;
-      e.preventDefault();
-      setTimeout(() => document.querySelector('#mvpMenu [data-mvp-picked]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 500);
-    },
-    true,
-  );
+  // The book's 🛒 closes the book and opens the cart page (#/cart) — the same items as here.
   let glOk = null;
   const webgl = () => {
     if (glOk === null)
@@ -543,9 +680,11 @@
           data: menuBookData(r, menu),
           lang: document.documentElement.lang,
           cartQuantity: (id) => picked(r.id).get(id) || 0,
-          onCartChange: (dish, delta) => {
+          onCartChange: (dish, delta, at) => {
             const before = picked(r.id).get(dish.id) || 0;
-            return stepDish(r, menu, dish.id, delta) !== before;
+            const changed = stepDish(r, menu, dish.id, delta) !== before;
+            if (changed) flyToCart(at, menu.find((x) => x.id === dish.id)?.image_url, delta < 0);
+            return changed;
           },
           origin: button,
           onClose: () => (done(), button.focus()),
@@ -603,6 +742,7 @@
   let lastCheckout = null; // the open checkout: { form, ctx }
   async function restaurant(r, menu, seq) {
     shown = { r, menu };
+    menus.set(r.id, menu);
     const sel = picked(r.id);
     const place = [r.cuisine, r.address].filter(Boolean).join(' · ');
     page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
@@ -632,10 +772,105 @@
       if (v) return open3d(r, menu, v.dataset['3d']);
       const b = e.target.closest('[data-step]');
       if (!b) return;
-      stepDish(r, menu, b.closest('[data-dish]').dataset.dish, Number(b.dataset.step));
+      const card = b.closest('[data-dish]'),
+        img = card.querySelector('.mvp-dish-media img'),
+        id = card.dataset.dish,
+        step = Number(b.dataset.step),
+        at = centre(img && step > 0 ? img : b),
+        before = picked(r.id).get(id) || 0;
+      if (stepDish(r, menu, id, step) !== before) flyToCart(at, img?.currentSrc || img?.src, step < 0);
     });
+    // "Davom etish / Bron qilish" on the cart page: straight to the hall (the dishes are already picked).
+    let toHall = false;
+    try {
+      toHall = sessionStorage.getItem('rf-cart-go') === r.id;
+      sessionStorage.removeItem('rf-cart-go');
+    } catch {}
+    if (toHall) setTimeout(() => document.getElementById('mvpHall')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
+    cartBar();
     await bookingPlan(r.id, r, seq);
   }
+
+  /*
+   * #/cart — the cart as its own page (top bar and bottom menu stay): the dishes with − / + and remove, the sum,
+   * the money lines the booking will carry (total / paid / remaining — the advance is chosen at the payment step),
+   * and "Davom etish / Bron qilish" → the restaurant's hall with these dishes already in the booking.
+   */
+  async function cartPage(seq) {
+    const x = cartRead();
+    let r = null,
+      menu = [];
+    if (x && typeof loadCatalog === 'function') {
+      await loadCatalog().catch(() => null);
+      if (seq && typeof state !== 'undefined' && seq !== state.seq) return;
+      r = state.catalog?.find((y) => y.id === x.restaurantId) || null;
+      menu = (state.menu || []).filter((m) => m.restaurant_id === x.restaurantId);
+    }
+    const draw = (note) => {
+      const cart = cartRead();
+      if (!cart?.items.length || !r) {
+        page(c('cartTitle'), `<section class="panel mvp-cart-empty"><p class="mvp-cart-big" aria-hidden="true">🛒</p><h2>${h(c('cartEmpty'))}</h2><p class="muted">${h(c('cartEmptyHint'))}</p><a class="primary" href="#/discover">${h(c('toRestaurants'))}</a></section>`);
+        return cartBar();
+      }
+      const rows = cart.items.map((i) => ({ i, m: menu.find((y) => y.id === i.id) }));
+      const total = rows.reduce((s, { i, m }) => s + (Number(m?.price ?? i.price) || 0) * i.quantity, 0);
+      const line = ({ i, m }) => {
+        const name = m?.name || i.name || '—',
+          price = Number(m?.price ?? i.price) || 0,
+          img = m?.image_url || i.image;
+        return `<li class="mvp-cart-row" data-cart-id="${h(i.id)}">${img ? `<img src="${h(img)}" alt="" width="64" height="64" loading="lazy" decoding="async">` : '<span class="mvp-dish-ph" aria-hidden="true">🍽</span>'}<div class="mvp-cart-info"><b>${h(name)}</b><span class="muted">${money(price)} × ${i.quantity} = <b>${money(price * i.quantity)}</b></span></div><span class="mvp-qty"><button type="button" data-cart-step="-1" aria-label="− ${h(name)}">−</button><b>${i.quantity}</b><button type="button" data-cart-step="1" aria-label="+ ${h(name)}">+</button></span><button type="button" class="mvp-cart-del" data-cart-del aria-label="${h(c('cartRemove'))}: ${h(name)}" title="${h(c('cartRemove'))}">✕</button></li>`;
+      };
+      page(
+        c('cartTitle'),
+        `<a class="link back" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('toMenu'))}</a><section class="panel mvp-cart"><h2>${h(r.name)}</h2>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}${note ? `<p class="notice">${h(note)}</p>` : ''}<ul class="mvp-cart-list">${rows.map(line).join('')}</ul><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(total)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(total)}</dd></div><div><dt>${h(c('cartPaid'))}</dt><dd>${money(0)}</dd></div><div><dt>${h(c('cartLeft'))}</dt><dd>${money(total)}</dd></div></dl><p class="muted mvp-cart-note">💳 ${h(c('cartDepositNote'))}</p><button type="button" class="primary mvp-cart-go" data-cart-go>${h(c('cartGo'))} →</button></section>`,
+      );
+      cartBar();
+    };
+    // Prices and names from the menu as it is now; dishes gone or switched off leave the cart.
+    let note = '';
+    if (x && r && menu.length) {
+      const ok = x.items.filter((i) => menu.find((m) => m.id === i.id)?.available);
+      if (ok.length !== x.items.length) {
+        menus.set(r.id, menu);
+        const keep = new CartMap(r.id, ok.map((i) => [i.id, i.quantity]));
+        keep.save();
+        note = c('cartUnavailable');
+      }
+    }
+    if (r) menus.set(r.id, menu);
+    draw(note);
+    const root = document.getElementById('content');
+    root.onclick = (e) => {
+      const row = e.target.closest?.('[data-cart-id]');
+      if (e.target.closest?.('[data-cart-go]')) {
+        try {
+          sessionStorage.setItem('rf-cart-go', r.id);
+        } catch {}
+        location.hash = '#/restaurant/' + encodeURIComponent(r.id);
+        return;
+      }
+      if (!row || !r) return;
+      const id = row.dataset.cartId,
+        sel = picked(r.id),
+        b = e.target.closest('[data-cart-step]');
+      if (b) {
+        const q = Math.max(0, Math.min(20, (sel.get(id) || 0) + Number(b.dataset.cartStep)));
+        q ? sel.set(id, q) : sel.delete(id);
+      } else if (e.target.closest('[data-cart-del]')) sel.delete(id);
+      else return;
+      draw('');
+      document.querySelector(`[data-cart-id="${CSS.escape(id)}"] [data-cart-step="${b?.dataset.cartStep || 1}"]`)?.focus();
+    };
+  }
+  window.addEventListener('hashchange', () => {
+    // Leaving the cart page drops its click handler; the bar shows again everywhere else.
+    if (!/^#\/cart\b/.test(location.hash)) {
+      const root = document.getElementById('content');
+      if (root) root.onclick = null;
+    }
+    cartBar();
+  });
+  window.addEventListener('storage', (e) => e.key === CART_KEY && cartBar());
 
   // ---------- Step 3: checkout — time and guests; who books comes from Telegram ----------
   const normPhone = (v) => {
@@ -1218,6 +1453,8 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });
   else langBar();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cartBar, { once: true });
+  else cartBar();
 
-  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile };
+  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile, cartPage, cartBar };
 })();
