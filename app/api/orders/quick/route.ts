@@ -35,7 +35,9 @@ export async function POST(request: Request) {
     if (await banned(guestKeys(contact))) throw new ApiError(403, BAN_MESSAGE);
     const r = await env.DB!.prepare("SELECT id,name,is_demo,delivery_enabled,delivery_fee,delivery_minutes FROM restaurants WHERE id=? AND status='active'").bind(restaurantId).first<any>();
     if (!r) throw new ApiError(404, 'Restoran topilmadi.');
-    if (!r.delivery_enabled) throw new ApiError(409, 'Bu restoran hozircha yetkazib bermaydi.');
+    const demo = !!r.is_demo || restaurantId.startsWith('rf-demo-');
+    // A DEMO restaurant shows the whole delivery flow (nothing is saved or sent); real ones must deliver.
+    if (!r.delivery_enabled && !demo) throw new ApiError(409, 'Bu restoran hozircha yetkazib bermaydi.');
     const rows = (await env.DB!.prepare('SELECT id,name,price FROM menu WHERE restaurant_id=? AND available=1').bind(restaurantId).all<any>()).results;
     const used = new Set<string>();
     let subtotal = 0;
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
       total = subtotal + fee;
     if (!Number.isSafeInteger(total) || total > 100000000) throw new ApiError(400, 'Buyurtma summasi juda katta.');
     const summary = { subtotal, fee, total, minutes: Number(r.delivery_minutes) || 0, payment: 'pay_on_delivery' };
-    if (r.is_demo || restaurantId.startsWith('rf-demo-')) return json({ ok: true, demo: true, id: 'demo', ...summary }, 201);
+    if (demo) return json({ ok: true, demo: true, id: 'demo', ...summary }, 201);
     let userId = u?.userId || '';
     if (!userId) {
       userId = 'guest:' + crypto.randomUUID();

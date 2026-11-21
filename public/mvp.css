@@ -328,3 +328,22 @@ body[data-theme=light] .mvp-modeswitch{background:#f1f5f9;border-color:#e2e8f0}
 .mvp-dlv-msg:empty{display:none}
 .mvp-dlv-msg{color:#f87171;font-weight:600}
 .mvp-prof-owner{font-weight:800}
+/* The service choice: two big cards on top of the restaurant page, a compact pair in the cart */
+.mvp-modeswitch button{display:flex;align-items:center;justify-content:center;gap:8px}
+.mvp-modeswitch button[aria-disabled=true]{opacity:.5}
+.mvp-modeswitch.big{grid-template-columns:1fr 1fr;padding:12px;gap:10px;border-radius:20px;margin:4px 0 14px}
+.mvp-mode-q{grid-column:1/-1;margin:0 2px 2px;font-weight:800;font-size:1.05rem}
+.mvp-modeswitch.big button{flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;gap:4px;min-height:112px;padding:14px;border:1px solid #1e293b;border-radius:16px;background:rgba(2,6,23,.45)}
+.mvp-modeswitch.big button[aria-pressed=true]{border-color:transparent;box-shadow:0 8px 22px rgba(0,201,167,.25)}
+.mvp-modeswitch.big .mvp-mode-ico{font-size:1.7rem;line-height:1}
+.mvp-modeswitch.big b{font-size:1rem}
+.mvp-modeswitch.big small{font-size:.8rem;line-height:1.3;opacity:.85;font-weight:500}
+body[data-theme=light] .mvp-modeswitch.big button{background:#fff;border-color:#e2e8f0}
+body[data-theme=light] .mvp-modeswitch.big button[aria-pressed=true]{background:linear-gradient(135deg,#00c9a7,#0ea5e9)}
+.mvp-mode-banner{margin:6px 0 12px;padding:12px 14px;border-radius:14px;border:1px solid}
+.mvp-mode-banner b{display:block;font-size:1.05rem}
+.mvp-mode-banner p{margin:4px 0 0;font-size:.9rem;opacity:.85}
+.mvp-mode-banner.dine{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.35)}
+.mvp-mode-banner.dlv{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4)}
+.mvp-modeswitch.big button[aria-pressed=true]{background:linear-gradient(135deg,#00c9a7,#0ea5e9);color:#04121f}.mvp-modeswitch.big button[aria-pressed=true] small{opacity:.9}
+.mvp-modeswitch.big button small{color:inherit}

@@ -67,6 +67,20 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      enter: "Menyu va xizmatlar",
+      howTitle: "Qanday xizmat kerak?",
+      dineT: "Restoranda o‘tiraman",
+      dineS: "Stol bron qilish, taomni oldindan tanlash",
+      dlvT: "Yetkazib bering",
+      dlvS: "Taomni uyingizgacha olib kelamiz",
+      dlvSoon: "Bu restoranda hozircha yo‘q",
+      dineBanner: "🪑 Restoranda kutib olamiz",
+      dineBannerS: "Taomlaringiz siz kelgan vaqtga tayyor turadi. Keyingi qadam — zal xaritasidan qulay stolni tanlash.",
+      dlvBanner: "🛵 Eshigingizgacha yetkazamiz",
+      dlvBannerS: "Issiq holda, restoranning o‘z kuryeri orqali. To‘lov — taom qo‘lingizga yetganda.",
+      dineGo: "🪑 Stol tanlash va bron qilish →",
+      tagDine: "Bron",
+      tagDlv: "Yetkazib berish",
       modeDine: "🪑 Joy band qilish",
       modeDelivery: "🛵 Yetkazib berish",
       deliveryHint: "Taomlarni Korzinkaga qo‘shing — manzil, telefon va to‘lov Korzinkada.",
@@ -236,6 +250,20 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      enter: "Меню и услуги",
+      howTitle: "Как вам удобнее?",
+      dineT: "Посижу в ресторане",
+      dineS: "Бронь стола, блюда заранее",
+      dlvT: "Доставьте мне",
+      dlvS: "Привезём блюда к вашей двери",
+      dlvSoon: "В этом ресторане пока нет",
+      dineBanner: "🪑 Ждём вас в ресторане",
+      dineBannerS: "Блюда будут готовы к вашему приходу. Следующий шаг — выбрать удобный стол на плане зала.",
+      dlvBanner: "🛵 Доставим до двери",
+      dlvBannerS: "Горячим, курьером ресторана. Оплата — когда заказ у вас в руках.",
+      dineGo: "🪑 Выбрать стол и забронировать →",
+      tagDine: "Бронь",
+      tagDlv: "Доставка",
       modeDine: "🪑 Бронь столика",
       modeDelivery: "🛵 Доставка",
       deliveryHint: "Добавьте блюда в корзину — адрес, телефон и оплата в корзине.",
@@ -405,6 +433,20 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      enter: "Menu & services",
+      howTitle: "How would you like it?",
+      dineT: "Dine in",
+      dineS: "Book a table, pre-order dishes",
+      dlvT: "Deliver to me",
+      dlvS: "We bring the food to your door",
+      dlvSoon: "Not available here yet",
+      dineBanner: "🪑 We’ll welcome you at the restaurant",
+      dineBannerS: "Your dishes will be ready when you arrive. Next step: pick a table on the hall plan.",
+      dlvBanner: "🛵 Delivered to your door",
+      dlvBannerS: "Hot, by the restaurant’s own courier. Pay when the order is in your hands.",
+      dineGo: "🪑 Choose a table and book →",
+      tagDine: "Booking",
+      tagDlv: "Delivery",
       modeDine: "🪑 Book a table",
       modeDelivery: "🛵 Delivery",
       deliveryHint: "Add dishes to the cart — address, phone and payment are in the cart.",
@@ -539,9 +581,10 @@
   const CART_KEY = 'rf-cart';
   // 🪑 Joy band qilish / 🛵 Yetkazib berish — the guest's choice, kept for the restaurant page and the cart.
   const MODE_KEY = 'rf-mode';
+  const canDeliver = (r) => !!r && (!!r.delivery_enabled || isDemo(r));
   const getMode = (r) => {
     try {
-      return r?.delivery_enabled && localStorage.getItem(MODE_KEY) === 'delivery' ? 'delivery' : 'dinein';
+      return canDeliver(r) && localStorage.getItem(MODE_KEY) === 'delivery' ? 'delivery' : 'dinein';
     } catch {
       return 'dinein';
     }
@@ -551,10 +594,13 @@
       localStorage.setItem(MODE_KEY, m);
     } catch {}
   };
-  const modeSwitch = (r, mode) =>
-    r?.delivery_enabled
-      ? `<div class="mvp-modeswitch" role="group" aria-label="${h(c('modeDine'))} / ${h(c('modeDelivery'))}"><button type="button" data-mode="dinein" aria-pressed="${mode === 'dinein'}">${h(c('modeDine'))}</button><button type="button" data-mode="delivery" aria-pressed="${mode === 'delivery'}">${h(c('modeDelivery'))}</button></div>`
-      : '';
+  // Two big choices on top of the restaurant page (and a compact pair in the cart); delivery greyed out where
+  // the restaurant does not deliver.
+  const modeSwitch = (r, mode, big = false) => {
+    const off = !canDeliver(r);
+    const btn = (m, ico, t, sub) => `<button type="button" data-mode="${m}" aria-pressed="${mode === m}"${m === 'delivery' && off ? ' aria-disabled="true"' : ''}><span class="mvp-mode-ico" aria-hidden="true">${ico}</span><b>${h(t)}</b>${big ? `<small>${h(sub)}</small>` : ''}</button>`;
+    return `<div class="mvp-modeswitch${big ? ' big' : ''}" role="group" aria-label="${h(c('howTitle'))}">${big ? `<p class="mvp-mode-q">${h(c('howTitle'))}</p>` : ''}${btn('dinein', '🪑', c('dineT'), c('dineS'))}${btn('delivery', '🛵', c('dlvT'), off ? c('dlvSoon') : c('dlvS'))}</div>`;
+  };
   const menus = new Map(); // restaurant id → its menu (the last one shown)
   function cartRead() {
     try {
@@ -632,7 +678,7 @@
   // ---------- Step 1: home ----------
   function card(r) {
     const place = [r.cuisine, r.city || '', r.address].filter(Boolean).join(' · ');
-    return `<article class="mvp-card${r.id === AMANDA ? ' featured' : ''}" data-restaurant-id="${h(r.id)}"><a class="mvp-card-photo" href="#/restaurant/${encodeURIComponent(r.id)}" tabindex="-1" aria-hidden="true">${r.image_url ? `<img src="${h(r.image_url)}" alt="" loading="lazy" decoding="async" width="640" height="400">` : `<span>${h(r.name[0] || '')}</span>`}${isDemo(r) ? '<span class="mvp-demo-tag">DEMO</span>' : ''}</a><div class="mvp-card-body"><h3>${h(r.name)}</h3><p>${h(place)}</p><a class="primary mvp-book" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('book'))} →</a></div></article>`;
+    return `<article class="mvp-card${r.id === AMANDA ? ' featured' : ''}" data-restaurant-id="${h(r.id)}"><a class="mvp-card-photo" href="#/restaurant/${encodeURIComponent(r.id)}" tabindex="-1" aria-hidden="true">${r.image_url ? `<img src="${h(r.image_url)}" alt="" loading="lazy" decoding="async" width="640" height="400">` : `<span>${h(r.name[0] || '')}</span>`}${isDemo(r) ? '<span class="mvp-demo-tag">DEMO</span>' : ''}</a><div class="mvp-card-body"><h3>${h(r.name)}</h3><p>${h(place)}</p><a class="primary mvp-book" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('enter'))} →</a></div></article>`;
   }
   const sorted = () => [...(state.catalog || [])].sort((a, b) => (a.id === AMANDA ? -1 : b.id === AMANDA ? 1 : isDemo(a) - isDemo(b)));
   function matches(r, q) {
@@ -867,7 +913,7 @@
     menus.set(r.id, menu);
     const sel = picked(r.id);
     const place = [r.cuisine, r.address].filter(Boolean).join(' · ');
-    page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p>${modeSwitch(r, getMode(r))}<p class="notice mvp-dlv-hint" data-dlv-hint hidden>🛵 ${h(c('deliveryHint'))}${Number(r.delivery_fee) >= 0 ? ` · ${h(c('deliveryFee'))}: <b>${money(r.delivery_fee)}</b>` : ''}${r.delivery_minutes ? ` · ~${Number(r.delivery_minutes)} ${h(c('min'))}` : ''}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
+    page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}${modeSwitch(r, getMode(r), true)}<p class="mvp-place">${h(place)}</p><p class="notice mvp-dlv-hint" data-dlv-hint hidden>🛵 ${h(c('deliveryHint'))}${Number(r.delivery_fee) >= 0 ? ` · ${h(c('deliveryFee'))}: <b>${money(r.delivery_fee)}</b>` : ''}${r.delivery_minutes ? ` · ~${Number(r.delivery_minutes)} ${h(c('min'))}` : ''}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
     const box = document.getElementById('mvpMenu');
     // Delivery: no hall — the menu list opens and the dishes go to the cart (address and payment there).
     const applyMode = (mode) => {
@@ -882,6 +928,7 @@
     document.querySelector('#content .mvp-modeswitch')?.addEventListener('click', (e) => {
       const b = e.target.closest('[data-mode]');
       if (!b) return;
+      if (b.getAttribute('aria-disabled') === 'true') return alert(c('dlvOff'));
       setMode(b.dataset.mode);
       applyMode(b.dataset.mode);
     });
@@ -1018,8 +1065,8 @@
         return `<li class="mvp-cart-row" data-cart-id="${h(i.id)}">${img ? `<img src="${h(img)}" alt="" width="64" height="64" loading="lazy" decoding="async">` : '<span class="mvp-dish-ph" aria-hidden="true">🍽</span>'}<div class="mvp-cart-info"><b>${h(name)}</b><span class="muted">${money(price)} × ${i.quantity} = <b>${money(price * i.quantity)}</b></span></div><span class="mvp-qty"><button type="button" data-cart-step="-1" aria-label="− ${h(name)}">−</button><b>${i.quantity}</b><button type="button" data-cart-step="1" aria-label="+ ${h(name)}">+</button></span><button type="button" class="mvp-cart-del" data-cart-del aria-label="${h(c('cartRemove'))}: ${h(name)}" title="${h(c('cartRemove'))}">✕</button></li>`;
       };
       page(
-        c('cartTitle'),
-        `<a class="link back" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('toMenu'))}</a><section class="panel mvp-cart"><h2>${h(r.name)}</h2>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}${note ? `<p class="notice">${h(note)}</p>` : ''}<ul class="mvp-cart-list">${rows.map(line).join('')}</ul>${modeSwitch(r, getMode(r))}${getMode(r) === 'delivery' ? deliveryForm(r, total) : `<dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(total)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(total)}</dd></div><div><dt>${h(c('cartPaid'))}</dt><dd>${money(0)}</dd></div><div><dt>${h(c('cartLeft'))}</dt><dd>${money(total)}</dd></div></dl><p class="muted mvp-cart-note">💳 ${h(c('cartDepositNote'))}</p><button type="button" class="primary mvp-cart-go" data-cart-go>${h(c('cartGo'))} →</button>`}</section>`,
+        `${c('cartTitle')} · ${getMode(r) === 'delivery' ? c('tagDlv') : c('tagDine')}`,
+        `<a class="link back" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('toMenu'))}</a><section class="panel mvp-cart"><h2>${h(r.name)}</h2>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}${note ? `<p class="notice">${h(note)}</p>` : ''}<ul class="mvp-cart-list">${rows.map(line).join('')}</ul>${modeSwitch(r, getMode(r))}${getMode(r) === 'delivery' ? `<div class="mvp-mode-banner dlv"><b>${h(c('dlvBanner'))}</b><p>${h(c('dlvBannerS'))}</p></div>${deliveryForm(r, total)}` : `<div class="mvp-mode-banner dine"><b>${h(c('dineBanner'))}</b><p>${h(c('dineBannerS'))}</p></div><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(total)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(total)}</dd></div><div><dt>${h(c('cartPaid'))}</dt><dd>${money(0)}</dd></div><div><dt>${h(c('cartLeft'))}</dt><dd>${money(total)}</dd></div></dl><p class="muted mvp-cart-note">💳 ${h(c('cartDepositNote'))}</p><button type="button" class="primary mvp-cart-go" data-cart-go>${h(c('dineGo'))}</button>`}</section>`,
       );
       cartBar();
       bindDelivery(r);
@@ -1040,6 +1087,7 @@
     const root = document.getElementById('content');
     root.onclick = (e) => {
       const sw = e.target.closest?.('.mvp-modeswitch [data-mode]');
+      if (sw?.getAttribute('aria-disabled') === 'true') return alert(c('dlvOff'));
       if (sw) {
         setMode(sw.dataset.mode);
         return draw('');
