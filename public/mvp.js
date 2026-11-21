@@ -67,6 +67,29 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      stTitle: "📊 Statistika",
+      stToday: "Bugun",
+      stWeek: "Hafta (7 kun)",
+      stMonth: "Oy (30 kun)",
+      stRevenue: "Umumiy tushum",
+      stRevenueSub: "Avanslar {a} · Yakunlangan zakazlar {o}",
+      stCount: "Zakazlar soni",
+      stCountSub: "Bron {b} · Yetkazib berish {o}",
+      stPending: "⏳ Tasdiq kutmoqda: {n} →",
+      stRating: "O‘rtacha reyting",
+      stReviewsN: "{n} ta sharh",
+      stNoRating: "Hali baho yo‘q",
+      stTop: "🔥 Eng ko‘p sotilgan taomlar",
+      stTopEmpty: "Bu davrda hali sotilgan taom yo‘q.",
+      stQty: "{n} ta",
+      stReviews: "💬 Mijozlar reytingi va sharhlari",
+      stReviewsEmpty: "Hali sharhlar yo‘q — birinchi mehmonlaringiz baho qoldirgach shu yerda ko‘rinadi.",
+      stEmpty: {"today": "Bugun hali zakazlar yo‘q", "week": "Bu hafta hali zakazlar yo‘q", "month": "Bu oy hali zakazlar yo‘q"},
+      stEmptySub: "Restoran sahifangiz tayyor bo‘lsa, mehmonlar bron va buyurtma bera boshlaydi.",
+      stNoRest: "Hali restoraningiz yo‘q",
+      stAddRest: "🏪 Restoran qo‘shish",
+      stNote: "Tushum: to‘langan avanslar + yakunlangan zakazlar. Restoranda to‘langan qolgan summa kirmaydi.",
+      stLoadFail: "Statistikani yuklab bo‘lmadi. Qayta urinib ko‘ring.",
       eta: "⏱ Taxminiy yetkazish",
       track: "📍 Buyurtmani kuzatish",
       myOrders: "🛵 Yetkazib berish buyurtmalarim",
@@ -254,6 +277,29 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      stTitle: "📊 Статистика",
+      stToday: "Сегодня",
+      stWeek: "Неделя (7 дней)",
+      stMonth: "Месяц (30 дней)",
+      stRevenue: "Общая выручка",
+      stRevenueSub: "Авансы {a} · Завершённые заказы {o}",
+      stCount: "Количество заказов",
+      stCountSub: "Брони {b} · Доставка {o}",
+      stPending: "⏳ Ждут подтверждения: {n} →",
+      stRating: "Средний рейтинг",
+      stReviewsN: "{n} отзывов",
+      stNoRating: "Оценок пока нет",
+      stTop: "🔥 Самые продаваемые блюда",
+      stTopEmpty: "За этот период блюд ещё не продано.",
+      stQty: "{n} шт",
+      stReviews: "💬 Рейтинг и отзывы гостей",
+      stReviewsEmpty: "Отзывов пока нет — они появятся здесь после первых гостей.",
+      stEmpty: {"today": "Сегодня заказов пока нет", "week": "За неделю заказов пока нет", "month": "За месяц заказов пока нет"},
+      stEmptySub: "Когда страница ресторана готова, гости начинают бронировать и заказывать.",
+      stNoRest: "У вас пока нет ресторана",
+      stAddRest: "🏪 Добавить ресторан",
+      stNote: "Выручка: оплаченные авансы + завершённые заказы. Остаток, оплаченный в ресторане, не учитывается.",
+      stLoadFail: "Не удалось загрузить статистику. Попробуйте ещё раз.",
       eta: "⏱ Примерное время доставки",
       track: "📍 Отследить заказ",
       myOrders: "🛵 Мои заказы с доставкой",
@@ -441,6 +487,29 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      stTitle: "📊 Statistics",
+      stToday: "Today",
+      stWeek: "Week (7 days)",
+      stMonth: "Month (30 days)",
+      stRevenue: "Total revenue",
+      stRevenueSub: "Advances {a} · Completed orders {o}",
+      stCount: "Orders",
+      stCountSub: "Bookings {b} · Delivery {o}",
+      stPending: "⏳ Waiting for confirmation: {n} →",
+      stRating: "Average rating",
+      stReviewsN: "{n} reviews",
+      stNoRating: "No ratings yet",
+      stTop: "🔥 Top-selling dishes",
+      stTopEmpty: "No dishes sold in this period yet.",
+      stQty: "{n} pcs",
+      stReviews: "💬 Guest ratings & reviews",
+      stReviewsEmpty: "No reviews yet — they appear here after your first guests.",
+      stEmpty: {"today": "No orders today yet", "week": "No orders this week yet", "month": "No orders this month yet"},
+      stEmptySub: "Once your restaurant page is ready, guests start booking and ordering.",
+      stNoRest: "You have no restaurant yet",
+      stAddRest: "🏪 Add a restaurant",
+      stNote: "Revenue: paid advances + completed orders. The rest paid at the restaurant is not included.",
+      stLoadFail: "Could not load the statistics. Please try again.",
       eta: "⏱ Estimated delivery",
       track: "📍 Track the order",
       myOrders: "🛵 My delivery orders",
@@ -1524,6 +1593,68 @@
       .map((o) => `<article class="mvp-order"><div><b>${h(o.restaurant_name)}</b><span class="muted">${h(st[o.status] || o.status)} · ${money(o.total)}</span><small class="muted">${h(new Date(o.created_at).toLocaleString(lang() === 'en' ? 'en-GB' : 'ru-RU', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}</small></div>${['pending', 'confirmed'].includes(o.status) ? `<a class="quiet" href="#/tracking/${encodeURIComponent(o.id)}">${h(c('track'))}</a>` : ''}</article>`)
       .join('')}</section>`;
   }
+  /*
+   * 📊 Statistika — the owner's home (GET /api/manage/stats): period chips (today / 7 / 30 days), revenue,
+   * orders, rating, top-selling dishes and the latest reviews; clean empty states for a new restaurant.
+   */
+  const fill = (s, v) => String(s).replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+  async function ownerStats(seq) {
+    let period = 'today',
+      rid = '';
+    try {
+      period = ['today', 'week', 'month'].includes(localStorage.getItem('rf-stats-period')) ? localStorage.getItem('rf-stats-period') : 'today';
+      rid = localStorage.getItem('rf-stats-restaurant') || '';
+    } catch {}
+    page(c('stTitle'), `<section class="mvp-stats" data-stats><div class="mvp-stats-periods" role="group">${['today', 'week', 'month'].map((p) => `<button type="button" data-period="${p}" aria-pressed="${p === period}">${h(c({ today: 'stToday', week: 'stWeek', month: 'stMonth' }[p]))}</button>`).join('')}</div><div data-stats-body><p class="muted">…</p></div></section>`);
+    const root = document.querySelector('#content [data-stats]');
+    const load = async () => {
+      const body = root.querySelector('[data-stats-body]');
+      body.setAttribute('aria-busy', 'true');
+      let d;
+      try {
+        d = await api('/api/manage/stats?period=' + period + (rid ? '&restaurantId=' + encodeURIComponent(rid) : ''));
+      } catch {
+        body.innerHTML = `<p class="notice">${h(c('stLoadFail'))}</p>`;
+        return;
+      }
+      if (!root.isConnected || (seq && typeof state !== 'undefined' && seq !== state.seq)) return;
+      body.removeAttribute('aria-busy');
+      if (!d.restaurant) {
+        body.innerHTML = `<div class="panel mvp-stats-empty"><p class="mvp-cart-big" aria-hidden="true">🏪</p><h2>${h(c('stNoRest'))}</h2><a class="primary" href="#/manage">${h(c('stAddRest'))}</a></div>`;
+        return;
+      }
+      const stars = (n) => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+      const pick = d.restaurants.length > 1 ? `<select class="mvp-stats-rest" data-stats-rest aria-label="${h(d.restaurant.name)}">${d.restaurants.map((x) => `<option value="${h(x.id)}" ${x.id === d.restaurant.id ? 'selected' : ''}>${h(x.name)}</option>`).join('')}</select>` : `<p class="mvp-stats-name">🏪 <b>${h(d.restaurant.name)}</b></p>`;
+      const empty = !d.count.total && !d.revenue.total;
+      body.innerHTML = `${pick}${d.restaurant.demo ? `<p class="notice">${h(c('demo'))}</p>` : ''}${empty ? `<div class="mvp-stats-empty-line"><b>${h(c('stEmpty')[period])}</b><span class="muted">${h(c('stEmptySub'))}</span></div>` : ''}
+        <div class="mvp-kpis">
+          <article class="mvp-kpi rev"><small>💰 ${h(c('stRevenue'))}</small><strong>${money(d.revenue.total)}</strong><span>${h(fill(c('stRevenueSub'), { a: money(d.revenue.deposits), o: money(d.revenue.orders) }))}</span></article>
+          <article class="mvp-kpi cnt"><small>🧾 ${h(c('stCount'))}</small><strong>${d.count.total}</strong><span>${h(fill(c('stCountSub'), { b: d.count.bookings, o: d.count.orders }))}</span>${d.count.pending ? `<a href="#/zakazlar" class="mvp-kpi-link">${h(fill(c('stPending'), { n: d.count.pending }))}</a>` : ''}</article>
+          <article class="mvp-kpi rat"><small>⭐ ${h(c('stRating'))}</small><strong>${d.rating.average != null ? '⭐ ' + d.rating.average.toFixed(1) : '—'}</strong><span>${h(d.rating.count ? fill(c('stReviewsN'), { n: d.rating.count }) : c('stNoRating'))}</span></article>
+        </div>
+        <section class="panel mvp-top"><h2>${h(c('stTop'))}</h2>${d.top.length ? `<ol>${d.top.map((x, i) => `<li><span class="mvp-top-n">${i + 1}</span><b>${h(x.name)}</b><span class="mvp-top-q">${h(fill(c('stQty'), { n: x.quantity }))}</span><span class="mvp-top-s">${money(x.revenue)}</span></li>`).join('')}</ol>` : `<p class="muted">${h(c('stTopEmpty'))}</p>`}</section>
+        <section class="panel mvp-revs"><h2>${h(c('stReviews'))}</h2>${d.reviews.length ? d.reviews.map((x) => `<article><span class="mvp-stars" aria-label="${x.stars}/5">${stars(x.stars)}</span>${x.name ? ` <b>${h(x.name)}</b>` : ''} <small class="muted">${h(new Date(x.at).toLocaleDateString(lang() === 'en' ? 'en-GB' : 'ru-RU', { timeZone: 'Asia/Tashkent' }))}</small>${x.comment ? `<p>${h(x.comment)}</p>` : ''}</article>`).join('') : `<p class="muted">${h(c('stReviewsEmpty'))}</p>`}</section>
+        <p class="muted mvp-stats-note">${h(c('stNote'))}</p>`;
+      body.querySelector('[data-stats-rest]')?.addEventListener('change', (e) => {
+        rid = e.target.value;
+        try {
+          localStorage.setItem('rf-stats-restaurant', rid);
+        } catch {}
+        load();
+      });
+    };
+    root.querySelector('.mvp-stats-periods').onclick = (e) => {
+      const b = e.target.closest('[data-period]');
+      if (!b || b.dataset.period === period) return;
+      period = b.dataset.period;
+      try {
+        localStorage.setItem('rf-stats-period', period);
+      } catch {}
+      root.querySelectorAll('[data-period]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      load();
+    };
+    await load();
+  }
   async function bookingsPage(seq) {
     page(c('bkTitle'), `<section class="mvp-page"><div data-pay-return></div><div data-orders></div><div data-bk><p class="muted">…</p></div></section>`);
     const root = document.querySelector('#content .mvp-page');
@@ -1753,5 +1884,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cartBar, { once: true });
   else cartBar();
 
-  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile, cartPage, cartBar };
+  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile, cartPage, cartBar, ownerStats };
 })();

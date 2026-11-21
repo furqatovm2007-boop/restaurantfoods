@@ -6783,5 +6783,15 @@
     "uz": "Vegetarian",
     "ru": "Вегетарианская",
     "en": "Vegetarian"
+  },
+  "Statistika": {
+    "uz": "Statistika",
+    "ru": "Статистика",
+    "en": "Statistics"
+  },
+  "Zakazlar": {
+    "uz": "Zakazlar",
+    "ru": "Заказы",
+    "en": "Orders"
   }
 }

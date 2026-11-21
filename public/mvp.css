@@ -378,3 +378,31 @@ body[data-theme=light].rf-mvp input[type=checkbox]:not(:checked),html.rf-mvp bod
 .mvp-order{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #1e293b}
 .mvp-order>div{display:grid;gap:2px;min-width:0}
 .mvp-eta{font-size:1.05rem}
+/* 📊 Owner statistics */
+.mvp-stats-periods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px;border-radius:14px;border:1px solid #1e293b;background:rgba(15,23,42,.6);margin-bottom:14px}
+.mvp-stats-periods button{min-height:44px;border:0;border-radius:10px;background:transparent;color:inherit;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer}
+.mvp-stats-periods button[aria-pressed=true]{background:linear-gradient(135deg,#00c9a7,#0ea5e9);color:#04121f}
+.mvp-stats-rest{width:100%;margin-bottom:12px}
+.mvp-stats-name{margin:0 0 12px}
+.mvp-stats-empty-line{display:grid;gap:4px;padding:12px 14px;margin-bottom:12px;border-radius:14px;border:1px dashed #334155}
+.mvp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.mvp-kpi{display:grid;gap:4px;padding:14px;border-radius:16px;border:1px solid #1e293b;background:rgba(15,23,42,.72)}
+.mvp-kpi small{font-weight:700;opacity:.85}
+.mvp-kpi strong{font-size:1.6rem;line-height:1.15}
+.mvp-kpi span{font-size:.82rem;opacity:.75}
+.mvp-kpi.rev strong{color:#34d399}.mvp-kpi.rat strong{color:#facc15}
+.mvp-kpi-link{font-weight:700;font-size:.85rem;color:#38bdf8;text-decoration:none}
+.mvp-top ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.mvp-top li{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1e293b}
+.mvp-top-n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#1e293b;font-weight:800;font-size:.85rem}
+.mvp-top li:first-child .mvp-top-n{background:#facc15;color:#04121f}
+.mvp-top-q{opacity:.8;font-size:.9rem}.mvp-top-s{font-weight:700}
+.mvp-revs article{padding:10px 0;border-top:1px solid #1e293b}
+.mvp-revs p{margin:4px 0 0}
+.mvp-stars{color:#facc15;letter-spacing:1px}
+.mvp-stats-note{font-size:.8rem}
+body[data-theme=light] .mvp-kpi,body[data-theme=light] .mvp-stats-periods{background:#fff;border-color:#e2e8f0}
+/* Owner views of the dashboard: "📋 Zakazlar" = bookings + orders only; "🏪 Restoranim" = the restaurant itself */
+.cabinet-page.view-orders>:not([data-section=bookings]):not([data-section=orders]){display:none!important}
+.cabinet-page.view-restaurant>[data-section=bookings],.cabinet-page.view-restaurant>[data-section=orders],.cabinet-page.view-restaurant>[data-section=dashboard],.cabinet-page.view-restaurant .cabinet-tabs [data-tab=dashboard],.cabinet-page.view-restaurant .cabinet-tabs [data-tab=bookings],.cabinet-page.view-restaurant .cabinet-tabs [data-tab=orders]{display:none!important}
+.mvp-top h2,.mvp-revs h2{font-size:1.15rem}

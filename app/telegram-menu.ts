@@ -39,7 +39,7 @@ export const mainMenu = (l: Lang = 'uz', owner = false) => {
   if (SIMPLE_MVP_MODE)
     return {
       inline_keyboard: [
-        ...(owner ? [[openButton(t.ownerPanel, l, '/manage')]] : []),
+        ...(owner ? [[openButton(t.ownerPanel, l, '/stats')]] : []),
         [openButton(t.mvpBook, l)],
         [
           { text: t.mvpBookings, callback_data: 'my_bookings' },
