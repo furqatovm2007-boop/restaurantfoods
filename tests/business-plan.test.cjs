@@ -1,20 +1,32 @@
 const assert=require('node:assert/strict'),{load}=require('./harness.cjs');
-// Investor business plan: budget adds up to exactly $20 000 = 256 000 000 so'm, the target forecast
-// pays back within 6 months, every requested section is in the document, and only the admin opens it.
+// Admin "Biznes-reja (PDF)": the same sections as /investors (app/plan-content.ts), word for word, in UZ / RU / EN;
+// the live MVP pricing (100 000 so'm pilot → Start / Business / Premium later), the Click + receipt + anti-spam
+// workflow (no card binding / penalty fee), Telegram instead of SMS, the 4-phase roadmap; admin only, noindex.
 (async()=>{
- const bp=load('app/business-plan.ts',{});
- const total=bp.BUDGET.reduce((s,b)=>s+b.usd,0);assert.equal(total,20000);assert.equal(total,bp.INVESTMENT_USD);assert.equal(total*bp.USD_RATE,256000000);
- for(const b of bp.BUDGET)assert.equal(b.items.reduce((s,[,v])=>s+v,0),b.usd,b.name);
- assert.equal(bp.BUDGET.map(b=>b.usd).join(),'6880,2800,2120,5800,2400');
- const payback=bp.TARGET.find(r=>r.cumulative>=0).m;assert.ok(payback<=6,'target payback within 6 months: '+payback);
- assert.ok(bp.CONSERVATIVE.find(r=>r.cumulative>=0).m>payback,'conservative scenario is slower');
- const html=bp.businessPlanHtml(new Date('2026-10-24T09:00:00Z'));
- for(const s of ['AI Smart Vision','3 soniya','15 soniyada','Multi-camera','AI Service Timer','7 daqiqa','2 soatlik bekor qilish','50 000 so‘m','100 000 so‘m','150 000 so‘m','Raqamli chek va QR','Call AI','Mijoz AI roboti','3% platformaga','Kuryer','Gulchi','Start','Business','Premium','399 000','699 000','$6,880','$2,800','$2,120','$5,800','$2,400','Noutbuklar','Onlayn zaklad','100 000 – 600 000 so‘m','Dekoratsiyalar','Marry me','$20,000','256 000 000','$20 000','Zal kassasi','Do‘kon kassasi (POS)','5 daqiqa','Stop-list','Offline QR chipta','Tabiiy o‘zbekcha ovoz','Ichki zaxira AI','Administrator','App Store','Google Play','Vapi','12 oylik moliyaviy prognoz','Pitch nutqi','9 ta qiyin savol','70/30 qoidasi','10 daqiqa kutish vaqti','Virtual kutish zali','Kofe bonusi','PDF yuklab olish / Chop etish'])assert.ok(html.includes(s),'missing: '+s);
- assert.equal((html.split('<ol class="qa">')[1].split('</ol>')[0].match(/<li>/g)||[]).length,9,'nine Q&A');assert.equal((html.match(/<section class="page/g)||[]).length,10);assert.ok(!/\$15[ ,]000|192 000 000/.test(html),'no old $15 000 figures');assert.ok(!/IP-kameralar|planshetlari|VPS/.test(html),'no IP cameras, tablets or stream VPS in the budget');
- assert.ok(!/<script>/.test(html),'no inline script (CSP)');
+ const content=load('app/plan-content.ts',{});
+ const bp=load('app/business-plan.ts',{'./plan-content':content});const inv=load('app/investors.ts',{'./plan-content':content});
+ const body=(html,open,close)=>[...html.matchAll(new RegExp(open+'([\\s\\S]*?)'+close,'g'))].map(m=>m[1]);
+ const need={
+  uz:['100 000 so‘m / oy','Amanda','Start','Business','Premium','199 000 so‘m','399 000 so‘m','699 000 so‘m','20–30+ faol restoran','Click Business','total_amount','paid_amount','remaining_amount','Telegram’da tekshirish','anti-spam','0 so‘m','Eskiz.uz','$0','3D virtual turi','Bir nechta stolni guruh bilan','3D menyu','Korzinka','Tungi / kunduzgi','UZ | RU | EN','1-bosqich — Pilot','2-bosqich — Avtomatlashtirish','3-bosqich — Kengayish','4-bosqich — Ekotizim','R-Keeper, iiko, Poster','Telegram Mini App','3–5% komissiya','Toshkent','Supabase','Cloudflare','React','3 000 000 so‘m'],
+  ru:['100 000 сум / мес','Пилот','Фаза 1 — Пилот','Фаза 4 — Экосистема','Click Business','remaining_amount','Eskiz.uz','Корзина','Тёмная / светлая','R-Keeper'],
+  en:['100 000 UZS / month','Phase 1 — Pilot','Phase 2 — Automation','Phase 3 — Scale','Phase 4 — Ecosystem','1-tap Click Business','Receipt check in Telegram','Automated anti-spam blocking','Eskiz.uz','Multi-table group booking','Interactive 3D menu','Cart (Korzinka)','Dark / light mode'],
+ };
+ for(const lang of ['uz','ru','en']){
+  const pdf=bp.businessPlanHtml(new Date('2026-11-21T09:00:00Z'),lang),page=inv.investorsHtml(lang);
+  assert.ok(pdf.includes(`<html lang="${lang}"`)&&page.includes(`<html lang="${lang}"`),lang);
+  for(const s of need[lang])assert.ok(pdf.includes(s),lang+' pdf missing: '+s);
+  // The six sections are the same markup in both documents.
+  const a=body(pdf,'<section class="page plan-page">','</section>'),b=body(page,'<section>','</section>');
+  assert.equal(a.length,6,lang+' six sections');assert.deepEqual(JSON.stringify(a),JSON.stringify(b),lang+': page and PDF match');
+  assert.ok(!/avtomatik jarima|50 000 so‘m|150 000 so‘m|\$20[ ,]000|256 000 000/.test(a.join('')+pdf.split('<main')[1]),lang+': no penalty fee or old $20 000 plan');
+  assert.ok(!/<script>/.test(pdf),'no inline script (CSP)');assert.ok(!/ style="/.test(pdf)&&!/ style="/.test(page),'no inline styles (CSP)');
+ }
+ assert.equal(bp.businessPlanHtml(new Date(),'xx').includes('<html lang="uz"'),true,'unknown language → uz');
+ // The older plan stays in the code (not served).
+ assert.ok(bp.legacyBusinessPlanHtml(new Date('2026-10-24T09:00:00Z')).includes('$20 000'));
  let who=null;const route=load('app/business-plan/route.ts',{'../access':{identity:async()=>who},'../business-plan':bp});
  let r=await route.GET();assert.equal(r.status,302);assert.equal(r.headers.get('location'),'/#/login');
  who={userId:'c',role:'customer'};assert.equal((await route.GET()).status,403);
- who={userId:'a',role:'admin'};r=await route.GET();assert.equal(r.status,200);assert.ok(r.headers.get('cache-control').includes('no-store'));assert.ok(r.headers.get('x-robots-tag').includes('noindex'));assert.ok((await r.text()).includes('RestaurantFoods'));
- console.log('PASS business plan: $20 000 budget (5 lines, items add up), payback ≤ 6 months (target), all sections, admin only, noindex');
+ who={userId:'a',role:'admin'};r=await route.GET(new Request('https://x.test/business-plan?lang=ru'));assert.equal(r.status,200);assert.ok(r.headers.get('cache-control').includes('no-store'));assert.ok(r.headers.get('x-robots-tag').includes('noindex'));const t=await r.text();assert.ok(t.includes('<html lang="ru"')&&t.includes('RestaurantFoods'));
+ console.log('PASS business plan: same 6 sections as /investors in UZ/RU/EN, pilot pricing, Click/receipt/anti-spam, roadmap, admin only, noindex');
 })().catch(e=>{console.error(e);process.exitCode=1});

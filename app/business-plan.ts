@@ -1,3 +1,4 @@
+import { planSections, planHead, planLang, langLinks } from './plan-content';
 /*
  * Investor business plan (A4, print-ready). Everything is rendered on the server as static HTML with
  * inline SVG charts, so "Print / Save as PDF" in any browser gives the same document. The forecast
@@ -140,7 +141,28 @@ function lineChart(a: Month[], b: Month[]) {
 
 const mark = (v: string | number) => (v === 1 ? '<span class="yes">✓</span>' : v === 0 ? '<span class="no">—</span>' : `<b>${esc(v)}</b>`);
 
-export function businessPlanHtml(today = new Date()) {
+/*
+ * "Biznes-reja (PDF)" for the admin. Since the MVP pricing update its sections come from app/plan-content.ts —
+ * the very renderer /investors uses — so the downloaded PDF and the web page match word for word, in UZ / RU / EN.
+ * The earlier investment plan (the $20 000 budget, the 399/699 ming forecast, the card-binding penalty rules)
+ * no longer matched the live MVP and is not shown; its data and charts stay above as legacyBusinessPlanHtml().
+ */
+export function businessPlanHtml(today = new Date(), langRaw?: unknown) {
+  const lang = planLang(langRaw),
+    d = planHead(lang);
+  const date = today.toLocaleDateString(lang === 'en' ? 'en-GB' : 'ru-RU', { timeZone: 'Asia/Tashkent' });
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${d.rich(d.title)}</title><link rel="stylesheet" href="/business-plan.css?v=4"></head><body>
+<div class="toolbar no-print"><a href="/${lang}#/admin">${d.rich(d.admin)}</a>${langLinks('/business-plan', lang)}<button type="button" id="printPlan">${d.rich(d.print)}</button></div>
+<main class="doc">
+<section class="page cover"><p class="eyebrow">${d.rich(d.eyebrow)}</p><h1>RestaurantFoods</h1><p class="subtitle"><b>${d.rich(d.h1)}</b></p><p class="subtitle">${d.rich(d.lead)}</p><ul class="plan-pills">${d.pills.map((x) => `<li>${d.rich(x)}</li>`).join('')}</ul><p class="meta">restaurantfoods.online · ${d.rich(d.date)}: ${esc(date)}</p></section>
+${planSections(lang, (inner) => `<section class="page plan-page">${inner}</section>`)}
+</main>
+<script src="/business-plan.js?v=2" defer></script>
+</body></html>`;
+}
+
+/** The earlier (pre-MVP) investment plan, kept for reference; not served. */
+export function legacyBusinessPlanHtml(today = new Date()) {
   const date = today.toLocaleDateString('ru-RU', { timeZone: 'Asia/Tashkent' });
   const total = BUDGET.reduce((s, b) => s + b.usd, 0);
   const pbTarget = paybackMonth(TARGET),

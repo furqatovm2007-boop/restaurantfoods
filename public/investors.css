@@ -49,3 +49,25 @@ td b{color:var(--gold)}
 /* No inline styles (strict CSP): the cost / margin split and the growth bars (23 / 115 / 400 mln, app/investors.ts). */
 .inv-cost{width:10%}.inv-profit{width:90%}
 .inv-h0{height:14%}.inv-h1{height:32%}.inv-h2{height:100%}
+/* Shared investor sections (app/plan-content.ts) — the same markup as the admin PDF (/business-plan). */
+.inv-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.plan-langs{display:inline-flex;gap:4px;padding:3px;border-radius:999px;border:1px solid var(--line)}
+.plan-langs a,.plan-langs b{padding:.3rem .7rem;border-radius:999px;font-size:.85rem;text-decoration:none;color:var(--muted)}
+.plan-langs b{background:var(--emerald);color:#04221b}
+.plan-t{width:100%;border-collapse:collapse;margin:8px 0}
+.plan-t th,.plan-t td{padding:.55rem .6rem;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;vertical-align:top}
+.plan-t th{color:var(--muted);font-size:.85rem}
+.plan-t b{color:var(--gold)}
+.plan-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.75rem}
+.plan-cards article,.plan-phase{border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);padding:.85rem 1rem}
+.plan-cards article>b,.plan-phase>b{display:block;color:var(--gold);margin-bottom:.25rem}
+.plan-cards p,.plan-phase p{margin:0;color:var(--muted)}
+.plan-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;padding-left:1.2rem}
+.plan-phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.75rem}
+.plan-phase small{display:block;color:var(--emerald);font-weight:700;margin-bottom:.4rem}
+.plan-phase ul{margin:.5rem 0 0;padding-left:1.1rem}
+.plan-note{color:var(--muted);font-size:.85rem}
+.plan-faq{display:grid;gap:.6rem;padding-left:1.3rem}
+.plan-faq p{margin:.2rem 0 0;color:var(--muted)}
+@media print{.plan-langs{display:none}.plan-cards article,.plan-phase{background:#fff;border-color:#ccc;break-inside:avoid}.plan-cards p,.plan-phase p,.plan-faq p,.plan-note{color:#333}.plan-t b,.plan-cards article>b,.plan-phase>b{color:#111}.plan-t th,.plan-t td{border-color:#ddd}.plan-faq li{break-inside:avoid}}
+.plan-flow{list-style-position:inside;padding-left:0}.plan-flow li{padding-left:1.4em;text-indent:-1.4em}

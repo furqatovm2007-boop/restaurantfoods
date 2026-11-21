@@ -12,6 +12,7 @@ const HEADERS = {
   'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
 };
 
-export async function GET() {
-  return new Response(investorsHtml(), { headers: HEADERS });
+export async function GET(request?: Request) {
+  const lang = request ? new URL(request.url).searchParams.get('lang') : null;
+  return new Response(investorsHtml(lang), { headers: HEADERS });
 }
