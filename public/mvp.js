@@ -475,6 +475,28 @@
     // The app's own copy (ui/restaurant.js readCart) follows.
     if (typeof state !== 'undefined' && state) state.cart = keep;
     cartBar();
+    navBadge(cartCount(keep));
+  }
+  /*
+   * The 🛒 Korzinka tab of the bottom bar: its badge follows the cart in place (the bar is not redrawn, so a dish
+   * already flying to that icon still lands on it), and pops when the flight lands.
+   */
+  let navCount = null;
+  function navBadge(n) {
+    const b = document.querySelector('#mobileNav [data-nav-cart-count]');
+    if (!b) return;
+    const more = navCount !== null && n > navCount;
+    navCount = n;
+    b.textContent = String(n);
+    b.hidden = !n;
+    const link = b.closest('a');
+    if (link) link.setAttribute('aria-label', (link.textContent.replace(/\d+/g, '').trim() || 'Korzinka') + (n ? ': ' + n : ''));
+    if (more && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+      setTimeout(() => {
+        try {
+          b.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.6)', offset: 0.4 }, { transform: 'scale(.9)', offset: 0.7 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+        } catch {}
+      }, 820);
   }
   // A Map of dish id → quantity for one restaurant; every change is written to the cart at once.
   class CartMap extends Map {
@@ -581,7 +603,11 @@
       bar.href = '#/cart';
       document.body.append(bar);
     }
-    bar.hidden = !n || onCart;
+    // Phones: the bottom bar's 🛒 Korzinka tab (with its count) takes over; the floating bar stays for wide
+    // screens, where the bottom bar is not shown.
+    const nav = document.getElementById('mobileNav'),
+      tab = !!nav && !nav.hidden && getComputedStyle(nav).display !== 'none' && !!nav.querySelector('[data-nav-cart-count]');
+    bar.hidden = !n || onCart || tab;
     if (!n) return;
     const label = `${c('cartBar')} · ${n} ${c('pcs')} · ${money(cartSum(x))}`;
     bar.setAttribute('aria-label', '🛒 ' + label);
@@ -869,8 +895,10 @@
       if (root) root.onclick = null;
     }
     cartBar();
+    setTimeout(cartBar, 50);
   });
   window.addEventListener('storage', (e) => e.key === CART_KEY && cartBar());
+  window.addEventListener('resize', () => cartBar(), { passive: true });
 
   // ---------- Step 3: checkout — time and guests; who books comes from Telegram ----------
   const normPhone = (v) => {

@@ -283,7 +283,7 @@ html.rf-book-open #content,html.rf-book-open #topbar,html.rf-book-open #mobileNa
 @media (min-width:900px){.mvp-cartbar{bottom:24px}}
 @keyframes mvpCartIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
 html.rf-book-open .mvp-cartbar,body:has(dialog[open]) .mvp-cartbar{visibility:hidden}
-#content:has(.mvp-step) {padding-bottom:84px}
+@media (min-width:900px){#content:has(.mvp-step){padding-bottom:84px}}
 .mvp-cart-list{list-style:none;margin:12px 0;padding:0;display:grid;gap:10px}
 .mvp-cart-row{display:grid;grid-template-columns:56px 1fr auto auto;align-items:center;gap:10px;padding:10px;border:1px solid #1e293b;border-radius:14px}
 .mvp-cart-row img,.mvp-cart-row .mvp-dish-ph{width:56px;height:56px;border-radius:10px;object-fit:cover;display:grid;place-items:center}
@@ -299,3 +299,8 @@ html.rf-book-open .mvp-cartbar,body:has(dialog[open]) .mvp-cartbar{visibility:hi
 .mvp-cart-big{font-size:48px;margin:0}
 body[data-theme=light] .mvp-cart-row{border-color:#e2e8f0}
 @media (max-width:420px){.mvp-cart-row{grid-template-columns:48px 1fr auto;}.mvp-cart-row .mvp-cart-del{grid-column:3;grid-row:1}.mvp-cart-row .mvp-qty{grid-column:2/4}}
+/* 🛒 Korzinka tab in the bottom bar: the live count sits on the icon (the fly-to-cart target) */
+.mobile-nav .mvp-nav-cart-ico{position:relative;display:inline-grid;place-items:center}
+.mobile-nav .mvp-nav-cart-ico b{position:absolute;top:-7px;right:-11px;left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#facc15;color:#04121f;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 0 0 2px #0b1526}
+.mobile-nav .mvp-nav-cart-ico b[hidden]{display:none}
+body[data-theme=light] .mobile-nav .mvp-nav-cart-ico b{box-shadow:0 0 0 2px #fff}
