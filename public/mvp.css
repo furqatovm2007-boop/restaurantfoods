@@ -304,3 +304,11 @@ body[data-theme=light] .mvp-cart-row{border-color:#e2e8f0}
 .mobile-nav .mvp-nav-cart-ico b{position:absolute;top:-7px;right:-11px;left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#facc15;color:#04121f;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 0 0 2px #0b1526}
 .mobile-nav .mvp-nav-cart-ico b[hidden]{display:none}
 body[data-theme=light] .mobile-nav .mvp-nav-cart-ico b{box-shadow:0 0 0 2px #fff}
+/* The page never scrolls sideways on phones: the hall map stays inside the screen (it pans and zooms inside its
+   own box), so nothing pushes the bottom bar off-screen. clip, not hidden: no extra scroll container, vertical
+   overflow (menus, the phone country list) still shows. */
+html,body{max-width:100%;overflow-x:clip}
+#content{max-width:100%;min-width:0;overflow-x:clip}
+.mvp-step,#mvpHall,#bookingPlan,.booking-panel{width:100%;max-width:100%;min-width:0;overflow-x:clip}
+#bookingPlan .hall-scroll,#bookingPlan .hall-map,#bookingPlan svg{max-width:100%}
+.mobile-nav{max-width:100vw}

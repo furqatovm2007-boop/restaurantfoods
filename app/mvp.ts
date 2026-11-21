@@ -78,3 +78,27 @@ export async function ensureDemoAmanda() {
   await env.DB!.batch(stmts);
   return true;
 }
+
+/*
+ * One hall map for every restaurant (SIMPLE_MVP_MODE): the other DEMO restaurants used to open the older demo
+ * room (Floor 1 / Floor 2, − 100% +, "Guest overstaying"…), whose tables live outside D1. They now open the same
+ * hall map as everyone; a demo restaurant with no tables in D1 gets a simple DEMO layout once (idempotent,
+ * INSERT OR IGNORE, is_demo=1 rows only — like Amanda above). Bookings for demos are still never saved.
+ */
+const DEMO_SPOTS: [number, number, string][] = [
+  [18, 22, 'round'], [40, 22, 'round'], [62, 22, 'round'], [84, 22, 'round'],
+  [18, 52, 'rectangle'], [40, 52, 'rectangle'], [62, 52, 'rectangle'], [84, 52, 'round'],
+  [22, 80, 'rectangle'], [44, 80, 'round'], [66, 80, 'round'], [86, 80, 'round'],
+];
+const DEMO_SEATS = [2, 2, 4, 4, 4, 6, 6, 2, 8, 4, 4, 2];
+export async function ensureDemoTables(r: { id: string; is_demo?: number | null; tables?: number | null }) {
+  if (!SIMPLE_MVP_MODE || !(r.is_demo || r.id.startsWith('rf-demo-'))) return false;
+  if (await env.DB!.prepare('SELECT 1 FROM restaurant_tables WHERE restaurant_id=? LIMIT 1').bind(r.id).first()) return false;
+  const n = Math.max(4, Math.min(DEMO_SPOTS.length, Number(r.tables) || 8));
+  await env.DB!.batch(
+    DEMO_SPOTS.slice(0, n).map(([x, y, shape], i) =>
+      env.DB!.prepare('INSERT OR IGNORE INTO restaurant_tables (id,restaurant_id,number,floor,seats,atmosphere,x,y,shape,active,is_demo) VALUES (?,?,?,1,?,?,?,?,?,1,1)').bind(`${r.id}-t${i + 1}`, r.id, i + 1, DEMO_SEATS[i], 'DEMO stol', x, y, shape),
+    ),
+  );
+  return true;
+}
