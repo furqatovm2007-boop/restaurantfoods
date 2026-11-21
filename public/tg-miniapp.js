@@ -83,6 +83,8 @@
     if (!location.hash || location.hash === '#' || /tgWebApp/.test(location.hash)) {
       const go = api.goTo || new URLSearchParams(location.search).get('go') || '';
       const target = /^\/[\w\-/%.]{1,200}$/.test(go) ? go : '/discover';
+      // No page asked for: owners and managers are sent on to their dashboard once signed in (ui/restaurant.js).
+      if (target === '/discover') window.RF_TG_HOME_PENDING = true;
       history.replaceState(null, '', location.pathname + location.search + '#' + target);
     }
     backButton(tg);

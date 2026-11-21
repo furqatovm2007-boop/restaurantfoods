@@ -6713,5 +6713,75 @@
     "uz": "Restoranim",
     "ru": "Мой ресторан",
     "en": "My restaurant"
+  },
+  "ko‘pi bilan 3 ta": {
+    "uz": "ko‘pi bilan 3 ta",
+    "ru": "не больше 3",
+    "en": "up to 3"
+  },
+  "Ko‘pi bilan 3 ta oshxona turini tanlang.": {
+    "uz": "Ko‘pi bilan 3 ta oshxona turini tanlang.",
+    "ru": "Выберите не больше 3 типов кухни.",
+    "en": "Choose up to 3 cuisines."
+  },
+  "Milliy": {
+    "uz": "Milliy",
+    "ru": "Национальная",
+    "en": "National"
+  },
+  "Yevropa": {
+    "uz": "Yevropa",
+    "ru": "Европейская",
+    "en": "European"
+  },
+  "Fast-food": {
+    "uz": "Fast-food",
+    "ru": "Фастфуд",
+    "en": "Fast food"
+  },
+  "Italyan": {
+    "uz": "Italyan",
+    "ru": "Итальянская",
+    "en": "Italian"
+  },
+  "Turk": {
+    "uz": "Turk",
+    "ru": "Турецкая",
+    "en": "Turkish"
+  },
+  "Osiyo": {
+    "uz": "Osiyo",
+    "ru": "Азиатская",
+    "en": "Asian"
+  },
+  "Kavkaz": {
+    "uz": "Kavkaz",
+    "ru": "Кавказская",
+    "en": "Caucasian"
+  },
+  "Grill / Shashlik": {
+    "uz": "Grill / Shashlik",
+    "ru": "Гриль / Шашлык",
+    "en": "Grill / Kebab"
+  },
+  "Dengiz mahsulotlari": {
+    "uz": "Dengiz mahsulotlari",
+    "ru": "Морепродукты",
+    "en": "Seafood"
+  },
+  "Kafe va qandolat": {
+    "uz": "Kafe va qandolat",
+    "ru": "Кафе и кондитерская",
+    "en": "Café & pastry"
+  },
+  "Choyxona": {
+    "uz": "Choyxona",
+    "ru": "Чайхана",
+    "en": "Teahouse"
+  },
+  "Vegetarian": {
+    "uz": "Vegetarian",
+    "ru": "Вегетарианская",
+    "en": "Vegetarian"
   }
 }

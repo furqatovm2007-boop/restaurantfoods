@@ -347,3 +347,34 @@ body[data-theme=light] .mvp-modeswitch.big button[aria-pressed=true]{background:
 .mvp-mode-banner.dlv{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.4)}
 .mvp-modeswitch.big button[aria-pressed=true]{background:linear-gradient(135deg,#00c9a7,#0ea5e9);color:#04121f}.mvp-modeswitch.big button[aria-pressed=true] small{opacity:.9}
 .mvp-modeswitch.big button small{color:inherit}
+/* Solid top bar (nothing shows through it, in Telegram too) and a cover for the notch / status-bar area */
+html.rf-mvp body #topbar{background:#0b1526!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.rf-mvp body[data-theme=light] #topbar{background:#fff!important}
+html.rf-mvp #topbar::after{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:#0b1526;z-index:30;pointer-events:none}
+html.rf-mvp body[data-theme=light] #topbar::after{background:#fff}
+/* Owner dashboard: tabs stuck right under the top bar, solid; fields never wider than the screen */
+html.rf-mvp .cabinet-tabs{top:var(--rf-topbar-h,64px);background:#0b1526!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;scroll-snap-type:none}
+html.rf-mvp body[data-theme=light] .cabinet-tabs{background:#f8fafc!important}
+.rf-mvp .cabinet-page,.rf-mvp .cabinet-page .panel,.rf-mvp .cabinet-page form,.rf-mvp .cabinet-page .two,.rf-mvp .cabinet-page .two>*,.rf-mvp .cabinet-page label{min-width:0;max-width:100%}
+.rf-mvp .cabinet-page input,.rf-mvp .cabinet-page select,.rf-mvp .cabinet-page textarea{max-width:100%;min-width:0;box-sizing:border-box}
+.rf-mvp input[type=time],.rf-mvp input[type=date]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;max-width:100%;box-sizing:border-box;display:block}
+/* Checkboxes: a clear box with a tick, in both themes */
+.rf-mvp input[type=checkbox]:not(.rf-switch){-webkit-appearance:none;appearance:none;flex:none;width:24px;height:24px;margin:0;border:2px solid #64748b;border-radius:7px;background:#0f172a;display:inline-grid;place-items:center;cursor:pointer;vertical-align:middle}
+.rf-mvp input[type=checkbox]:not(.rf-switch):checked{background:#00c9a7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%2304121f' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat;border-color:#00c9a7}
+.rf-mvp input[type=checkbox]:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
+body[data-theme=light].rf-mvp input[type=checkbox]:not(:checked),html.rf-mvp body[data-theme=light] input[type=checkbox]:not(:checked){background:#fff;border-color:#94a3b8}
+/* Kitchen type chips */
+.cuisine-pick{border:0;padding:0;margin:0;min-width:0}
+.cuisine-pick legend{font-weight:700;font-size:.8rem;letter-spacing:.03em;margin-bottom:6px}
+.cuisine-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cuisine-chip{display:inline-flex!important;align-items:center;gap:6px;padding:6px 10px;border:1px solid #334155;border-radius:999px;cursor:pointer;font-weight:600}
+.cuisine-chip input[type=checkbox]{width:18px!important;height:18px!important;border-radius:5px!important}
+.cuisine-chip:has(input:checked){border-color:#00c9a7;background:rgba(0,201,167,.12)}
+/* Admin → Telegram tools: full-width buttons, one under another */
+.tg-tools{display:grid;gap:10px;margin:8px 0 12px}
+.tg-tools button{width:100%}
+/* Delivery orders in "Bronlarim" */
+.mvp-orders{margin-bottom:14px}
+.mvp-order{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #1e293b}
+.mvp-order>div{display:grid;gap:2px;min-width:0}
+.mvp-eta{font-size:1.05rem}

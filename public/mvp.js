@@ -67,6 +67,10 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      eta: "⏱ Taxminiy yetkazish",
+      track: "📍 Buyurtmani kuzatish",
+      myOrders: "🛵 Yetkazib berish buyurtmalarim",
+      oStatus: {"pending": "⏳ Restoran tasdig‘ini kutmoqda", "confirmed": "👨‍🍳 Tayyorlanmoqda / yo‘lda", "completed": "✅ Yetkazildi", "cancelled": "❌ Bekor qilingan"},
       enter: "Menyu va xizmatlar",
       howTitle: "Qanday xizmat kerak?",
       dineT: "Restoranda o‘tiraman",
@@ -250,6 +254,10 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      eta: "⏱ Примерное время доставки",
+      track: "📍 Отследить заказ",
+      myOrders: "🛵 Мои заказы с доставкой",
+      oStatus: {"pending": "⏳ Ждёт подтверждения ресторана", "confirmed": "👨‍🍳 Готовится / в пути", "completed": "✅ Доставлен", "cancelled": "❌ Отменён"},
       enter: "Меню и услуги",
       howTitle: "Как вам удобнее?",
       dineT: "Посижу в ресторане",
@@ -433,6 +441,10 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      eta: "⏱ Estimated delivery",
+      track: "📍 Track the order",
+      myOrders: "🛵 My delivery orders",
+      oStatus: {"pending": "⏳ Waiting for the restaurant", "confirmed": "👨‍🍳 Cooking / on the way", "completed": "✅ Delivered", "cancelled": "❌ Cancelled"},
       enter: "Menu & services",
       howTitle: "How would you like it?",
       dineT: "Dine in",
@@ -985,9 +997,12 @@
   // 🛵 Delivery checkout in the cart: name, phone, address (+ optional location pin and comment), the bill with
   // the delivery fee; POST /api/orders/quick sends it to the restaurant's Telegram and its dashboard.
   const dlv = { lat: null, lng: null };
+  // "35–40 daqiqa (taxminan)": kitchen 15–20 min + the road from the restaurant to the pinned spot
+  // (ui/restaurant.js deliveryText); the restaurant's own figure when it set one.
+  const etaText = (r) => (Number(r.delivery_minutes) > 0 ? `~${Number(r.delivery_minutes)} ${c('min')}` : typeof deliveryText === 'function' ? deliveryText(r, dlv.lat ?? undefined, dlv.lng ?? undefined) : `15–20 ${c('min')}`);
   function deliveryForm(r, subtotal) {
     const fee = Number(r.delivery_fee) || 0;
-    return `<form class="mvp-dlv form" data-dlv novalidate><label>${h(c('dlvName'))}<input name="name" autocomplete="name" required minlength="2" maxlength="60" value="${h(typed.name || me()?.name || '')}"></label>${phoneField()}<label>${h(c('dlvAddress'))}<textarea name="address" rows="2" required minlength="3" maxlength="300" placeholder="${h(c('dlvAddressPh'))}">${h(typed.address || '')}</textarea></label><button type="button" class="quiet mvp-dlv-pin" data-dlv-pin>${h(dlv.lat !== null ? c('dlvPinned') : c('dlvPin'))}</button><label>${h(c('dlvComment'))}<input name="comment" maxlength="300" placeholder="${h(c('dlvCommentPh'))}"></label><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(subtotal)}</dd></div><div><dt>${h(c('deliveryFee'))}</dt><dd>${money(fee)}</dd></div>${r.delivery_minutes ? `<div><dt>${h(c('deliveryTime'))}</dt><dd>~${Number(r.delivery_minutes)} ${h(c('min'))}</dd></div>` : ''}<div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(subtotal + fee)}</dd></div></dl><p class="muted">${h(c('dlvPay'))}</p><p class="mvp-dlv-msg" role="status" data-dlv-msg></p><button type="submit" class="primary mvp-cart-go">${h(c('dlvSend'))}</button></form>`;
+    return `<form class="mvp-dlv form" data-dlv novalidate><label>${h(c('dlvName'))}<input name="name" autocomplete="name" required minlength="2" maxlength="60" value="${h(typed.name || me()?.name || '')}"></label>${phoneField()}<label>${h(c('dlvAddress'))}<textarea name="address" rows="2" required minlength="3" maxlength="300" placeholder="${h(c('dlvAddressPh'))}">${h(typed.address || '')}</textarea></label><button type="button" class="quiet mvp-dlv-pin" data-dlv-pin>${h(dlv.lat !== null ? c('dlvPinned') : c('dlvPin'))}</button><label>${h(c('dlvComment'))}<input name="comment" maxlength="300" placeholder="${h(c('dlvCommentPh'))}"></label><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(subtotal)}</dd></div><div><dt>${h(c('deliveryFee'))}</dt><dd>${money(fee)}</dd></div><div><dt>${h(c('deliveryTime'))}</dt><dd>${h(etaText(r))}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(subtotal + fee)}</dd></div></dl><p class="muted">${h(c('dlvPay'))}</p><p class="mvp-dlv-msg" role="status" data-dlv-msg></p><button type="submit" class="primary mvp-cart-go">${h(c('dlvSend'))}</button></form>`;
   }
   function bindDelivery(r) {
     const f = document.querySelector('#content [data-dlv]');
@@ -1032,7 +1047,7 @@
           localStorage.setItem('rf-mvp-contact', JSON.stringify({ name, phone }));
         } catch {}
         if (!res.demo && !me()) refreshMe().catch(() => null);
-        page(c('cartTitle'), `<section class="panel mvp-cart mvp-dlv-done"><h2>${h(res.demo ? c('dlvDemo') : c('dlvDone'))}</h2><p>${h(r.name)}</p><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(res.subtotal)}</dd></div><div><dt>${h(c('deliveryFee'))}</dt><dd>${money(res.fee)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(res.total)}</dd></div></dl><p class="muted">${h(c('dlvPay'))}</p>${res.demo ? '' : `<p class="muted">${h(c('dlvDoneHint'))}</p>`}<a class="primary" href="#/discover">${h(c('toRestaurants'))}</a></section>`);
+        page(c('cartTitle'), `<section class="panel mvp-cart mvp-dlv-done"><h2>${h(res.demo ? c('dlvDemo') : c('dlvDone'))}</h2><p>${h(r.name)}</p><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(res.subtotal)}</dd></div><div><dt>${h(c('deliveryFee'))}</dt><dd>${money(res.fee)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(res.total)}</dd></div></dl><p class="muted">${h(c('dlvPay'))}</p><p class="mvp-eta">${h(c('eta'))}: <b>${h(etaText(r))}</b></p>${res.demo ? '' : `<p class="muted">${h(c('dlvDoneHint'))}</p><a class="primary" href="#/tracking/${encodeURIComponent(res.id)}">${h(c('track'))}</a> `}<a class="${res.demo ? 'primary' : 'quiet'}" href="#/discover">${h(c('toRestaurants'))}</a></section>`);
       } catch (err) {
         msg.textContent = err?.message || String(err);
         btn.disabled = false;
@@ -1493,12 +1508,29 @@
     if (roles) roles.outerHTML = isOwner(u) ? `<a class="mvp-prof-help mvp-prof-owner" href="#/manage">${h(c('ownerTab'))}</a>` : u?.role === 'admin' ? `<a class="mvp-prof-help mvp-prof-owner" href="#/admin">${h(c('adminTab'))}</a><a class="mvp-prof-help" href="#/manage">${h(c('ownerTab'))}</a>` : `<a class="mvp-prof-help" href="#/login">${h(c('ownerLogin'))}</a><a class="mvp-prof-help" href="#/partner/restaurant">${h(c('partner'))}</a>`;
     renderProfile(root, u);
   }
+  // Delivery orders of this account (last 7 days): status, sum and the live tracking page (#/tracking/<id>).
+  async function renderOrders(box) {
+    let list = [];
+    try {
+      list = await api('/api/orders');
+    } catch {
+      return;
+    }
+    const week = Date.now() - 7 * 86400000;
+    list = (Array.isArray(list) ? list : []).filter((o) => o.fulfillment === 'delivery' && Date.parse(o.created_at) > week).slice(0, 10);
+    if (!list.length || !box.isConnected) return;
+    const st = c('oStatus');
+    box.innerHTML = `<section class="panel mvp-orders"><h2>${h(c('myOrders'))}</h2>${list
+      .map((o) => `<article class="mvp-order"><div><b>${h(o.restaurant_name)}</b><span class="muted">${h(st[o.status] || o.status)} · ${money(o.total)}</span><small class="muted">${h(new Date(o.created_at).toLocaleString(lang() === 'en' ? 'en-GB' : 'ru-RU', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}</small></div>${['pending', 'confirmed'].includes(o.status) ? `<a class="quiet" href="#/tracking/${encodeURIComponent(o.id)}">${h(c('track'))}</a>` : ''}</article>`)
+      .join('')}</section>`;
+  }
   async function bookingsPage(seq) {
-    page(c('bkTitle'), `<section class="mvp-page"><div data-pay-return></div><div data-bk><p class="muted">…</p></div></section>`);
+    page(c('bkTitle'), `<section class="mvp-page"><div data-pay-return></div><div data-orders></div><div data-bk><p class="muted">…</p></div></section>`);
     const root = document.querySelector('#content .mvp-page');
     const u = me() || (await refreshMe().catch(() => null), me());
     if (!root.isConnected || (seq && typeof state !== 'undefined' && seq !== state.seq)) return;
     renderBookings(root, u);
+    if (u) renderOrders(root.querySelector('[data-orders]'));
     paymentReturn(root, u);
   }
   /*
@@ -1710,6 +1742,14 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', langBar, { once: true });
   else langBar();
+  // The top bar's real height (Telegram, notches) for the bars that stick under it (the dashboard tabs).
+  const topbarHeight = () => {
+    const b = document.getElementById('topbar');
+    if (b && !b.hidden) document.documentElement.style.setProperty('--rf-topbar-h', b.getBoundingClientRect().height + 'px');
+  };
+  window.addEventListener('resize', topbarHeight, { passive: true });
+  window.addEventListener('hashchange', () => setTimeout(topbarHeight, 30));
+  setTimeout(topbarHeight, 300);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cartBar, { once: true });
   else cartBar();
 

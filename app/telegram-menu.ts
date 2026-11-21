@@ -32,12 +32,14 @@ const photoUrl = (u: unknown) => {
 // Same visibility rule as the public flower catalogue (app/api/flowers).
 const FLOWERS_PUBLIC = "f.active=1 AND f.status='active' AND f.is_approved=1 AND f.in_stock=1 AND COALESCE(a.status,'active')<>'suspended' AND COALESCE(a.role,'admin') IN ('florist','admin')";
 
-export const mainMenu = (l: Lang = 'uz') => {
+export const mainMenu = (l: Lang = 'uz', owner = false) => {
   const t = BOT[l];
-  // SIMPLE_MVP_MODE: book in the Mini App; my bookings and my profile side by side.
+  // SIMPLE_MVP_MODE: book in the Mini App; my bookings and my profile side by side. A restaurant owner or
+  // manager gets their dashboard first (the Mini App opens on #/manage).
   if (SIMPLE_MVP_MODE)
     return {
       inline_keyboard: [
+        ...(owner ? [[openButton(t.ownerPanel, l, '/manage')]] : []),
         [openButton(t.mvpBook, l)],
         [
           { text: t.mvpBookings, callback_data: 'my_bookings' },
@@ -282,12 +284,22 @@ async function signIn(chatId: string, go: string, text: string, l: Lang) {
  * list cannot linger); 2) remove_keyboard, so an old keyboard under the input field is deleted from the screen;
  * 3) the greeting with two inline buttons (book in the Mini App, my bookings).
  */
+/** The chat of a restaurant owner or manager (their account's Telegram, or a restaurant's linked chat). */
+async function isOwnerChat(chatId: string) {
+  try {
+    return !!(await env.DB!.prepare(
+      "SELECT 1 FROM accounts a WHERE a.telegram_chat_id=? AND (a.role IN ('restaurant_owner','admin') OR EXISTS (SELECT 1 FROM restaurant_staff s WHERE s.user_id=a.id AND s.role='manager')) UNION SELECT 1 FROM restaurants WHERE telegram_chat_id=? AND status<>'deleted' LIMIT 1",
+    ).bind(chatId, chatId).first());
+  } catch {
+    return false;
+  }
+}
 async function mvpWelcome(chatId: string, l: Lang) {
   // The global lists too, if this release has not set them yet (the cron does it within 5 minutes of a deploy).
   await ensureBotSetup().catch(() => null);
   await telegram('setMyCommands', { commands: MVP_COMMANDS, scope: { type: 'chat', chat_id: chatId } });
   await clearKeyboard(chatId, l);
-  await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpWelcome, reply_markup: mainMenu(l) });
+  await telegram('sendMessage', { chat_id: chatId, text: BOT[l].mvpWelcome, reply_markup: mainMenu(l, await isOwnerChat(chatId)) });
   return 'menu';
 }
 /** One short message with remove_keyboard; remembered per chat, so other messages do it only once. */
