@@ -67,6 +67,52 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      lbTitle: "🏆 Restoranlar reytingi (Top-3)",
+      lbMine: "Sizning restoraningiz: #{n} o‘rinda ({t} ta restoran ichida)",
+      lbMineTop: "🎉 Sizning restoraningiz Top-3 da: #{n} o‘rin!",
+      lbMineNone: "Restoraningiz reytingga birinchi yakunlangan zakazdan keyin kiradi.",
+      lbEmpty: "Reyting hali shakllanmagan.",
+      lbServed: "{n} ta zakaz",
+      lbNote: "Reyting: bajarilgan zakazlar × o‘rtacha baho.",
+      psTitle: "📊 Platforma statistikasi",
+      psRevenue: "Umumiy tushum (barcha restoranlar)",
+      psBookings: "Bronlar",
+      psDelivery: "Yetkazib berishlar",
+      psOrders: "Zakazlar",
+      psRank: "🏆 Barcha restoranlar reytingi",
+      psCols: ["#", "Restoran", "Reyting", "Zakazlar", "Tushum"],
+      psNone: "Hali faol restoran yo‘q.",
+      usTitle: "👥 Foydalanuvchilar",
+      usSearch: "Ism, email yoki telefon bo‘yicha qidirish…",
+      usRole: "Rol",
+      usRoles: {"customer": "Mijoz (client)", "restaurant_owner": "Restoran egasi (owner)", "courier": "Kuryer", "florist": "Gulchi", "admin": "Super admin"},
+      usAdminNote: "Super admin rolini xavfsizlik uchun faqat server sozlamasi orqali berish mumkin.",
+      usStatus: {"active": "Faol", "suspended": "Bloklangan"},
+      usBlock: "🚫 Bloklash",
+      usUnblock: "✅ Blokdan chiqarish",
+      usSaved: "Saqlandi.",
+      usNone: "Hech kim topilmadi.",
+      usYou: "(siz)",
+      bnTitle: "⛔ Qora ro‘yxat",
+      bnNone: "Qora ro‘yxat bo‘sh.",
+      bnUnban: "Blokdan chiqarish",
+      bnStrikes: "⚠️ Ketma-ket bekor qilishlar (7 kun)",
+      bnClear: "Tozalash",
+      bnAdd: "Raqamni bloklash",
+      bnReason: "Sabab (ixtiyoriy)",
+      bnPhone: "Telefon",
+      bnTg: "Telegram",
+      onTitle: "🛵 Ish holati",
+      onOn: "🟢 Onlayn — buyurtmalar Telegram’ga keladi",
+      onOff: "🔴 Oflayn — buyurtma kelmaydi",
+      onGoOn: "Onlayn bo‘lish",
+      onGoOff: "Oflayn bo‘lish",
+      onHint: "Onlayn bo‘lsangiz, yangi yetkazish Telegram’da 10 soniyalik taklif bo‘lib keladi.",
+      adLinks: "🛠 Admin vositalari",
+      adBlog: "📝 Blog",
+      adPdf: "📄 Biznes-reja (PDF)",
+      adInv: "💼 Investorlar sahifasi",
+      adAi: "🤖 AI holati",
       stTitle: "📊 Statistika",
       stToday: "Bugun",
       stWeek: "Hafta (7 kun)",
@@ -277,6 +323,52 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      lbTitle: "🏆 Рейтинг ресторанов (Топ-3)",
+      lbMine: "Ваш ресторан: #{n} место (из {t})",
+      lbMineTop: "🎉 Ваш ресторан в Топ-3: #{n} место!",
+      lbMineNone: "Ресторан попадёт в рейтинг после первого выполненного заказа.",
+      lbEmpty: "Рейтинг пока не сформирован.",
+      lbServed: "{n} заказов",
+      lbNote: "Рейтинг: выполненные заказы × средняя оценка.",
+      psTitle: "📊 Статистика платформы",
+      psRevenue: "Общая выручка (все рестораны)",
+      psBookings: "Брони",
+      psDelivery: "Доставки",
+      psOrders: "Заказы",
+      psRank: "🏆 Рейтинг всех ресторанов",
+      psCols: ["#", "Ресторан", "Рейтинг", "Заказы", "Выручка"],
+      psNone: "Активных ресторанов пока нет.",
+      usTitle: "👥 Пользователи",
+      usSearch: "Поиск по имени, email или телефону…",
+      usRole: "Роль",
+      usRoles: {"customer": "Клиент", "restaurant_owner": "Владелец ресторана", "courier": "Курьер", "florist": "Флорист", "admin": "Супер-админ"},
+      usAdminNote: "Роль супер-админа из соображений безопасности назначается только в настройках сервера.",
+      usStatus: {"active": "Активен", "suspended": "Заблокирован"},
+      usBlock: "🚫 Заблокировать",
+      usUnblock: "✅ Разблокировать",
+      usSaved: "Сохранено.",
+      usNone: "Никого не найдено.",
+      usYou: "(вы)",
+      bnTitle: "⛔ Чёрный список",
+      bnNone: "Чёрный список пуст.",
+      bnUnban: "Разблокировать",
+      bnStrikes: "⚠️ Повторные отмены (7 дней)",
+      bnClear: "Очистить",
+      bnAdd: "Заблокировать номер",
+      bnReason: "Причина (необязательно)",
+      bnPhone: "Телефон",
+      bnTg: "Telegram",
+      onTitle: "🛵 Статус работы",
+      onOn: "🟢 Онлайн — заказы приходят в Telegram",
+      onOff: "🔴 Офлайн — заказы не приходят",
+      onGoOn: "Выйти онлайн",
+      onGoOff: "Уйти офлайн",
+      onHint: "В онлайне новая доставка приходит в Telegram как предложение на 10 секунд.",
+      adLinks: "🛠 Инструменты админа",
+      adBlog: "📝 Блог",
+      adPdf: "📄 Бизнес-план (PDF)",
+      adInv: "💼 Страница инвесторов",
+      adAi: "🤖 Статус AI",
       stTitle: "📊 Статистика",
       stToday: "Сегодня",
       stWeek: "Неделя (7 дней)",
@@ -487,6 +579,52 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      lbTitle: "🏆 Restaurant ranking (Top 3)",
+      lbMine: "Your restaurant: #{n} (of {t})",
+      lbMineTop: "🎉 Your restaurant is in the Top 3: #{n}!",
+      lbMineNone: "Your restaurant enters the ranking after its first completed order.",
+      lbEmpty: "The ranking is not formed yet.",
+      lbServed: "{n} orders",
+      lbNote: "Ranking: completed orders × average rating.",
+      psTitle: "📊 Platform statistics",
+      psRevenue: "Total revenue (all restaurants)",
+      psBookings: "Bookings",
+      psDelivery: "Deliveries",
+      psOrders: "Orders",
+      psRank: "🏆 All restaurants ranking",
+      psCols: ["#", "Restaurant", "Rating", "Orders", "Revenue"],
+      psNone: "No active restaurants yet.",
+      usTitle: "👥 Users",
+      usSearch: "Search by name, email or phone…",
+      usRole: "Role",
+      usRoles: {"customer": "Client", "restaurant_owner": "Restaurant owner", "courier": "Courier", "florist": "Florist", "admin": "Super admin"},
+      usAdminNote: "For safety, the super admin role is granted only in the server settings.",
+      usStatus: {"active": "Active", "suspended": "Blocked"},
+      usBlock: "🚫 Block",
+      usUnblock: "✅ Unblock",
+      usSaved: "Saved.",
+      usNone: "Nobody found.",
+      usYou: "(you)",
+      bnTitle: "⛔ Blacklist",
+      bnNone: "The blacklist is empty.",
+      bnUnban: "Unban",
+      bnStrikes: "⚠️ Repeated cancellations (7 days)",
+      bnClear: "Clear",
+      bnAdd: "Block a phone",
+      bnReason: "Reason (optional)",
+      bnPhone: "Phone",
+      bnTg: "Telegram",
+      onTitle: "🛵 Work status",
+      onOn: "🟢 Online — orders come to Telegram",
+      onOff: "🔴 Offline — no orders",
+      onGoOn: "Go online",
+      onGoOff: "Go offline",
+      onHint: "While online, a new delivery arrives in Telegram as a 10-second offer.",
+      adLinks: "🛠 Admin tools",
+      adBlog: "📝 Blog",
+      adPdf: "📄 Business plan (PDF)",
+      adInv: "💼 Investors page",
+      adAi: "🤖 AI status",
       stTitle: "📊 Statistics",
       stToday: "Today",
       stWeek: "Week (7 days)",
@@ -1574,7 +1712,18 @@
     out.onclick = () => document.getElementById('logout')?.click();
     // Restaurant owners / managers: their dashboard; the admin: the admin panel; everyone else: the owners' way in.
     const roles = root.querySelector('[data-prof-roles]');
-    if (roles) roles.outerHTML = isOwner(u) ? `<a class="mvp-prof-help mvp-prof-owner" href="#/manage">${h(c('ownerTab'))}</a>` : u?.role === 'admin' ? `<a class="mvp-prof-help mvp-prof-owner" href="#/admin">${h(c('adminTab'))}</a><a class="mvp-prof-help" href="#/manage">${h(c('ownerTab'))}</a>` : `<a class="mvp-prof-help" href="#/login">${h(c('ownerLogin'))}</a><a class="mvp-prof-help" href="#/partner/restaurant">${h(c('partner'))}</a>`;
+    const lng = lang();
+    if (roles)
+      roles.outerHTML = isOwner(u)
+        ? `<a class="mvp-prof-help mvp-prof-owner" href="#/manage">${h(c('ownerTab'))}</a>`
+        : u?.role === 'admin'
+          ? `<p class="mvp-prof-group">${h(c('adLinks'))}</p><a class="mvp-prof-help" href="#/blog-admin">${h(c('adBlog'))}</a><a class="mvp-prof-help" href="/business-plan?lang=${lng}" target="_blank" rel="noopener">${h(c('adPdf'))}</a><a class="mvp-prof-help" href="/investors?lang=${lng}" target="_blank" rel="noopener">${h(c('adInv'))}</a><a class="mvp-prof-help" href="#/admin?ai=1">${h(c('adAi'))}</a>`
+          : u?.role === 'courier'
+            ? '<div data-courier-online></div>'
+            : u?.role === 'florist'
+              ? ''
+              : `<a class="mvp-prof-help" href="#/login">${h(c('ownerLogin'))}</a><a class="mvp-prof-help" href="#/partner/restaurant">${h(c('partner'))}</a>`;
+    if (u?.role === 'courier') courierToggle(root.querySelector('[data-courier-online]'));
     renderProfile(root, u);
   }
   // Delivery orders of this account (last 7 days): status, sum and the live tracking page (#/tracking/<id>).
@@ -1598,6 +1747,14 @@
    * orders, rating, top-selling dishes and the latest reviews; clean empty states for a new restaurant.
    */
   const fill = (s, v) => String(s).replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+  // 🏆 Top-3 of the platform and this restaurant's place (GET /api/manage/stats → leaderboard).
+  function leaderboard(lb) {
+    if (!lb) return '';
+    const medal = ['🥇', '🥈', '🥉'];
+    const rows = lb.top.length ? `<ol class="mvp-lb">${lb.top.map((x, i) => `<li><span class="mvp-lb-m">${medal[i]}</span><b>${h(x.name)}</b><span>${x.rating != null ? '⭐ ' + Number(x.rating).toFixed(1) : '—'}</span><span class="muted">${h(fill(c('lbServed'), { n: x.served }))}</span></li>`).join('')}</ol>` : `<p class="muted">${h(c('lbEmpty'))}</p>`;
+    const mine = lb.mine ? (lb.mine <= 3 ? fill(c('lbMineTop'), { n: lb.mine }) : fill(c('lbMine'), { n: lb.mine, t: lb.total })) : c('lbMineNone');
+    return `<section class="panel mvp-lb-card"><h2>${h(c('lbTitle'))}</h2>${rows}<p class="mvp-lb-mine${lb.mine && lb.mine <= 3 ? ' top' : ''}">${h(mine)}</p><p class="muted mvp-stats-note">${h(c('lbNote'))}</p></section>`;
+  }
   async function ownerStats(seq) {
     let period = 'today',
       rid = '';
@@ -1632,6 +1789,7 @@
           <article class="mvp-kpi cnt"><small>🧾 ${h(c('stCount'))}</small><strong>${d.count.total}</strong><span>${h(fill(c('stCountSub'), { b: d.count.bookings, o: d.count.orders }))}</span>${d.count.pending ? `<a href="#/zakazlar" class="mvp-kpi-link">${h(fill(c('stPending'), { n: d.count.pending }))}</a>` : ''}</article>
           <article class="mvp-kpi rat"><small>⭐ ${h(c('stRating'))}</small><strong>${d.rating.average != null ? '⭐ ' + d.rating.average.toFixed(1) : '—'}</strong><span>${h(d.rating.count ? fill(c('stReviewsN'), { n: d.rating.count }) : c('stNoRating'))}</span></article>
         </div>
+        ${leaderboard(d.leaderboard)}
         <section class="panel mvp-top"><h2>${h(c('stTop'))}</h2>${d.top.length ? `<ol>${d.top.map((x, i) => `<li><span class="mvp-top-n">${i + 1}</span><b>${h(x.name)}</b><span class="mvp-top-q">${h(fill(c('stQty'), { n: x.quantity }))}</span><span class="mvp-top-s">${money(x.revenue)}</span></li>`).join('')}</ol>` : `<p class="muted">${h(c('stTopEmpty'))}</p>`}</section>
         <section class="panel mvp-revs"><h2>${h(c('stReviews'))}</h2>${d.reviews.length ? d.reviews.map((x) => `<article><span class="mvp-stars" aria-label="${x.stars}/5">${stars(x.stars)}</span>${x.name ? ` <b>${h(x.name)}</b>` : ''} <small class="muted">${h(new Date(x.at).toLocaleDateString(lang() === 'en' ? 'en-GB' : 'ru-RU', { timeZone: 'Asia/Tashkent' }))}</small>${x.comment ? `<p>${h(x.comment)}</p>` : ''}</article>`).join('') : `<p class="muted">${h(c('stReviewsEmpty'))}</p>`}</section>
         <p class="muted mvp-stats-note">${h(c('stNote'))}</p>`;
@@ -1654,6 +1812,151 @@
       load();
     };
     await load();
+  }
+  // 📊 Admin dashboard: platform totals and every restaurant ranked (GET /api/admin/stats).
+  async function platformStats(box) {
+    if (!box) return;
+    let period = 'today';
+    try {
+      period = ['today', 'week', 'month'].includes(localStorage.getItem('rf-admin-period')) ? localStorage.getItem('rf-admin-period') : 'today';
+    } catch {}
+    const draw = async () => {
+      box.innerHTML = `<h2>${h(c('psTitle'))}</h2><div class="mvp-stats-periods" role="group">${['today', 'week', 'month'].map((p) => `<button type="button" data-period="${p}" aria-pressed="${p === period}">${h(c({ today: 'stToday', week: 'stWeek', month: 'stMonth' }[p]))}</button>`).join('')}</div><div data-ps><p class="muted">…</p></div>`;
+      box.querySelector('.mvp-stats-periods').onclick = (e) => {
+        const b = e.target.closest('[data-period]');
+        if (!b || b.dataset.period === period) return;
+        period = b.dataset.period;
+        try {
+          localStorage.setItem('rf-admin-period', period);
+        } catch {}
+        draw();
+      };
+      let d;
+      try {
+        d = await api('/api/admin/stats?period=' + period);
+      } catch (e) {
+        box.querySelector('[data-ps]').innerHTML = `<p class="notice">${h(e.message || c('stLoadFail'))}</p>`;
+        return;
+      }
+      const t = d.totals,
+        cols = c('psCols');
+      box.querySelector('[data-ps]').innerHTML = `<div class="mvp-kpis"><article class="mvp-kpi rev"><small>💰 ${h(c('psRevenue'))}</small><strong>${money(t.revenue)}</strong><span>${h(fill(c('stRevenueSub'), { a: money(t.deposits), o: money(t.orderRevenue) }))}</span></article><article class="mvp-kpi cnt"><small>🪑 ${h(c('psBookings'))}</small><strong>${t.bookings}</strong></article><article class="mvp-kpi cnt"><small>🛵 ${h(c('psDelivery'))}</small><strong>${t.delivery}</strong><span>${h(c('psOrders'))}: ${t.orders}</span></article></div><h3>${h(c('psRank'))}</h3>${d.restaurants.length ? `<div class="mvp-table-wrap"><table class="mvp-rank"><thead><tr>${cols.map((x) => `<th>${h(x)}</th>`).join('')}</tr></thead><tbody>${d.restaurants.map((r) => `<tr><td>${r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : '#' + r.rank}</td><td><b>${h(r.name)}</b><small class="muted">${h(fill(c('lbServed'), { n: r.served }))}</small></td><td>${r.rating != null ? '⭐ ' + Number(r.rating).toFixed(1) + ` <small class="muted">(${r.reviews})</small>` : '—'}</td><td>${r.periodOrders}</td><td>${money(r.periodRevenue)}</td></tr>`).join('')}</tbody></table></div><p class="muted mvp-stats-note">${h(c('lbNote'))} ${h(c('stNote'))}</p>` : `<p class="muted">${h(c('psNone'))}</p>`}`;
+    };
+    await draw();
+  }
+  // 👥 Users (admin): search, role, block; the blacklist (bans and repeated cancellations).
+  async function usersPage(seq) {
+    if (me()?.role !== 'admin') return page(c('usTitle'), `<p class="notice">403</p>`);
+    page(c('usTitle'), `<div class="mvp-users-page"><section class="panel mvp-users"><input type="search" class="mvp-users-q" placeholder="${h(c('usSearch'))}" aria-label="${h(c('usSearch'))}"><p class="muted">${h(c('usAdminNote'))}</p><div data-users><p class="muted">…</p></div></section><section class="panel mvp-bans"><h2>${h(c('bnTitle'))}</h2><div data-bans><p class="muted">…</p></div><form class="mvp-ban-add form" data-ban-add><h3>${h(c('bnAdd'))}</h3>${phoneField(c('bnPhone'), '')}<label>${h(c('bnReason'))}<input name="reason" maxlength="200"></label><button class="quiet" type="submit">🚫 ${h(c('bnAdd'))}</button></form></section></div>`);
+    const root = document.querySelector('#content .mvp-users-page');
+    const roles = c('usRoles'),
+      st = c('usStatus'),
+      myId = me()?.id;
+    let timer = 0;
+    const loadUsers = async (q = '') => {
+      const box = root.querySelector('[data-users]');
+      let d;
+      try {
+        d = await api('/api/admin/accounts' + (q ? '?q=' + encodeURIComponent(q) : ''));
+      } catch (e) {
+        box.innerHTML = `<p class="notice">${h(e.message)}</p>`;
+        return;
+      }
+      if (seq && typeof state !== 'undefined' && seq !== state.seq) return;
+      const list = d.accounts.filter((a) => !String(a.id).startsWith('guest:') || q);
+      box.innerHTML = list.length
+        ? list
+            .map((a) => {
+              const self = a.id === myId || a.role === 'admin';
+              const opts = ['customer', 'restaurant_owner', 'courier', 'florist', 'admin'].map((r) => `<option value="${r}" ${a.role === r ? 'selected' : ''} ${r === 'admin' ? 'disabled' : ''}>${h(roles[r])}</option>`).join('');
+              return `<article class="mvp-user" data-user="${h(a.id)}"><div class="mvp-user-who"><b>${h(a.name || '—')} ${a.id === myId ? h(c('usYou')) : ''}</b><small class="muted">${h([a.email, a.phone || a.contact_phone].filter(Boolean).join(' · ') || a.id)}</small><span class="badge ${a.status === 'suspended' ? 'warn' : 'ok'}">${h(st[a.status] || a.status)}</span></div><label class="mvp-user-role">${h(c('usRole'))}<select data-role ${self ? 'disabled' : ''}>${opts}</select></label>${self ? '' : `<button type="button" class="quiet" data-ustatus="${a.status === 'suspended' ? 'active' : 'suspended'}">${h(a.status === 'suspended' ? c('usUnblock') : c('usBlock'))}</button>`}</article>`;
+            })
+            .join('')
+        : `<p class="muted">${h(c('usNone'))}</p>`;
+    };
+    const loadBans = async () => {
+      const box = root.querySelector('[data-bans]');
+      let d;
+      try {
+        d = await api('/api/admin/bans');
+      } catch (e) {
+        box.innerHTML = `<p class="notice">${h(e.message)}</p>`;
+        return;
+      }
+      const kind = (k) => (k === 'ph' ? '📞 ' + c('bnPhone') : '✈️ ' + c('bnTg'));
+      box.innerHTML = `${d.bans.length ? d.bans.map((b) => `<article class="mvp-ban"><div><b>${h(b.who)}</b><small class="muted">${h(kind(b.kind))} · ${h(new Date(b.at).toLocaleDateString('ru-RU'))} · ${h(b.reason)}</small></div><button type="button" class="quiet" data-unban="${h(b.key)}">${h(c('bnUnban'))}</button></article>`).join('') : `<p class="muted">${h(c('bnNone'))}</p>`}${d.strikes.length ? `<h3>${h(c('bnStrikes'))}</h3>${d.strikes.map((x) => `<article class="mvp-ban"><div><b>${h(x.who)}</b><small class="muted">${h(kind(x.kind))} · ${x.count}×</small></div><button type="button" class="quiet" data-clear="${h(x.key)}">${h(c('bnClear'))}</button></article>`).join('')}` : ''}`;
+    };
+    root.querySelector('.mvp-users-q').addEventListener('input', (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => loadUsers(e.target.value.trim()), 350);
+    });
+    root.addEventListener('change', async (e) => {
+      const sel = e.target.closest('[data-role]');
+      if (!sel) return;
+      const id = sel.closest('[data-user]').dataset.user;
+      sel.disabled = true;
+      try {
+        await api('/api/admin/accounts', 'POST', { action: 'role', id, role: sel.value });
+        if (typeof notify === 'function') notify(c('usSaved'));
+      } catch (err) {
+        alert(err.message);
+        loadUsers(root.querySelector('.mvp-users-q').value.trim());
+      }
+      sel.disabled = false;
+    });
+    root.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-ustatus],[data-unban],[data-clear]');
+      if (!b) return;
+      b.disabled = true;
+      try {
+        if (b.dataset.ustatus) await api('/api/admin/accounts', 'POST', { action: 'status', id: b.closest('[data-user]').dataset.user, status: b.dataset.ustatus });
+        else await api('/api/admin/bans', 'POST', { action: b.dataset.unban ? 'unban' : 'clear', key: b.dataset.unban || b.dataset.clear });
+        if (b.dataset.ustatus) loadUsers(root.querySelector('.mvp-users-q').value.trim());
+        else loadBans();
+      } catch (err) {
+        alert(err.message);
+        b.disabled = false;
+      }
+    });
+    const add = root.querySelector('[data-ban-add]');
+    if (window.RFPhone) window.RFPhone.bind(add);
+    add.onsubmit = async (e) => {
+      e.preventDefault();
+      const phone = add.elements.phone?.value;
+      if (!phone) return;
+      try {
+        await api('/api/admin/bans', 'POST', { action: 'ban', phone, reason: add.elements.reason.value.trim() });
+        add.reset();
+        loadBans();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+    await Promise.all([loadUsers(), loadBans()]);
+  }
+  // Courier profile: online / offline (only online couriers get the 10-second Telegram offers).
+  async function courierToggle(box) {
+    if (!box) return;
+    let d;
+    try {
+      d = await api('/api/delivery');
+    } catch {
+      return;
+    }
+    const draw = (on) => {
+      box.innerHTML = `<section class="panel mvp-online"><h2>${h(c('onTitle'))}</h2><p class="mvp-online-state ${on ? 'on' : 'off'}">${h(on ? c('onOn') : c('onOff'))}</p><button type="button" class="${on ? 'quiet' : 'primary'}" data-online="${on ? '0' : '1'}">${h(on ? c('onGoOff') : c('onGoOn'))}</button><p class="muted">${h(c('onHint'))}</p></section>`;
+      box.querySelector('[data-online]').onclick = async (e) => {
+        e.currentTarget.disabled = true;
+        try {
+          const r = await api('/api/delivery', 'POST', { action: 'online', online: e.currentTarget.dataset.online === '1' });
+          draw(r.online);
+        } catch (err) {
+          alert(err.message);
+          draw(on);
+        }
+      };
+    };
+    if (d.approved) draw(!!d.online);
   }
   async function bookingsPage(seq) {
     page(c('bkTitle'), `<section class="mvp-page"><div data-pay-return></div><div data-orders></div><div data-bk><p class="muted">…</p></div></section>`);
@@ -1884,5 +2187,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cartBar, { once: true });
   else cartBar();
 
-  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile, cartPage, cartBar, ownerStats };
+  window.RFMvp = { home, restaurant, checkout, card, normPhone, syncLang, relabel, profilePage, bookingsPage, openProfile, cartPage, cartBar, ownerStats, platformStats, usersPage, courierToggle };
 })();

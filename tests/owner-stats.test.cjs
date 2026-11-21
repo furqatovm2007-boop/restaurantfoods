@@ -5,7 +5,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
  const DB={prepare(sql){let args=[];return {sql,bind(...a){args=a;return this},first:async()=>db.prepare(sql).get(...args),all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...args).changes)}})}}};
  const env={DB},cf={'cloudflare:workers':{env}};let who=null;
- const route=load('app/api/manage/stats/route.ts',{...cf,'../../../access':{identity:async()=>who},'../../../http':load('app/http.ts',cf),'../../../review-rules':load('app/review-rules.ts',{})});
+ const http=load('app/http.ts',cf),ps=load('app/platform-stats.ts',{...cf,'./review-rules':load('app/review-rules.ts',{})});
+ const route=load('app/api/manage/stats/route.ts',{...cf,'../../../access':{identity:async()=>who},'../../../http':http,'../../../review-rules':load('app/review-rules.ts',{}),'../../../platform-stats':ps});
+ const adminRoute=load('app/api/admin/stats/route.ts',{'../../../access':{identity:async()=>who},'../../../http':http,'../../../platform-stats':ps});
  const get=async(qs='')=>{const r=await route.GET(new Request('https://x.test/api/manage/stats'+qs));return {status:r.status,body:await r.json()}};
  const now=new Date().toISOString(),day=ms=>new Date(ms+5*3600000).toISOString().slice(0,10),today=day(Date.now()),old=day(Date.now()-10*86400000);
  for(const [id,role] of [['o1','restaurant_owner'],['o2','restaurant_owner'],['c1','customer'],['c2','customer']])db.prepare("INSERT INTO accounts(id,email,name,role,created_at) VALUES (?,?,?,?,?)").run(id,id+'@x.uz',id==='c1'?'Aziz Karimov':id,role,now);
@@ -29,6 +31,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
  assert.equal(s.rating.average,4.5);assert.equal(s.rating.count,2);assert.equal(s.reviews[0].name.length>0,true);
  s=(await get('?period=month')).body;assert.equal(s.revenue.orders,114000,'30 days include the older order');assert.equal(s.count.bookings,2);assert.ok(s.top.some(t=>t.name==='Somsa'&&t.quantity===7));
  s=(await get('?period=week')).body;assert.equal(s.count.bookings,1,'10-day-old booking outside the week');
+ // 🏆 Ranking: r1 has 2 served orders (b1 confirmed today, x1 completed, x3 completed, b4 completed) and 4.5★; r2 none.
+ s=(await get()).body;assert.equal(s.leaderboard.mine,1);assert.equal(s.leaderboard.top[0].name,'Osh Markazi');assert.equal(s.leaderboard.total,2);
+ // Admin: combined figures and every restaurant ranked; owners are refused.
+ assert.equal((await adminRoute.GET(new Request('https://x.test/api/admin/stats'))).status,403);
+ who={userId:'a1',role:'admin'};let a=await (await adminRoute.GET(new Request('https://x.test/api/admin/stats?period=month'))).json();
+ assert.equal(a.totals.revenue,50000+114000);assert.equal(a.totals.bookings,2);assert.equal(a.restaurants.length,2);assert.equal(a.restaurants[0].id,'r1');assert.equal(a.restaurants[0].rank,1);assert.equal(a.restaurants[0].periodRevenue,164000);assert.equal(a.restaurants[1].periodOrders,0);
  who=null;assert.equal((await get()).status,401);
- console.log('PASS owner stats: own restaurant only, today/week/month, revenue = paid advances + completed orders, counts, top dishes, rating & reviews, empty state');
+ console.log('PASS owner stats: own restaurant only, today/week/month, revenue = paid advances + completed orders, counts, top dishes, rating & reviews, empty state, Top-3 + own rank, admin platform totals and ranking');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -132,6 +132,26 @@
     return `<div class="table-order-badge"><span>🍽️ ${esc(c.rest)}: ${esc(o.restaurant_name)}</span><span class="sep" aria-hidden="true">|</span><span>${esc(c.tableNo)} #${esc(o.table_number)}${o.merged_table ? '+' + esc(o.merged_table) : ''}</span><span class="sep" aria-hidden="true">|</span><span>⏰ ${esc(c.before15)}: <b>${esc(ready)}</b></span></div>`;
   }
 
+  /*
+   * Where the bouquet goes, on every florist order: 🍽 Restoranga (restaurant, address, table, guest, the time
+   * it must be there — 15 min before the guest) or 🏠 Uyga (home address, recipient phone, card note, time).
+   */
+  const DEST = {
+    uz: { rest: '🍽 Restoranga', home: '🏠 Uyga', table: 'Stol', guest: 'Mehmon', arrive: 'Mehmon keladi', ready: 'Tayyor bo‘lsin', phone: 'Qabul qiluvchi', note: 'Izoh / otkritka', when: 'Yetkazish vaqti', map: 'Xarita', today: 'Bugun', month: 'Shu oy', sold: 'ta sotuv' },
+    ru: { rest: '🍽 В ресторан', home: '🏠 На дом', table: 'Стол', guest: 'Гость', arrive: 'Гость придёт', ready: 'Готово к', phone: 'Получатель', note: 'Комментарий / открытка', when: 'Время доставки', map: 'Карта', today: 'Сегодня', month: 'Этот месяц', sold: 'продаж' },
+    en: { rest: '🍽 To a restaurant', home: '🏠 To a home', table: 'Table', guest: 'Guest', arrive: 'Guest arrives', ready: 'Ready by', phone: 'Recipient', note: 'Comment / card note', when: 'Delivery time', map: 'Map', today: 'Today', month: 'This month', sold: 'sales' },
+  };
+  const dest = () => DEST[(document.documentElement.lang || 'uz').slice(0, 2)] || DEST.uz;
+  function destination(o) {
+    const d = dest();
+    const link = o.lat != null ? `<a href="https://www.google.com/maps?q=${o.lat},${o.lng}" target="_blank" rel="noopener">🗺 ${d.map}</a>` : '';
+    if (o.delivery_type === 'table') {
+      const at = String(o.arrive_at || '').slice(0, 5),
+        ready = String(o.deliver_at || '').slice(11, 16) || String(o.deliver_at || '');
+      return `<div class="fl-dest rest"><span class="fl-dest-badge">${d.rest}</span><b>${esc(o.restaurant_name || o.address || '—')}</b>${o.restaurant_address ? `<span>📍 ${esc(o.restaurant_address)}</span>` : ''}${link ? `<span>${link}</span>` : ''}<span>🪑 ${d.table} <b>#${esc(o.table_number ?? '—')}${o.merged_table ? '+' + esc(o.merged_table) : ''}</b>${o.guest_name ? ` · 👤 ${d.guest}: <b>${esc(o.guest_name)}</b>` : ''}</span><span>⏰ ${d.arrive}: <b>${esc([o.arrive_date, at].filter(Boolean).join(' ') || '—')}</b>${ready ? ` · ${d.ready}: <b>${esc(ready)}</b>` : ''}</span>${o.note ? `<span>💌 ${d.note}: ${esc(o.note)}</span>` : ''}</div>`;
+    }
+    return `<div class="fl-dest home"><span class="fl-dest-badge">${d.home}</span><b>📍 ${esc(o.address || '—')}</b>${link ? `<span>${link}</span>` : ''}<span>📞 ${d.phone}: <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></span>${o.note ? `<span>💌 ${d.note}: ${esc(o.note)}</span>` : ''}${o.deliver_at ? `<span>⏰ ${d.when}: <b>${esc(String(o.deliver_at).replace('T', ' ').slice(0, 16))}</b></span>` : ''}</div>`;
+  }
   async function florist(root, ctx) {
     const c = w();
     const data = await api('/api/flowers?view=florist');
@@ -142,7 +162,16 @@
     root.classList.add('florist-root');
     const render = () => {
       const tot = data.totals || {};
-      root.innerHTML = `<div class="metric-grid"><div class="metric"><small>${c.earned}</small><strong>${money(tot.earned)}</strong></div><div class="metric"><small>${c.commission} (3%)</small><strong>${money(tot.commission)}</strong></div><div class="metric"><small>${c.ordersCount}</small><strong>${tot.count || 0}</strong></div></div><p class="muted">${c.rateNote}</p><section class="panel">${formHtml(editing)}</section><section class="panel"><h3>${c.incoming}</h3>${data.orders.length ? data.orders.map((o) => `<article class="row"><div><strong>${esc(o.title)} × ${o.quantity}</strong><p>${money(o.total)} → ${c.earned.toLowerCase()}: <b>${money(o.florist_amount)}</b> (−${money(o.commission)})</p>${tableBadge(o, c)}<p>${o.delivery_type === 'table' ? '🍽 ' : '🏠 '}${esc(o.address)}${o.deliver_at ? ' · ' + esc(o.deliver_at) : ''}${o.lat != null ? ` · <a href="https://www.google.com/maps?q=${o.lat},${o.lng}" target="_blank" rel="noopener">${c.map}</a>` : ''}</p><p><a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${o.note ? ' · ' + esc(o.note) : ''}</p><span class="badge">${esc(c.status[o.status] || o.status)}</span>${o.courier_name ? ` <span class="badge">🛵 ${esc(o.courier_name)}</span>` : ''}</div><div class="row-actions">${(next[o.status] || []).map(([s, label]) => `<button type="button" class="${s === 'cancelled' ? 'quiet' : 'primary'}" data-st="${s}" data-id="${esc(o.id)}">${label}</button>`).join('')}</div></article>`).join('') : `<p>${c.noOrders}</p>`}</section><section class="panel"><h3>${c.myPosts}</h3>${data.flowers.length ? `<div class="flower-grid">${data.flowers.map((f) => `<article class="flower-card panel ${f.active ? '' : 'inactive'}">${picture(f)}<div class="flower-body"><h3>${esc(f.title)}</h3><p class="muted">${esc(f.kind)} · ${esc(f.size)}</p><b>${money(f.price)}</b><div class="row-actions"><button type="button" class="quiet" data-edit="${esc(f.id)}">${c.edit}</button><button type="button" class="${f.in_stock === 0 ? 'danger' : 'quiet'}" data-stock="${esc(f.id)}" data-on="${f.in_stock === 0 ? '1' : '0'}">${f.in_stock === 0 ? c.stockOff : c.stockOn}</button>${f.active ? `<button type="button" class="quiet" data-remove="${esc(f.id)}">${c.remove}</button>` : ''}</div></div></article>`).join('')}</div>` : `<p>${c.noPosts}</p>`}</section>`;
+      const d = dest(),
+        day = (ms) => new Date(ms + 5 * 3600000).toISOString().slice(0, 10),
+        today = day(Date.now()),
+        month = today.slice(0, 7),
+        sold = (data.orders || []).filter((o) => o.status === 'delivered'),
+        tList = sold.filter((o) => day(Date.parse(o.created_at)) === today),
+        mList = sold.filter((o) => day(Date.parse(o.created_at)).startsWith(month)),
+        earn = (l) => l.reduce((n, o) => n + (Number(o.florist_amount) || 0), 0);
+      if (ctx.view) root.dataset.view = ctx.view;
+      root.innerHTML = `<div data-fsec="earn" class="fl-earn"><div class="metric"><small>${d.today}</small><strong>${money(earn(tList))}</strong><span>${tList.length} ${d.sold}</span></div><div class="metric"><small>${d.month}</small><strong>${money(earn(mList))}</strong><span>${mList.length} ${d.sold}</span></div></div><div class="metric-grid" data-fsec="earn"><div class="metric"><small>${c.earned}</small><strong>${money(tot.earned)}</strong></div><div class="metric"><small>${c.commission} (3%)</small><strong>${money(tot.commission)}</strong></div><div class="metric"><small>${c.ordersCount}</small><strong>${tot.count || 0}</strong></div></div><p class="muted" data-fsec="earn">${c.rateNote}</p><section class="panel" data-fsec="flowers">${formHtml(editing)}</section><section class="panel" data-fsec="orders"><h3>${c.incoming}</h3>${data.orders.length ? data.orders.map((o) => `<article class="row"><div><strong>${esc(o.title)} × ${o.quantity}</strong><p>${money(o.total)} → ${c.earned.toLowerCase()}: <b>${money(o.florist_amount)}</b> (−${money(o.commission)})</p>${destination(o)}<span class="badge">${esc(c.status[o.status] || o.status)}</span>${o.courier_name ? ` <span class="badge">🛵 ${esc(o.courier_name)}</span>` : ''}</div><div class="row-actions">${(next[o.status] || []).map(([s, label]) => `<button type="button" class="${s === 'cancelled' ? 'quiet' : 'primary'}" data-st="${s}" data-id="${esc(o.id)}">${label}</button>`).join('')}</div></article>`).join('') : `<p>${c.noOrders}</p>`}</section><section class="panel" data-fsec="flowers"><h3>${c.myPosts}</h3>${data.flowers.length ? `<div class="flower-grid">${data.flowers.map((f) => `<article class="flower-card panel ${f.active ? '' : 'inactive'}">${picture(f)}<div class="flower-body"><h3>${esc(f.title)}</h3><p class="muted">${esc(f.kind)} · ${esc(f.size)}</p><b>${money(f.price)}</b><div class="row-actions"><button type="button" class="quiet" data-edit="${esc(f.id)}">${c.edit}</button><button type="button" class="${f.in_stock === 0 ? 'danger' : 'quiet'}" data-stock="${esc(f.id)}" data-on="${f.in_stock === 0 ? '1' : '0'}">${f.in_stock === 0 ? c.stockOff : c.stockOn}</button>${f.active ? `<button type="button" class="quiet" data-remove="${esc(f.id)}">${c.remove}</button>` : ''}</div></div></article>`).join('')}</div>` : `<p>${c.noPosts}</p>`}</section>`;
       const form = root.querySelector('[data-post]'),
         say = (m) => (form.querySelector('.form-message').textContent = m);
       // Live 3% commission calculator under the price.

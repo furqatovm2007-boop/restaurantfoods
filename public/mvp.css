@@ -406,3 +406,47 @@ body[data-theme=light] .mvp-kpi,body[data-theme=light] .mvp-stats-periods{backgr
 .cabinet-page.view-orders>:not([data-section=bookings]):not([data-section=orders]){display:none!important}
 .cabinet-page.view-restaurant>[data-section=bookings],.cabinet-page.view-restaurant>[data-section=orders],.cabinet-page.view-restaurant>[data-section=dashboard],.cabinet-page.view-restaurant .cabinet-tabs [data-tab=dashboard],.cabinet-page.view-restaurant .cabinet-tabs [data-tab=bookings],.cabinet-page.view-restaurant .cabinet-tabs [data-tab=orders]{display:none!important}
 .mvp-top h2,.mvp-revs h2{font-size:1.15rem}
+/* Courier: the bottom bar replaces the old inner tabs */
+.rf-mvp .courier-tabs{display:none}
+.courier-online{padding:10px 14px;border-radius:14px;font-weight:700;margin:0 0 12px}
+.courier-online.on{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4)}
+.courier-online.off{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35)}
+.courier-balance{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.courier-balance .metric span{display:block;font-size:.8rem;opacity:.75}
+.mvp-online-state{font-weight:800;font-size:1.05rem}
+.mvp-online-state.on{color:#34d399}.mvp-online-state.off{color:#f87171}
+/* Florist: one part per bottom-bar tab */
+.florist-root[data-view=orders] [data-fsec]:not([data-fsec=orders]),.florist-root[data-view=flowers] [data-fsec]:not([data-fsec=flowers]),.florist-root[data-view=earn] [data-fsec]:not([data-fsec=earn]){display:none!important}
+.florist-root:not([data-view]) .fl-earn{display:none}
+.fl-earn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fl-earn .metric span{display:block;font-size:.8rem;opacity:.75}
+.fl-dest{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border-radius:14px;border:1px solid}
+.fl-dest.rest{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.45)}
+.fl-dest.home{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.45)}
+.fl-dest-badge{justify-self:start;padding:3px 10px;border-radius:999px;font-weight:800;font-size:.85rem;background:#0ea5e9;color:#04121f}
+.fl-dest.home .fl-dest-badge{background:#f59e0b}
+.fl-dest b{font-size:1.02rem}
+/* Owner: Top-3 */
+.mvp-lb{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mvp-lb li{display:grid;grid-template-columns:30px 1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1e293b}
+.mvp-lb-m{font-size:1.3rem}
+.mvp-lb-mine{margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);font-weight:800}
+.mvp-lb-mine.top{background:rgba(250,204,21,.14);border-color:rgba(250,204,21,.5)}
+.mvp-lb-card h2{font-size:1.15rem}
+/* Admin */
+.mvp-platform h2{font-size:1.2rem}
+.mvp-table-wrap{overflow-x:auto;max-width:100%}
+.mvp-rank{width:100%;border-collapse:collapse;font-size:.9rem}
+.mvp-rank th,.mvp-rank td{padding:8px 6px;border-bottom:1px solid #1e293b;text-align:left;vertical-align:top}
+.mvp-rank td small{display:block}
+.mvp-users-q{width:100%;margin-bottom:8px}
+.mvp-user{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 0;border-top:1px solid #1e293b}
+.mvp-user-who{display:grid;gap:2px}
+.mvp-user-who .badge{justify-self:start}
+.mvp-user-role{display:grid;gap:4px;font-size:.85rem}
+.mvp-user button{justify-self:start}
+@media(min-width:700px){.mvp-user{grid-template-columns:1fr 220px auto;align-items:center}}
+.mvp-ban{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #1e293b}
+.mvp-ban>div{display:grid;gap:2px;min-width:0}
+.mvp-ban-add{margin-top:14px}
+.mvp-prof-group{margin:6px 0 0;font-weight:800}

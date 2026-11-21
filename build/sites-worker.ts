@@ -9,6 +9,8 @@ import { runBotSync } from "../app/telegram-menu";
 import { runHourPing } from "../app/hour-ping";
 import { sweepP2P } from "../app/p2p";
 import { ensureDemoAmanda } from "../app/mvp";
+import { advanceOffers } from "../app/courier-dispatch";
+import { runWithContext } from "../lib/after-response";
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
@@ -33,7 +35,10 @@ export default {
         },
       };
     }
-    const response = await runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx));
+    // ctx is kept for the request (lib/after-response.ts): the courier offer's 10-second timer runs after the answer.
+    const response = await runWithContext(ctx, () => runWithConnectorBinding(binding, () => handler.fetch(request, env, ctx)));
+    // Courier offers whose 10 seconds ran out move on to the next courier (checked at most every 5 s per isolate).
+    if (path.startsWith("/api/")) ctx.waitUntil(runWithContext(ctx, () => advanceOffers()).catch(() => {}));
     // Health watch: 5xx API responses are counted after the response (see app/health.ts).
     if (response.status >= 500 && path.startsWith("/api/")) ctx.waitUntil(recordServerError().catch(() => {}));
     return response;
@@ -52,6 +57,8 @@ export default {
     // Bot menu: commands + menu button once per release, and the one-time announcement with the new keyboard.
     ctx.waitUntil(runBotSync().catch(() => console.error(JSON.stringify({ event: "bot_sync_failed" }))));
     // SIMPLE_MVP_MODE: the featured demo restaurant (app/mvp.ts), created once.
+    // Courier offers: expired ones move on, orders still without a courier are offered again.
+    ctx.waitUntil(runWithContext(ctx, () => advanceOffers(true)).catch(() => console.error(JSON.stringify({ event: "dispatch_sweep_failed" }))));
     ctx.waitUntil(ensureDemoAmanda().catch(() => console.error(JSON.stringify({ event: "demo_seed_failed" }))));
   },
 };

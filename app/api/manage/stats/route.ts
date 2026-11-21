@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { identity } from '../../../access';
 import { ApiError, json, failure } from '../../../http';
 import { countedReview } from '../../../review-rules';
+import { ranking } from '../../../platform-stats';
 export const dynamic = 'force-dynamic';
 
 /*
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       since = day(Date.now() - (PERIODS[period] - 1) * 86400000),
       sinceIso = new Date(Date.parse(since + 'T00:00:00+05:00')).toISOString();
 
-    const [bookings, orders, rating, reviews] = await Promise.all([
+    const [bookings, orders, rating, reviews, ranked] = await Promise.all([
       env.DB!.prepare(
         "SELECT b.id,b.status,b.preorder_items,b.deposit_status,(SELECT amount FROM deposits d WHERE d.booking_id=b.id AND d.state='paid') AS deposit_paid,CASE WHEN b.deposit_status='p2p_paid' THEN COALESCE(json_extract(ps.value,'$.paid'),json_extract(ps.value,'$.deposit'),json_extract(ps.value,'$.total'),json_extract(ps.value,'$.amount')) END AS p2p_paid FROM bookings b LEFT JOIN app_settings ps ON ps.key='p2p:'||b.id WHERE b.restaurant_id=? AND b.date BETWEEN ? AND ? AND b.deposit_status<>'group_hold'",
       )
@@ -47,6 +48,8 @@ export async function GET(request: Request) {
       env.DB!.prepare('SELECT id,status,total,items,fulfillment FROM orders WHERE restaurant_id=? AND created_at>=?').bind(r.id, sinceIso).all<any>(),
       env.DB!.prepare(`SELECT AVG(stars) AS avg,COUNT(*) AS n FROM reviews rv JOIN restaurants r ON r.id=rv.restaurant_id WHERE rv.restaurant_id=? AND ${countedReview('rv', 'r')}`).bind(r.id).first<{ avg: number | null; n: number }>(),
       env.DB!.prepare(`SELECT rv.stars,rv.comment,rv.created_at,a.name FROM reviews rv JOIN restaurants r ON r.id=rv.restaurant_id LEFT JOIN accounts a ON a.id=rv.user_id WHERE rv.restaurant_id=? AND ${countedReview('rv', 'r')} ORDER BY rv.created_at DESC LIMIT 10`).bind(r.id).all<any>(),
+      // 🏆 The platform's Top-3 and this restaurant's place (app/platform-stats.ts ranking).
+      ranking().catch(() => []),
     ]);
 
     const done = (s: string) => s === 'confirmed' || s === 'completed';
@@ -99,6 +102,7 @@ export async function GET(request: Request) {
       count: { total: bookingsDone + ordersDone, bookings: bookingsDone, orders: ordersDone, delivery, pending: bookingsPending + ordersPending },
       rating: { average: rating?.avg ? Math.round(rating.avg * 10) / 10 : null, count: Number(rating?.n) || 0 },
       top,
+      leaderboard: { top: ranked.slice(0, 3).map(({ rank, name, rating, reviews: n, served }) => ({ rank, name, rating, reviews: n, served })), mine: ranked.find((x) => x.id === r.id)?.rank ?? null, total: ranked.length },
       reviews: reviews.results.map((x: any) => ({ stars: x.stars, comment: String(x.comment || '').slice(0, 500), at: x.created_at, name: x.name && !String(x.name).startsWith('guest:') ? String(x.name).split(' ')[0] : '' })),
     });
   } catch (e) {

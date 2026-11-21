@@ -6793,5 +6793,60 @@
     "uz": "Zakazlar",
     "ru": "Заказы",
     "en": "Orders"
+  },
+  "Daromad": {
+    "uz": "Daromad",
+    "ru": "Доход",
+    "en": "Earnings"
+  },
+  "Gullarim": {
+    "uz": "Gullarim",
+    "ru": "Мои цветы",
+    "en": "My flowers"
+  },
+  "Dashboard": {
+    "uz": "Dashboard",
+    "ru": "Дашборд",
+    "en": "Dashboard"
+  },
+  "Foydalanuvchilar": {
+    "uz": "Foydalanuvchilar",
+    "ru": "Пользователи",
+    "en": "Users"
+  },
+  "Kuryer kutilmoqda": {
+    "uz": "Kuryer kutilmoqda",
+    "ru": "Ждёт курьера",
+    "en": "Waiting for a courier"
+  },
+  "Bugun": {
+    "uz": "Bugun",
+    "ru": "Сегодня",
+    "en": "Today"
+  },
+  "7 kun": {
+    "uz": "7 kun",
+    "ru": "7 дней",
+    "en": "7 days"
+  },
+  "ta yetkazish": {
+    "uz": "ta yetkazish",
+    "ru": "доставок",
+    "en": "deliveries"
+  },
+  "Daromad — yetkazish haqlari (restoran belgilagan narx, ma’lumot uchun).": {
+    "uz": "Daromad — yetkazish haqlari (restoran belgilagan narx, ma’lumot uchun).",
+    "ru": "Доход — плата за доставку (цена ресторана, для справки).",
+    "en": "Earnings are delivery fees (the restaurant’s price, for reference)."
+  },
+  "🟢 Onlayn — yangi yetkazishlar Telegram’ga 10 soniyalik taklif bo‘lib keladi.": {
+    "uz": "🟢 Onlayn — yangi yetkazishlar Telegram’ga 10 soniyalik taklif bo‘lib keladi.",
+    "ru": "🟢 Онлайн — новые доставки приходят в Telegram как предложение на 10 секунд.",
+    "en": "🟢 Online — new deliveries arrive in Telegram as 10-second offers."
+  },
+  "🔴 Oflaynsiz — Telegram takliflarini olish uchun Profilda “Onlayn bo‘lish”ni bosing.": {
+    "uz": "🔴 Oflaynsiz — Telegram takliflarini olish uchun Profilda “Onlayn bo‘lish”ni bosing.",
+    "ru": "🔴 Вы офлайн — чтобы получать предложения в Telegram, нажмите «Выйти онлайн» в профиле.",
+    "en": "🔴 You are offline — tap “Go online” in Profile to get Telegram offers."
   }
 }
