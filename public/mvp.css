@@ -1,6 +1,10 @@
 /* SIMPLE_MVP_MODE (html.rf-mvp, public/mvp-mode.js): the 3-step booking flow, phone first. */
 /* Hidden in this mode (the features stay in the code): AI assistant launcher and its panel, Call AI ringing. */
-.rf-mvp .rf-ai-launch,.rf-mvp .rf-robot,.rf-mvp .rf-robot-panel,.rf-mvp .call-ai-ring{display:none!important}
+.rf-mvp .call-ai-ring{display:none!important}
+/* The customer AI assistant is back (bottom-right, above the bottom bar). */
+.rf-mvp .rf-ai-launch{bottom:calc(84px + env(safe-area-inset-bottom))!important;right:14px!important;z-index:40}
+@media(min-width:769px){.rf-mvp .rf-ai-launch{bottom:calc(96px + env(safe-area-inset-bottom))!important}}
+html.rf-book-open .rf-ai-launch{visibility:hidden}
 
 /* Step 1: hero line, search, simple cards */
 .rf-mvp #content .page-head h1{font-size:clamp(1.6rem,6vw,2.6rem);line-height:1.15;max-width:22ch}
@@ -312,3 +316,15 @@ html,body{max-width:100%;overflow-x:clip}
 .mvp-step,#mvpHall,#bookingPlan,.booking-panel{width:100%;max-width:100%;min-width:0;overflow-x:clip}
 #bookingPlan .hall-scroll,#bookingPlan .hall-map,#bookingPlan svg{max-width:100%}
 .mobile-nav{max-width:100vw}
+
+/* 🪑 Joy band qilish / 🛵 Yetkazib berish */
+.mvp-modeswitch{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;margin:10px 0 14px;border-radius:16px;border:1px solid #1e293b;background:rgba(15,23,42,.6)}
+.mvp-modeswitch button{min-height:46px;border:0;border-radius:12px;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer}
+.mvp-modeswitch button[aria-pressed=true]{background:linear-gradient(135deg,#00c9a7,#0ea5e9);color:#04121f}
+body[data-theme=light] .mvp-modeswitch{background:#f1f5f9;border-color:#e2e8f0}
+.mvp-dlv{display:grid;gap:10px;margin-top:8px}
+.mvp-dlv textarea{width:100%;resize:vertical}
+.mvp-dlv-pin{justify-self:start}
+.mvp-dlv-msg:empty{display:none}
+.mvp-dlv-msg{color:#f87171;font-weight:600}
+.mvp-prof-owner{font-weight:800}

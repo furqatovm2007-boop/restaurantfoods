@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=
 const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
 const DB={prepare(sql){let a=[];return{bind(...v){a=v;return this},first:async()=>db.prepare(sql).get(...a)||null,all:async()=>({results:db.prepare(sql).all(...a)}),run:async()=>({meta:{changes:Number(db.prepare(sql).run(...a).changes)}})}}};
 const env={DB},http=load('app/http.ts',{'cloudflare:workers':{env}}),plans=load('app/plans.ts',{'cloudflare:workers':{env},'./http':http});
-const ai=load('app/client-ai.ts',{'cloudflare:workers':{env},'./http':http}),catalog=load('app/ai-catalog.ts',{'cloudflare:workers':{env},'./http':http,'./plans':plans});
+const ai=load('app/client-ai.ts',{'cloudflare:workers':{env},'./http':http}),catalog=load('app/ai-catalog.ts',{'cloudflare:workers':{env},'./http':http,'./plans':plans,'./mvp':{SIMPLE_MVP_MODE:false}});
 const iso=d=>new Date(d).toISOString(),DAY=86400000,now=Date.parse('2026-10-22T10:00:00+05:00');
 const customer={userId:'c1',role:'customer'};
 const status=async(p)=>{try{await p;return 200}catch(e){return e.status}};

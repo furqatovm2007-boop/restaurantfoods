@@ -1,6 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {planState} from './plans';
 import {ApiError} from './http';
+import {SIMPLE_MVP_MODE} from './mvp';
 
 /*
  * Dynamic AI context. Every request reads the live D1 catalog (a newly approved restaurant
@@ -22,7 +23,8 @@ export async function aiCatalog(currentRestaurantId?:string,query?:string,voice=
   env.DB!.prepare("SELECT m.id,m.restaurant_id,m.name,m.price,m.category,m.ingredients,m.allergens,m.is_demo FROM menu m JOIN restaurants r ON r.id=m.restaurant_id WHERE r.status='active' AND m.available=1 ORDER BY m.restaurant_id,m.name LIMIT 8000").all<any>(),
  ]).then(r=>r.map(x=>x.results));
  // The customer assistant only knows restaurants whose plan includes it (Premium or trial).
- const allowed=new Set(restaurants.filter(r=>planState(r).features.clientAi).map(r=>r.id));
+ // SIMPLE_MVP_MODE: every active restaurant (the pilot plan has no tiers yet).
+ const allowed=new Set(restaurants.filter(r=>SIMPLE_MVP_MODE||planState(r).features.clientAi).map(r=>r.id));
  if(!allowed.size)throw new ApiError(403,'AI_NOT_AVAILABLE');
  restaurants.splice(0,restaurants.length,...restaurants.filter(r=>allowed.has(r.id)));
  const words=terms(query),byRestaurant=new Map<string,any[]>();

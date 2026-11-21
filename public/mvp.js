@@ -67,6 +67,32 @@
       pass: 'QR chipta',
       close: 'Yopish',
       helpCenter: 'Yordam markazi',
+      modeDine: "🪑 Joy band qilish",
+      modeDelivery: "🛵 Yetkazib berish",
+      deliveryHint: "Taomlarni Korzinkaga qo‘shing — manzil, telefon va to‘lov Korzinkada.",
+      deliveryFee: "Yetkazish",
+      deliveryTime: "Yetkazish vaqti",
+      min: "daq",
+      dlvName: "Ismingiz",
+      dlvAddress: "Yetkazish manzili",
+      dlvAddressPh: "Ko‘cha, uy, podyezd, qavat, xonadon",
+      dlvPin: "📍 Joylashuvimni qo‘shish",
+      dlvPinned: "📍 Joylashuv qo‘shildi",
+      dlvPinFail: "Joylashuvni olib bo‘lmadi — manzilni yozing.",
+      dlvComment: "Izoh (ixtiyoriy)",
+      dlvCommentPh: "Masalan: domofon 45, achchiq bo‘lmasin",
+      dlvPay: "💵 To‘lov yetkazilganda: naqd yoki karta.",
+      dlvSend: "🛵 Buyurtma berish",
+      dlvSending: "Yuborilmoqda…",
+      dlvDone: "✅ Buyurtma restoranga yuborildi!",
+      dlvDoneHint: "Restoran tasdiqlagach siz bilan bog‘lanadi. Buyurtma Profilda ko‘rinadi.",
+      dlvDemo: "DEMO: buyurtma haqiqiy restoranga yuborilmadi.",
+      dlvOff: "Bu restoran hozircha yetkazib bermaydi — faqat joy band qilish.",
+      dlvPhoneBad: "Telefon raqamini to‘liq kiriting.",
+      ownerTab: "🏪 Restoranim — boshqaruv",
+      adminTab: "🛡 Admin panel",
+      ownerLogin: "🏪 Restoran egasimisiz? Kirish",
+      partner: "🤝 Restoraningizni qo‘shing",
       view3d: '3D ko‘rinish',
       book3d: 'Interaktiv 3D menyu',
       menuList: 'Oddiy menyu',
@@ -210,6 +236,32 @@
       pass: 'QR-пропуск',
       close: 'Закрыть',
       helpCenter: 'Центр помощи',
+      modeDine: "🪑 Бронь столика",
+      modeDelivery: "🛵 Доставка",
+      deliveryHint: "Добавьте блюда в корзину — адрес, телефон и оплата в корзине.",
+      deliveryFee: "Доставка",
+      deliveryTime: "Время доставки",
+      min: "мин",
+      dlvName: "Ваше имя",
+      dlvAddress: "Адрес доставки",
+      dlvAddressPh: "Улица, дом, подъезд, этаж, квартира",
+      dlvPin: "📍 Добавить мою геолокацию",
+      dlvPinned: "📍 Геолокация добавлена",
+      dlvPinFail: "Не удалось получить геолокацию — укажите адрес.",
+      dlvComment: "Комментарий (необязательно)",
+      dlvCommentPh: "Например: домофон 45, не острое",
+      dlvPay: "💵 Оплата при получении: наличные или карта.",
+      dlvSend: "🛵 Оформить доставку",
+      dlvSending: "Отправляем…",
+      dlvDone: "✅ Заказ отправлен в ресторан!",
+      dlvDoneHint: "После подтверждения ресторан свяжется с вами. Заказ виден в профиле.",
+      dlvDemo: "DEMO: заказ не отправлен в настоящий ресторан.",
+      dlvOff: "Этот ресторан пока не доставляет — только бронь столика.",
+      dlvPhoneBad: "Введите номер телефона полностью.",
+      ownerTab: "🏪 Мой ресторан — управление",
+      adminTab: "🛡 Админ-панель",
+      ownerLogin: "🏪 Владелец ресторана? Войти",
+      partner: "🤝 Добавьте свой ресторан",
       view3d: '3D-просмотр',
       book3d: 'Интерактивное 3D-меню',
       menuList: 'Обычное меню',
@@ -353,6 +405,32 @@
       pass: 'QR pass',
       close: 'Close',
       helpCenter: 'Help center',
+      modeDine: "🪑 Book a table",
+      modeDelivery: "🛵 Delivery",
+      deliveryHint: "Add dishes to the cart — address, phone and payment are in the cart.",
+      deliveryFee: "Delivery",
+      deliveryTime: "Delivery time",
+      min: "min",
+      dlvName: "Your name",
+      dlvAddress: "Delivery address",
+      dlvAddressPh: "Street, house, entrance, floor, flat",
+      dlvPin: "📍 Add my location",
+      dlvPinned: "📍 Location added",
+      dlvPinFail: "Could not get your location — type the address.",
+      dlvComment: "Comment (optional)",
+      dlvCommentPh: "E.g. intercom 45, not spicy",
+      dlvPay: "💵 Pay on delivery: cash or card.",
+      dlvSend: "🛵 Place delivery order",
+      dlvSending: "Sending…",
+      dlvDone: "✅ Order sent to the restaurant!",
+      dlvDoneHint: "The restaurant will contact you once it confirms. The order is in your Profile.",
+      dlvDemo: "DEMO: the order was not sent to a real restaurant.",
+      dlvOff: "This restaurant does not deliver yet — table booking only.",
+      dlvPhoneBad: "Enter the full phone number.",
+      ownerTab: "🏪 My restaurant — dashboard",
+      adminTab: "🛡 Admin panel",
+      ownerLogin: "🏪 Restaurant owner? Sign in",
+      partner: "🤝 Add your restaurant",
       view3d: '3D view',
       book3d: 'Interactive 3D menu',
       menuList: 'Simple menu',
@@ -459,6 +537,24 @@
    * views, opens #/cart or reloads. Each item also keeps its name, price and photo for the floating bar.
    */
   const CART_KEY = 'rf-cart';
+  // 🪑 Joy band qilish / 🛵 Yetkazib berish — the guest's choice, kept for the restaurant page and the cart.
+  const MODE_KEY = 'rf-mode';
+  const getMode = (r) => {
+    try {
+      return r?.delivery_enabled && localStorage.getItem(MODE_KEY) === 'delivery' ? 'delivery' : 'dinein';
+    } catch {
+      return 'dinein';
+    }
+  };
+  const setMode = (m) => {
+    try {
+      localStorage.setItem(MODE_KEY, m);
+    } catch {}
+  };
+  const modeSwitch = (r, mode) =>
+    r?.delivery_enabled
+      ? `<div class="mvp-modeswitch" role="group" aria-label="${h(c('modeDine'))} / ${h(c('modeDelivery'))}"><button type="button" data-mode="dinein" aria-pressed="${mode === 'dinein'}">${h(c('modeDine'))}</button><button type="button" data-mode="delivery" aria-pressed="${mode === 'delivery'}">${h(c('modeDelivery'))}</button></div>`
+      : '';
   const menus = new Map(); // restaurant id → its menu (the last one shown)
   function cartRead() {
     try {
@@ -771,8 +867,25 @@
     menus.set(r.id, menu);
     const sel = picked(r.id);
     const place = [r.cuisine, r.address].filter(Boolean).join(' · ');
-    page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
+    page(r.name, `<a class="link back" href="#/discover">${h(c('back'))}</a>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}<p class="mvp-place">${h(place)}</p>${modeSwitch(r, getMode(r))}<p class="notice mvp-dlv-hint" data-dlv-hint hidden>🛵 ${h(c('deliveryHint'))}${Number(r.delivery_fee) >= 0 ? ` · ${h(c('deliveryFee'))}: <b>${money(r.delivery_fee)}</b>` : ''}${r.delivery_minutes ? ` · ~${Number(r.delivery_minutes)} ${h(c('min'))}` : ''}</p><section class="panel mvp-step" id="mvpHall"><h2>${h(c('hall'))}</h2><p class="muted">${h(c('hallHint'))}</p><div class="booking-panel" id="bookingPlan"><p>…</p></div></section><section class="panel mvp-step" id="mvpMenu">${menuInner(r, menu, sel)}</section>`);
     const box = document.getElementById('mvpMenu');
+    // Delivery: no hall — the menu list opens and the dishes go to the cart (address and payment there).
+    const applyMode = (mode) => {
+      document.getElementById('mvpHall')?.toggleAttribute('hidden', mode === 'delivery');
+      document.querySelector('[data-dlv-hint]')?.toggleAttribute('hidden', mode !== 'delivery');
+      document.querySelectorAll('.mvp-modeswitch [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+      if (mode === 'delivery' && !menuListOpen) {
+        menuListOpen = true;
+        box.innerHTML = menuInner(r, menu, picked(r.id));
+      }
+    };
+    document.querySelector('#content .mvp-modeswitch')?.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-mode]');
+      if (!b) return;
+      setMode(b.dataset.mode);
+      applyMode(b.dataset.mode);
+    });
+    applyMode(getMode(r));
     // The 3D menu's code is downloaded (not run) once the menu section is near the screen.
     if (webgl() && window.RF3DPrefetch && 'IntersectionObserver' in window) {
       const io = new IntersectionObserver((entries) => {
@@ -822,6 +935,64 @@
    * the money lines the booking will carry (total / paid / remaining — the advance is chosen at the payment step),
    * and "Davom etish / Bron qilish" → the restaurant's hall with these dishes already in the booking.
    */
+  // 🛵 Delivery checkout in the cart: name, phone, address (+ optional location pin and comment), the bill with
+  // the delivery fee; POST /api/orders/quick sends it to the restaurant's Telegram and its dashboard.
+  const dlv = { lat: null, lng: null };
+  function deliveryForm(r, subtotal) {
+    const fee = Number(r.delivery_fee) || 0;
+    return `<form class="mvp-dlv form" data-dlv novalidate><label>${h(c('dlvName'))}<input name="name" autocomplete="name" required minlength="2" maxlength="60" value="${h(typed.name || me()?.name || '')}"></label>${phoneField()}<label>${h(c('dlvAddress'))}<textarea name="address" rows="2" required minlength="3" maxlength="300" placeholder="${h(c('dlvAddressPh'))}">${h(typed.address || '')}</textarea></label><button type="button" class="quiet mvp-dlv-pin" data-dlv-pin>${h(dlv.lat !== null ? c('dlvPinned') : c('dlvPin'))}</button><label>${h(c('dlvComment'))}<input name="comment" maxlength="300" placeholder="${h(c('dlvCommentPh'))}"></label><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(subtotal)}</dd></div><div><dt>${h(c('deliveryFee'))}</dt><dd>${money(fee)}</dd></div>${r.delivery_minutes ? `<div><dt>${h(c('deliveryTime'))}</dt><dd>~${Number(r.delivery_minutes)} ${h(c('min'))}</dd></div>` : ''}<div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(subtotal + fee)}</dd></div></dl><p class="muted">${h(c('dlvPay'))}</p><p class="mvp-dlv-msg" role="status" data-dlv-msg></p><button type="submit" class="primary mvp-cart-go">${h(c('dlvSend'))}</button></form>`;
+  }
+  function bindDelivery(r) {
+    const f = document.querySelector('#content [data-dlv]');
+    if (!f) return;
+    if (window.RFPhone && f.querySelector('[data-rf-phone]')) window.RFPhone.bind(f);
+    f.querySelector('[data-dlv-pin]').onclick = (e) => {
+      const b = e.currentTarget,
+        msg = f.querySelector('[data-dlv-msg]');
+      if (!navigator.geolocation) return (msg.textContent = c('dlvPinFail'));
+      b.disabled = true;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          dlv.lat = Math.round(pos.coords.latitude * 1e6) / 1e6;
+          dlv.lng = Math.round(pos.coords.longitude * 1e6) / 1e6;
+          b.textContent = c('dlvPinned');
+          b.disabled = false;
+        },
+        () => ((msg.textContent = c('dlvPinFail')), (b.disabled = false)),
+        { timeout: 10000, maximumAge: 60000 },
+      );
+    };
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = f.querySelector('[data-dlv-msg]'),
+        btn = f.querySelector('[type=submit]');
+      const name = f.elements.name.value.trim(),
+        phone = f.elements.phone?.value || '',
+        address = f.elements.address.value.trim();
+      typed.name = name;
+      typed.address = address;
+      if (!phone) return ((msg.textContent = c('dlvPhoneBad')), f.querySelector('.rf-phone-local, [name=phone]')?.focus());
+      if (!f.reportValidity()) return;
+      const cart = cartRead();
+      if (!cart?.items.length) return;
+      btn.disabled = true;
+      btn.textContent = c('dlvSending');
+      msg.textContent = '';
+      try {
+        const res = await api('/api/orders/quick', 'POST', { restaurantId: r.id, name, phone, address, comment: f.elements.comment.value.trim(), lat: dlv.lat, lng: dlv.lng, items: cart.items.map(({ id, quantity }) => ({ id, quantity })) });
+        cartWrite(null);
+        try {
+          localStorage.setItem('rf-mvp-contact', JSON.stringify({ name, phone }));
+        } catch {}
+        if (!res.demo && !me()) refreshMe().catch(() => null);
+        page(c('cartTitle'), `<section class="panel mvp-cart mvp-dlv-done"><h2>${h(res.demo ? c('dlvDemo') : c('dlvDone'))}</h2><p>${h(r.name)}</p><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(res.subtotal)}</dd></div><div><dt>${h(c('deliveryFee'))}</dt><dd>${money(res.fee)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(res.total)}</dd></div></dl><p class="muted">${h(c('dlvPay'))}</p>${res.demo ? '' : `<p class="muted">${h(c('dlvDoneHint'))}</p>`}<a class="primary" href="#/discover">${h(c('toRestaurants'))}</a></section>`);
+      } catch (err) {
+        msg.textContent = err?.message || String(err);
+        btn.disabled = false;
+        btn.textContent = c('dlvSend');
+      }
+    };
+  }
   async function cartPage(seq) {
     const x = cartRead();
     let r = null,
@@ -848,9 +1019,10 @@
       };
       page(
         c('cartTitle'),
-        `<a class="link back" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('toMenu'))}</a><section class="panel mvp-cart"><h2>${h(r.name)}</h2>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}${note ? `<p class="notice">${h(note)}</p>` : ''}<ul class="mvp-cart-list">${rows.map(line).join('')}</ul><dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(total)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(total)}</dd></div><div><dt>${h(c('cartPaid'))}</dt><dd>${money(0)}</dd></div><div><dt>${h(c('cartLeft'))}</dt><dd>${money(total)}</dd></div></dl><p class="muted mvp-cart-note">💳 ${h(c('cartDepositNote'))}</p><button type="button" class="primary mvp-cart-go" data-cart-go>${h(c('cartGo'))} →</button></section>`,
+        `<a class="link back" href="#/restaurant/${encodeURIComponent(r.id)}">${h(c('toMenu'))}</a><section class="panel mvp-cart"><h2>${h(r.name)}</h2>${isDemo(r) ? `<p class="notice mvp-demo-note">${h(c('demo'))}</p>` : ''}${note ? `<p class="notice">${h(note)}</p>` : ''}<ul class="mvp-cart-list">${rows.map(line).join('')}</ul>${modeSwitch(r, getMode(r))}${getMode(r) === 'delivery' ? deliveryForm(r, total) : `<dl class="mvp-cart-sum"><div><dt>${h(c('cartSubtotal'))}</dt><dd>${money(total)}</dd></div><div class="mvp-cart-total"><dt>${h(c('cartTotal'))}</dt><dd>${money(total)}</dd></div><div><dt>${h(c('cartPaid'))}</dt><dd>${money(0)}</dd></div><div><dt>${h(c('cartLeft'))}</dt><dd>${money(total)}</dd></div></dl><p class="muted mvp-cart-note">💳 ${h(c('cartDepositNote'))}</p><button type="button" class="primary mvp-cart-go" data-cart-go>${h(c('cartGo'))} →</button>`}</section>`,
       );
       cartBar();
+      bindDelivery(r);
     };
     // Prices and names from the menu as it is now; dishes gone or switched off leave the cart.
     let note = '';
@@ -867,6 +1039,11 @@
     draw(note);
     const root = document.getElementById('content');
     root.onclick = (e) => {
+      const sw = e.target.closest?.('.mvp-modeswitch [data-mode]');
+      if (sw) {
+        setMode(sw.dataset.mode);
+        return draw('');
+      }
       const row = e.target.closest?.('[data-cart-id]');
       if (e.target.closest?.('[data-cart-go]')) {
         try {
@@ -914,6 +1091,7 @@
       : `<label>${h(label)}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required value="${h(value)}"></label>`;
   const uzPhone = (v) => /^\+998\d{9}$/.test(v);
   const me = () => (typeof state !== 'undefined' ? state.user : null);
+  const isOwner = (u) => u?.role === 'restaurant_owner' || !!u?.staff?.some?.((m) => m.role === 'manager');
   const tgUser = () => {
     const u = me();
     return u && u.telegram?.linked ? u : null;
@@ -1255,13 +1433,16 @@
    * and Log out; My reservations = the booking list. openProfile (the old dialog) is kept for other callers.
    */
   async function profilePage(seq) {
-    page(c('profTitle'), `<section class="mvp-page"><div class="panel mvp-prof-card" data-prof><p class="muted">…</p></div><div class="mvp-prof-links"><a class="mvp-prof-help" href="#/help">❓ ${h(c('helpCenter'))}</a><button type="button" class="mvp-prof-logout" data-logout hidden>🚪 ${h(c('logout'))}</button></div></section>`);
+    page(c('profTitle'), `<section class="mvp-page"><div class="panel mvp-prof-card" data-prof><p class="muted">…</p></div><div class="mvp-prof-links"><span data-prof-roles></span><a class="mvp-prof-help" href="#/help">❓ ${h(c('helpCenter'))}</a><button type="button" class="mvp-prof-logout" data-logout hidden>🚪 ${h(c('logout'))}</button></div></section>`);
     const root = document.querySelector('#content .mvp-page');
     const u = me() || (await refreshMe().catch(() => null), me());
     if (!root.isConnected || (seq && typeof state !== 'undefined' && seq !== state.seq)) return;
     const out = root.querySelector('[data-logout]');
     out.hidden = !u;
     out.onclick = () => document.getElementById('logout')?.click();
+    // Restaurant owners / managers: their dashboard; the admin: the admin panel; everyone else: the owners' way in.
+    const roles = root.querySelector('[data-prof-roles]');
+    if (roles) roles.outerHTML = isOwner(u) ? `<a class="mvp-prof-help mvp-prof-owner" href="#/manage">${h(c('ownerTab'))}</a>` : u?.role === 'admin' ? `<a class="mvp-prof-help mvp-prof-owner" href="#/admin">${h(c('adminTab'))}</a><a class="mvp-prof-help" href="#/manage">${h(c('ownerTab'))}</a>` : `<a class="mvp-prof-help" href="#/login">${h(c('ownerLogin'))}</a><a class="mvp-prof-help" href="#/partner/restaurant">${h(c('partner'))}</a>`;
     renderProfile(root, u);
   }
   async function bookingsPage(seq) {

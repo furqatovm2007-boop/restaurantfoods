@@ -5,6 +5,7 @@ declare namespace Cloudflare {
     /** Server-side only: table occupancy vision (gpt-4o-mini). */
     OPENAI_API_KEY?: string;
     OPENAI_VISION_MODEL?: string;
+    OPENAI_CHAT_MODEL?: string;
     /** Telegram booking notifications. */
     TELEGRAM_BOT_TOKEN?: string;
     TELEGRAM_WEBHOOK_SECRET?: string;
